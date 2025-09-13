@@ -166,11 +166,22 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
         setError('');
 
         // Get API key from Supabase edge function
+        console.log('Fetching Google Maps API key...');
         const { data, error: apiError } = await supabase.functions.invoke('google-maps-proxy');
         
-        if (apiError || !data?.apiKey) {
-          throw new Error('Kunne ikke hente Google Maps API-nøkkel');
+        console.log('API response:', { data, apiError });
+        
+        if (apiError) {
+          console.error('Supabase function error:', apiError);
+          throw new Error(`Supabase feil: ${apiError.message}`);
         }
+        
+        if (!data?.apiKey) {
+          console.error('No API key in response:', data);
+          throw new Error('Ingen API-nøkkel mottatt fra server');
+        }
+
+        console.log('Got API key, loading Google Maps...');
 
         const loader = new Loader({
           apiKey: data.apiKey,
