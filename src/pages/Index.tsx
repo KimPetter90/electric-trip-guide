@@ -5,7 +5,6 @@ import CarSelector from "@/components/CarSelector";
 import RouteInput from "@/components/RouteInput";
 import ChargingMap from "@/components/ChargingMap";
 import RouteMap from "@/components/RouteMap";
-import MapboxRoute from "@/components/MapboxRoute";
 import { Zap, Route, MapPin, Car } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 
