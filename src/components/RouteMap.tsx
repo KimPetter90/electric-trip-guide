@@ -269,7 +269,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           try {
             marker.setMap(null);
           } catch (e) {
-            console.warn('Kunne ikke fjerne marker:', e);
+            // Silent fail - marker er allerede fjernet
           }
         }
       });
@@ -280,24 +280,26 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         try {
           routeLine.setMap(null);
         } catch (e) {
-          console.warn('Kunne ikke fjerne route line:', e);
+          // Silent fail - route line er allerede fjernet
         }
       }
       setRouteLine(null);
     } catch (error) {
-      console.warn('Cleanup error:', error);
+      // Ignore cleanup errors completely
     }
   };
 
   // Cleanup når komponenten unmountes
   useEffect(() => {
     return () => {
-      // Delayed cleanup for å unngå DOM race conditions
-      setTimeout(() => {
+      // Enkel cleanup uten setTimeout
+      try {
         cleanupMap();
-      }, 0);
+      } catch (e) {
+        // Ignore all cleanup errors
+      }
     };
-  }, [markers, routeLine]);
+  }, []);
 
   // Hent Google Maps API key med fallback
   useEffect(() => {
@@ -344,62 +346,9 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
   // Fallback: statisk kart uten Google Maps API
   const initializeStaticMap = () => {
-    try {
-      if (mapRef.current) {
-        // Simuler et enkelt kart med CSS og SVG
-        const mapContainer = mapRef.current;
-        mapContainer.innerHTML = `
-          <div style="
-            width: 100%; 
-            height: 100%; 
-            background: linear-gradient(135deg, #e3f2fd 0%, #f1f8e9 100%);
-            border-radius: 8px;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #e0e0e0;
-          ">
-            <div style="
-              background: white;
-              padding: 20px;
-              border-radius: 12px;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-              text-align: center;
-              max-width: 400px;
-            ">
-              <div style="font-size: 48px; margin-bottom: 16px;">🗺️</div>
-              <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 18px; font-weight: 600;">
-                Kartfunksjon midlertidig utilgjengelig
-              </h3>
-              <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.5;">
-                Ruteplanlegging og ladestasjoner fungerer fortsatt normalt.
-                Kartet vil laste automatisk når tjenesten er tilgjengelig igjen.
-              </p>
-              <div style="
-                margin-top: 16px;
-                padding: 8px 16px;
-                background: #f0f9ff;
-                border: 1px solid #0ea5e9;
-                border-radius: 6px;
-                font-size: 12px;
-                color: #0284c7;
-              ">
-                💡 Se "Analyse" og "Ladestasjoner" faner for rutedetaljer
-              </div>
-            </div>
-          </div>
-        `;
-        
-        setMap(null); // Ingen Google Maps tilgjengelig
-        setLoading(false);
-        setError(null); // Ikke vis som feil siden det er forventet
-      }
-    } catch (error) {
-      console.error('Feil ved fallback kart:', error);
-      setError('Kunne ikke laste kart');
-      setLoading(false);
-    }
+    setMap(null); // Ingen Google Maps tilgjengelig
+    setLoading(false);
+    setError(null); // Ikke vis som feil siden det er forventet
   };
 
   // Initialiser Google Maps
@@ -709,6 +658,26 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                     <p className="text-sm text-muted-foreground">Laster kart...</p>
+                  </div>
+                </div>
+              )}
+              
+              {!loading && !map && (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50 rounded-lg border-2 border-gray-200">
+                  <div className="bg-white p-6 rounded-xl shadow-lg text-center max-w-md mx-4">
+                    <div className="text-5xl mb-4">🗺️</div>
+                    <h3 className="text-lg font-semibold mb-2 text-gray-800">
+                      Kartfunksjon midlertidig utilgjengelig
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                      Ruteplanlegging og ladestasjoner fungerer fortsatt normalt.
+                      Kartet vil laste automatisk når tjenesten er tilgjengelig igjen.
+                    </p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <p className="text-xs text-blue-700">
+                        💡 Se "Analyse" og "Ladestasjoner" faner for rutedetaljer
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
