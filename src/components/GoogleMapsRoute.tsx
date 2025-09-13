@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Zap, Battery, Clock, DollarSign, AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CarModel {
   id: string;
@@ -89,6 +90,8 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
   const [requiredStations, setRequiredStations] = useState<ChargingStation[]>([]);
   const [routeDistance, setRouteDistance] = useState<number>(0);
   const [batteryStatus, setBatteryStatus] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
 
   // Calculate if charging is needed based on battery percentage and route
   const calculateChargingNeeds = (distance: number, car: CarModel, batteryPercentage: number, trailerWeight: number) => {
@@ -125,51 +128,73 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
   useEffect(() => {
     if (!isVisible || !mapRef.current) return;
 
-    const loader = new Loader({
-      apiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyBdVl-cGnQ0C6X9CX5VzEIBz_2eHZpHCk0",
-      version: "weekly",
-      libraries: ["geometry"]
-    });
+    const initializeMap = async () => {
+      try {
+        setIsLoading(true);
+        setError('');
 
-    loader.load().then(() => {
-      const mapInstance = new google.maps.Map(mapRef.current!, {
-        center: { lat: 60.472, lng: 8.4689 }, // Center of Norway
-        zoom: 6,
-        styles: [
-          {
-            "featureType": "all",
-            "elementType": "geometry",
-            "stylers": [{ "color": "#1e1e1e" }]
-          },
-          {
-            "featureType": "all",
-            "elementType": "labels.text.fill",
-            "stylers": [{ "color": "#888888" }]
-          },
-          {
-            "featureType": "water",
-            "elementType": "geometry",
-            "stylers": [{ "color": "#000000" }]
-          }
-        ]
-      });
-
-      const directionsServiceInstance = new google.maps.DirectionsService();
-      const directionsRendererInstance = new google.maps.DirectionsRenderer({
-        suppressMarkers: true,
-        polylineOptions: {
-          strokeColor: "#00ff88",
-          strokeWeight: 4,
-          strokeOpacity: 0.8
+        // Get API key from Supabase edge function
+        const { data, error: apiError } = await supabase.functions.invoke('google-maps-proxy');
+        
+        if (apiError || !data?.apiKey) {
+          throw new Error('Kunne ikke hente Google Maps API-nøkkel');
         }
-      });
 
-      directionsRendererInstance.setMap(mapInstance);
+        const loader = new Loader({
+          apiKey: data.apiKey,
+          version: "weekly",
+          libraries: ["geometry"]
+        });
 
-      setMap(mapInstance);
-      setDirectionsService(directionsServiceInstance);
-      setDirectionsRenderer(directionsRendererInstance);
-    });
+        await loader.load();
+
+        const mapInstance = new google.maps.Map(mapRef.current!, {
+          center: { lat: 60.472, lng: 8.4689 }, // Center of Norway
+          zoom: 6,
+          styles: [
+            {
+              "featureType": "all",
+              "elementType": "geometry",
+              "stylers": [{ "color": "#1e1e1e" }]
+            },
+            {
+              "featureType": "all",
+              "elementType": "labels.text.fill",
+              "stylers": [{ "color": "#888888" }]
+            },
+            {
+              "featureType": "water",
+              "elementType": "geometry",
+              "stylers": [{ "color": "#000000" }]
+            }
+          ]
+        });
+
+        const directionsServiceInstance = new google.maps.DirectionsService();
+        const directionsRendererInstance = new google.maps.DirectionsRenderer({
+          suppressMarkers: true,
+          polylineOptions: {
+            strokeColor: "#00ff88",
+            strokeWeight: 4,
+            strokeOpacity: 0.8
+          }
+        });
+
+        directionsRendererInstance.setMap(mapInstance);
+
+        setMap(mapInstance);
+        setDirectionsService(directionsServiceInstance);
+        setDirectionsRenderer(directionsRendererInstance);
+        setIsLoading(false);
+
+      } catch (err) {
+        console.error('Error initializing Google Maps:', err);
+        setError(err instanceof Error ? err.message : 'Kunne ikke laste Google Maps');
+        setIsLoading(false);
+      }
+    };
+
+    initializeMap();
   }, [isVisible]);
 
   useEffect(() => {
@@ -270,7 +295,25 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
         <div 
           ref={mapRef}
           className="h-96 rounded-lg overflow-hidden border border-glass-border shadow-neon bg-background/20"
-        />
+        >
+          {isLoading && (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Laster Google Maps...</p>
+              </div>
+            </div>
+          )}
+          {error && (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center text-destructive">
+                <AlertTriangle className="h-16 w-16 mx-auto mb-4" />
+                <p className="font-medium">Kunne ikke laste kartet</p>
+                <p className="text-sm">{error}</p>
+              </div>
+            </div>
+          )}
+        </div>
         
         <div className="mt-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-4 flex-wrap">

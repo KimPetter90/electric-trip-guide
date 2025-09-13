@@ -1,1 +1,4 @@
 project_id = "vwmopjkrnjrxkbxsswnb"
+
+[functions.google-maps-proxy]
+verify_jwt = false
