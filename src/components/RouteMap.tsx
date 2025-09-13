@@ -144,16 +144,16 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
               </div>
             </div>
           ) : (
-            <div className="h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
-              {/* Stylized Norway Map Background */}
-              <div className="absolute inset-0 opacity-30">
+            <div className="h-full bg-gradient-to-br from-blue-50 via-slate-100 to-green-50 relative overflow-hidden">
+              {/* Simplified Norway Map Background */}
+              <div className="absolute inset-0 opacity-20">
                 <svg viewBox="0 0 400 500" className="w-full h-full">
                   <path 
                     d="M200 50 L250 100 L280 150 L270 200 L250 250 L220 300 L200 350 L180 300 L150 250 L130 200 L140 150 L170 100 Z" 
-                    fill="none" 
+                    fill="hsl(var(--primary))" 
                     stroke="hsl(var(--primary))" 
-                    strokeWidth="2" 
-                    opacity="0.5"
+                    strokeWidth="1" 
+                    opacity="0.3"
                   />
                 </svg>
               </div>
@@ -163,10 +163,11 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
                 {/* Start point */}
                 {fromPosition && (
                   <div className="absolute transform -translate-x-1/2 -translate-y-1/2" style={fromPosition}>
-                    <div className="w-6 h-6 bg-green-500 rounded-full shadow-lg animate-pulse border-2 border-white">
-                      <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 text-xs font-semibold text-green-400 whitespace-nowrap bg-background/80 px-2 py-1 rounded">
-                        {routeData.from} (Start)
-                      </div>
+                    <div className="w-10 h-10 bg-green-500 rounded-full shadow-xl animate-pulse border-4 border-white flex items-center justify-center">
+                      <span className="text-white font-bold text-lg">🚗</span>
+                    </div>
+                    <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 text-sm font-bold text-green-700 whitespace-nowrap bg-white/90 px-3 py-2 rounded-lg shadow-lg border-2 border-green-500">
+                      START: {routeData.from.toUpperCase()}
                     </div>
                   </div>
                 )}
@@ -174,10 +175,11 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
                 {/* End point */}
                 {toPosition && (
                   <div className="absolute transform -translate-x-1/2 -translate-y-1/2" style={toPosition}>
-                    <div className="w-6 h-6 bg-red-500 rounded-full shadow-lg animate-pulse border-2 border-white">
-                      <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 text-xs font-semibold text-red-400 whitespace-nowrap bg-background/80 px-2 py-1 rounded">
-                        {routeData.to} (Mål)
-                      </div>
+                    <div className="w-10 h-10 bg-red-500 rounded-full shadow-xl animate-pulse border-4 border-white flex items-center justify-center">
+                      <span className="text-white font-bold text-lg">🏁</span>
+                    </div>
+                    <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 text-sm font-bold text-red-700 whitespace-nowrap bg-white/90 px-3 py-2 rounded-lg shadow-lg border-2 border-red-500">
+                      MÅL: {routeData.to.toUpperCase()}
                     </div>
                   </div>
                 )}
@@ -196,18 +198,28 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
                       className="absolute transform -translate-x-1/2 -translate-y-1/2 group cursor-pointer"
                       style={positions[index]}
                     >
-                      <div className="w-6 h-6 bg-gradient-electric rounded-full shadow-neon animate-pulse-neon flex items-center justify-center text-xs font-bold text-primary-foreground border-2 border-white">
-                        ⚡
+                      <div className="w-8 h-8 bg-yellow-400 rounded-full shadow-xl animate-bounce border-3 border-white flex items-center justify-center">
+                        <span className="text-yellow-900 font-bold text-lg">⚡</span>
+                      </div>
+                      <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 text-xs font-bold text-yellow-700 whitespace-nowrap bg-white/90 px-2 py-1 rounded shadow-lg">
+                        LADING {index + 1}
                       </div>
                       
-                      {/* Tooltip */}
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                        <div className="bg-background border border-glass-border rounded-lg p-2 shadow-lg backdrop-blur-sm min-w-32">
-                          <h5 className="font-semibold text-xs">{station.name}</h5>
-                          <p className="text-xs text-muted-foreground">{station.location}</p>
-                          <div className="flex items-center gap-2 text-xs mt-1">
-                            <span>⚡ {station.chargeAmount} kWh</span>
-                            <span>⏱️ {station.chargeTime} min</span>
+                      {/* Forbedret tooltip */}
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-4 hidden group-hover:block z-10">
+                        <div className="bg-white border-2 border-yellow-400 rounded-lg p-3 shadow-xl backdrop-blur-sm min-w-40">
+                          <h5 className="font-bold text-sm text-gray-800">{station.name}</h5>
+                          <p className="text-xs text-gray-600 mb-2">{station.location}</p>
+                          <div className="space-y-1 text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">⚡ {station.chargeAmount} kWh</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">⏱️ {station.chargeTime} min</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">💰 {station.cost} kr</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -215,14 +227,14 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
                   );
                 })}
                 
-                {/* Animated route line between start and end */}
+                {/* Forbedret rutelinje mellem start og slutt */}
                 {fromPosition && toPosition && (
                   <svg className="absolute inset-0 w-full h-full pointer-events-none">
                     <defs>
                       <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.8"/>
-                        <stop offset="50%" stopColor="hsl(var(--secondary))" stopOpacity="0.6"/>
-                        <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0.4"/>
+                        <stop offset="0%" stopColor="#10b981" stopOpacity="0.8"/>
+                        <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.8"/>
+                        <stop offset="100%" stopColor="#ef4444" stopOpacity="0.8"/>
                       </linearGradient>
                     </defs>
                     <line 
@@ -231,49 +243,62 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
                       x2={toPosition.left} 
                       y2={toPosition.top}
                       stroke="url(#routeGradient)" 
-                      strokeWidth="3" 
-                      strokeDasharray="10,5"
+                      strokeWidth="6" 
+                      strokeDasharray="15,10"
                       className="animate-pulse"
                     />
                   </svg>
                 )}
               </div>
               
-              {/* Map info overlay */}
-              <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm border border-glass-border rounded-lg p-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  <span className="font-semibold">Ruteinformasjon</span>
+              {/* Forbedret info overlay */}
+              <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm border-2 border-primary rounded-lg p-4 shadow-xl max-w-64">
+                <div className="flex items-center gap-2 text-base font-bold">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  <span className="text-gray-800">RUTEINFORMASJON</span>
                 </div>
-                <div className="text-xs text-muted-foreground mt-1 space-y-1">
+                <div className="text-sm text-gray-700 mt-2 space-y-1 font-medium">
                   {routeData.from && routeData.to ? (
                     <>
-                      <div>Rute: {routeData.from} → {routeData.to}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold">Rute:</span> 
+                        <span>{routeData.from} → {routeData.to}</span>
+                      </div>
                       {selectedCar && (
-                        <div>Bil: {selectedCar.brand} {selectedCar.model}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold">Bil:</span> 
+                          <span>{selectedCar.brand} {selectedCar.model}</span>
+                        </div>
                       )}
                       {tripInfo && (
                         <>
-                          <div>Rekkevidde: {Math.round(tripInfo.range)} km</div>
-                          {tripInfo.needsCharging && <div className="text-yellow-400">⚡ Lading kreves</div>}
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold">Rekkevidde:</span> 
+                            <span className="text-blue-600">{Math.round(tripInfo.range)} km</span>
+                          </div>
+                          {tripInfo.needsCharging && (
+                            <div className="text-yellow-600 font-bold flex items-center gap-1">
+                              ⚡ LADING KREVES
+                            </div>
+                          )}
                         </>
                       )}
                     </>
                   ) : (
-                    <div>Skriv inn start og destinasjon</div>
+                    <div className="text-gray-500">Skriv inn start og destinasjon</div>
                   )}
                 </div>
               </div>
 
-              {/* Show missing city warning */}
+              {/* Forbedret advarsel for manglende byer */}
               {routeData.from && !fromPosition && (
-                <div className="absolute top-4 left-4 bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-2 text-xs">
-                  By ikke funnet: {routeData.from}
+                <div className="absolute top-4 left-4 bg-red-100 border-2 border-red-500 rounded-lg p-3 text-sm font-bold text-red-700">
+                  ❌ By ikke funnet: {routeData.from}
                 </div>
               )}
               {routeData.to && !toPosition && (
-                <div className="absolute top-4 right-4 bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-2 text-xs">
-                  By ikke funnet: {routeData.to}
+                <div className="absolute top-4 right-4 bg-red-100 border-2 border-red-500 rounded-lg p-3 text-sm font-bold text-red-700">
+                  ❌ By ikke funnet: {routeData.to}
                 </div>
               )}
             </div>
