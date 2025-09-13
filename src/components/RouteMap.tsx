@@ -115,12 +115,11 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [directionsService, setDirectionsService] = useState<google.maps.DirectionsService | null>(null);
-  const [directionsRenderer, setDirectionsRenderer] = useState<google.maps.DirectionsRenderer | null>(null);
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
   const [routeAnalysis, setRouteAnalysis] = useState<TripAnalysis | null>(null);
   const [optimizedStations, setOptimizedStations] = useState<ChargingStation[]>([]);
   const [activeTab, setActiveTab] = useState("map");
+  const [routeLine, setRouteLine] = useState<google.maps.Polyline | null>(null);
 
   // Simuler værdata (i en ekte app ville dette komme fra en vær-API)
   const getWeatherData = (): WeatherData => ({
@@ -261,6 +260,30 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     };
   };
 
+  // Cleanup function
+  const cleanupMap = () => {
+    // Fjern alle markører
+    markers.forEach(marker => {
+      if (marker && marker.setMap) {
+        marker.setMap(null);
+      }
+    });
+    setMarkers([]);
+    
+    // Fjern route line
+    if (routeLine) {
+      routeLine.setMap(null);
+      setRouteLine(null);
+    }
+  };
+
+  // Cleanup når komponenten unmountes
+  useEffect(() => {
+    return () => {
+      cleanupMap();
+    };
+  }, []);
+
   // Hent Google Maps API key
   useEffect(() => {
     const fetchGoogleMapsKey = async () => {
@@ -328,21 +351,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           ]
         });
 
-        const directionsServiceInstance = new google.maps.DirectionsService();
-        const directionsRendererInstance = new google.maps.DirectionsRenderer({
-          polylineOptions: {
-            strokeColor: '#3b82f6',
-            strokeWeight: 8,
-            strokeOpacity: 0.8
-          },
-          suppressMarkers: true
-        });
-
-        directionsRendererInstance.setMap(mapInstance);
-
         setMap(mapInstance);
-        setDirectionsService(directionsServiceInstance);
-        setDirectionsRenderer(directionsRendererInstance);
         setLoading(false);
       }
     } catch (err) {
@@ -354,7 +363,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
   // Oppdater kart når ruteinformasjon endres
   useEffect(() => {
-    if (!map || !directionsService || !directionsRenderer || !routeData.from || !routeData.to || !selectedCar) {
+    if (!map || !routeData.from || !routeData.to || !selectedCar) {
       return;
     }
 
@@ -365,16 +374,15 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     const toCoords = cityCoordinates[toCity];
 
     if (!fromCoords || !toCoords) {
-      console.warn('En eller begge byer ikke funnet:', fromCity, toCity);
+      setError(`Kunne ikke finne koordinater for ${fromCity} eller ${toCity}`);
       return;
     }
 
-    // Fjern eksisterende markører
-    markers.forEach(marker => marker.setMap(null));
-    setMarkers([]);
+    // Cleanup previous map elements
+    cleanupMap();
 
-    // Tegn rett linje mellom byene (fallback når Directions API ikke fungerer)
-    const drawStraightRoute = () => {
+    // Tegn rett linje mellom byene
+    const drawRoute = () => {
       const routePath = new google.maps.Polyline({
         path: [fromCoords, toCoords],
         geodesic: true,
@@ -383,6 +391,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         strokeWeight: 8,
       });
       routePath.setMap(map);
+      setRouteLine(routePath);
       
       // Beregn distance
       const distance = getDistance(fromCoords, toCoords);
@@ -395,170 +404,140 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       const analysis = calculateTripAnalysis(distance, optimizedStations);
       setRouteAnalysis(analysis);
       
-      return distance;
+      return { distance, optimizedStations };
     };
 
-    // Prøv først Directions API, hvis det feiler bruk rett linje
-    const request: google.maps.DirectionsRequest = {
-      origin: fromCoords,
-      destination: toCoords,
-      travelMode: google.maps.TravelMode.DRIVING,
-      region: 'NO',
-      avoidHighways: false,
-      avoidTolls: false
-    };
+    console.log('Tegner rute mellom', fromCity, 'og', toCity);
+    const { distance, optimizedStations } = drawRoute();
 
-    directionsService.route(request, (result, status) => {
-      let distance: number;
-      
-      if (status === 'OK' && result) {
-        // Directions API fungerte
-        directionsRenderer.setDirections(result);
-        const route = result.routes[0];
-        distance = route.legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0) / 1000;
-        
-        // Optimaliser ladestasjoner basert på faktisk rute
-        const optimizedStations = optimizeChargingStations(distance);
-        setOptimizedStations(optimizedStations);
-        
-        // Beregn reiseanalyse
-        const analysis = calculateTripAnalysis(distance, optimizedStations);
-        setRouteAnalysis(analysis);
-      } else {
-        // Directions API feilet, bruk rett linje
-        console.warn('Directions API feilet:', status, 'Bruker rett-linje rute');
-        distance = drawStraightRoute();
+    const newMarkers: google.maps.Marker[] = [];
+
+    // Start markør
+    const startMarker = new google.maps.Marker({
+      position: fromCoords,
+      map: map,
+      title: `Start: ${routeData.from} (${routeData.batteryPercentage}% batteri)`,
+      icon: {
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="25" cy="25" r="22" fill="#10b981" stroke="white" stroke-width="6"/>
+            <text x="25" y="32" text-anchor="middle" fill="white" font-size="24" font-weight="bold">🚗</text>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(50, 50),
+        anchor: new google.maps.Point(25, 25)
       }
-
-      const newMarkers: google.maps.Marker[] = [];
-
-      // Start markør
-      const startMarker = new google.maps.Marker({
-        position: fromCoords,
-        map: map,
-        title: `Start: ${routeData.from} (${routeData.batteryPercentage}% batteri)`,
-        icon: {
-          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="25" r="22" fill="#10b981" stroke="white" stroke-width="6"/>
-              <text x="25" y="32" text-anchor="middle" fill="white" font-size="24" font-weight="bold">🚗</text>
-            </svg>
-          `),
-          scaledSize: new google.maps.Size(50, 50),
-          anchor: new google.maps.Point(25, 25)
-        }
-      });
-
-      const startInfoWindow = new google.maps.InfoWindow({
-        content: `
-          <div style="padding: 10px; min-width: 200px;">
-            <h3 style="margin: 0 0 10px 0; color: #1f2937;">${routeData.from}</h3>
-            <p style="margin: 5px 0; color: #374151;"><strong>Startbatteri:</strong> ${routeData.batteryPercentage}%</p>
-            <p style="margin: 5px 0; color: #374151;"><strong>Rekkevidde:</strong> ~${selectedCar ? Math.round(selectedCar.range * routeData.batteryPercentage / 100) : 0} km</p>
-          </div>
-        `
-      });
-
-      startMarker.addListener('click', () => {
-        startInfoWindow.open(map, startMarker);
-      });
-
-      newMarkers.push(startMarker);
-
-      // Slutt markør
-      const endMarker = new google.maps.Marker({
-        position: toCoords,
-        map: map,
-        title: `Destinasjon: ${routeData.to}`,
-        icon: {
-          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="25" r="22" fill="#ef4444" stroke="white" stroke-width="6"/>
-              <text x="25" y="32" text-anchor="middle" fill="white" font-size="24" font-weight="bold">🏁</text>
-            </svg>
-          `),
-          scaledSize: new google.maps.Size(50, 50),
-          anchor: new google.maps.Point(25, 25)
-        }
-      });
-
-      const endInfoWindow = new google.maps.InfoWindow({
-        content: `
-          <div style="padding: 10px; min-width: 200px;">
-            <h3 style="margin: 0 0 10px 0; color: #1f2937;">${routeData.to}</h3>
-            <p style="margin: 5px 0; color: #374151;"><strong>Total distanse:</strong> ${Math.round(distance)} km</p>
-            <p style="margin: 5px 0; color: #374151;"><strong>Ladestopp:</strong> ${optimizedStations.length}</p>
-          </div>
-        `
-      });
-
-      endMarker.addListener('click', () => {
-        endInfoWindow.open(map, endMarker);
-      });
-
-      newMarkers.push(endMarker);
-
-      // Ladestasjoner på ruten
-      optimizedStations.forEach((station, index) => {
-        const availabilityColor = station.available / station.total > 0.5 ? '#10b981' : 
-                                 station.available > 0 ? '#f59e0b' : '#ef4444';
-        
-        const chargingMarker = new google.maps.Marker({
-          position: { lat: station.lat, lng: station.lng },
-          map: map,
-          title: `Ladestopp ${index + 1}: ${station.name}`,
-          icon: {
-            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-              <svg width="45" height="45" viewBox="0 0 45 45" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="22.5" cy="22.5" r="20" fill="${availabilityColor}" stroke="white" stroke-width="4"/>
-                <text x="22.5" y="18" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${index + 1}</text>
-                <text x="22.5" y="30" text-anchor="middle" fill="white" font-size="12" font-weight="bold">⚡</text>
-              </svg>
-            `),
-            scaledSize: new google.maps.Size(45, 45),
-            anchor: new google.maps.Point(22.5, 22.5)
-          }
-        });
-
-        const chargingInfoWindow = new google.maps.InfoWindow({
-          content: `
-            <div style="padding: 15px; min-width: 250px;">
-              <h3 style="margin: 0 0 10px 0; color: #1f2937;">${station.name}</h3>
-              <p style="margin: 5px 0; color: #374151;"><strong>Lokasjon:</strong> ${station.location}</p>
-              <p style="margin: 5px 0; color: #374151;"><strong>Avstand:</strong> ${Math.round(station.distance || 0)} km fra start</p>
-              <p style="margin: 5px 0; color: #374151;"><strong>Ankomst batteri:</strong> ${Math.round(station.arrivalBattery || 0)}%</p>
-              <p style="margin: 5px 0; color: #374151;"><strong>Avreise batteri:</strong> ${Math.round(station.departureBattery || 0)}%</p>
-              <p style="margin: 5px 0; color: #374151;"><strong>Ladetid:</strong> ${station.chargeTime} min</p>
-              <p style="margin: 5px 0; color: #374151;"><strong>Kostnad:</strong> ${station.cost} kr</p>
-              <p style="margin: 5px 0; color: #374151;"><strong>Tilgjengelig:</strong> ${station.available}/${station.total}</p>
-              <div style="margin-top: 10px;">
-                <span style="padding: 2px 8px; background: ${availabilityColor}; color: white; border-radius: 12px; font-size: 12px;">
-                  ${station.fastCharger ? 'Hurtiglader' : 'Standard'}
-                </span>
-              </div>
-            </div>
-          `
-        });
-
-        chargingMarker.addListener('click', () => {
-          chargingInfoWindow.open(map, chargingMarker);
-        });
-
-        newMarkers.push(chargingMarker);
-      });
-
-      setMarkers(newMarkers);
-      
-      // Justerer kameraet for å vise hele ruten
-      const bounds = new google.maps.LatLngBounds();
-      bounds.extend(fromCoords);
-      bounds.extend(toCoords);
-      optimizedStations.forEach(station => {
-        bounds.extend({ lat: station.lat, lng: station.lng });
-      });
-      map.fitBounds(bounds);
     });
-  }, [map, directionsService, directionsRenderer, routeData, selectedCar]);
+
+    const startInfoWindow = new google.maps.InfoWindow({
+      content: `
+        <div style="padding: 10px; min-width: 200px;">
+          <h3 style="margin: 0 0 10px 0; color: #1f2937;">${routeData.from}</h3>
+          <p style="margin: 5px 0; color: #374151;"><strong>Startbatteri:</strong> ${routeData.batteryPercentage}%</p>
+          <p style="margin: 5px 0; color: #374151;"><strong>Rekkevidde:</strong> ~${selectedCar ? Math.round(selectedCar.range * routeData.batteryPercentage / 100) : 0} km</p>
+        </div>
+      `
+    });
+
+    startMarker.addListener('click', () => {
+      startInfoWindow.open(map, startMarker);
+    });
+
+    newMarkers.push(startMarker);
+
+    // Slutt markør
+    const endMarker = new google.maps.Marker({
+      position: toCoords,
+      map: map,
+      title: `Destinasjon: ${routeData.to}`,
+      icon: {
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="25" cy="25" r="22" fill="#ef4444" stroke="white" stroke-width="6"/>
+            <text x="25" y="32" text-anchor="middle" fill="white" font-size="24" font-weight="bold">🏁</text>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(50, 50),
+        anchor: new google.maps.Point(25, 25)
+      }
+    });
+
+    const endInfoWindow = new google.maps.InfoWindow({
+      content: `
+        <div style="padding: 10px; min-width: 200px;">
+          <h3 style="margin: 0 0 10px 0; color: #1f2937;">${routeData.to}</h3>
+          <p style="margin: 5px 0; color: #374151;"><strong>Total distanse:</strong> ${Math.round(distance)} km</p>
+          <p style="margin: 5px 0; color: #374151;"><strong>Ladestopp:</strong> ${optimizedStations.length}</p>
+        </div>
+      `
+    });
+
+    endMarker.addListener('click', () => {
+      endInfoWindow.open(map, endMarker);
+    });
+
+    newMarkers.push(endMarker);
+
+    // Ladestasjoner på ruten
+    optimizedStations.forEach((station, index) => {
+      const availabilityColor = station.available / station.total > 0.5 ? '#10b981' : 
+                               station.available > 0 ? '#f59e0b' : '#ef4444';
+      
+      const chargingMarker = new google.maps.Marker({
+        position: { lat: station.lat, lng: station.lng },
+        map: map,
+        title: `Ladestopp ${index + 1}: ${station.name}`,
+        icon: {
+          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+            <svg width="45" height="45" viewBox="0 0 45 45" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="22.5" cy="22.5" r="20" fill="${availabilityColor}" stroke="white" stroke-width="4"/>
+              <text x="22.5" y="18" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${index + 1}</text>
+              <text x="22.5" y="30" text-anchor="middle" fill="white" font-size="12" font-weight="bold">⚡</text>
+            </svg>
+          `),
+          scaledSize: new google.maps.Size(45, 45),
+          anchor: new google.maps.Point(22.5, 22.5)
+        }
+      });
+
+      const chargingInfoWindow = new google.maps.InfoWindow({
+        content: `
+          <div style="padding: 15px; min-width: 250px;">
+            <h3 style="margin: 0 0 10px 0; color: #1f2937;">${station.name}</h3>
+            <p style="margin: 5px 0; color: #374151;"><strong>Lokasjon:</strong> ${station.location}</p>
+            <p style="margin: 5px 0; color: #374151;"><strong>Avstand:</strong> ${Math.round(station.distance || 0)} km fra start</p>
+            <p style="margin: 5px 0; color: #374151;"><strong>Ankomst batteri:</strong> ${Math.round(station.arrivalBattery || 0)}%</p>
+            <p style="margin: 5px 0; color: #374151;"><strong>Avreise batteri:</strong> ${Math.round(station.departureBattery || 0)}%</p>
+            <p style="margin: 5px 0; color: #374151;"><strong>Ladetid:</strong> ${station.chargeTime} min</p>
+            <p style="margin: 5px 0; color: #374151;"><strong>Kostnad:</strong> ${station.cost} kr</p>
+            <p style="margin: 5px 0; color: #374151;"><strong>Tilgjengelig:</strong> ${station.available}/${station.total}</p>
+            <div style="margin-top: 10px;">
+              <span style="padding: 2px 8px; background: ${availabilityColor}; color: white; border-radius: 12px; font-size: 12px;">
+                ${station.fastCharger ? 'Hurtiglader' : 'Standard'}
+              </span>
+            </div>
+          </div>
+        `
+      });
+
+      chargingMarker.addListener('click', () => {
+        chargingInfoWindow.open(map, chargingMarker);
+      });
+
+      newMarkers.push(chargingMarker);
+    });
+
+    setMarkers(newMarkers);
+    
+    // Justerer kameraet for å vise hele ruten
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend(fromCoords);
+    bounds.extend(toCoords);
+    optimizedStations.forEach(station => {
+      bounds.extend({ lat: station.lat, lng: station.lng });
+    });
+    map.fitBounds(bounds);
+  }, [map, routeData, selectedCar]);
 
   if (!isVisible) return null;
 
