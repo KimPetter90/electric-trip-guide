@@ -143,7 +143,11 @@ function Index() {
               </Card>
             ) : (
               <div className="space-y-6 animate-float animation-delay-300">
-                <RouteMap isVisible={showRoute} />
+                <RouteMap 
+                  isVisible={showRoute} 
+                  routeData={routeData}
+                  selectedCar={selectedCar}
+                />
                 <ChargingMap isVisible={showRoute} />
               </div>
             )}
