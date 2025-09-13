@@ -1,32 +1,7 @@
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
-import L from 'leaflet';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Zap, Clock, DollarSign } from "lucide-react";
-import 'leaflet/dist/leaflet.css';
-
-// Fix Leaflet default icons
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-// Custom charging station icon
-const chargingIcon = new L.Icon({
-  iconUrl: 'data:image/svg+xml;base64,' + btoa(`
-    <svg width="25" height="41" viewBox="0 0 25 41" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12.5 0C5.596 0 0 5.596 0 12.5c0 12.5 12.5 28.5 12.5 28.5s12.5-16 12.5-28.5C25 5.596 19.404 0 12.5 0z" fill="#00ff88"/>
-      <circle cx="12.5" cy="12.5" r="6" fill="white"/>
-      <path d="M10 8l3 4h-2l0 3 -3 -4h2z" fill="#00ff88"/>
-    </svg>
-  `),
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-});
+import { Zap, Clock, DollarSign, MapPin } from "lucide-react";
 
 interface ChargingStation {
   id: string;
@@ -76,15 +51,6 @@ const mockChargingStations: ChargingStation[] = [
   }
 ];
 
-// Mock route coordinates (Oslo to Bergen via charging stations)
-const routeCoordinates: [number, number][] = [
-  [59.9139, 10.7522], // Oslo
-  [60.1939, 11.1004], // Gardermoen
-  [61.1153, 10.4662], // Lillehammer
-  [60.6856, 9.0072],  // Gol
-  [60.3913, 5.3221]   // Bergen
-];
-
 interface RouteMapProps {
   isVisible: boolean;
 }
@@ -93,7 +59,6 @@ export default function RouteMap({ isVisible }: RouteMapProps) {
   const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
-    // Simulate map loading
     const timer = setTimeout(() => setMapReady(true), 1000);
     return () => clearTimeout(timer);
   }, []);
@@ -108,7 +73,7 @@ export default function RouteMap({ isVisible }: RouteMapProps) {
           Interaktivt rutekart
         </h3>
         
-        <div className="h-96 rounded-lg overflow-hidden border border-glass-border shadow-neon">
+        <div className="h-96 rounded-lg overflow-hidden border border-glass-border shadow-neon relative">
           {!mapReady ? (
             <div className="h-full bg-background/20 flex items-center justify-center">
               <div className="text-center">
@@ -117,80 +82,104 @@ export default function RouteMap({ isVisible }: RouteMapProps) {
               </div>
             </div>
           ) : (
-            <MapContainer
-              center={[60.5, 8.5]}
-              zoom={6}
-              style={{ height: '100%', width: '100%' }}
-              className="z-0"
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
+            <div className="h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+              {/* Stylized Norway Map Background */}
+              <div className="absolute inset-0 opacity-30">
+                <svg viewBox="0 0 400 500" className="w-full h-full">
+                  <path 
+                    d="M200 50 L250 100 L280 150 L270 200 L250 250 L220 300 L200 350 L180 300 L150 250 L130 200 L140 150 L170 100 Z" 
+                    fill="none" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth="2" 
+                    opacity="0.5"
+                  />
+                </svg>
+              </div>
               
-              {/* Route line */}
-              <Polyline
-                positions={routeCoordinates}
-                color="#00ff88"
-                weight={4}
-                opacity={0.8}
-              />
-              
-              {/* Charging stations */}
-              {mockChargingStations.map((station, index) => (
-                <Marker
-                  key={station.id}
-                  position={[station.lat, station.lng]}
-                  icon={chargingIcon}
-                >
-                  <Popup className="custom-popup">
-                    <div className="p-2">
-                      <h4 className="font-semibold mb-1">{station.name}</h4>
-                      <p className="text-sm text-muted-foreground mb-2">{station.location}</p>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          <span>{station.chargeTime} min</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Zap className="h-3 w-3" />
-                          <span>{station.chargeAmount} kWh</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <DollarSign className="h-3 w-3" />
-                          <span>{station.cost} kr</span>
+              {/* Route visualization */}
+              <div className="absolute inset-0">
+                {/* Start point - Oslo */}
+                <div className="absolute top-[70%] left-[55%] transform -translate-x-1/2 -translate-y-1/2">
+                  <div className="w-4 h-4 bg-green-500 rounded-full shadow-lg animate-pulse">
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-xs font-semibold text-green-400 whitespace-nowrap">
+                      Oslo (Start)
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Charging stations */}
+                {mockChargingStations.map((station, index) => {
+                  const positions = [
+                    { top: '60%', left: '58%' }, // Gardermoen
+                    { top: '40%', left: '52%' }, // Lillehammer  
+                    { top: '55%', left: '42%' }  // Gol
+                  ];
+                  
+                  return (
+                    <div 
+                      key={station.id}
+                      className="absolute transform -translate-x-1/2 -translate-y-1/2 group cursor-pointer"
+                      style={positions[index]}
+                    >
+                      <div className="w-6 h-6 bg-gradient-electric rounded-full shadow-neon animate-pulse-neon flex items-center justify-center text-xs font-bold text-primary-foreground">
+                        {index + 1}
+                      </div>
+                      
+                      {/* Tooltip */}
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-10">
+                        <div className="bg-background border border-glass-border rounded-lg p-2 shadow-lg backdrop-blur-sm min-w-32">
+                          <h5 className="font-semibold text-xs">{station.name}</h5>
+                          <p className="text-xs text-muted-foreground">{station.location}</p>
+                          <div className="flex items-center gap-2 text-xs mt-1">
+                            <span>⚡ {station.chargeAmount} kWh</span>
+                            <span>⏱️ {station.chargeTime} min</span>
+                          </div>
                         </div>
                       </div>
-                      {station.fastCharger && (
-                        <Badge variant="secondary" className="text-xs mt-2">
-                          <Zap className="h-3 w-3 mr-1" />
-                          Hurtiglading
-                        </Badge>
-                      )}
                     </div>
-                  </Popup>
-                </Marker>
-              ))}
-              
-              {/* Start and end markers */}
-              <Marker position={[59.9139, 10.7522]}>
-                <Popup>
-                  <div className="text-center">
-                    <h4 className="font-semibold">Start: Oslo</h4>
-                    <p className="text-sm">Reisens startpunkt</p>
+                  );
+                })}
+                
+                {/* End point - Bergen */}
+                <div className="absolute top-[65%] left-[20%] transform -translate-x-1/2 -translate-y-1/2">
+                  <div className="w-4 h-4 bg-red-500 rounded-full shadow-lg animate-pulse">
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-xs font-semibold text-red-400 whitespace-nowrap">
+                      Bergen (Mål)
+                    </div>
                   </div>
-                </Popup>
-              </Marker>
+                </div>
+                
+                {/* Animated route line effect */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                  <defs>
+                    <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.8"/>
+                      <stop offset="50%" stopColor="hsl(var(--secondary))" stopOpacity="0.6"/>
+                      <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0.4"/>
+                    </linearGradient>
+                  </defs>
+                  <path 
+                    d="M 220 350 Q 232 300 250 250 Q 260 200 208 200 Q 168 240 80 325" 
+                    fill="none" 
+                    stroke="url(#routeGradient)" 
+                    strokeWidth="3" 
+                    strokeDasharray="10,5"
+                    className="animate-pulse"
+                  />
+                </svg>
+              </div>
               
-              <Marker position={[60.3913, 5.3221]}>
-                <Popup>
-                  <div className="text-center">
-                    <h4 className="font-semibold">Mål: Bergen</h4>
-                    <p className="text-sm">Reisens destinasjon</p>
-                  </div>
-                </Popup>
-              </Marker>
-            </MapContainer>
+              {/* Map info overlay */}
+              <div className="absolute bottom-4 left-4 bg-background/80 backdrop-blur-sm border border-glass-border rounded-lg p-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  <span className="font-semibold">Norge Rutekart</span>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Oslo → Bergen via ladestasjoner
+                </div>
+              </div>
+            </div>
           )}
         </div>
         
@@ -212,13 +201,15 @@ export default function RouteMap({ isVisible }: RouteMapProps) {
           <h4 className="font-semibold text-sm">Planlagte ladestopp:</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             {mockChargingStations.map((station, index) => (
-              <div key={station.id} className="bg-glass-bg backdrop-blur-sm rounded-lg p-3 border border-glass-border">
+              <div key={station.id} className="bg-glass-bg backdrop-blur-sm rounded-lg p-3 border border-glass-border hover:bg-primary/5 transition-colors cursor-pointer">
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-5 h-5 rounded-full bg-gradient-electric text-primary-foreground flex items-center justify-center text-xs font-semibold">
                     {index + 1}
                   </div>
                   <h5 className="font-semibold text-xs">{station.name}</h5>
                 </div>
+                
+                <p className="text-xs text-muted-foreground mb-2">{station.location}</p>
                 
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-1">
@@ -234,6 +225,13 @@ export default function RouteMap({ isVisible }: RouteMapProps) {
                     <span>{station.cost} kr</span>
                   </div>
                 </div>
+                
+                {station.fastCharger && (
+                  <Badge variant="secondary" className="text-xs mt-2">
+                    <Zap className="h-3 w-3 mr-1" />
+                    Hurtig
+                  </Badge>
+                )}
               </div>
             ))}
           </div>
