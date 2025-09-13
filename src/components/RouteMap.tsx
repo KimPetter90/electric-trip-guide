@@ -139,9 +139,16 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     const weatherImpact = weather.impactOnRange;
     const totalImpact = trailerImpact + weatherImpact;
     
-    const effectiveRange = selectedCar.range * (1 - totalImpact / 100) * (routeData.batteryPercentage / 100);
+    // Beregn hvor langt vi kan kjøre med nåværende batteri
+    const maxRangeWithFullBattery = selectedCar.range * (1 - totalImpact / 100);
+    const currentBatteryRange = maxRangeWithFullBattery * (routeData.batteryPercentage / 100);
     const safetyMargin = 50; // 50km sikkerhet
-    const usableRange = effectiveRange - safetyMargin;
+    let usableCurrentRange = Math.max(0, currentBatteryRange - safetyMargin);
+    
+    // Sjekk om vi trenger lading i det hele tatt
+    if (usableCurrentRange >= routeDistance) {
+      return []; // Ingen lading nødvendig!
+    }
 
     const stations: ChargingStation[] = [];
     let currentDistance = 0;
@@ -166,8 +173,11 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     });
 
     // Planlegg ladestopp
-    while (currentDistance + usableRange < routeDistance) {
-      const nextStopDistance = currentDistance + usableRange;
+    const maxDistancePerCharge = maxRangeWithFullBattery * 0.8; // Bruker 80% av full rekkevidde mellom ladinger
+    
+    // Første stopp basert på nåværende batteri
+    while (currentDistance + usableCurrentRange < routeDistance) {
+      const nextStopDistance = currentDistance + usableCurrentRange;
       
       // Finn beste stasjon rundt dette punktet
       const availableStations = routeStations.filter(station => {
@@ -192,16 +202,23 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           return score > bestScore ? station : best;
         });
 
+        const distanceTraveled = usableCurrentRange;
+        const batteryUsed = (distanceTraveled / maxRangeWithFullBattery) * 100;
+        const arrivalBattery = Math.max(5, currentBattery - batteryUsed);
+        
         const stationWithAnalysis = {
           ...bestStation,
           distance: nextStopDistance,
-          arrivalBattery: Math.max(10, currentBattery - (usableRange / selectedCar.range * 100)),
-          departureBattery: Math.min(100, bestStation.chargeAmount + Math.max(10, currentBattery - (usableRange / selectedCar.range * 100)))
+          arrivalBattery: arrivalBattery,
+          departureBattery: Math.min(100, bestStation.chargeAmount + arrivalBattery)
         };
 
         stations.push(stationWithAnalysis);
         currentDistance = nextStopDistance;
         currentBattery = stationWithAnalysis.departureBattery || 80;
+        
+        // Neste stopp bruker full rekkevidde (siden vi lader til 80%+)
+        usableCurrentRange = maxDistancePerCharge - safetyMargin;
       } else {
         break;
       }
