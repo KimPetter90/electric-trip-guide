@@ -260,29 +260,44 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     };
   };
 
-  // Cleanup function
+  // Cleanup function med safeguards
   const cleanupMap = () => {
-    // Fjern alle markører
-    markers.forEach(marker => {
-      if (marker && marker.setMap) {
-        marker.setMap(null);
+    try {
+      // Fjern alle markører med null-checks
+      markers.forEach(marker => {
+        if (marker && marker.setMap && typeof marker.setMap === 'function') {
+          try {
+            marker.setMap(null);
+          } catch (e) {
+            console.warn('Kunne ikke fjerne marker:', e);
+          }
+        }
+      });
+      setMarkers([]);
+      
+      // Fjern route line med null-check
+      if (routeLine && routeLine.setMap && typeof routeLine.setMap === 'function') {
+        try {
+          routeLine.setMap(null);
+        } catch (e) {
+          console.warn('Kunne ikke fjerne route line:', e);
+        }
       }
-    });
-    setMarkers([]);
-    
-    // Fjern route line
-    if (routeLine) {
-      routeLine.setMap(null);
       setRouteLine(null);
+    } catch (error) {
+      console.warn('Cleanup error:', error);
     }
   };
 
   // Cleanup når komponenten unmountes
   useEffect(() => {
     return () => {
-      cleanupMap();
+      // Delayed cleanup for å unngå DOM race conditions
+      setTimeout(() => {
+        cleanupMap();
+      }, 0);
     };
-  }, []);
+  }, [markers, routeLine]);
 
   // Hent Google Maps API key
   useEffect(() => {
@@ -367,6 +382,12 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       return;
     }
 
+    // Sjekk at map-referansen fortsatt er gyldig
+    if (!mapRef.current) {
+      console.warn('Map ref er null, avbryter rute-oppdatering');
+      return;
+    }
+
     const fromCity = routeData.from.toLowerCase().trim();
     const toCity = routeData.to.toLowerCase().trim();
     
@@ -378,11 +399,18 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       return;
     }
 
-    // Cleanup previous map elements
-    cleanupMap();
+    // Cleanup previous map elements (med ekstra sjekk)
+    if (map && mapRef.current) {
+      cleanupMap();
+    }
 
     // Tegn rett linje mellom byene
     const drawRoute = () => {
+      // Sjekk at komponenten fortsatt er mountet
+      if (!mapRef.current || !map) {
+        return { distance: 0, optimizedStations: [] };
+      }
+      
       const routePath = new google.maps.Polyline({
         path: [fromCoords, toCoords],
         geodesic: true,
@@ -390,8 +418,12 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         strokeOpacity: 0.8,
         strokeWeight: 8,
       });
-      routePath.setMap(map);
-      setRouteLine(routePath);
+      
+      // Sjekk igjen før vi setter på kartet
+      if (map && mapRef.current) {
+        routePath.setMap(map);
+        setRouteLine(routePath);
+      }
       
       // Beregn distance
       const distance = getDistance(fromCoords, toCoords);
@@ -529,14 +561,20 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
     setMarkers(newMarkers);
     
-    // Justerer kameraet for å vise hele ruten
-    const bounds = new google.maps.LatLngBounds();
-    bounds.extend(fromCoords);
-    bounds.extend(toCoords);
-    optimizedStations.forEach(station => {
-      bounds.extend({ lat: station.lat, lng: station.lng });
-    });
-    map.fitBounds(bounds);
+    // Justerer kameraet for å vise hele ruten (med safeguard)
+    if (map && mapRef.current && fromCoords && toCoords) {
+      try {
+        const bounds = new google.maps.LatLngBounds();
+        bounds.extend(fromCoords);
+        bounds.extend(toCoords);
+        optimizedStations.forEach(station => {
+          bounds.extend({ lat: station.lat, lng: station.lng });
+        });
+        map.fitBounds(bounds);
+      } catch (error) {
+        console.warn('Kunne ikke sette bounds:', error);
+      }
+    }
   }, [map, routeData, selectedCar]);
 
   if (!isVisible) return null;
