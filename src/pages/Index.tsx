@@ -144,11 +144,7 @@ const Index = () => {
               </Card>
             ) : (
               <div className="space-y-6 animate-float animation-delay-300">
-                <MapboxRoute 
-                  isVisible={showRoute} 
-                  selectedCar={selectedCar}
-                  routeData={routeData}
-                />
+                <RouteMap isVisible={showRoute} />
                 <ChargingMap isVisible={showRoute} />
               </div>
             )}
