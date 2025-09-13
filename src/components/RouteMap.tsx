@@ -4,8 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Zap, Clock, DollarSign, MapPin, AlertCircle, Route, Thermometer, Wind, Car, Battery, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Zap, Clock, DollarSign, MapPin, AlertCircle, Route, Thermometer, Wind, Car, Battery, TrendingUp, Navigation } from "lucide-react";
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 
 interface CarModel {
   id: string;
@@ -118,7 +120,9 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   const [routeAnalysis, setRouteAnalysis] = useState<TripAnalysis | null>(null);
   const [optimizedStations, setOptimizedStations] = useState<ChargingStation[]>([]);
   const [activeTab, setActiveTab] = useState("map");
-  const [routeLine, setRouteLine] = useState<any>(null);
+  const [routingControl, setRoutingControl] = useState<any>(null);
+  const [alternativeRoutes, setAlternativeRoutes] = useState<any[]>([]);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
 
   // Simuler værdata
   const getWeatherData = (): WeatherData => ({
@@ -250,11 +254,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   const cleanupMap = () => {
     try {
       markers.forEach(marker => {
-        if (marker && marker.setMap) {
-          try {
-            marker.setMap(null);
-          } catch (e) {}
-        } else if (marker && marker.remove) {
+        if (marker && marker.remove) {
           try {
             marker.remove();
           } catch (e) {}
@@ -262,16 +262,13 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       });
       setMarkers([]);
       
-      if (routeLine) {
+      if (routingControl && map) {
         try {
-          if (routeLine.setMap) {
-            routeLine.setMap(null);
-          } else if (routeLine.remove) {
-            routeLine.remove();
-          }
+          map.removeControl(routingControl);
         } catch (e) {}
       }
-      setRouteLine(null);
+      setRoutingControl(null);
+      setAlternativeRoutes([]);
     } catch (error) {}
   };
 
@@ -325,31 +322,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   // Oppdater kart når ruteinformasjon endres
   useEffect(() => {
     const updateMapRoute = async () => {
-      if (!map && !loading) {
-        if (routeData.from && routeData.to && selectedCar) {
-          const fromCity = routeData.from.toLowerCase().trim();
-          const toCity = routeData.to.toLowerCase().trim();
-          
-          const fromCoords = cityCoordinates[fromCity];
-          const toCoords = cityCoordinates[toCity];
-
-          if (fromCoords && toCoords) {
-            const distance = getDistance(fromCoords, toCoords);
-            const optimizedStations = optimizeChargingStations(distance);
-            setOptimizedStations(optimizedStations);
-            
-            const analysis = calculateTripAnalysis(distance, optimizedStations);
-            setRouteAnalysis(analysis);
-          }
-        }
-        return;
-      }
-      
       if (!map || !routeData.from || !routeData.to || !selectedCar) {
-        return;
-      }
-
-      if (!mapRef.current) {
         return;
       }
 
@@ -368,24 +341,91 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
       try {
         const L = await import('leaflet');
+        const LRM = await import('leaflet-routing-machine');
         
-        const routePath = L.polyline([
-          [fromCoords.lat, fromCoords.lng],
-          [toCoords.lat, toCoords.lng]
-        ], {
-          color: '#3b82f6',
-          opacity: 0.8,
-          weight: 8
-        }).addTo(map);
-        
-        setRouteLine(routePath);
-        
-        const distance = getDistance(fromCoords, toCoords);
-        const optimizedStations = optimizeChargingStations(distance);
-        setOptimizedStations(optimizedStations);
-        
-        const analysis = calculateTripAnalysis(distance, optimizedStations);
-        setRouteAnalysis(analysis);
+        // Opprett routing control med OSRM
+        const control = (LRM as any).control({
+          waypoints: [
+            L.latLng(fromCoords.lat, fromCoords.lng),
+            L.latLng(toCoords.lat, toCoords.lng)
+          ],
+          router: (LRM as any).osrmv1({
+            serviceUrl: 'https://router.project-osrm.org/route/v1',
+            profile: 'driving'
+          }),
+          routeWhileDragging: false,
+          addWaypoints: false,
+          createMarker: function() { return null; }, // Vi lager egne markører
+          lineOptions: {
+            styles: [
+              { color: '#3b82f6', opacity: 0.8, weight: 8 }
+            ]
+          },
+          altLineOptions: {
+            styles: [
+              { color: '#94a3b8', opacity: 0.6, weight: 6 }
+            ]
+          },
+          show: false, // Skjul standard instruksjoner
+          collapsible: false
+        });
+
+        control.on('routesfound', function(e: any) {
+          const routes = e.routes;
+          setAlternativeRoutes(routes);
+          
+          if (routes.length > 0) {
+            const mainRoute = routes[selectedRouteIndex] || routes[0];
+            const distance = mainRoute.summary.totalDistance / 1000; // Konverter til km
+            
+            const optimizedStations = optimizeChargingStations(distance);
+            setOptimizedStations(optimizedStations);
+            
+            const analysis = calculateTripAnalysis(distance, optimizedStations);
+            setRouteAnalysis(analysis);
+
+            // Legg til ladestasjonsmarkører
+            const newMarkers: any[] = [];
+            
+            optimizedStations.forEach((station, index) => {
+              const availabilityColor = station.available / station.total > 0.5 ? '#10b981' : 
+                                       station.available > 0 ? '#f59e0b' : '#ef4444';
+              
+              const chargingIcon = L.divIcon({
+                html: `<div style="background: ${availabilityColor}; color: white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">${index + 1}</div>`,
+                className: 'custom-marker',
+                iconSize: [35, 35],
+                iconAnchor: [17.5, 17.5]
+              });
+
+              const chargingMarker = L.marker([station.lat, station.lng], { icon: chargingIcon })
+                .addTo(map)
+                .bindPopup(`
+                  <div style="padding: 12px; min-width: 200px;">
+                    <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${station.name}</h3>
+                    <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Lokasjon:</strong> ${station.location}</p>
+                    <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Ankomst batteri:</strong> ${Math.round(station.arrivalBattery || 0)}%</p>
+                    <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Avreise batteri:</strong> ${Math.round(station.departureBattery || 0)}%</p>
+                    <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Ladetid:</strong> ${station.chargeTime} min</p>
+                    <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Kostnad:</strong> ${station.cost} kr</p>
+                    <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Tilgjengelig:</strong> ${station.available}/${station.total}</p>
+                    <div style="margin-top: 8px;">
+                      <span style="padding: 2px 8px; background: ${availabilityColor}; color: white; border-radius: 12px; font-size: 12px;">
+                        ${station.fastCharger ? 'Hurtiglader' : 'Standard'}
+                      </span>
+                    </div>
+                  </div>
+                `);
+
+              newMarkers.push(chargingMarker);
+            });
+
+            setMarkers(newMarkers);
+          }
+        });
+
+        control.addTo(map);
+        setRoutingControl(control);
 
         const newMarkers: any[] = [];
 
@@ -420,120 +460,105 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           .bindPopup(`
             <div style="padding: 8px; min-width: 180px;">
               <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${routeData.to}</h3>
-              <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Total distanse:</strong> ${Math.round(distance)} km</p>
-              <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Ladestopp:</strong> ${optimizedStations.length}</p>
+              <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Fra:</strong> ${routeData.from}</p>
+              <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Alternative ruter:</strong> Tilgjengelig</p>
             </div>
           `);
 
         newMarkers.push(endMarker);
-
-        optimizedStations.forEach((station, index) => {
-          const availabilityColor = station.available / station.total > 0.5 ? '#10b981' : 
-                                   station.available > 0 ? '#f59e0b' : '#ef4444';
-          
-          const chargingIcon = L.divIcon({
-            html: `<div style="background: ${availabilityColor}; color: white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">${index + 1}</div>`,
-            className: 'custom-marker',
-            iconSize: [35, 35],
-            iconAnchor: [17.5, 17.5]
-          });
-
-          const chargingMarker = L.marker([station.lat, station.lng], { icon: chargingIcon })
-            .addTo(map)
-            .bindPopup(`
-              <div style="padding: 12px; min-width: 200px;">
-                <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${station.name}</h3>
-                <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Lokasjon:</strong> ${station.location}</p>
-                <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Avstand:</strong> ${Math.round(station.distance || 0)} km fra start</p>
-                <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Ankomst batteri:</strong> ${Math.round(station.arrivalBattery || 0)}%</p>
-                <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Avreise batteri:</strong> ${Math.round(station.departureBattery || 0)}%</p>
-                <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Ladetid:</strong> ${station.chargeTime} min</p>
-                <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Kostnad:</strong> ${station.cost} kr</p>
-                <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Tilgjengelig:</strong> ${station.available}/${station.total}</p>
-                <div style="margin-top: 8px;">
-                  <span style="padding: 2px 8px; background: ${availabilityColor}; color: white; border-radius: 12px; font-size: 12px;">
-                    ${station.fastCharger ? 'Hurtiglader' : 'Standard'}
-                  </span>
-                </div>
-              </div>
-            `);
-
-          newMarkers.push(chargingMarker);
-        });
-
         setMarkers(newMarkers);
-        
-        if (map && mapRef.current && fromCoords && toCoords) {
-          try {
-            const group = L.featureGroup([...newMarkers, routePath]);
-            map.fitBounds(group.getBounds().pad(0.1));
-          } catch (error) {
-            console.warn('Kunne ikke sette bounds:', error);
-          }
-        }
-      } catch (error) {
-        console.error('Feil ved oppdatering av kart:', error);
+
+        map.fitBounds([
+          [fromCoords.lat, fromCoords.lng],
+          [toCoords.lat, toCoords.lng]
+        ], { padding: [50, 50] });
+
+      } catch (err) {
+        console.error('Feil ved oppdatering av kartrute:', err);
+        setError('Kunne ikke oppdatere kartrute');
       }
     };
 
     updateMapRoute();
-  }, [map, routeData, selectedCar]);
+  }, [map, routeData, selectedCar, loading, selectedRouteIndex]);
 
-  if (!isVisible) return null;
+  // Funksjon for å bytte rute
+  const selectAlternativeRoute = (routeIndex: number) => {
+    setSelectedRouteIndex(routeIndex);
+    if (routingControl && alternativeRoutes.length > routeIndex) {
+      const selectedRoute = alternativeRoutes[routeIndex];
+      const distance = selectedRoute.summary.totalDistance / 1000;
+      
+      const optimizedStations = optimizeChargingStations(distance);
+      setOptimizedStations(optimizedStations);
+      
+      const analysis = calculateTripAnalysis(distance, optimizedStations);
+      setRouteAnalysis(analysis);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="h-96 bg-muted rounded-lg flex items-center justify-center">
+        <div className="text-center">
+          <MapPin className="h-8 w-8 mx-auto mb-2 animate-pulse" />
+          <p>Laster kart...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6">
+    <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="map">🗺️ Kart</TabsTrigger>
-          <TabsTrigger value="analysis">📊 Analyse</TabsTrigger>
-          <TabsTrigger value="stations">⚡ Ladestasjoner</TabsTrigger>
+          <TabsTrigger value="map">Kart</TabsTrigger>
+          <TabsTrigger value="analysis">Analyse</TabsTrigger>
+          <TabsTrigger value="stations">Ladestasjoner</TabsTrigger>
         </TabsList>
 
+        {alternativeRoutes.length > 1 && (
+          <div className="mt-4 space-y-2">
+            <h4 className="font-medium flex items-center gap-2">
+              <Navigation className="h-4 w-4" />
+              Alternative ruter
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {alternativeRoutes.map((route, index) => (
+                <Button
+                  key={index}
+                  variant={selectedRouteIndex === index ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => selectAlternativeRoute(index)}
+                  className="text-xs"
+                >
+                  Rute {index + 1} ({Math.round(route.summary.totalDistance / 1000)} km)
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <TabsContent value="map" className="space-y-4">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Route className="h-5 w-5" />
-                Rute: {routeData.from} → {routeData.to}
-              </h3>
-              
-              {routeAnalysis && (
-                <div className="flex gap-4 text-sm text-muted-foreground">
-                  <span>{Math.round(routeAnalysis.totalDistance)} km</span>
-                  <span>{Math.round(routeAnalysis.totalTime * 60)} min</span>
-                  <span>{optimizedStations.length} ladestopp</span>
-                </div>
-              )}
-            </div>
-
-            {error && (
-              <Alert className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <div 
-              ref={mapRef} 
-              className="w-full h-[500px] rounded-lg border bg-muted"
-              style={{ minHeight: '500px' }}
-            >
-              {loading && (
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                    <p className="text-sm text-muted-foreground">Laster kart...</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </Card>
+          <div 
+            ref={mapRef} 
+            className="w-full h-96 rounded-lg border shadow-sm"
+            style={{ minHeight: '400px' }}
+          />
         </TabsContent>
 
         <TabsContent value="analysis" className="space-y-4">
           {routeAnalysis && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <Card className="p-4">
                 <div className="flex items-center space-x-2">
                   <Route className="h-4 w-4 text-blue-500" />
@@ -546,10 +571,10 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
               <Card className="p-4">
                 <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-green-500" />
+                  <Clock className="h-4 w-4 text-orange-500" />
                   <div>
-                    <p className="text-sm font-medium">Total reisetid</p>
-                    <p className="text-2xl font-bold">{Math.round(routeAnalysis.totalTime)} t {Math.round((routeAnalysis.totalTime % 1) * 60)} min</p>
+                    <p className="text-sm font-medium">Total tid</p>
+                    <p className="text-2xl font-bold">{Math.round(routeAnalysis.totalTime * 10) / 10}t</p>
                   </div>
                 </div>
               </Card>
@@ -559,7 +584,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
                   <Zap className="h-4 w-4 text-yellow-500" />
                   <div>
                     <p className="text-sm font-medium">Ladetid</p>
-                    <p className="text-2xl font-bold">{Math.round(routeAnalysis.chargingTime)} min</p>
+                    <p className="text-2xl font-bold">{routeAnalysis.chargingTime} min</p>
                   </div>
                 </div>
               </Card>
