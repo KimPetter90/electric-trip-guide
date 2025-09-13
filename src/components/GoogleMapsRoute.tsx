@@ -92,6 +92,8 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
   const [batteryStatus, setBatteryStatus] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
+  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
   // Calculate if charging is needed based on battery percentage and route
   const calculateChargingNeeds = (distance: number, car: CarModel, batteryPercentage: number, trailerWeight: number) => {
@@ -125,8 +127,38 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
     };
   };
 
+  // Cleanup function
   useEffect(() => {
-    if (!isVisible || !mapRef.current) return;
+    return () => {
+      // Clean up markers
+      markers.forEach(marker => {
+        if (marker) {
+          marker.setMap(null);
+        }
+      });
+      
+      // Clean up directions renderer
+      if (directionsRenderer) {
+        directionsRenderer.setMap(null);
+      }
+      
+      // Clean up map
+      if (map && mapRef.current) {
+        try {
+          // Clear the map container safely
+          const mapContainer = mapRef.current;
+          if (mapContainer && mapContainer.firstChild) {
+            mapContainer.innerHTML = '';
+          }
+        } catch (error) {
+          console.warn('Error cleaning up map:', error);
+        }
+      }
+    };
+  }, [map, directionsRenderer, markers]);
+
+  useEffect(() => {
+    if (!isVisible || !mapRef.current || isInitialized) return;
 
     const initializeMap = async () => {
       try {
@@ -148,7 +180,10 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
 
         await loader.load();
 
-        const mapInstance = new google.maps.Map(mapRef.current!, {
+        // Check if the component is still mounted and visible
+        if (!isVisible || !mapRef.current) return;
+
+        const mapInstance = new google.maps.Map(mapRef.current, {
           center: { lat: 60.472, lng: 8.4689 }, // Center of Norway
           zoom: 6,
           styles: [
@@ -186,6 +221,7 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
         setDirectionsService(directionsServiceInstance);
         setDirectionsRenderer(directionsRendererInstance);
         setIsLoading(false);
+        setIsInitialized(true);
 
       } catch (err) {
         console.error('Error initializing Google Maps:', err);
@@ -195,10 +231,14 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
     };
 
     initializeMap();
-  }, [isVisible]);
+  }, [isVisible, isInitialized]);
 
   useEffect(() => {
     if (!map || !directionsService || !directionsRenderer || !routeData.from || !routeData.to) return;
+
+    // Clear existing markers
+    markers.forEach(marker => marker.setMap(null));
+    setMarkers([]);
 
     directionsService.route({
       origin: routeData.from,
@@ -224,6 +264,7 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
         }
 
         // Add charging station markers
+        const newMarkers: google.maps.Marker[] = [];
         chargingStations.forEach(station => {
           const marker = new google.maps.Marker({
             position: { lat: station.lat, lng: station.lng },
@@ -255,7 +296,11 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
           marker.addListener('click', () => {
             infoWindow.open(map, marker);
           });
+
+          newMarkers.push(marker);
         });
+
+        setMarkers(newMarkers);
       }
     });
   }, [map, directionsService, directionsRenderer, routeData, selectedCar]);
@@ -295,9 +340,10 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
         <div 
           ref={mapRef}
           className="h-96 rounded-lg overflow-hidden border border-glass-border shadow-neon bg-background/20"
+          style={{ minHeight: '384px' }}
         >
           {isLoading && (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-full absolute inset-0 bg-background/50 backdrop-blur-sm z-10">
               <div className="text-center">
                 <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                 <p className="text-muted-foreground">Laster Google Maps...</p>
@@ -305,7 +351,7 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
             </div>
           )}
           {error && (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-full absolute inset-0 bg-background/50 backdrop-blur-sm z-10">
               <div className="text-center text-destructive">
                 <AlertTriangle className="h-16 w-16 mx-auto mb-4" />
                 <p className="font-medium">Kunne ikke laste kartet</p>
