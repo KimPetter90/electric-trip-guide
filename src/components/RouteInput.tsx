@@ -4,12 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Truck, Route } from "lucide-react";
+import { MapPin, Truck, Route, Battery } from "lucide-react";
 
 interface RouteData {
   from: string;
   to: string;
   trailerWeight: number;
+  batteryPercentage: number;
 }
 
 interface RouteInputProps {
@@ -62,6 +63,28 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
               className="bg-background/50 border-glass-border focus:border-primary focus:shadow-glow"
             />
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="battery" className="flex items-center gap-2">
+            <Battery className="h-3 w-3" />
+            Batteriprosent ved start
+          </Label>
+          <Input
+            id="battery"
+            type="number"
+            placeholder="80"
+            value={routeData.batteryPercentage || ''}
+            onChange={(e) => handleInputChange('batteryPercentage', parseInt(e.target.value) || 80)}
+            className="bg-background/50 border-glass-border focus:border-primary focus:shadow-glow"
+            min="0"
+            max="100"
+          />
+          {routeData.batteryPercentage && (
+            <Badge variant="outline" className="text-xs">
+              {routeData.batteryPercentage}% batteri
+            </Badge>
+          )}
         </div>
 
         <div className="space-y-2">

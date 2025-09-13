@@ -5,6 +5,7 @@ import CarSelector from "@/components/CarSelector";
 import RouteInput from "@/components/RouteInput";
 import ChargingMap from "@/components/ChargingMap";
 import RouteMap from "@/components/RouteMap";
+import GoogleMapsRoute from "@/components/GoogleMapsRoute";
 import { Zap, Route, MapPin, Car } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 
@@ -22,6 +23,7 @@ interface RouteData {
   from: string;
   to: string;
   trailerWeight: number;
+  batteryPercentage: number;
 }
 
 const Index = () => {
@@ -29,7 +31,8 @@ const Index = () => {
   const [routeData, setRouteData] = useState<RouteData>({
     from: "",
     to: "",
-    trailerWeight: 0
+    trailerWeight: 0,
+    batteryPercentage: 80
   });
   const [showRoute, setShowRoute] = useState(false);
 
@@ -141,7 +144,11 @@ const Index = () => {
               </Card>
             ) : (
               <div className="space-y-6 animate-float animation-delay-300">
-                <RouteMap isVisible={showRoute} />
+                <GoogleMapsRoute 
+                  isVisible={showRoute} 
+                  selectedCar={selectedCar}
+                  routeData={routeData}
+                />
                 <ChargingMap isVisible={showRoute} />
               </div>
             )}
