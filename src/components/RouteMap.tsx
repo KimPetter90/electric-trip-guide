@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader } from '@googlemaps/js-api-loader';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Zap, Clock, DollarSign, MapPin, AlertCircle, Route, Thermometer, Wind, Car, Battery, Navigation, TrendingUp } from "lucide-react";
+import { Zap, Clock, DollarSign, MapPin, AlertCircle, Route, Thermometer, Wind, Car, Battery, TrendingUp } from "lucide-react";
 
 interface CarModel {
   id: string;
@@ -112,26 +110,26 @@ interface RouteMapProps {
 
 export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [map, setMap] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
+  const [markers, setMarkers] = useState<any[]>([]);
   const [routeAnalysis, setRouteAnalysis] = useState<TripAnalysis | null>(null);
   const [optimizedStations, setOptimizedStations] = useState<ChargingStation[]>([]);
   const [activeTab, setActiveTab] = useState("map");
-  const [routeLine, setRouteLine] = useState<google.maps.Polyline | null>(null);
+  const [routeLine, setRouteLine] = useState<any>(null);
 
-  // Simuler værdata (i en ekte app ville dette komme fra en vær-API)
+  // Simuler værdata
   const getWeatherData = (): WeatherData => ({
-    temperature: Math.round(Math.random() * 20 - 5), // -5 til 15°C
-    wind: Math.round(Math.random() * 15), // 0-15 m/s
+    temperature: Math.round(Math.random() * 20 - 5),
+    wind: Math.round(Math.random() * 15),
     condition: ["Overskyet", "Sol", "Regn", "Snø"][Math.floor(Math.random() * 4)],
-    impactOnRange: Math.round((Math.random() - 0.5) * 20) // ±10% påvirkning
+    impactOnRange: Math.round((Math.random() - 0.5) * 20)
   });
 
-  // Beregn distanse mellom to punkter (forenklet)
+  // Beregn distanse mellom to punkter
   const getDistance = (point1: { lat: number; lng: number }, point2: { lat: number; lng: number }) => {
-    const R = 6371; // Jordens radius i km
+    const R = 6371;
     const dLat = (point2.lat - point1.lat) * Math.PI / 180;
     const dLon = (point2.lng - point1.lng) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -150,22 +148,19 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     const weatherImpact = weather.impactOnRange;
     const totalImpact = trailerImpact + weatherImpact;
     
-    // Beregn hvor langt vi kan kjøre med nåværende batteri
     const maxRangeWithFullBattery = selectedCar.range * (1 - totalImpact / 100);
     const currentBatteryRange = maxRangeWithFullBattery * (routeData.batteryPercentage / 100);
-    const safetyMargin = 50; // 50km sikkerhet
+    const safetyMargin = 50;
     let usableCurrentRange = Math.max(0, currentBatteryRange - safetyMargin);
     
-    // Sjekk om vi trenger lading i det hele tatt
     if (usableCurrentRange >= routeDistance) {
-      return []; // Ingen lading nødvendig!
+      return [];
     }
 
     const stations: ChargingStation[] = [];
     let currentDistance = 0;
     let currentBattery = routeData.batteryPercentage;
 
-    // Finn nærmeste stasjoner på ruten
     const fromCity = routeData.from.toLowerCase().trim();
     const toCity = routeData.to.toLowerCase().trim();
     const fromCoords = cityCoordinates[fromCity];
@@ -173,37 +168,30 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
     if (!fromCoords || !toCoords) return [];
 
-    // Filtrer stasjoner som er på ruten (forenklet logikk)
     const routeStations = allChargingStations.filter(station => {
       const distFromStart = getDistance(fromCoords, { lat: station.lat, lng: station.lng });
       const distToEnd = getDistance({ lat: station.lat, lng: station.lng }, toCoords);
       const directDist = getDistance(fromCoords, toCoords);
-      
-      // Stasjonen er "på ruten" hvis den ikke legger til mer enn 20% ekstra distanse
       return (distFromStart + distToEnd) <= directDist * 1.2;
     });
 
-    // Planlegg ladestopp
-    const maxDistancePerCharge = maxRangeWithFullBattery * 0.8; // Bruker 80% av full rekkevidde mellom ladinger
+    const maxDistancePerCharge = maxRangeWithFullBattery * 0.8;
     
-    // Første stopp basert på nåværende batteri
     while (currentDistance + usableCurrentRange < routeDistance) {
       const nextStopDistance = currentDistance + usableCurrentRange;
       
-      // Finn beste stasjon rundt dette punktet
       const availableStations = routeStations.filter(station => {
         const stationDistance = (nextStopDistance / routeDistance) * getDistance(fromCoords, toCoords);
         const stationActualDist = getDistance(fromCoords, { lat: station.lat, lng: station.lng });
-        return Math.abs(stationDistance - stationActualDist) < 100; // 100km radius
+        return Math.abs(stationDistance - stationActualDist) < 100;
       });
 
       if (availableStations.length > 0) {
-        // Velg beste stasjon basert på hastighet, tilgjengelighet og pris
         const bestStation = availableStations.reduce((best, station) => {
           const score = 
             (station.fastCharger ? 50 : 0) +
             (station.available / station.total * 30) +
-            (100 - station.cost / 10); // Lavere cost = høyere score
+            (100 - station.cost / 10);
           
           const bestScore = 
             (best.fastCharger ? 50 : 0) +
@@ -227,8 +215,6 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         stations.push(stationWithAnalysis);
         currentDistance = nextStopDistance;
         currentBattery = stationWithAnalysis.departureBattery || 80;
-        
-        // Neste stopp bruker full rekkevidde (siden vi lader til 80%+)
         usableCurrentRange = maxDistancePerCharge - safetyMargin;
       } else {
         break;
@@ -243,10 +229,9 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     const weather = getWeatherData();
     const totalChargingTime = stations.reduce((sum, station) => sum + station.chargeTime, 0);
     const totalCost = stations.reduce((sum, station) => sum + station.cost, 0);
-    const drivingTime = distance / 80; // Antatt 80 km/h gjennomsnitt
+    const drivingTime = distance / 80;
     const totalTime = drivingTime + (totalChargingTime / 60);
-    
-    const co2Saved = distance * 0.12; // 120g CO2/km spart vs bensinbil
+    const co2Saved = distance * 0.12;
     const efficiency = selectedCar ? (distance / selectedCar.consumption * 100) : 0;
 
     return {
@@ -260,357 +245,237 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     };
   };
 
-  // Cleanup function med safeguards
+  // Cleanup function
   const cleanupMap = () => {
     try {
-      // Fjern alle markører med null-checks
       markers.forEach(marker => {
-        if (marker && marker.setMap && typeof marker.setMap === 'function') {
+        if (marker && marker.setMap) {
           try {
             marker.setMap(null);
-          } catch (e) {
-            // Silent fail - marker er allerede fjernet
-          }
+          } catch (e) {}
+        } else if (marker && marker.remove) {
+          try {
+            marker.remove();
+          } catch (e) {}
         }
       });
       setMarkers([]);
       
-      // Fjern route line med null-check
-      if (routeLine && routeLine.setMap && typeof routeLine.setMap === 'function') {
+      if (routeLine) {
         try {
-          routeLine.setMap(null);
-        } catch (e) {
-          // Silent fail - route line er allerede fjernet
-        }
+          if (routeLine.setMap) {
+            routeLine.setMap(null);
+          } else if (routeLine.remove) {
+            routeLine.remove();
+          }
+        } catch (e) {}
       }
       setRouteLine(null);
-    } catch (error) {
-      // Ignore cleanup errors completely
-    }
+    } catch (error) {}
   };
 
-  // Cleanup når komponenten unmountes
+  // Initialiser kart med Leaflet
   useEffect(() => {
-    return () => {
-      // Enkel cleanup uten setTimeout
-      try {
-        cleanupMap();
-      } catch (e) {
-        // Ignore all cleanup errors
-      }
-    };
-  }, []);
-
-  // Hent Google Maps API key med fallback
-  useEffect(() => {
-    const initializeWithFallback = async () => {
+    const initializeMap = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        // Prøv å hente API key fra proxy
-        try {
-          const response = await fetch(`https://vwmopjkrnjrxkbxsswnb.supabase.co/functions/v1/google-maps-proxy`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3bW9wamtybmpyeGtieHNzd25iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3OTQ0MDgsImV4cCI6MjA3MzM3MDQwOH0.KdDS_tT7LV7HuXN8Nw3dxUU3YRGobsJrkE2esDxgJH8`,
-              'Content-Type': 'application/json',
-            },
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            if (data.apiKey) {
-              await initializeGoogleMaps(data.apiKey);
-              return;
-            }
+        const L = await import('leaflet');
+        
+        if (mapRef.current) {
+          cleanupMap();
+          if (map && map.remove) {
+            try {
+              map.remove();
+            } catch (e) {}
           }
-        } catch (proxyError) {
-          console.warn('Google Maps proxy feilet, bruker fallback kart');
+          
+          const leafletMap = L.map(mapRef.current).setView([60.472, 8.4689], 6);
+          
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+          }).addTo(leafletMap);
+          
+          setMap(leafletMap);
+          setLoading(false);
         }
-        
-        // Fallback: bruk statisk kart uten Google Maps
-        initializeStaticMap();
-        
       } catch (err) {
         console.error('Feil ved kart-initialisering:', err);
-        setError('Kunne ikke laste kart - bruker fallback');
-        initializeStaticMap();
+        setError('Kunne ikke laste kart');
+        setLoading(false);
       }
     };
 
     if (isVisible) {
-      initializeWithFallback();
+      initializeMap();
     }
-  }, [isVisible]);
-
-  // Fallback: statisk kart uten Google Maps API
-  const initializeStaticMap = () => {
-    setMap(null); // Ingen Google Maps tilgjengelig
-    setLoading(false);
-    setError(null); // Ikke vis som feil siden det er forventet
-  };
-
-  // Initialiser Google Maps
-  const initializeGoogleMaps = async (apiKey: string) => {
-    try {
-      const loader = new Loader({
-        apiKey: apiKey,
-        version: 'weekly',
-        libraries: ['places']
-      });
-
-      await loader.load();
-
-      if (mapRef.current) {
-        const mapInstance = new google.maps.Map(mapRef.current, {
-          center: { lat: 60.472, lng: 8.4689 },
-          zoom: 6,
-          mapTypeId: google.maps.MapTypeId.ROADMAP,
-          styles: [
-            {
-              featureType: "poi.business",
-              stylers: [{ visibility: "off" }]
-            },
-            {
-              featureType: "road",
-              elementType: "labels.icon",
-              stylers: [{ visibility: "off" }]
-            }
-          ]
-        });
-
-        setMap(mapInstance);
-        setLoading(false);
+    
+    return () => {
+      cleanupMap();
+      if (map && map.remove) {
+        try {
+          map.remove();
+        } catch (e) {}
       }
-    } catch (err) {
-      console.error('Feil ved initialisering av Google Maps:', err);
-      setError('Kunne ikke laste Google Maps');
-      setLoading(false);
-    }
-  };
+    };
+  }, [isVisible]);
 
   // Oppdater kart når ruteinformasjon endres
   useEffect(() => {
-    // Hvis Google Maps ikke er tilgjengelig, vis bare analyse-data
-    if (!map && !loading) {
-      // Beregn rute-data uten kart
-      if (routeData.from && routeData.to && selectedCar) {
-        const fromCity = routeData.from.toLowerCase().trim();
-        const toCity = routeData.to.toLowerCase().trim();
-        
-        const fromCoords = cityCoordinates[fromCity];
-        const toCoords = cityCoordinates[toCity];
-
-        if (fromCoords && toCoords) {
-          const distance = getDistance(fromCoords, toCoords);
-          const optimizedStations = optimizeChargingStations(distance);
-          setOptimizedStations(optimizedStations);
+    const updateMapRoute = async () => {
+      if (!map && !loading) {
+        if (routeData.from && routeData.to && selectedCar) {
+          const fromCity = routeData.from.toLowerCase().trim();
+          const toCity = routeData.to.toLowerCase().trim();
           
-          const analysis = calculateTripAnalysis(distance, optimizedStations);
-          setRouteAnalysis(analysis);
+          const fromCoords = cityCoordinates[fromCity];
+          const toCoords = cityCoordinates[toCity];
+
+          if (fromCoords && toCoords) {
+            const distance = getDistance(fromCoords, toCoords);
+            const optimizedStations = optimizeChargingStations(distance);
+            setOptimizedStations(optimizedStations);
+            
+            const analysis = calculateTripAnalysis(distance, optimizedStations);
+            setRouteAnalysis(analysis);
+          }
         }
+        return;
       }
-      return;
-    }
-    
-    if (!map || !routeData.from || !routeData.to || !selectedCar) {
-      return;
-    }
+      
+      if (!map || !routeData.from || !routeData.to || !selectedCar) {
+        return;
+      }
 
-    // Sjekk at map-referansen fortsatt er gyldig
-    if (!mapRef.current) {
-      console.warn('Map ref er null, avbryter rute-oppdatering');
-      return;
-    }
+      if (!mapRef.current) {
+        return;
+      }
 
-    const fromCity = routeData.from.toLowerCase().trim();
-    const toCity = routeData.to.toLowerCase().trim();
-    
-    const fromCoords = cityCoordinates[fromCity];
-    const toCoords = cityCoordinates[toCity];
+      const fromCity = routeData.from.toLowerCase().trim();
+      const toCity = routeData.to.toLowerCase().trim();
+      
+      const fromCoords = cityCoordinates[fromCity];
+      const toCoords = cityCoordinates[toCity];
 
-    if (!fromCoords || !toCoords) {
-      setError(`Kunne ikke finne koordinater for ${fromCity} eller ${toCity}`);
-      return;
-    }
+      if (!fromCoords || !toCoords) {
+        setError(`Kunne ikke finne koordinater for ${fromCity} eller ${toCity}`);
+        return;
+      }
 
-    // Cleanup previous map elements (med ekstra sjekk)
-    if (map && mapRef.current) {
       cleanupMap();
-    }
 
-    // Tegn rett linje mellom byene
-    const drawRoute = () => {
-      // Sjekk at komponenten fortsatt er mountet
-      if (!mapRef.current || !map) {
-        return { distance: 0, optimizedStations: [] };
-      }
-      
-      const routePath = new google.maps.Polyline({
-        path: [fromCoords, toCoords],
-        geodesic: true,
-        strokeColor: '#3b82f6',
-        strokeOpacity: 0.8,
-        strokeWeight: 8,
-      });
-      
-      // Sjekk igjen før vi setter på kartet
-      if (map && mapRef.current) {
-        routePath.setMap(map);
+      try {
+        const L = await import('leaflet');
+        
+        const routePath = L.polyline([
+          [fromCoords.lat, fromCoords.lng],
+          [toCoords.lat, toCoords.lng]
+        ], {
+          color: '#3b82f6',
+          opacity: 0.8,
+          weight: 8
+        }).addTo(map);
+        
         setRouteLine(routePath);
+        
+        const distance = getDistance(fromCoords, toCoords);
+        const optimizedStations = optimizeChargingStations(distance);
+        setOptimizedStations(optimizedStations);
+        
+        const analysis = calculateTripAnalysis(distance, optimizedStations);
+        setRouteAnalysis(analysis);
+
+        const newMarkers: any[] = [];
+
+        const startIcon = L.divIcon({
+          html: '<div style="background: #10b981; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">🚗</div>',
+          className: 'custom-marker',
+          iconSize: [40, 40],
+          iconAnchor: [20, 20]
+        });
+
+        const startMarker = L.marker([fromCoords.lat, fromCoords.lng], { icon: startIcon })
+          .addTo(map)
+          .bindPopup(`
+            <div style="padding: 8px; min-width: 180px;">
+              <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${routeData.from}</h3>
+              <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Startbatteri:</strong> ${routeData.batteryPercentage}%</p>
+              <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Rekkevidde:</strong> ~${selectedCar ? Math.round(selectedCar.range * routeData.batteryPercentage / 100) : 0} km</p>
+            </div>
+          `);
+
+        newMarkers.push(startMarker);
+
+        const endIcon = L.divIcon({
+          html: '<div style="background: #ef4444; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">🏁</div>',
+          className: 'custom-marker',
+          iconSize: [40, 40],
+          iconAnchor: [20, 20]
+        });
+
+        const endMarker = L.marker([toCoords.lat, toCoords.lng], { icon: endIcon })
+          .addTo(map)
+          .bindPopup(`
+            <div style="padding: 8px; min-width: 180px;">
+              <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${routeData.to}</h3>
+              <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Total distanse:</strong> ${Math.round(distance)} km</p>
+              <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Ladestopp:</strong> ${optimizedStations.length}</p>
+            </div>
+          `);
+
+        newMarkers.push(endMarker);
+
+        optimizedStations.forEach((station, index) => {
+          const availabilityColor = station.available / station.total > 0.5 ? '#10b981' : 
+                                   station.available > 0 ? '#f59e0b' : '#ef4444';
+          
+          const chargingIcon = L.divIcon({
+            html: `<div style="background: ${availabilityColor}; color: white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">${index + 1}</div>`,
+            className: 'custom-marker',
+            iconSize: [35, 35],
+            iconAnchor: [17.5, 17.5]
+          });
+
+          const chargingMarker = L.marker([station.lat, station.lng], { icon: chargingIcon })
+            .addTo(map)
+            .bindPopup(`
+              <div style="padding: 12px; min-width: 200px;">
+                <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px;">${station.name}</h3>
+                <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Lokasjon:</strong> ${station.location}</p>
+                <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Avstand:</strong> ${Math.round(station.distance || 0)} km fra start</p>
+                <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Ankomst batteri:</strong> ${Math.round(station.arrivalBattery || 0)}%</p>
+                <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Avreise batteri:</strong> ${Math.round(station.departureBattery || 0)}%</p>
+                <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Ladetid:</strong> ${station.chargeTime} min</p>
+                <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Kostnad:</strong> ${station.cost} kr</p>
+                <p style="margin: 4px 0; color: #374151; font-size: 14px;"><strong>Tilgjengelig:</strong> ${station.available}/${station.total}</p>
+                <div style="margin-top: 8px;">
+                  <span style="padding: 2px 8px; background: ${availabilityColor}; color: white; border-radius: 12px; font-size: 12px;">
+                    ${station.fastCharger ? 'Hurtiglader' : 'Standard'}
+                  </span>
+                </div>
+              </div>
+            `);
+
+          newMarkers.push(chargingMarker);
+        });
+
+        setMarkers(newMarkers);
+        
+        if (map && mapRef.current && fromCoords && toCoords) {
+          try {
+            const group = L.featureGroup([...newMarkers, routePath]);
+            map.fitBounds(group.getBounds().pad(0.1));
+          } catch (error) {
+            console.warn('Kunne ikke sette bounds:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Feil ved oppdatering av kart:', error);
       }
-      
-      // Beregn distance
-      const distance = getDistance(fromCoords, toCoords);
-      
-      // Optimaliser ladestasjoner basert på rett-linje distanse
-      const optimizedStations = optimizeChargingStations(distance);
-      setOptimizedStations(optimizedStations);
-      
-      // Beregn reiseanalyse
-      const analysis = calculateTripAnalysis(distance, optimizedStations);
-      setRouteAnalysis(analysis);
-      
-      return { distance, optimizedStations };
     };
 
-    console.log('Tegner rute mellom', fromCity, 'og', toCity);
-    const { distance, optimizedStations } = drawRoute();
-
-    const newMarkers: google.maps.Marker[] = [];
-
-    // Start markør
-    const startMarker = new google.maps.Marker({
-      position: fromCoords,
-      map: map,
-      title: `Start: ${routeData.from} (${routeData.batteryPercentage}% batteri)`,
-      icon: {
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="25" cy="25" r="22" fill="#10b981" stroke="white" stroke-width="6"/>
-            <text x="25" y="32" text-anchor="middle" fill="white" font-size="24" font-weight="bold">🚗</text>
-          </svg>
-        `),
-        scaledSize: new google.maps.Size(50, 50),
-        anchor: new google.maps.Point(25, 25)
-      }
-    });
-
-    const startInfoWindow = new google.maps.InfoWindow({
-      content: `
-        <div style="padding: 10px; min-width: 200px;">
-          <h3 style="margin: 0 0 10px 0; color: #1f2937;">${routeData.from}</h3>
-          <p style="margin: 5px 0; color: #374151;"><strong>Startbatteri:</strong> ${routeData.batteryPercentage}%</p>
-          <p style="margin: 5px 0; color: #374151;"><strong>Rekkevidde:</strong> ~${selectedCar ? Math.round(selectedCar.range * routeData.batteryPercentage / 100) : 0} km</p>
-        </div>
-      `
-    });
-
-    startMarker.addListener('click', () => {
-      startInfoWindow.open(map, startMarker);
-    });
-
-    newMarkers.push(startMarker);
-
-    // Slutt markør
-    const endMarker = new google.maps.Marker({
-      position: toCoords,
-      map: map,
-      title: `Destinasjon: ${routeData.to}`,
-      icon: {
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="25" cy="25" r="22" fill="#ef4444" stroke="white" stroke-width="6"/>
-            <text x="25" y="32" text-anchor="middle" fill="white" font-size="24" font-weight="bold">🏁</text>
-          </svg>
-        `),
-        scaledSize: new google.maps.Size(50, 50),
-        anchor: new google.maps.Point(25, 25)
-      }
-    });
-
-    const endInfoWindow = new google.maps.InfoWindow({
-      content: `
-        <div style="padding: 10px; min-width: 200px;">
-          <h3 style="margin: 0 0 10px 0; color: #1f2937;">${routeData.to}</h3>
-          <p style="margin: 5px 0; color: #374151;"><strong>Total distanse:</strong> ${Math.round(distance)} km</p>
-          <p style="margin: 5px 0; color: #374151;"><strong>Ladestopp:</strong> ${optimizedStations.length}</p>
-        </div>
-      `
-    });
-
-    endMarker.addListener('click', () => {
-      endInfoWindow.open(map, endMarker);
-    });
-
-    newMarkers.push(endMarker);
-
-    // Ladestasjoner på ruten
-    optimizedStations.forEach((station, index) => {
-      const availabilityColor = station.available / station.total > 0.5 ? '#10b981' : 
-                               station.available > 0 ? '#f59e0b' : '#ef4444';
-      
-      const chargingMarker = new google.maps.Marker({
-        position: { lat: station.lat, lng: station.lng },
-        map: map,
-        title: `Ladestopp ${index + 1}: ${station.name}`,
-        icon: {
-          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg width="45" height="45" viewBox="0 0 45 45" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="22.5" cy="22.5" r="20" fill="${availabilityColor}" stroke="white" stroke-width="4"/>
-              <text x="22.5" y="18" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${index + 1}</text>
-              <text x="22.5" y="30" text-anchor="middle" fill="white" font-size="12" font-weight="bold">⚡</text>
-            </svg>
-          `),
-          scaledSize: new google.maps.Size(45, 45),
-          anchor: new google.maps.Point(22.5, 22.5)
-        }
-      });
-
-      const chargingInfoWindow = new google.maps.InfoWindow({
-        content: `
-          <div style="padding: 15px; min-width: 250px;">
-            <h3 style="margin: 0 0 10px 0; color: #1f2937;">${station.name}</h3>
-            <p style="margin: 5px 0; color: #374151;"><strong>Lokasjon:</strong> ${station.location}</p>
-            <p style="margin: 5px 0; color: #374151;"><strong>Avstand:</strong> ${Math.round(station.distance || 0)} km fra start</p>
-            <p style="margin: 5px 0; color: #374151;"><strong>Ankomst batteri:</strong> ${Math.round(station.arrivalBattery || 0)}%</p>
-            <p style="margin: 5px 0; color: #374151;"><strong>Avreise batteri:</strong> ${Math.round(station.departureBattery || 0)}%</p>
-            <p style="margin: 5px 0; color: #374151;"><strong>Ladetid:</strong> ${station.chargeTime} min</p>
-            <p style="margin: 5px 0; color: #374151;"><strong>Kostnad:</strong> ${station.cost} kr</p>
-            <p style="margin: 5px 0; color: #374151;"><strong>Tilgjengelig:</strong> ${station.available}/${station.total}</p>
-            <div style="margin-top: 10px;">
-              <span style="padding: 2px 8px; background: ${availabilityColor}; color: white; border-radius: 12px; font-size: 12px;">
-                ${station.fastCharger ? 'Hurtiglader' : 'Standard'}
-              </span>
-            </div>
-          </div>
-        `
-      });
-
-      chargingMarker.addListener('click', () => {
-        chargingInfoWindow.open(map, chargingMarker);
-      });
-
-      newMarkers.push(chargingMarker);
-    });
-
-    setMarkers(newMarkers);
-    
-    // Justerer kameraet for å vise hele ruten (med safeguard)
-    if (map && mapRef.current && fromCoords && toCoords) {
-      try {
-        const bounds = new google.maps.LatLngBounds();
-        bounds.extend(fromCoords);
-        bounds.extend(toCoords);
-        optimizedStations.forEach(station => {
-          bounds.extend({ lat: station.lat, lng: station.lng });
-        });
-        map.fitBounds(bounds);
-      } catch (error) {
-        console.warn('Kunne ikke sette bounds:', error);
-      }
-    }
+    updateMapRoute();
   }, [map, routeData, selectedCar]);
 
   if (!isVisible) return null;
@@ -658,26 +523,6 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                     <p className="text-sm text-muted-foreground">Laster kart...</p>
-                  </div>
-                </div>
-              )}
-              
-              {!loading && !map && (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50 rounded-lg border-2 border-gray-200">
-                  <div className="bg-white p-6 rounded-xl shadow-lg text-center max-w-md mx-4">
-                    <div className="text-5xl mb-4">🗺️</div>
-                    <h3 className="text-lg font-semibold mb-2 text-gray-800">
-                      Kartfunksjon midlertidig utilgjengelig
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                      Ruteplanlegging og ladestasjoner fungerer fortsatt normalt.
-                      Kartet vil laste automatisk når tjenesten er tilgjengelig igjen.
-                    </p>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <p className="text-xs text-blue-700">
-                        💡 Se "Analyse" og "Ladestasjoner" faner for rutedetaljer
-                      </p>
-                    </div>
                   </div>
                 </div>
               )}
