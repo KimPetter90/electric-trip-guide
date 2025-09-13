@@ -8,47 +8,52 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 225 25% 96%;
-    --foreground: 225 25% 8%;
+    --background: 225 15% 8%;
+    --foreground: 140 100% 95%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 225 25% 8%;
+    --card: 225 25% 12%;
+    --card-foreground: 140 100% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 225 25% 8%;
+    --popover: 225 25% 12%;
+    --popover-foreground: 140 100% 95%;
 
-    --primary: 210 100% 45%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 195 100% 65%;
+    --primary: 140 100% 45%;
+    --primary-foreground: 225 25% 8%;
+    --primary-glow: 120 100% 65%;
+    --primary-neon: 140 100% 55%;
 
-    --secondary: 150 80% 45%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 180 100% 45%;
+    --secondary-foreground: 225 25% 8%;
+    --secondary-glow: 180 100% 65%;
 
-    --muted: 225 25% 92%;
-    --muted-foreground: 225 15% 45%;
-
-    --accent: 195 100% 85%;
+    --accent: 220 100% 45%;
     --accent-foreground: 225 25% 8%;
+    --accent-glow: 220 100% 65%;
+
+    --muted: 225 25% 15%;
+    --muted-foreground: 140 50% 70%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 225 25% 88%;
-    --input: 225 25% 88%;
-    --ring: 210 100% 45%;
+    --border: 225 25% 20%;
+    --input: 225 25% 18%;
+    --ring: 140 100% 45%;
 
-    /* Electric gradients */
-    --gradient-electric: linear-gradient(135deg, hsl(210 100% 45%), hsl(195 100% 65%));
-    --gradient-eco: linear-gradient(135deg, hsl(150 80% 45%), hsl(120 70% 55%));
-    --gradient-hero: linear-gradient(135deg, hsl(210 100% 45%) 0%, hsl(195 100% 65%) 50%, hsl(150 80% 45%) 100%);
+    /* Futuristic gradients */
+    --gradient-electric: linear-gradient(135deg, hsl(140 100% 45%) 0%, hsl(120 100% 65%) 30%, hsl(180 100% 45%) 100%);
+    --gradient-eco: linear-gradient(135deg, hsl(120 100% 40%) 0%, hsl(140 100% 50%) 50%, hsl(160 100% 45%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(225 25% 8%) 0%, hsl(140 100% 8%) 30%, hsl(120 100% 10%) 70%, hsl(225 25% 8%) 100%);
+    --gradient-neon: linear-gradient(45deg, hsl(140 100% 45%), hsl(180 100% 45%), hsl(220 100% 45%));
     
     /* Glass effects */
-    --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-bg: rgba(20, 255, 150, 0.1);
+    --glass-border: rgba(20, 255, 150, 0.2);
     
-    /* Shadows */
-    --shadow-electric: 0 10px 40px -15px hsl(210 100% 45% / 0.3);
-    --shadow-glow: 0 0 30px hsl(195 100% 65% / 0.4);
+    /* Neon shadows */
+    --shadow-electric: 0 0 20px hsl(140 100% 45% / 0.5), 0 0 40px hsl(140 100% 45% / 0.3);
+    --shadow-glow: 0 0 30px hsl(120 100% 65% / 0.6), 0 0 60px hsl(120 100% 65% / 0.3);
+    --shadow-neon: 0 0 10px hsl(140 100% 55%), 0 0 20px hsl(140 100% 55%), 0 0 30px hsl(140 100% 55%);
 
     --radius: 0.5rem;
 

@@ -56,12 +56,12 @@ export default function ChargingMap({ isVisible }: ChargingMapProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
-        <MapPin className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-semibold">Ladestasjonkart</h3>
+        <MapPin className="h-5 w-5 text-primary animate-glow-pulse" />
+        <h3 className="text-lg font-semibold text-foreground">Ladestasjonkart</h3>
       </div>
 
       {/* Route Overview */}
-      <Card className="p-4 bg-gradient-hero text-primary-foreground">
+      <Card className="p-4 bg-gradient-electric text-primary-foreground shadow-neon animate-pulse-neon">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div>
             <div className="text-2xl font-bold">465</div>
@@ -85,10 +85,10 @@ export default function ChargingMap({ isVisible }: ChargingMapProps) {
       {/* Charging Stops */}
       <div className="space-y-3">
         {mockChargingStops.map((stop, index) => (
-          <Card key={stop.id} className="p-4 hover:shadow-electric transition-shadow">
+          <Card key={stop.id} className="p-4 bg-glass-bg backdrop-blur-sm border-glass-border hover:shadow-neon hover:border-primary/50 transition-all duration-300 animate-float" style={{ animationDelay: `${index * 200}ms` }}>
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
+                <div className="w-8 h-8 rounded-full bg-gradient-electric text-primary-foreground flex items-center justify-center text-sm font-semibold shadow-neon animate-pulse-neon">
                   {index + 1}
                 </div>
                 <div className="flex-1">

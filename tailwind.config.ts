@@ -23,10 +23,17 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
           glow: "hsl(var(--primary-glow))",
+          neon: "hsl(var(--primary-neon))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
+          glow: "hsl(var(--secondary-glow))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+          glow: "hsl(var(--accent-glow))",
         },
         glass: {
           bg: "var(--glass-bg)",
@@ -67,10 +74,56 @@ export default {
         'gradient-electric': 'var(--gradient-electric)',
         'gradient-eco': 'var(--gradient-eco)',
         'gradient-hero': 'var(--gradient-hero)',
+        'gradient-neon': 'var(--gradient-neon)',
       },
       boxShadow: {
         'electric': 'var(--shadow-electric)',
         'glow': 'var(--shadow-glow)',
+        'neon': 'var(--shadow-neon)',
+      },
+      keyframes: {
+        "pulse-neon": {
+          "0%, 100%": { 
+            boxShadow: "0 0 5px hsl(140 100% 55%), 0 0 10px hsl(140 100% 55%), 0 0 15px hsl(140 100% 55%)",
+            opacity: "1"
+          },
+          "50%": { 
+            boxShadow: "0 0 10px hsl(140 100% 55%), 0 0 20px hsl(140 100% 55%), 0 0 30px hsl(140 100% 55%)",
+            opacity: "0.8"
+          }
+        },
+        "float": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-10px)" }
+        },
+        "glow-pulse": {
+          "0%, 100%": { 
+            filter: "brightness(1) drop-shadow(0 0 10px hsl(140 100% 45%))"
+          },
+          "50%": { 
+            filter: "brightness(1.2) drop-shadow(0 0 20px hsl(140 100% 45%))"
+          }
+        },
+        "circuit": {
+          "0%": { 
+            backgroundPosition: "0% 0%",
+            opacity: "0.3"
+          },
+          "50%": {
+            backgroundPosition: "100% 100%", 
+            opacity: "0.6"
+          },
+          "100%": { 
+            backgroundPosition: "0% 0%",
+            opacity: "0.3"
+          }
+        }
+      },
+      animation: {
+        "pulse-neon": "pulse-neon 2s ease-in-out infinite",
+        "float": "float 3s ease-in-out infinite",
+        "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+        "circuit": "circuit 8s linear infinite",
       },
       borderRadius: {
         lg: "var(--radius)",

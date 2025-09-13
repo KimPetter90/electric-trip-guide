@@ -62,18 +62,18 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
-        <Car className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-semibold">Velg din elbil</h3>
+        <Car className="h-5 w-5 text-primary animate-glow-pulse" />
+        <h3 className="text-lg font-semibold text-foreground">Velg din elbil</h3>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {carModels.map((car) => (
           <Card
             key={car.id}
-            className={`p-4 cursor-pointer transition-all duration-200 hover:shadow-electric ${
+            className={`p-4 cursor-pointer transition-all duration-200 hover:shadow-neon backdrop-blur-sm ${
               selectedCar?.id === car.id 
-                ? 'ring-2 ring-primary bg-gradient-electric text-primary-foreground' 
-                : 'hover:bg-accent'
+                ? 'ring-2 ring-primary bg-gradient-electric text-primary-foreground shadow-electric animate-pulse-neon' 
+                : 'bg-glass-bg border-glass-border hover:bg-primary/10 hover:border-primary/30'
             }`}
             onClick={() => onCarSelect(car)}
           >

@@ -27,10 +27,10 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
   };
 
   return (
-    <Card className="p-6 bg-glass-bg backdrop-blur-sm border-glass-border">
+    <Card className="p-6 bg-glass-bg backdrop-blur-sm border-glass-border shadow-glow">
       <div className="flex items-center gap-2 mb-4">
-        <Route className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-semibold">Planlegg rute</h3>
+        <Route className="h-5 w-5 text-primary animate-glow-pulse" />
+        <h3 className="text-lg font-semibold text-foreground">Planlegg rute</h3>
       </div>
 
       <div className="space-y-4">
@@ -45,7 +45,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
               placeholder="Oslo"
               value={routeData.from}
               onChange={(e) => handleInputChange('from', e.target.value)}
-              className="bg-background/50"
+              className="bg-background/50 border-glass-border focus:border-primary focus:shadow-glow"
             />
           </div>
 
@@ -59,7 +59,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
               placeholder="Bergen"
               value={routeData.to}
               onChange={(e) => handleInputChange('to', e.target.value)}
-              className="bg-background/50"
+              className="bg-background/50 border-glass-border focus:border-primary focus:shadow-glow"
             />
           </div>
         </div>
@@ -75,7 +75,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
             placeholder="0"
             value={routeData.trailerWeight || ''}
             onChange={(e) => handleInputChange('trailerWeight', parseInt(e.target.value) || 0)}
-            className="bg-background/50"
+            className="bg-background/50 border-glass-border focus:border-primary focus:shadow-glow"
           />
           {routeData.trailerWeight > 0 && (
             <Badge variant="outline" className="text-xs">
@@ -86,7 +86,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
 
         <Button 
           onClick={onPlanRoute}
-          className="w-full bg-gradient-electric hover:bg-gradient-eco shadow-electric"
+          className="w-full bg-gradient-electric hover:bg-gradient-eco shadow-neon hover:shadow-glow animate-pulse-neon"
           size="lg"
         >
           <Route className="h-4 w-4 mr-2" />
