@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Zap, Clock, DollarSign, AlertCircle } from "lucide-react";
 
@@ -77,7 +76,7 @@ const mockChargingStations: ChargingStation[] = [
   }
 ];
 
-const MapboxRoute: React.FC<MapboxRouteProps> = ({ isVisible, selectedCar, routeData }) => {
+function MapboxRoute({ isVisible, selectedCar, routeData }: MapboxRouteProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapToken, setMapToken] = useState<string | null>(null);
@@ -154,6 +153,8 @@ const MapboxRoute: React.FC<MapboxRouteProps> = ({ isVisible, selectedCar, route
       );
 
       map.current.on('load', () => {
+        if (!map.current) return;
+
         // Add charging stations as markers
         mockChargingStations.forEach((station, index) => {
           const el = document.createElement('div');
@@ -355,6 +356,6 @@ const MapboxRoute: React.FC<MapboxRouteProps> = ({ isVisible, selectedCar, route
       )}
     </Card>
   );
-};
+}
 
 export default MapboxRoute;
