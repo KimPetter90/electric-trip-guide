@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import CarSelector from "@/components/CarSelector";
 import RouteInput from "@/components/RouteInput";
 import ChargingMap from "@/components/ChargingMap";
+import RouteMap from "@/components/RouteMap";
 import { Zap, Route, MapPin, Car } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 
@@ -139,7 +140,8 @@ const Index = () => {
                 </p>
               </Card>
             ) : (
-              <div className="animate-float animation-delay-300">
+              <div className="space-y-6 animate-float animation-delay-300">
+                <RouteMap isVisible={showRoute} />
                 <ChargingMap isVisible={showRoute} />
               </div>
             )}

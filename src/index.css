@@ -122,3 +122,23 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Leaflet map styling */
+.leaflet-popup-content-wrapper {
+  @apply bg-background border border-glass-border shadow-neon;
+  border-radius: 8px;
+}
+
+.leaflet-popup-tip {
+  @apply bg-background;
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  padding: 0;
+}
+
+.custom-popup .leaflet-popup-content-wrapper {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
