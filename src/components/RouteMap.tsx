@@ -1,32 +1,9 @@
-import { useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Zap, Clock, DollarSign } from "lucide-react";
 
-// Fix for default markers in react-leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-// Custom charging station icon
-const chargingIcon = new L.Icon({
-  iconUrl: 'data:image/svg+xml;base64,' + btoa(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
-      <circle cx="12" cy="12" r="11" fill="#00ff88" stroke="#ffffff" stroke-width="2"/>
-      <path d="M13 8v8m-4-4l8 0" stroke="#000000" stroke-width="2" stroke-linecap="round"/>
-    </svg>
-  `),
-  iconSize: [32, 32],
-  iconAnchor: [16, 32],
-  popupAnchor: [0, -32],
-});
-
+// Simple static map component without Leaflet for now
 interface ChargingStation {
   id: string;
   name: string;
@@ -89,14 +66,12 @@ interface RouteMapProps {
 }
 
 export default function RouteMap({ isVisible }: RouteMapProps) {
+  const [mapReady, setMapReady] = useState(false);
+
   useEffect(() => {
-    // Ensure Leaflet CSS is loaded
-    if (!document.querySelector('link[href*="leaflet.css"]')) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-    }
+    // Simple timeout to simulate map loading
+    const timer = setTimeout(() => setMapReady(true), 1000);
+    return () => clearTimeout(timer);
   }, []);
 
   if (!isVisible) return null;
@@ -109,38 +84,27 @@ export default function RouteMap({ isVisible }: RouteMapProps) {
           Interaktivt rutekart
         </h3>
         
-        <div className="h-96 rounded-lg overflow-hidden border border-glass-border shadow-neon">
-          <MapContainer
-            center={[60.5, 9.5]}
-            zoom={6}
-            style={{ height: "100%", width: "100%" }}
-            className="z-0"
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            
-            {/* Route polyline */}
-            <Polyline
-              positions={routeCoordinates}
-              color="#00ff88"
-              weight={4}
-              opacity={0.8}
-              dashArray="10, 10"
-            />
-            
-            {/* Charging station markers */}
-            {mockChargingStations.map((station) => (
-              <Marker
-                key={station.id}
-                position={[station.lat, station.lng]}
-                icon={chargingIcon}
-              >
-                <Popup className="custom-popup">
-                  <div className="p-2 min-w-48">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-semibold text-sm">{station.name}</h4>
+        <div className="h-96 rounded-lg overflow-hidden border border-glass-border shadow-neon bg-background/20 flex items-center justify-center">
+          {!mapReady ? (
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Laster kart...</p>
+            </div>
+          ) : (
+            <div className="text-center">
+              <div className="w-32 h-32 rounded-full bg-gradient-electric opacity-20 animate-pulse-neon mx-auto mb-4"></div>
+              <h4 className="text-lg font-semibold text-foreground mb-2">Kart kommer snart!</h4>
+              <p className="text-muted-foreground">Interaktivt kart med rute og ladestasjonmarkeringer</p>
+              
+              {/* Show charging stations as cards instead */}
+              <div className="mt-6 space-y-2">
+                {mockChargingStations.map((station, index) => (
+                  <div key={station.id} className="bg-glass-bg backdrop-blur-sm rounded-lg p-3 border border-glass-border">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-6 h-6 rounded-full bg-gradient-electric text-primary-foreground flex items-center justify-center text-xs font-semibold">
+                        {index + 1}
+                      </div>
+                      <h5 className="font-semibold text-sm">{station.name}</h5>
                       {station.fastCharger && (
                         <Badge variant="secondary" className="text-xs">
                           <Zap className="h-3 w-3 mr-1" />
@@ -150,7 +114,7 @@ export default function RouteMap({ isVisible }: RouteMapProps) {
                     </div>
                     <p className="text-xs text-muted-foreground mb-2">{station.location}</p>
                     
-                    <div className="grid grid-cols-1 gap-1 text-xs">
+                    <div className="grid grid-cols-3 gap-2 text-xs">
                       <div className="flex items-center gap-1">
                         <Clock className="h-3 w-3 text-muted-foreground" />
                         <span>{station.chargeTime} min</span>
@@ -165,10 +129,10 @@ export default function RouteMap({ isVisible }: RouteMapProps) {
                       </div>
                     </div>
                   </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         
         <div className="mt-4 text-sm text-muted-foreground">
