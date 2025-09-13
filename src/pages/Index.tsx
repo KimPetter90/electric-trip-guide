@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import CarSelector from "@/components/CarSelector";
@@ -25,7 +25,7 @@ interface RouteData {
   batteryPercentage: number;
 }
 
-const Index = () => {
+function Index() {
   const [selectedCar, setSelectedCar] = useState<CarModel | null>(null);
   const [routeData, setRouteData] = useState<RouteData>({
     from: "",
@@ -161,6 +161,6 @@ const Index = () => {
       </footer>
     </div>
   );
-};
+}
 
 export default Index;
