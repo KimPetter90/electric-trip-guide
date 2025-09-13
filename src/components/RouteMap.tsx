@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import React, { useRef, useState, useEffect } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Text, Sphere, Box, Cylinder } from '@react-three/drei';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Zap, Clock, DollarSign, MapPin } from "lucide-react";
+import * as THREE from 'three';
 
 interface CarModel {
   id: string;
@@ -24,28 +27,27 @@ interface ChargingStation {
   id: string;
   name: string;
   location: string;
-  lat: number;
-  lng: number;
+  position: [number, number, number];
   chargeTime: number;
   chargeAmount: number;
   cost: number;
   fastCharger: boolean;
 }
 
-// Norske byer med posisjoner
-const cityPositions: Record<string, { top: string; left: string; region: string }> = {
-  'oslo': { top: '70%', left: '55%', region: 'Østlandet' },
-  'bergen': { top: '65%', left: '20%', region: 'Vestlandet' },
-  'trondheim': { top: '35%', left: '48%', region: 'Trøndelag' },
-  'stavanger': { top: '78%', left: '22%', region: 'Vestlandet' },
-  'tromsø': { top: '15%', left: '52%', region: 'Nord-Norge' },
-  'ålesund': { top: '52%', left: '25%', region: 'Vestlandet' },
-  'kristiansand': { top: '85%', left: '35%', region: 'Sørlandet' },
-  'drammen': { top: '72%', left: '52%', region: 'Østlandet' },
-  'fredrikstad': { top: '75%', left: '58%', region: 'Østlandet' },
-  'lillehammer': { top: '60%', left: '50%', region: 'Østlandet' },
-  'bodø': { top: '25%', left: '45%', region: 'Nord-Norge' },
-  'molde': { top: '48%', left: '28%', region: 'Vestlandet' }
+// 3D posisjoner for norske byer (x, y, z)
+const cityPositions3D: Record<string, [number, number, number]> = {
+  'oslo': [2, 0, -1],
+  'bergen': [-3, 0, -1],
+  'trondheim': [1, 0, 2],
+  'stavanger': [-3, 0, -3],
+  'tromsø': [1, 0, 5],
+  'ålesund': [-2, 0, 1],
+  'kristiansand': [-1, 0, -3],
+  'drammen': [1.8, 0, -1.2],
+  'fredrikstad': [2.2, 0, -1.5],
+  'lillehammer': [1.5, 0, 0],
+  'bodø': [0, 0, 4],
+  'molde': [-1.5, 0, 1.2]
 };
 
 const mockChargingStations: ChargingStation[] = [
@@ -53,8 +55,7 @@ const mockChargingStations: ChargingStation[] = [
     id: "1",
     name: "Circle K Gardermoen",
     location: "Jessheim",
-    lat: 60.1939,
-    lng: 11.1004,
+    position: [2.2, 0.5, -0.5],
     chargeTime: 25,
     chargeAmount: 35,
     cost: 175,
@@ -64,8 +65,7 @@ const mockChargingStations: ChargingStation[] = [
     id: "2",
     name: "Ionity Lillehammer",
     location: "Lillehammer", 
-    lat: 61.1153,
-    lng: 10.4662,
+    position: [1.5, 0.5, 0],
     chargeTime: 30,
     chargeAmount: 45,
     cost: 225,
@@ -75,14 +75,204 @@ const mockChargingStations: ChargingStation[] = [
     id: "3",
     name: "Mer Gol",
     location: "Gol",
-    lat: 60.6856,
-    lng: 9.0072,
+    position: [0.5, 0.5, -0.8],
     chargeTime: 35,
     chargeAmount: 50,
     cost: 250,
     fastCharger: true
   }
 ];
+
+// 3D Norge-form (forenklet)
+function NorwayMap() {
+  const meshRef = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y = Math.sin(state.clock.getElapsedTime() * 0.1) * 0.1;
+    }
+  });
+
+  // Forenklet Norge-form som extruded shape
+  const norwayShape = new THREE.Shape();
+  norwayShape.moveTo(0, -2);
+  norwayShape.lineTo(2, -1);
+  norwayShape.lineTo(3, 1);
+  norwayShape.lineTo(2, 3);
+  norwayShape.lineTo(1, 5);
+  norwayShape.lineTo(0, 4);
+  norwayShape.lineTo(-1, 3);
+  norwayShape.lineTo(-2, 2);
+  norwayShape.lineTo(-3, 0);
+  norwayShape.lineTo(-3, -2);
+  norwayShape.lineTo(-1, -3);
+  norwayShape.lineTo(0, -2);
+
+  return (
+    <mesh ref={meshRef} position={[0, -0.5, 0]} rotation={[0, 0, 0]}>
+      <extrudeGeometry
+        args={[
+          norwayShape,
+          {
+            depth: 0.2,
+            bevelEnabled: true,
+            bevelSegments: 2,
+            steps: 2,
+            bevelSize: 0.1,
+            bevelThickness: 0.1,
+          },
+        ]}
+      />
+      <meshLambertMaterial color="#10b981" />
+    </mesh>
+  );
+}
+
+// Animerte bymarkører
+function CityMarker({ position, label, isStart, isEnd }: { 
+  position: [number, number, number]; 
+  label: string; 
+  isStart?: boolean; 
+  isEnd?: boolean; 
+}) {
+  const meshRef = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.position.y = position[1] + Math.sin(state.clock.getElapsedTime() * 2) * 0.1;
+    }
+  });
+
+  const color = isStart ? '#10b981' : isEnd ? '#ef4444' : '#3b82f6';
+
+  return (
+    <group position={position}>
+      <Cylinder ref={meshRef} args={[0.1, 0.1, 0.3]} position={[0, 0.15, 0]}>
+        <meshLambertMaterial color={color} />
+      </Cylinder>
+      <Text
+        position={[0, 0.5, 0]}
+        fontSize={0.15}
+        color={color}
+        anchorX="center"
+        anchorY="middle"
+      >
+        {label.toUpperCase()}
+      </Text>
+    </group>
+  );
+}
+
+// Ladestasjon markører
+function ChargingStationMarker({ station }: { station: ChargingStation }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y = state.clock.getElapsedTime();
+      meshRef.current.position.y = station.position[1] + Math.sin(state.clock.getElapsedTime() * 3) * 0.1;
+    }
+  });
+
+  return (
+    <group position={station.position}>
+      <Box ref={meshRef} args={[0.15, 0.15, 0.15]}>
+        <meshLambertMaterial color="#fbbf24" />
+      </Box>
+      <Text
+        position={[0, 0.4, 0]}
+        fontSize={0.1}
+        color="#f59e0b"
+        anchorX="center"
+        anchorY="middle"
+      >
+        ⚡{station.name.split(' ')[0]}
+      </Text>
+    </group>
+  );
+}
+
+// Rutelinje i 3D
+function RouteLine({ fromPos, toPos }: { 
+  fromPos: [number, number, number]; 
+  toPos: [number, number, number]; 
+}) {
+  const points = [
+    new THREE.Vector3(...fromPos),
+    new THREE.Vector3((fromPos[0] + toPos[0]) / 2, 1, (fromPos[2] + toPos[2]) / 2), // Midtpunkt høyere opp
+    new THREE.Vector3(...toPos),
+  ];
+
+  const curve = new THREE.CatmullRomCurve3(points);
+  const tubeGeometry = new THREE.TubeGeometry(curve, 50, 0.02, 8, false);
+
+  return (
+    <mesh geometry={tubeGeometry}>
+      <meshLambertMaterial color="#3b82f6" />
+    </mesh>
+  );
+}
+
+// Hovedscene
+function Scene({ routeData, selectedCar, tripInfo }: { 
+  routeData: RouteData; 
+  selectedCar: CarModel | null; 
+  tripInfo: any; 
+}) {
+  const fromCity = routeData.from.toLowerCase().trim();
+  const toCity = routeData.to.toLowerCase().trim();
+  
+  const fromPosition = cityPositions3D[fromCity];
+  const toPosition = cityPositions3D[toCity];
+
+  return (
+    <>
+      {/* Belysning */}
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[10, 10, 5]} intensity={1} />
+      <pointLight position={[0, 5, 0]} intensity={0.5} color="#fbbf24" />
+
+      {/* Norge kart */}
+      <NorwayMap />
+
+      {/* By-markører */}
+      {fromPosition && (
+        <CityMarker 
+          position={fromPosition} 
+          label={routeData.from} 
+          isStart={true} 
+        />
+      )}
+      {toPosition && (
+        <CityMarker 
+          position={toPosition} 
+          label={routeData.to} 
+          isEnd={true} 
+        />
+      )}
+
+      {/* Rutelinje */}
+      {fromPosition && toPosition && (
+        <RouteLine fromPos={fromPosition} toPos={toPosition} />
+      )}
+
+      {/* Ladestasjoner - kun hvis nødvendig */}
+      {tripInfo?.needsCharging && mockChargingStations.map((station) => (
+        <ChargingStationMarker key={station.id} station={station} />
+      ))}
+
+      {/* Kamera kontroller */}
+      <OrbitControls 
+        enablePan={true} 
+        enableZoom={true} 
+        enableRotate={true}
+        minDistance={5}
+        maxDistance={15}
+        maxPolarAngle={Math.PI / 2}
+      />
+    </>
+  );
+}
 
 interface RouteMapProps {
   isVisible: boolean;
@@ -94,24 +284,17 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setMapReady(true), 1000);
+    const timer = setTimeout(() => setMapReady(true), 1500);
     return () => clearTimeout(timer);
   }, []);
 
   if (!isVisible) return null;
 
-  // Finn posisjoner for fra og til byer
-  const fromCity = routeData.from.toLowerCase().trim();
-  const toCity = routeData.to.toLowerCase().trim();
-  
-  const fromPosition = cityPositions[fromCity];
-  const toPosition = cityPositions[toCity];
-
-  // Beregn forbruk og rekkevidde
+  // Beregn reiseinformasjon
   const calculateTripInfo = () => {
     if (!selectedCar) return null;
     
-    const baseDistance = 500; // Estimert distanse
+    const baseDistance = 500;
     const extraConsumption = routeData.trailerWeight > 0 ? routeData.trailerWeight * 0.15 / 1000 : 0;
     const totalConsumption = selectedCar.consumption + extraConsumption;
     const maxRange = selectedCar.range * (routeData.batteryPercentage / 100);
@@ -127,180 +310,76 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
   const tripInfo = calculateTripInfo();
 
+  const fromCity = routeData.from.toLowerCase().trim();
+  const toCity = routeData.to.toLowerCase().trim();
+  const fromPosition = cityPositions3D[fromCity];
+  const toPosition = cityPositions3D[toCity];
+
   return (
     <div className="space-y-4">
       <Card className="p-4 bg-glass-bg backdrop-blur-sm border-glass-border">
         <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <div className="w-2 h-2 bg-gradient-electric rounded-full animate-pulse-neon"></div>
-          Rutevisning: {routeData.from || 'Start'} → {routeData.to || 'Destinasjon'}
+          3D Rutekart: {routeData.from || 'Start'} → {routeData.to || 'Destinasjon'}
         </h3>
         
-        <div className="h-96 rounded-lg overflow-hidden border border-glass-border shadow-neon relative">
+        <div className="h-96 rounded-lg overflow-hidden border border-glass-border shadow-neon relative bg-gradient-to-b from-sky-400 to-blue-600">
           {!mapReady ? (
-            <div className="h-full bg-background/20 flex items-center justify-center">
+            <div className="h-full flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-700">
               <div className="text-center">
                 <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Beregner rute...</p>
+                <p className="text-white font-semibold">Laster 3D kart...</p>
               </div>
             </div>
           ) : (
-            <div className="h-full bg-gradient-to-br from-blue-50 via-slate-100 to-green-50 relative overflow-hidden">
-              {/* Simplified Norway Map Background */}
-              <div className="absolute inset-0 opacity-20">
-                <svg viewBox="0 0 400 500" className="w-full h-full">
-                  <path 
-                    d="M200 50 L250 100 L280 150 L270 200 L250 250 L220 300 L200 350 L180 300 L150 250 L130 200 L140 150 L170 100 Z" 
-                    fill="hsl(var(--primary))" 
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth="1" 
-                    opacity="0.3"
-                  />
-                </svg>
-              </div>
-              
-              {/* Route visualization */}
-              <div className="absolute inset-0">
-                {/* Start point */}
-                {fromPosition && (
-                  <div className="absolute transform -translate-x-1/2 -translate-y-1/2" style={fromPosition}>
-                    <div className="w-10 h-10 bg-green-500 rounded-full shadow-xl animate-pulse border-4 border-white flex items-center justify-center">
-                      <span className="text-white font-bold text-lg">🚗</span>
-                    </div>
-                    <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 text-sm font-bold text-green-700 whitespace-nowrap bg-white/90 px-3 py-2 rounded-lg shadow-lg border-2 border-green-500">
-                      START: {routeData.from.toUpperCase()}
-                    </div>
-                  </div>
-                )}
-                
-                {/* End point */}
-                {toPosition && (
-                  <div className="absolute transform -translate-x-1/2 -translate-y-1/2" style={toPosition}>
-                    <div className="w-10 h-10 bg-red-500 rounded-full shadow-xl animate-pulse border-4 border-white flex items-center justify-center">
-                      <span className="text-white font-bold text-lg">🏁</span>
-                    </div>
-                    <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 text-sm font-bold text-red-700 whitespace-nowrap bg-white/90 px-3 py-2 rounded-lg shadow-lg border-2 border-red-500">
-                      MÅL: {routeData.to.toUpperCase()}
-                    </div>
-                  </div>
-                )}
+            <Canvas camera={{ position: [0, 5, 8], fov: 60 }}>
+              <Scene routeData={routeData} selectedCar={selectedCar} tripInfo={tripInfo} />
+            </Canvas>
+          )}
 
-                {/* Charging stations - kun vis hvis vi trenger lading */}
-                {tripInfo?.needsCharging && mockChargingStations.map((station, index) => {
-                  const positions = [
-                    { top: '60%', left: '58%' }, // Gardermoen
-                    { top: '40%', left: '52%' }, // Lillehammer  
-                    { top: '55%', left: '42%' }  // Gol
-                  ];
-                  
-                  return (
-                    <div 
-                      key={station.id}
-                      className="absolute transform -translate-x-1/2 -translate-y-1/2 group cursor-pointer"
-                      style={positions[index]}
-                    >
-                      <div className="w-8 h-8 bg-yellow-400 rounded-full shadow-xl animate-bounce border-3 border-white flex items-center justify-center">
-                        <span className="text-yellow-900 font-bold text-lg">⚡</span>
-                      </div>
-                      <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 text-xs font-bold text-yellow-700 whitespace-nowrap bg-white/90 px-2 py-1 rounded shadow-lg">
-                        LADING {index + 1}
-                      </div>
-                      
-                      {/* Forbedret tooltip */}
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-4 hidden group-hover:block z-10">
-                        <div className="bg-white border-2 border-yellow-400 rounded-lg p-3 shadow-xl backdrop-blur-sm min-w-40">
-                          <h5 className="font-bold text-sm text-gray-800">{station.name}</h5>
-                          <p className="text-xs text-gray-600 mb-2">{station.location}</p>
-                          <div className="space-y-1 text-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold">⚡ {station.chargeAmount} kWh</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold">⏱️ {station.chargeTime} min</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold">💰 {station.cost} kr</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-                
-                {/* Forbedret rutelinje mellem start og slutt */}
-                {fromPosition && toPosition && (
-                  <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                    <defs>
-                      <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#10b981" stopOpacity="0.8"/>
-                        <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.8"/>
-                        <stop offset="100%" stopColor="#ef4444" stopOpacity="0.8"/>
-                      </linearGradient>
-                    </defs>
-                    <line 
-                      x1={fromPosition.left} 
-                      y1={fromPosition.top}
-                      x2={toPosition.left} 
-                      y2={toPosition.top}
-                      stroke="url(#routeGradient)" 
-                      strokeWidth="6" 
-                      strokeDasharray="15,10"
-                      className="animate-pulse"
-                    />
-                  </svg>
-                )}
-              </div>
-              
-              {/* Forbedret info overlay */}
-              <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm border-2 border-primary rounded-lg p-4 shadow-xl max-w-64">
-                <div className="flex items-center gap-2 text-base font-bold">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  <span className="text-gray-800">RUTEINFORMASJON</span>
-                </div>
-                <div className="text-sm text-gray-700 mt-2 space-y-1 font-medium">
-                  {routeData.from && routeData.to ? (
+          {/* Kontroller overlay */}
+          <div className="absolute top-4 right-4 bg-black/70 text-white p-2 rounded text-xs">
+            <div>🖱️ Dra for å rotere</div>
+            <div>🎯 Scroll for zoom</div>
+          </div>
+
+          {/* Info overlay */}
+          <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm border-2 border-primary rounded-lg p-3 shadow-xl max-w-64">
+            <div className="flex items-center gap-2 text-sm font-bold">
+              <MapPin className="h-4 w-4 text-primary" />
+              <span className="text-gray-800">3D RUTEKART</span>
+            </div>
+            <div className="text-xs text-gray-700 mt-2 space-y-1 font-medium">
+              {routeData.from && routeData.to ? (
+                <>
+                  <div>🚗 Rute: {routeData.from} → {routeData.to}</div>
+                  {selectedCar && (
+                    <div>🚙 Bil: {selectedCar.brand} {selectedCar.model}</div>
+                  )}
+                  {tripInfo && (
                     <>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold">Rute:</span> 
-                        <span>{routeData.from} → {routeData.to}</span>
-                      </div>
-                      {selectedCar && (
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold">Bil:</span> 
-                          <span>{selectedCar.brand} {selectedCar.model}</span>
-                        </div>
-                      )}
-                      {tripInfo && (
-                        <>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold">Rekkevidde:</span> 
-                            <span className="text-blue-600">{Math.round(tripInfo.range)} km</span>
-                          </div>
-                          {tripInfo.needsCharging && (
-                            <div className="text-yellow-600 font-bold flex items-center gap-1">
-                              ⚡ LADING KREVES
-                            </div>
-                          )}
-                        </>
+                      <div>📏 Rekkevidde: {Math.round(tripInfo.range)} km</div>
+                      {tripInfo.needsCharging && (
+                        <div className="text-yellow-600 font-bold">⚡ LADING KREVES</div>
                       )}
                     </>
-                  ) : (
-                    <div className="text-gray-500">Skriv inn start og destinasjon</div>
                   )}
-                </div>
-              </div>
+                </>
+              ) : (
+                <div className="text-gray-500">Skriv inn start og destinasjon</div>
+              )}
+            </div>
+          </div>
 
-              {/* Forbedret advarsel for manglende byer */}
-              {routeData.from && !fromPosition && (
-                <div className="absolute top-4 left-4 bg-red-100 border-2 border-red-500 rounded-lg p-3 text-sm font-bold text-red-700">
-                  ❌ By ikke funnet: {routeData.from}
-                </div>
-              )}
-              {routeData.to && !toPosition && (
-                <div className="absolute top-4 right-4 bg-red-100 border-2 border-red-500 rounded-lg p-3 text-sm font-bold text-red-700">
-                  ❌ By ikke funnet: {routeData.to}
-                </div>
-              )}
+          {/* Advarsler for manglende byer */}
+          {routeData.from && !fromPosition && (
+            <div className="absolute top-4 left-4 bg-red-100 border-2 border-red-500 rounded-lg p-2 text-sm font-bold text-red-700">
+              ❌ By ikke funnet: {routeData.from}
+            </div>
+          )}
+          {routeData.to && !toPosition && (
+            <div className="absolute top-16 left-4 bg-red-100 border-2 border-red-500 rounded-lg p-2 text-sm font-bold text-red-700">
+              ❌ By ikke funnet: {routeData.to}
             </div>
           )}
         </div>
@@ -308,11 +387,11 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         <div className="mt-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-0.5 bg-gradient-electric opacity-80"></div>
-              <span>Planlagt rute</span>
+              <div className="w-3 h-0.5 bg-blue-500 opacity-80"></div>
+              <span>3D Rute</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-gradient-electric"></div>
+              <div className="w-3 h-3 rounded bg-yellow-400"></div>
               <span>Ladestasjoner</span>
             </div>
           </div>
@@ -343,7 +422,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           </div>
         )}
 
-        {/* Charging stations summary - kun hvis vi trenger lading */}
+        {/* Ladestasjoner - kun hvis nødvendig */}
         {tripInfo?.needsCharging && (
           <div className="mt-4 space-y-2">
             <h4 className="font-semibold text-sm">Anbefalte ladestopp:</h4>
@@ -351,8 +430,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
               {mockChargingStations.map((station, index) => (
                 <div key={station.id} className="bg-glass-bg backdrop-blur-sm rounded-lg p-3 border border-glass-border hover:bg-primary/5 transition-colors cursor-pointer">
                   <div className="flex items-center gap-2 mb-1">
-                    <div className="w-5 h-5 rounded-full bg-gradient-electric text-primary-foreground flex items-center justify-center text-xs font-semibold">
-                      {index + 1}
+                    <div className="w-5 h-5 rounded bg-yellow-400 text-yellow-900 flex items-center justify-center text-xs font-semibold">
+                      ⚡
                     </div>
                     <h5 className="font-semibold text-xs">{station.name}</h5>
                   </div>
