@@ -5,7 +5,7 @@ import CarSelector from "@/components/CarSelector";
 import RouteInput from "@/components/RouteInput";
 import ChargingMap from "@/components/ChargingMap";
 import RouteMap from "@/components/RouteMap";
-import GoogleMapsRoute from "@/components/GoogleMapsRoute";
+import MapboxRoute from "@/components/MapboxRoute";
 import { Zap, Route, MapPin, Car } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 
@@ -144,7 +144,7 @@ const Index = () => {
               </Card>
             ) : (
               <div className="space-y-6 animate-float animation-delay-300">
-                <GoogleMapsRoute 
+                <MapboxRoute 
                   isVisible={showRoute} 
                   selectedCar={selectedCar}
                   routeData={routeData}
