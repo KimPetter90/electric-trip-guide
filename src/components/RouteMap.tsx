@@ -299,43 +299,108 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     };
   }, [markers, routeLine]);
 
-  // Hent Google Maps API key
+  // Hent Google Maps API key med fallback
   useEffect(() => {
-    const fetchGoogleMapsKey = async () => {
+    const initializeWithFallback = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        const response = await fetch(`https://vwmopjkrnjrxkbxsswnb.supabase.co/functions/v1/google-maps-proxy`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3bW9wamtybmpyeGtieHNzd25iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3OTQ0MDgsImV4cCI6MjA3MzM3MDQwOH0.KdDS_tT7LV7HuXN8Nw3dxUU3YRGobsJrkE2esDxgJH8`,
-            'Content-Type': 'application/json',
-          },
-        });
+        // Prøv å hente API key fra proxy
+        try {
+          const response = await fetch(`https://vwmopjkrnjrxkbxsswnb.supabase.co/functions/v1/google-maps-proxy`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3bW9wamtybmpyeGtieHNzd25iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3OTQ0MDgsImV4cCI6MjA3MzM3MDQwOH0.KdDS_tT7LV7HuXN8Nw3dxUU3YRGobsJrkE2esDxgJH8`,
+              'Content-Type': 'application/json',
+            },
+          });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.apiKey) {
+              await initializeGoogleMaps(data.apiKey);
+              return;
+            }
+          }
+        } catch (proxyError) {
+          console.warn('Google Maps proxy feilet, bruker fallback kart');
         }
-
-        const data = await response.json();
         
-        if (data.apiKey) {
-          await initializeGoogleMaps(data.apiKey);
-        } else {
-          throw new Error('Ingen API-nøkkel mottatt');
-        }
+        // Fallback: bruk statisk kart uten Google Maps
+        initializeStaticMap();
+        
       } catch (err) {
-        console.error('Feil ved henting av Google Maps API-nøkkel:', err);
-        setError(err instanceof Error ? err.message : 'Ukjent feil');
-        setLoading(false);
+        console.error('Feil ved kart-initialisering:', err);
+        setError('Kunne ikke laste kart - bruker fallback');
+        initializeStaticMap();
       }
     };
 
     if (isVisible) {
-      fetchGoogleMapsKey();
+      initializeWithFallback();
     }
   }, [isVisible]);
+
+  // Fallback: statisk kart uten Google Maps API
+  const initializeStaticMap = () => {
+    try {
+      if (mapRef.current) {
+        // Simuler et enkelt kart med CSS og SVG
+        const mapContainer = mapRef.current;
+        mapContainer.innerHTML = `
+          <div style="
+            width: 100%; 
+            height: 100%; 
+            background: linear-gradient(135deg, #e3f2fd 0%, #f1f8e9 100%);
+            border-radius: 8px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #e0e0e0;
+          ">
+            <div style="
+              background: white;
+              padding: 20px;
+              border-radius: 12px;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+              text-align: center;
+              max-width: 400px;
+            ">
+              <div style="font-size: 48px; margin-bottom: 16px;">🗺️</div>
+              <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 18px; font-weight: 600;">
+                Kartfunksjon midlertidig utilgjengelig
+              </h3>
+              <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.5;">
+                Ruteplanlegging og ladestasjoner fungerer fortsatt normalt.
+                Kartet vil laste automatisk når tjenesten er tilgjengelig igjen.
+              </p>
+              <div style="
+                margin-top: 16px;
+                padding: 8px 16px;
+                background: #f0f9ff;
+                border: 1px solid #0ea5e9;
+                border-radius: 6px;
+                font-size: 12px;
+                color: #0284c7;
+              ">
+                💡 Se "Analyse" og "Ladestasjoner" faner for rutedetaljer
+              </div>
+            </div>
+          </div>
+        `;
+        
+        setMap(null); // Ingen Google Maps tilgjengelig
+        setLoading(false);
+        setError(null); // Ikke vis som feil siden det er forventet
+      }
+    } catch (error) {
+      console.error('Feil ved fallback kart:', error);
+      setError('Kunne ikke laste kart');
+      setLoading(false);
+    }
+  };
 
   // Initialiser Google Maps
   const initializeGoogleMaps = async (apiKey: string) => {
@@ -378,6 +443,28 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
   // Oppdater kart når ruteinformasjon endres
   useEffect(() => {
+    // Hvis Google Maps ikke er tilgjengelig, vis bare analyse-data
+    if (!map && !loading) {
+      // Beregn rute-data uten kart
+      if (routeData.from && routeData.to && selectedCar) {
+        const fromCity = routeData.from.toLowerCase().trim();
+        const toCity = routeData.to.toLowerCase().trim();
+        
+        const fromCoords = cityCoordinates[fromCity];
+        const toCoords = cityCoordinates[toCity];
+
+        if (fromCoords && toCoords) {
+          const distance = getDistance(fromCoords, toCoords);
+          const optimizedStations = optimizeChargingStations(distance);
+          setOptimizedStations(optimizedStations);
+          
+          const analysis = calculateTripAnalysis(distance, optimizedStations);
+          setRouteAnalysis(analysis);
+        }
+      }
+      return;
+    }
+    
     if (!map || !routeData.from || !routeData.to || !selectedCar) {
       return;
     }
