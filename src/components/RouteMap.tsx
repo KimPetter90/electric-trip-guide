@@ -902,13 +902,13 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       </div>
 
       {/* Analyse og ladestasjoner */}
-      <div className="w-full mt-6">
+      <div className="w-full mt-6 bg-transparent">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp className="h-5 w-5 text-primary" />
           <h4 className="text-lg font-semibold text-foreground">Ruteanalyse</h4>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full bg-transparent">
           <TabsList className="grid w-full grid-cols-2 mb-4 bg-card/80 backdrop-blur-sm border border-border">
             <TabsTrigger 
               value="analysis" 
@@ -926,7 +926,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
             </TabsTrigger>
           </TabsList>
 
-        <TabsContent value="analysis" className="space-y-4">
+        <TabsContent value="analysis" className="space-y-4 bg-transparent">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <Card className="p-4 bg-card/80 backdrop-blur-sm border-border">
                 <div className="flex items-center space-x-2">
@@ -1044,7 +1044,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
              )}
           </TabsContent>
 
-        <TabsContent value="stations" className="space-y-4">
+        <TabsContent value="stations" className="space-y-4 bg-transparent">
           <div className="grid gap-4">
             {optimizedStations.length > 0 ? (
               <>
