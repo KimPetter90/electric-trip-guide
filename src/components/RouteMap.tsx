@@ -132,50 +132,29 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   };
 
   // Finn stasjoner som ligger nær den faktiske ruten
-  const findStationsNearRoute = (routeGeometry?: any) => {
-    if (!routeGeometry || !routeGeometry.coordinates) {
-      console.log('Ingen rute-geometri tilgjengelig, bruker alle stasjoner');
-      return allChargingStations;
-    }
-
-    const routeCoords = routeGeometry.coordinates;
-    const maxDistanceFromRoute = 15; // Maksimum 15 km fra ruten
+  const findStationsNearRoute = (fromCoords: {lat: number, lng: number}, toCoords: {lat: number, lng: number}) => {
+    // Forenklet algoritme: finn stasjoner som ligger mellom start og slutt
+    const maxDistanceFromLine = 50; // Maksimum 50 km fra direkte linje
     
     return allChargingStations.filter(station => {
-      // Finn nærmeste punkt på ruten til stasjonen
-      let minDistance = Infinity;
-      let routeDistance = 0;
+      // Beregn avstand fra start og til slutt
+      const distanceFromStart = getDistance(fromCoords, { lat: station.lat, lng: station.lng });
+      const distanceToEnd = getDistance({ lat: station.lat, lng: station.lng }, toCoords);
+      const directDistance = getDistance(fromCoords, toCoords);
       
-      for (let i = 0; i < routeCoords.length; i++) {
-        const routePoint = { lat: routeCoords[i][1], lng: routeCoords[i][0] };
-        const distanceToStation = getDistance(routePoint, { lat: station.lat, lng: station.lng });
-        
-        if (distanceToStation < minDistance) {
-          minDistance = distanceToStation;
-          // Beregn avstand langs ruten til dette punktet
-          routeDistance = 0;
-          for (let j = 0; j < i; j++) {
-            if (j > 0) {
-              const segmentDistance = getDistance(
-                { lat: routeCoords[j-1][1], lng: routeCoords[j-1][0] },
-                { lat: routeCoords[j][1], lng: routeCoords[j][0] }
-              );
-              routeDistance += segmentDistance;
-            }
-          }
-        }
-      }
+      // Sjekk om stasjonen ligger omtrent på linjen mellom start og slutt
+      const totalDetourDistance = distanceFromStart + distanceToEnd;
+      const detour = totalDetourDistance - directDistance;
       
-      // Legg til avstand fra ruten og avstand langs ruten
-      (station as any).distanceFromRoute = minDistance;
-      (station as any).routeDistance = routeDistance;
+      // Legg til avstand fra start for sortering
+      (station as any).distanceFromStart = distanceFromStart;
       
-      return minDistance <= maxDistanceFromRoute;
-    }).sort((a, b) => (a as any).routeDistance - (b as any).routeDistance);
+      return detour <= maxDistanceFromLine && distanceFromStart > 20; // Ikke for nær start
+    }).sort((a, b) => (a as any).distanceFromStart - (b as any).distanceFromStart);
   };
 
   // Intelligent ladestasjonsoptimalisering med obligatoriske stopp
-  const optimizeChargingStations = (routeDistance: number, routeGeometry?: any) => {
+  const optimizeChargingStations = (routeDistance: number, fromCoords: {lat: number, lng: number}, toCoords: {lat: number, lng: number}) => {
     if (!selectedCar) return [];
 
     const currentBattery = routeData.batteryPercentage;
@@ -198,8 +177,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       return [];
     }
 
-    // Finn stasjoner som ligger nær den faktiske ruten
-    const stationsNearRoute = findStationsNearRoute(routeGeometry);
+    // Finn stasjoner som ligger langs ruten
+    const stationsNearRoute = findStationsNearRoute(fromCoords, toCoords);
     
     if (stationsNearRoute.length === 0) {
       console.log('Ingen stasjoner funnet langs ruten');
@@ -210,19 +189,17 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
     // Beregn hvor langt vi kan kjøre med nåværende batteri (med 10% buffer)
     const safeRange = currentRange * 0.9; // 10% sikkerhetsbuffer
-    const criticalRange = currentRange * 0.95; // 5% buffer for kritisk
 
-    // Sorter stasjoner etter avstand langs ruten
+    // Sorter stasjoner etter avstand fra start
     const sortedStations = stationsNearRoute
-      .filter(station => (station as any).routeDistance > 20) // Ikke for nær start
-      .sort((a, b) => (a as any).routeDistance - (b as any).routeDistance);
+      .sort((a, b) => (a as any).distanceFromStart - (b as any).distanceFromStart);
 
     const requiredStations: ChargingStation[] = [];
-    let currentPosition = 0;
+    let currentDistanceFromStart = 0;
     let remainingBattery = currentBattery;
     let remainingDistance = routeDistance;
 
-    while (remainingDistance > 0 && currentPosition < routeDistance) {
+    while (remainingDistance > 0) {
       const rangeFromHere = (actualRange * remainingBattery / 100) * 0.9; // Med buffer
       
       if (rangeFromHere >= remainingDistance) {
@@ -230,10 +207,10 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         break;
       }
 
-      // Find neste nødvendige ladestasjon langs ruten
+      // Find neste nødvendige ladestasjon
       const reachableStations = sortedStations.filter(station => 
-        (station as any).routeDistance > currentPosition && 
-        (station as any).routeDistance <= currentPosition + rangeFromHere &&
+        (station as any).distanceFromStart > currentDistanceFromStart && 
+        (station as any).distanceFromStart <= currentDistanceFromStart + rangeFromHere &&
         station.available > 0
       );
 
@@ -244,20 +221,15 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
       // Velg best stasjon (balanse mellom avstand og kvalitet)
       const bestStation = reachableStations.reduce((best, station) => {
-        const distanceScore = (rangeFromHere - ((station as any).routeDistance - currentPosition)) / rangeFromHere;
         const qualityScore = (station.fastCharger ? 1.5 : 1) * (station.available / station.total);
-        const totalScore = distanceScore * 0.6 + qualityScore * 0.4;
-        
-        const bestDistanceScore = (rangeFromHere - ((best as any).routeDistance - currentPosition)) / rangeFromHere;
         const bestQualityScore = (best.fastCharger ? 1.5 : 1) * (best.available / best.total);
-        const bestTotalScore = bestDistanceScore * 0.6 + bestQualityScore * 0.4;
         
-        return totalScore > bestTotalScore ? station : best;
+        return qualityScore > bestQualityScore ? station : best;
       });
 
       // Beregn batteristatusen ved ankomst til stasjonen
-      const stationDistance = (bestStation as any).routeDistance;
-      const batteryUsedToStation = ((stationDistance - currentPosition) / actualRange) * 100;
+      const stationDistance = (bestStation as any).distanceFromStart;
+      const batteryUsedToStation = (stationDistance / actualRange) * 100;
       const arrivalBattery = Math.max(5, remainingBattery - batteryUsedToStation);
       
       // Beregn hvor mye vi trenger å lade
@@ -278,9 +250,9 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       requiredStations.push(stationWithCalculations);
 
       // Oppdater posisjon og batteri for neste iterasjon
-      currentPosition = stationDistance;
+      currentDistanceFromStart = stationDistance;
       remainingBattery = departureBattery;
-      remainingDistance = routeDistance - currentPosition;
+      remainingDistance = routeDistance - stationDistance;
     }
 
     console.log('Obligatoriske ladestasjoner funnet:', requiredStations.length);
@@ -511,7 +483,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         newMarkers.push(startMarker, endMarker);
         
         console.log('Optimaliserer ladestasjoner...');
-        const optimizedStations = optimizeChargingStations(distance, route.geometry);
+        const optimizedStations = optimizeChargingStations(distance, fromCoords, toCoords);
         setOptimizedStations(optimizedStations);
         
         console.log('Beregner analyse...');
