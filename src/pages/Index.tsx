@@ -1,13 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CarSelector from "@/components/CarSelector";
 import RouteInput from "@/components/RouteInput";
 import ChargingMap from "@/components/ChargingMap";
 import RouteMap from "@/components/RouteMap";
 import TestApp from "@/components/TestApp";
-import { Zap, Route, MapPin, Car, TestTube } from "lucide-react";
+import OfflineManager from "@/components/OfflineManager";
+import OfflineSettings from "@/components/OfflineSettings";
+import { Zap, Route, MapPin, Car, TestTube, Bookmark, Settings, Home } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
+import { offlineStorage } from "@/utils/offlineStorage";
+import { useNetworkStatus } from "@/hooks/useNativeCapabilities";
 
 interface CarModel {
   id: string;
@@ -35,16 +40,71 @@ function Index() {
     batteryPercentage: 80
   });
   const [showRoute, setShowRoute] = useState(false);
-  const [showTestApp, setShowTestApp] = useState(false);
+  const [currentView, setCurrentView] = useState<'main' | 'test' | 'offline'>('main');
+  const isOnline = useNetworkStatus();
 
-  const handlePlanRoute = () => {
+  useEffect(() => {
+    // Log app startup
+    offlineStorage.logUsage('app_startup');
+    
+    // Load default settings
+    const loadDefaults = async () => {
+      const settings = await offlineStorage.getSettings();
+      setRouteData(prev => ({
+        ...prev,
+        batteryPercentage: settings.defaultBatteryPercentage
+      }));
+    };
+    loadDefaults();
+  }, []);
+
+  const handlePlanRoute = async () => {
     if (selectedCar && routeData.from && routeData.to) {
       setShowRoute(true);
+      await offlineStorage.logUsage('plan_route', {
+        car: selectedCar.brand,
+        from: routeData.from,
+        to: routeData.to
+      });
     }
   };
 
-  if (showTestApp) {
+  if (currentView === 'test') {
     return <TestApp />;
+  }
+
+  if (currentView === 'offline') {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold">ElRoute - Offline Manager</h1>
+            <Button 
+              onClick={() => setCurrentView('main')}
+              variant="outline"
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Tilbake til hovedside
+            </Button>
+          </div>
+          
+          <Tabs defaultValue="manager" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="manager">Lagrede Data</TabsTrigger>
+              <TabsTrigger value="settings">Innstillinger</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="manager">
+              <OfflineManager selectedCar={selectedCar} routeData={routeData} />
+            </TabsContent>
+            
+            <TabsContent value="settings">
+              <OfflineSettings />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -89,7 +149,7 @@ function Index() {
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 animate-float">
               Intelligent ruteplanlegging for fremtidens elbiler
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-6 text-muted-foreground">
+            <div className="flex items-center justify-center gap-6 text-muted-foreground">
               <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full px-4 py-2 border border-border animate-pulse-neon">
                 <Car className="h-5 w-5 text-primary" />
                 <span>Alle elbilmodeller</span>
@@ -100,18 +160,36 @@ function Index() {
               </div>
               <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full px-4 py-2 border border-border animate-pulse-neon animation-delay-1000">
                 <MapPin className="h-5 w-5 text-accent" />
-                <span>Sanntids data</span>
+                <span>Offline tilgjengelig</span>
               </div>
             </div>
-            <div className="mt-8">
+            
+            {/* Action Buttons */}
+            <div className="mt-8 flex flex-wrap justify-center gap-4">
               <Button 
-                onClick={() => setShowTestApp(true)}
+                onClick={() => setCurrentView('test')}
                 variant="outline"
                 className="bg-card/80 backdrop-blur-sm border-primary/40 hover:bg-primary/10"
               >
                 <TestTube className="h-4 w-4 mr-2" />
-                Test App Versjon
+                Test App
               </Button>
+              
+              <Button 
+                onClick={() => setCurrentView('offline')}
+                variant="outline"
+                className="bg-card/80 backdrop-blur-sm border-secondary/40 hover:bg-secondary/10"
+              >
+                <Bookmark className="h-4 w-4 mr-2" />
+                Offline Manager
+              </Button>
+              
+              {!isOnline && (
+                <div className="flex items-center gap-2 bg-red-500/20 backdrop-blur-sm rounded-full px-4 py-2 border border-red-500/40">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  <span className="text-red-300 text-sm">Offline modus</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
