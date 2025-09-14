@@ -6,9 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { AutocompleteInput } from "@/components/ui/autocomplete-input";
 import { MapPin, Truck, Route, Battery, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+
+// Norske byer for autocomplete
+const norwegianCities = [
+  "oslo", "bergen", "trondheim", "stavanger", "tromsø", "ålesund", 
+  "kristiansand", "drammen", "fredrikstad", "lillehammer", "bodø", "molde",
+  "haugesund", "tønsberg", "moss", "skien", "arendal", "hamar", "elverum",
+  "kongsberg", "gjøvik", "larvik", "kristiansund", "molde", "sandnes", 
+  "sarpsborg", "fredrikstad", "halden", "sandefjord", "kongsvinger",
+  "steinkjer", "levanger", "verdal", "namsos", "mo i rana", "fauske",
+  "narvik", "harstad", "alta", "hammerfest", "kirkenes", "vadsø"
+];
 
 interface RouteData {
   from: string;
@@ -47,11 +59,12 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
               <MapPin className="h-3 w-3" />
               Fra
             </Label>
-            <Input
+            <AutocompleteInput
               id="from"
               placeholder="Oslo"
               value={routeData.from}
-              onChange={(e) => handleInputChange('from', e.target.value)}
+              onChange={(value) => handleInputChange('from', value)}
+              suggestions={norwegianCities}
               className="bg-background/50 border-border focus:border-primary focus:shadow-lg"
             />
           </div>
@@ -61,11 +74,12 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
               <MapPin className="h-3 w-3" />
               Til
             </Label>
-            <Input
+            <AutocompleteInput
               id="to"
               placeholder="Bergen"
               value={routeData.to}
-              onChange={(e) => handleInputChange('to', e.target.value)}
+              onChange={(value) => handleInputChange('to', value)}
+              suggestions={norwegianCities}
               className="bg-background/50 border-border focus:border-primary focus:shadow-lg"
             />
           </div>
@@ -75,11 +89,12 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
               <MapPin className="h-3 w-3" />
               Via (valgfritt)
             </Label>
-            <Input
+            <AutocompleteInput
               id="via"
               placeholder="Lillehammer"
               value={routeData.via || ''}
-              onChange={(e) => handleInputChange('via', e.target.value)}
+              onChange={(value) => handleInputChange('via', value)}
+              suggestions={norwegianCities}
               className="bg-background/50 border-border focus:border-primary focus:shadow-lg"
             />
           </div>
