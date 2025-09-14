@@ -15,148 +15,25 @@ interface CarModel {
 }
 
 const carModels: CarModel[] = [
-  // Tesla
-  {
-    id: "tesla-model3",
-    brand: "Tesla",
-    model: "Model 3",
-    batteryCapacity: 75,
-    range: 560,
-    consumption: 14.3,
-    image: "🚗"
-  },
-  {
-    id: "tesla-models",
-    brand: "Tesla",
-    model: "Model S",
-    batteryCapacity: 100,
-    range: 652,
-    consumption: 16.5,
-    image: "🚗"
-  },
-  {
-    id: "tesla-modelx",
-    brand: "Tesla",
-    model: "Model X",
-    batteryCapacity: 100,
-    range: 560,
-    consumption: 20.6,
-    image: "🚙"
-  },
-  {
-    id: "tesla-modely",
-    brand: "Tesla",
-    model: "Model Y",
-    batteryCapacity: 75,
-    range: 533,
-    consumption: 15.6,
-    image: "🚙"
-  },
-  {
-    id: "tesla-cybertruck",
-    brand: "Tesla",
-    model: "Cybertruck",
-    batteryCapacity: 123,
-    range: 515,
-    consumption: 23.9,
-    image: "🚚"
-  },
-
-  // Volkswagen
-  {
-    id: "vw-id3",
-    brand: "Volkswagen",
-    model: "ID.3",
-    batteryCapacity: 58,
-    range: 426,
-    consumption: 15.4,
-    image: "🚗"
-  },
-  {
-    id: "vw-id4",
-    brand: "Volkswagen",
-    model: "ID.4",
-    batteryCapacity: 77,
-    range: 520,
-    consumption: 16.2,
-    image: "🚙"
-  },
-  {
-    id: "vw-id5",
-    brand: "Volkswagen",
-    model: "ID.5",
-    batteryCapacity: 77,
-    range: 520,
-    consumption: 16.8,
-    image: "🚙"
-  },
-  {
-    id: "vw-id7",
-    brand: "Volkswagen",
-    model: "ID.7",
-    batteryCapacity: 86,
-    range: 615,
-    consumption: 15.5,
-    image: "🚗"
-  },
-  {
-    id: "vw-id-buzz",
-    brand: "Volkswagen",
-    model: "ID.Buzz",
-    batteryCapacity: 82,
-    range: 423,
-    consumption: 21.4,
-    image: "🚐"
-  },
-  {
-    id: "vw-egolf",
-    brand: "Volkswagen",
-    model: "e-Golf",
-    batteryCapacity: 35.8,
-    range: 231,
-    consumption: 17.2,
-    image: "🚗"
-  },
-  {
-    id: "vw-eup",
-    brand: "Volkswagen",
-    model: "e-up!",
-    batteryCapacity: 36.8,
-    range: 258,
-    consumption: 16.9,
-    image: "🚗"
-  },
-
-  // Škoda
-  {
-    id: "skoda-enyaq",
-    brand: "Škoda",
-    model: "Enyaq iV",
-    batteryCapacity: 82,
-    range: 534,
-    consumption: 16.7,
-    image: "🚙"
-  },
-  {
-    id: "skoda-enyaq-coupe",
-    brand: "Škoda",
-    model: "Enyaq Coupé iV",
-    batteryCapacity: 82,
-    range: 545,
-    consumption: 16.4,
-    image: "🚙"
-  },
-  {
-    id: "skoda-citigo",
-    brand: "Škoda",
-    model: "CITIGOe iV",
-    batteryCapacity: 36.8,
-    range: 258,
-    consumption: 16.9,
-    image: "🚗"
-  },
-
   // Audi
+  {
+    id: "audi-etron",
+    brand: "Audi",
+    model: "e-tron",
+    batteryCapacity: 95,
+    range: 441,
+    consumption: 24.3,
+    image: "🚙"
+  },
+  {
+    id: "audi-etron-sportback",
+    brand: "Audi",
+    model: "e-tron Sportback",
+    batteryCapacity: 95,
+    range: 446,
+    consumption: 23.7,
+    image: "🚙"
+  },
   {
     id: "audi-etrongt",
     brand: "Audi",
@@ -185,21 +62,12 @@ const carModels: CarModel[] = [
     image: "🚙"
   },
   {
-    id: "audi-etron",
+    id: "audi-q8-etron",
     brand: "Audi",
-    model: "e-tron",
-    batteryCapacity: 95,
-    range: 441,
-    consumption: 24.3,
-    image: "🚙"
-  },
-  {
-    id: "audi-etron-sportback",
-    brand: "Audi",
-    model: "e-tron Sportback",
-    batteryCapacity: 95,
-    range: 446,
-    consumption: 23.7,
+    model: "Q8 e-tron",
+    batteryCapacity: 114,
+    range: 582,
+    consumption: 21.8,
     image: "🚙"
   },
   {
@@ -211,35 +79,8 @@ const carModels: CarModel[] = [
     consumption: 20.2,
     image: "🚗"
   },
-  {
-    id: "audi-q8-etron",
-    brand: "Audi",
-    model: "Q8 e-tron",
-    batteryCapacity: 114,
-    range: 582,
-    consumption: 21.8,
-    image: "🚙"
-  },
 
   // BMW
-  {
-    id: "bmw-i4",
-    brand: "BMW",
-    model: "i4",
-    batteryCapacity: 83.9,
-    range: 590,
-    consumption: 16.1,
-    image: "🚗"
-  },
-  {
-    id: "bmw-ix",
-    brand: "BMW",
-    model: "iX",
-    batteryCapacity: 111.5,
-    range: 630,
-    consumption: 19.8,
-    image: "🚙"
-  },
   {
     id: "bmw-i3",
     brand: "BMW",
@@ -250,6 +91,15 @@ const carModels: CarModel[] = [
     image: "🚗"
   },
   {
+    id: "bmw-i4",
+    brand: "BMW",
+    model: "i4",
+    batteryCapacity: 83.9,
+    range: 590,
+    consumption: 16.1,
+    image: "🚗"
+  },
+  {
     id: "bmw-i7",
     brand: "BMW",
     model: "i7",
@@ -257,6 +107,15 @@ const carModels: CarModel[] = [
     range: 625,
     consumption: 18.4,
     image: "🚗"
+  },
+  {
+    id: "bmw-ix",
+    brand: "BMW",
+    model: "iX",
+    batteryCapacity: 111.5,
+    range: 630,
+    consumption: 19.8,
+    image: "🚙"
   },
   {
     id: "bmw-ix1",
@@ -277,398 +136,61 @@ const carModels: CarModel[] = [
     image: "🚙"
   },
 
-  // Mercedes-Benz
+  // BYD
   {
-    id: "mercedes-eqs",
-    brand: "Mercedes-Benz",
-    model: "EQS",
-    batteryCapacity: 107.8,
-    range: 770,
-    consumption: 15.7,
-    image: "🚗"
-  },
-  {
-    id: "mercedes-eqc",
-    brand: "Mercedes-Benz",
-    model: "EQC",
-    batteryCapacity: 80,
-    range: 417,
-    consumption: 20.2,
-    image: "🚙"
-  },
-  {
-    id: "mercedes-eqe",
-    brand: "Mercedes-Benz",
-    model: "EQE",
-    batteryCapacity: 90.6,
-    range: 639,
-    consumption: 16.2,
-    image: "🚗"
-  },
-  {
-    id: "mercedes-eqa",
-    brand: "Mercedes-Benz",
-    model: "EQA",
-    batteryCapacity: 66.5,
-    range: 426,
-    consumption: 17.7,
-    image: "🚙"
-  },
-  {
-    id: "mercedes-eqb",
-    brand: "Mercedes-Benz",
-    model: "EQB",
-    batteryCapacity: 66.5,
-    range: 423,
-    consumption: 18.3,
-    image: "🚙"
-  },
-  {
-    id: "mercedes-eqs-suv",
-    brand: "Mercedes-Benz",
-    model: "EQS SUV",
-    batteryCapacity: 107.8,
-    range: 660,
-    consumption: 18.7,
-    image: "🚙"
-  },
-  {
-    id: "mercedes-eqe-suv",
-    brand: "Mercedes-Benz",
-    model: "EQE SUV",
-    batteryCapacity: 90.6,
-    range: 590,
-    consumption: 17.4,
-    image: "🚙"
-  },
-  {
-    id: "mercedes-eqv",
-    brand: "Mercedes-Benz",
-    model: "EQV",
-    batteryCapacity: 90,
-    range: 353,
-    consumption: 27.0,
-    image: "🚐"
-  },
-
-  // Hyundai
-  {
-    id: "hyundai-ioniq5",
-    brand: "Hyundai",
-    model: "IONIQ 5",
-    batteryCapacity: 77.4,
-    range: 481,
-    consumption: 18.0,
-    image: "🚙"
-  },
-  {
-    id: "hyundai-ioniq6",
-    brand: "Hyundai",
-    model: "IONIQ 6",
-    batteryCapacity: 77.4,
-    range: 614,
-    consumption: 14.3,
-    image: "🚗"
-  },
-  {
-    id: "hyundai-kona",
-    brand: "Hyundai",
-    model: "Kona Electric",
-    batteryCapacity: 64,
-    range: 484,
-    consumption: 14.7,
-    image: "🚙"
-  },
-  {
-    id: "hyundai-ioniq",
-    brand: "Hyundai",
-    model: "IONIQ Electric",
-    batteryCapacity: 38.3,
-    range: 311,
-    consumption: 13.8,
-    image: "🚗"
-  },
-
-  // Kia
-  {
-    id: "kia-ev6",
-    brand: "Kia",
-    model: "EV6",
-    batteryCapacity: 77.4,
-    range: 528,
-    consumption: 16.5,
-    image: "🚙"
-  },
-  {
-    id: "kia-ev9",
-    brand: "Kia",
-    model: "EV9",
-    batteryCapacity: 99.8,
-    range: 563,
-    consumption: 19.5,
-    image: "🚙"
-  },
-  {
-    id: "kia-esoul",
-    brand: "Kia",
-    model: "e-Soul",
-    batteryCapacity: 64,
-    range: 452,
-    consumption: 15.7,
-    image: "🚙"
-  },
-  {
-    id: "kia-eniro",
-    brand: "Kia",
-    model: "e-Niro",
-    batteryCapacity: 64,
-    range: 460,
-    consumption: 15.9,
-    image: "🚙"
-  },
-
-  // Nissan
-  {
-    id: "nissan-leaf",
-    brand: "Nissan",
-    model: "Leaf",
-    batteryCapacity: 62,
-    range: 385,
-    consumption: 17.0,
-    image: "🚗"
-  },
-  {
-    id: "nissan-ariya",
-    brand: "Nissan",
-    model: "Ariya",
-    batteryCapacity: 87,
-    range: 520,
-    consumption: 18.1,
-    image: "🚙"
-  },
-  {
-    id: "nissan-env200",
-    brand: "Nissan",
-    model: "e-NV200",
-    batteryCapacity: 40,
-    range: 200,
-    consumption: 25.9,
-    image: "🚐"
-  },
-
-  // Ford
-  {
-    id: "ford-mustangmache",
-    brand: "Ford",
-    model: "Mustang Mach-E",
-    batteryCapacity: 98.8,
-    range: 610,
-    consumption: 17.7,
-    image: "🚙"
-  },
-  {
-    id: "ford-explorer",
-    brand: "Ford",
-    model: "Explorer Electric",
-    batteryCapacity: 79,
-    range: 602,
-    consumption: 14.4,
-    image: "🚙"
-  },
-  {
-    id: "ford-etransit",
-    brand: "Ford",
-    model: "E-Transit",
-    batteryCapacity: 68,
-    range: 317,
-    consumption: 27.5,
-    image: "🚐"
-  },
-
-  // Polestar
-  {
-    id: "polestar-2",
-    brand: "Polestar",
-    model: "2",
-    batteryCapacity: 78,
-    range: 540,
+    id: "byd-atto3",
+    brand: "BYD",
+    model: "Atto 3",
+    batteryCapacity: 60.48,
+    range: 420,
     consumption: 16.3,
+    image: "🚙"
+  },
+  {
+    id: "byd-dolphin",
+    brand: "BYD",
+    model: "Dolphin",
+    batteryCapacity: 60.48,
+    range: 427,
+    consumption: 15.9,
     image: "🚗"
   },
   {
-    id: "polestar-3",
-    brand: "Polestar",
-    model: "3",
-    batteryCapacity: 111,
-    range: 628,
-    consumption: 19.4,
-    image: "🚙"
-  },
-  {
-    id: "polestar-4",
-    brand: "Polestar",
-    model: "4",
-    batteryCapacity: 102,
-    range: 611,
-    consumption: 18.8,
-    image: "🚙"
-  },
-
-  // Volvo
-  {
-    id: "volvo-xc40",
-    brand: "Volvo",
-    model: "XC40 Recharge",
-    batteryCapacity: 78,
-    range: 418,
-    consumption: 20.0,
-    image: "🚙"
-  },
-  {
-    id: "volvo-c40",
-    brand: "Volvo",
-    model: "C40 Recharge",
-    batteryCapacity: 78,
-    range: 444,
-    consumption: 19.3,
-    image: "🚙"
-  },
-  {
-    id: "volvo-ex30",
-    brand: "Volvo",
-    model: "EX30",
-    batteryCapacity: 69,
-    range: 476,
-    consumption: 16.2,
-    image: "🚙"
-  },
-  {
-    id: "volvo-ex90",
-    brand: "Volvo",
-    model: "EX90",
-    batteryCapacity: 111,
-    range: 614,
-    consumption: 20.3,
-    image: "🚙"
-  },
-
-  // Porsche
-  {
-    id: "porsche-taycan",
-    brand: "Porsche",
-    model: "Taycan",
-    batteryCapacity: 93.4,
-    range: 504,
-    consumption: 20.8,
+    id: "byd-han",
+    brand: "BYD",
+    model: "Han EV",
+    batteryCapacity: 85.4,
+    range: 521,
+    consumption: 17.9,
     image: "🚗"
   },
   {
-    id: "porsche-taycan-turbo",
-    brand: "Porsche",
-    model: "Taycan Turbo",
-    batteryCapacity: 93.4,
-    range: 507,
-    consumption: 20.6,
+    id: "byd-seal",
+    brand: "BYD",
+    model: "Seal",
+    batteryCapacity: 82.5,
+    range: 570,
+    consumption: 16.1,
     image: "🚗"
   },
   {
-    id: "porsche-taycan-cross-turismo",
-    brand: "Porsche",
-    model: "Taycan Cross Turismo",
-    batteryCapacity: 93.4,
-    range: 456,
-    consumption: 22.4,
-    image: "🚙"
-  },
-  {
-    id: "porsche-macan-electric",
-    brand: "Porsche",
-    model: "Macan Electric",
-    batteryCapacity: 100,
-    range: 613,
-    consumption: 18.8,
-    image: "🚙"
-  },
-
-  // Jaguar
-  {
-    id: "jaguar-ipace",
-    brand: "Jaguar",
-    model: "I-PACE",
-    batteryCapacity: 90,
-    range: 470,
-    consumption: 22.0,
-    image: "🚙"
-  },
-
-  // Land Rover
-  {
-    id: "landrover-range-rover-velar",
-    brand: "Land Rover",
-    model: "Range Rover Velar Electric",
-    batteryCapacity: 91,
-    range: 490,
-    consumption: 21.2,
-    image: "🚙"
-  },
-
-  // Genesis
-  {
-    id: "genesis-gv60",
-    brand: "Genesis",
-    model: "GV60",
-    batteryCapacity: 77.4,
-    range: 466,
-    consumption: 18.4,
-    image: "🚙"
-  },
-  {
-    id: "genesis-gv70-electrified",
-    brand: "Genesis",
-    model: "GV70 Electrified",
-    batteryCapacity: 77.4,
-    range: 455,
+    id: "byd-tang",
+    brand: "BYD",
+    model: "Tang EV",
+    batteryCapacity: 86.4,
+    range: 505,
     consumption: 19.1,
     image: "🚙"
   },
-  {
-    id: "genesis-g80-electrified",
-    brand: "Genesis",
-    model: "G80 Electrified",
-    batteryCapacity: 87.2,
-    range: 520,
-    consumption: 18.7,
-    image: "🚗"
-  },
 
-  // Lucid
+  // Cadillac
   {
-    id: "lucid-air",
-    brand: "Lucid",
-    model: "Air Dream Edition",
-    batteryCapacity: 118,
-    range: 837,
-    consumption: 15.7,
-    image: "🚗"
-  },
-
-  // Rivian
-  {
-    id: "rivian-r1t",
-    brand: "Rivian",
-    model: "R1T",
-    batteryCapacity: 135,
-    range: 516,
-    consumption: 28.9,
-    image: "🚚"
-  },
-  {
-    id: "rivian-r1s",
-    brand: "Rivian",
-    model: "R1S",
-    batteryCapacity: 135,
-    range: 516,
-    consumption: 28.9,
+    id: "cadillac-lyriq",
+    brand: "Cadillac",
+    model: "LYRIQ",
+    batteryCapacity: 102,
+    range: 502,
+    consumption: 22.3,
     image: "🚙"
   },
 
@@ -692,14 +214,72 @@ const carModels: CarModel[] = [
     image: "🚙"
   },
 
-  // Cadillac
+  // Fisker
   {
-    id: "cadillac-lyriq",
-    brand: "Cadillac",
-    model: "LYRIQ",
-    batteryCapacity: 102,
-    range: 502,
-    consumption: 22.3,
+    id: "fisker-ocean",
+    brand: "Fisker",
+    model: "Ocean",
+    batteryCapacity: 106,
+    range: 707,
+    consumption: 16.8,
+    image: "🚙"
+  },
+
+  // Ford
+  {
+    id: "ford-etransit",
+    brand: "Ford",
+    model: "E-Transit",
+    batteryCapacity: 68,
+    range: 317,
+    consumption: 27.5,
+    image: "🚐"
+  },
+  {
+    id: "ford-explorer",
+    brand: "Ford",
+    model: "Explorer Electric",
+    batteryCapacity: 79,
+    range: 602,
+    consumption: 14.4,
+    image: "🚙"
+  },
+  {
+    id: "ford-mustangmache",
+    brand: "Ford",
+    model: "Mustang Mach-E",
+    batteryCapacity: 98.8,
+    range: 610,
+    consumption: 17.7,
+    image: "🚙"
+  },
+
+  // Genesis
+  {
+    id: "genesis-g80-electrified",
+    brand: "Genesis",
+    model: "G80 Electrified",
+    batteryCapacity: 87.2,
+    range: 520,
+    consumption: 18.7,
+    image: "🚗"
+  },
+  {
+    id: "genesis-gv60",
+    brand: "Genesis",
+    model: "GV60",
+    batteryCapacity: 77.4,
+    range: 466,
+    consumption: 18.4,
+    image: "🚙"
+  },
+  {
+    id: "genesis-gv70-electrified",
+    brand: "Genesis",
+    model: "GV70 Electrified",
+    batteryCapacity: 77.4,
+    range: 455,
+    consumption: 19.1,
     image: "🚙"
   },
 
@@ -714,62 +294,198 @@ const carModels: CarModel[] = [
     image: "🚚"
   },
 
-  // Fisker
+  // Hyundai
   {
-    id: "fisker-ocean",
-    brand: "Fisker",
-    model: "Ocean",
-    batteryCapacity: 106,
-    range: 707,
-    consumption: 16.8,
+    id: "hyundai-ioniq",
+    brand: "Hyundai",
+    model: "IONIQ Electric",
+    batteryCapacity: 38.3,
+    range: 311,
+    consumption: 13.8,
+    image: "🚗"
+  },
+  {
+    id: "hyundai-ioniq5",
+    brand: "Hyundai",
+    model: "IONIQ 5",
+    batteryCapacity: 77.4,
+    range: 481,
+    consumption: 18.0,
     image: "🚙"
   },
 
-  // BYD
+  // Honda
   {
-    id: "byd-han",
-    brand: "BYD",
-    model: "Han EV",
-    batteryCapacity: 85.4,
-    range: 521,
-    consumption: 17.9,
+    id: "honda-e",
+    brand: "Honda",
+    model: "e",
+    batteryCapacity: 35.5,
+    range: 220,
+    consumption: 17.2,
     image: "🚗"
   },
   {
-    id: "byd-tang",
-    brand: "BYD",
-    model: "Tang EV",
-    batteryCapacity: 86.4,
-    range: 505,
-    consumption: 19.1,
-    image: "🚙"
+    id: "hyundai-ioniq6",
+    brand: "Hyundai",
+    model: "IONIQ 6",
+    batteryCapacity: 77.4,
+    range: 614,
+    consumption: 14.3,
+    image: "🚗"
   },
   {
-    id: "byd-atto3",
-    brand: "BYD",
-    model: "Atto 3",
-    batteryCapacity: 60.48,
-    range: 420,
-    consumption: 16.3,
+    id: "hyundai-kona",
+    brand: "Hyundai",
+    model: "Kona Electric",
+    batteryCapacity: 64,
+    range: 484,
+    consumption: 14.7,
     image: "🚙"
   },
+
+  // Jaguar
   {
-    id: "byd-dolphin",
-    brand: "BYD",
-    model: "Dolphin",
-    batteryCapacity: 60.48,
-    range: 427,
+    id: "jaguar-ipace",
+    brand: "Jaguar",
+    model: "I-PACE",
+    batteryCapacity: 90,
+    range: 470,
+    consumption: 22.0,
+    image: "🚙"
+  },
+
+  // Kia
+  {
+    id: "kia-eniro",
+    brand: "Kia",
+    model: "e-Niro",
+    batteryCapacity: 64,
+    range: 460,
     consumption: 15.9,
+    image: "🚙"
+  },
+  {
+    id: "kia-esoul",
+    brand: "Kia",
+    model: "e-Soul",
+    batteryCapacity: 64,
+    range: 452,
+    consumption: 15.7,
+    image: "🚙"
+  },
+  {
+    id: "kia-ev6",
+    brand: "Kia",
+    model: "EV6",
+    batteryCapacity: 77.4,
+    range: 528,
+    consumption: 16.5,
+    image: "🚙"
+  },
+  {
+    id: "kia-ev9",
+    brand: "Kia",
+    model: "EV9",
+    batteryCapacity: 99.8,
+    range: 563,
+    consumption: 19.5,
+    image: "🚙"
+  },
+
+  // Land Rover
+  {
+    id: "landrover-range-rover-velar",
+    brand: "Land Rover",
+    model: "Range Rover Velar Electric",
+    batteryCapacity: 91,
+    range: 490,
+    consumption: 21.2,
+    image: "🚙"
+  },
+
+  // Lucid
+  {
+    id: "lucid-air",
+    brand: "Lucid",
+    model: "Air Dream Edition",
+    batteryCapacity: 118,
+    range: 837,
+    consumption: 15.7,
+    image: "🚗"
+  },
+
+  // Mercedes-Benz
+  {
+    id: "mercedes-eqa",
+    brand: "Mercedes-Benz",
+    model: "EQA",
+    batteryCapacity: 66.5,
+    range: 426,
+    consumption: 17.7,
+    image: "🚙"
+  },
+  {
+    id: "mercedes-eqb",
+    brand: "Mercedes-Benz",
+    model: "EQB",
+    batteryCapacity: 66.5,
+    range: 423,
+    consumption: 18.3,
+    image: "🚙"
+  },
+  {
+    id: "mercedes-eqc",
+    brand: "Mercedes-Benz",
+    model: "EQC",
+    batteryCapacity: 80,
+    range: 417,
+    consumption: 20.2,
+    image: "🚙"
+  },
+  {
+    id: "mercedes-eqe",
+    brand: "Mercedes-Benz",
+    model: "EQE",
+    batteryCapacity: 90.6,
+    range: 639,
+    consumption: 16.2,
     image: "🚗"
   },
   {
-    id: "byd-seal",
-    brand: "BYD",
-    model: "Seal",
-    batteryCapacity: 82.5,
-    range: 570,
-    consumption: 16.1,
+    id: "mercedes-eqe-suv",
+    brand: "Mercedes-Benz",
+    model: "EQE SUV",
+    batteryCapacity: 90.6,
+    range: 590,
+    consumption: 17.4,
+    image: "🚙"
+  },
+  {
+    id: "mercedes-eqs",
+    brand: "Mercedes-Benz",
+    model: "EQS",
+    batteryCapacity: 107.8,
+    range: 770,
+    consumption: 15.7,
     image: "🚗"
+  },
+  {
+    id: "mercedes-eqs-suv",
+    brand: "Mercedes-Benz",
+    model: "EQS SUV",
+    batteryCapacity: 107.8,
+    range: 660,
+    consumption: 18.7,
+    image: "🚙"
+  },
+  {
+    id: "mercedes-eqv",
+    brand: "Mercedes-Benz",
+    model: "EQV",
+    batteryCapacity: 90,
+    range: 353,
+    consumption: 27.0,
+    image: "🚐"
   },
 
   // MG
@@ -1092,38 +808,16 @@ const carModels: CarModel[] = [
     image: "🚙"
   },
 
-  // Honda
+  // NIO
   {
-    id: "honda-e",
-    brand: "Honda",
-    model: "e",
-    batteryCapacity: 35.5,
-    range: 220,
-    consumption: 17.2,
-    image: "🚗"
-  },
-
-  // Xpeng
-  {
-    id: "xpeng-p7",
-    brand: "XPeng",
-    model: "P7",
-    batteryCapacity: 80.9,
-    range: 706,
-    consumption: 13.2,
-    image: "🚗"
-  },
-  {
-    id: "xpeng-g9",
-    brand: "XPeng",
-    model: "G9",
-    batteryCapacity: 98,
-    range: 650,
-    consumption: 16.8,
+    id: "nio-es8",
+    brand: "NIO",
+    model: "ES8",
+    batteryCapacity: 100,
+    range: 580,
+    consumption: 19.4,
     image: "🚙"
   },
-
-  // NIO
   {
     id: "nio-et7",
     brand: "NIO",
@@ -1133,14 +827,320 @@ const carModels: CarModel[] = [
     consumption: 15.9,
     image: "🚗"
   },
+
+  // Nissan
   {
-    id: "nio-es8",
-    brand: "NIO",
-    model: "ES8",
-    batteryCapacity: 100,
-    range: 580,
+    id: "nissan-ariya",
+    brand: "Nissan",
+    model: "Ariya",
+    batteryCapacity: 87,
+    range: 520,
+    consumption: 18.1,
+    image: "🚙"
+  },
+  {
+    id: "nissan-env200",
+    brand: "Nissan",
+    model: "e-NV200",
+    batteryCapacity: 40,
+    range: 200,
+    consumption: 25.9,
+    image: "🚐"
+  },
+  {
+    id: "nissan-leaf",
+    brand: "Nissan",
+    model: "Leaf",
+    batteryCapacity: 62,
+    range: 385,
+    consumption: 17.0,
+    image: "🚗"
+  },
+
+  // Polestar
+  {
+    id: "polestar-2",
+    brand: "Polestar",
+    model: "2",
+    batteryCapacity: 78,
+    range: 540,
+    consumption: 16.3,
+    image: "🚗"
+  },
+  {
+    id: "polestar-3",
+    brand: "Polestar",
+    model: "3",
+    batteryCapacity: 111,
+    range: 628,
     consumption: 19.4,
     image: "🚙"
+  },
+  {
+    id: "polestar-4",
+    brand: "Polestar",
+    model: "4",
+    batteryCapacity: 102,
+    range: 611,
+    consumption: 18.8,
+    image: "🚙"
+  },
+
+  // Porsche
+  {
+    id: "porsche-macan-electric",
+    brand: "Porsche",
+    model: "Macan Electric",
+    batteryCapacity: 100,
+    range: 613,
+    consumption: 18.8,
+    image: "🚙"
+  },
+  {
+    id: "porsche-taycan",
+    brand: "Porsche",
+    model: "Taycan",
+    batteryCapacity: 93.4,
+    range: 504,
+    consumption: 20.8,
+    image: "🚗"
+  },
+  {
+    id: "porsche-taycan-cross-turismo",
+    brand: "Porsche",
+    model: "Taycan Cross Turismo",
+    batteryCapacity: 93.4,
+    range: 456,
+    consumption: 22.4,
+    image: "🚙"
+  },
+  {
+    id: "porsche-taycan-turbo",
+    brand: "Porsche",
+    model: "Taycan Turbo",
+    batteryCapacity: 93.4,
+    range: 507,
+    consumption: 20.6,
+    image: "🚗"
+  },
+
+  // Rivian
+  {
+    id: "rivian-r1s",
+    brand: "Rivian",
+    model: "R1S",
+    batteryCapacity: 135,
+    range: 516,
+    consumption: 28.9,
+    image: "🚙"
+  },
+  {
+    id: "rivian-r1t",
+    brand: "Rivian",
+    model: "R1T",
+    batteryCapacity: 135,
+    range: 516,
+    consumption: 28.9,
+    image: "🚚"
+  },
+
+  // Škoda
+  {
+    id: "skoda-citigo",
+    brand: "Škoda",
+    model: "CITIGOe iV",
+    batteryCapacity: 36.8,
+    range: 258,
+    consumption: 16.9,
+    image: "🚗"
+  },
+  {
+    id: "skoda-enyaq",
+    brand: "Škoda",
+    model: "Enyaq iV",
+    batteryCapacity: 82,
+    range: 534,
+    consumption: 16.7,
+    image: "🚙"
+  },
+  {
+    id: "skoda-enyaq-coupe",
+    brand: "Škoda",
+    model: "Enyaq Coupé iV",
+    batteryCapacity: 82,
+    range: 545,
+    consumption: 16.4,
+    image: "🚙"
+  },
+
+  // Tesla
+  {
+    id: "tesla-cybertruck",
+    brand: "Tesla",
+    model: "Cybertruck",
+    batteryCapacity: 123,
+    range: 515,
+    consumption: 23.9,
+    image: "🚚"
+  },
+  {
+    id: "tesla-model3",
+    brand: "Tesla",
+    model: "Model 3",
+    batteryCapacity: 75,
+    range: 560,
+    consumption: 14.3,
+    image: "🚗"
+  },
+  {
+    id: "tesla-models",
+    brand: "Tesla",
+    model: "Model S",
+    batteryCapacity: 100,
+    range: 652,
+    consumption: 16.5,
+    image: "🚗"
+  },
+  {
+    id: "tesla-modelx",
+    brand: "Tesla",
+    model: "Model X",
+    batteryCapacity: 100,
+    range: 560,
+    consumption: 20.6,
+    image: "🚙"
+  },
+  {
+    id: "tesla-modely",
+    brand: "Tesla",
+    model: "Model Y",
+    batteryCapacity: 75,
+    range: 533,
+    consumption: 15.6,
+    image: "🚙"
+  },
+
+  // Volkswagen
+  {
+    id: "vw-egolf",
+    brand: "Volkswagen",
+    model: "e-Golf",
+    batteryCapacity: 35.8,
+    range: 231,
+    consumption: 17.2,
+    image: "🚗"
+  },
+  {
+    id: "vw-eup",
+    brand: "Volkswagen",
+    model: "e-up!",
+    batteryCapacity: 36.8,
+    range: 258,
+    consumption: 16.9,
+    image: "🚗"
+  },
+  {
+    id: "vw-id3",
+    brand: "Volkswagen",
+    model: "ID.3",
+    batteryCapacity: 58,
+    range: 426,
+    consumption: 15.4,
+    image: "🚗"
+  },
+  {
+    id: "vw-id4",
+    brand: "Volkswagen",
+    model: "ID.4",
+    batteryCapacity: 77,
+    range: 520,
+    consumption: 16.2,
+    image: "🚙"
+  },
+  {
+    id: "vw-id5",
+    brand: "Volkswagen",
+    model: "ID.5",
+    batteryCapacity: 77,
+    range: 520,
+    consumption: 16.8,
+    image: "🚙"
+  },
+  {
+    id: "vw-id7",
+    brand: "Volkswagen",
+    model: "ID.7",
+    batteryCapacity: 86,
+    range: 615,
+    consumption: 15.5,
+    image: "🚗"
+  },
+  {
+    id: "vw-id-buzz",
+    brand: "Volkswagen",
+    model: "ID.Buzz",
+    batteryCapacity: 82,
+    range: 423,
+    consumption: 21.4,
+    image: "🚐"
+  },
+
+  // Volvo
+  {
+    id: "volvo-c40",
+    brand: "Volvo",
+    model: "C40 Recharge",
+    batteryCapacity: 78,
+    range: 444,
+    consumption: 19.3,
+    image: "🚙"
+  },
+  {
+    id: "volvo-ex30",
+    brand: "Volvo",
+    model: "EX30",
+    batteryCapacity: 69,
+    range: 476,
+    consumption: 16.2,
+    image: "🚙"
+  },
+  {
+    id: "volvo-ex90",
+    brand: "Volvo",
+    model: "EX90",
+    batteryCapacity: 111,
+    range: 614,
+    consumption: 20.3,
+    image: "🚙"
+  },
+  {
+    id: "volvo-xc40",
+    brand: "Volvo",
+    model: "XC40 Recharge",
+    batteryCapacity: 78,
+    range: 418,
+    consumption: 20.0,
+    image: "🚙"
+  },
+
+  // XPeng
+  {
+    id: "xpeng-g9",
+    brand: "XPeng",
+    model: "G9",
+    batteryCapacity: 98,
+    range: 650,
+    consumption: 16.8,
+    image: "🚙"
+  },
+  {
+    id: "xpeng-p7",
+    brand: "XPeng",
+    model: "P7",
+    batteryCapacity: 80.9,
+    range: 706,
+    consumption: 13.2,
+    image: "🚗"
   },
 
   // Li Auto
