@@ -314,19 +314,19 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   // Hent Mapbox token
   const fetchMapboxToken = async () => {
     try {
-      const response = await fetch('https://vwmopjkrnjrxkbxsswnb.supabase.co/functions/v1/mapbox-token', {
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3bW9wamtybmpyeGtieHNzd25iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3OTQ0MDgsImV4cCI6MjA3MzM3MDQwOH0.KdDS_tT7LV7HuXN8Nw3dxUU3YRGobsJrkE2esDxgJH8'}`
-        }
-      });
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data, error } = await supabase.functions.invoke('mapbox-token');
       
-      const data = await response.json();
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
       
-      if (data.token) {
+      if (data?.token) {
         setMapboxToken(data.token);
         return data.token;
       } else {
-        throw new Error(data.error || 'Kunne ikke hente Mapbox token');
+        throw new Error(data?.error || 'Kunne ikke hente Mapbox token');
       }
     } catch (error) {
       console.error('Feil ved henting av Mapbox token:', error);
