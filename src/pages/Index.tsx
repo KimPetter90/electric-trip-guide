@@ -9,7 +9,8 @@ import RouteMap from "@/components/RouteMap";
 import TestApp from "@/components/TestApp";
 import OfflineManager from "@/components/OfflineManager";
 import OfflineSettings from "@/components/OfflineSettings";
-import { Zap, Route, MapPin, Car, TestTube, Bookmark, Settings, Home } from "lucide-react";
+import AppReadyForRelease from "@/components/AppReadyForRelease";
+import { Zap, Route, MapPin, Car, TestTube, Bookmark, Settings, Home, CheckCircle2 } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 import { offlineStorage } from "@/utils/offlineStorage";
 import { useNetworkStatus } from "@/hooks/useNativeCapabilities";
@@ -40,7 +41,7 @@ function Index() {
     batteryPercentage: 80
   });
   const [showRoute, setShowRoute] = useState(false);
-  const [currentView, setCurrentView] = useState<'main' | 'test' | 'offline'>('main');
+  const [currentView, setCurrentView] = useState<'main' | 'test' | 'offline' | 'release'>('main');
   const isOnline = useNetworkStatus();
 
   useEffect(() => {
@@ -71,6 +72,10 @@ function Index() {
 
   if (currentView === 'test') {
     return <TestApp />;
+  }
+
+  if (currentView === 'release') {
+    return <AppReadyForRelease />;
   }
 
   if (currentView === 'offline') {
@@ -167,6 +172,15 @@ function Index() {
             {/* Action Buttons */}
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <Button 
+                onClick={() => setCurrentView('release')}
+                size="lg"
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                App klar for nedlasting
+              </Button>
+              
+              <Button 
                 onClick={() => setCurrentView('test')}
                 variant="outline"
                 className="bg-card/80 backdrop-blur-sm border-primary/40 hover:bg-primary/10"
@@ -185,7 +199,7 @@ function Index() {
               </Button>
               
               {!isOnline && (
-                <div className="flex items-center gap-2 bg-red-500/20 backdrop-blur-sm rounded-full px-4 py-2 border border-red-500/40">
+                <div className="flex items-center gap-2 bg-red-500/20 backdrop-blur-sm rounded-full px-4 py-2 border border-red-500/40 mt-2">
                   <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                   <span className="text-red-300 text-sm">Offline modus</span>
                 </div>
