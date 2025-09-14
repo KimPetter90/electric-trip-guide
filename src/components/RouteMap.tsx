@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Zap, Clock, DollarSign, MapPin, AlertCircle, Route, Thermometer, Wind, Car, Battery, TrendingUp, Navigation } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -46,9 +47,22 @@ interface ChargingStation {
 
 interface WeatherData {
   temperature: number;
-  wind: number;
-  condition: string;
-  impactOnRange: number;
+  windSpeed: number;
+  windDirection: number;
+  humidity: number;
+  weatherCondition: string;
+  visibility: number;
+}
+
+interface RouteWeatherData {
+  startWeather: WeatherData;
+  endWeather: WeatherData;
+  averageConditions: {
+    temperature: number;
+    windSpeed: number;
+    humidity: number;
+  };
+  rangeFactor: number;
 }
 
 interface TripAnalysis {
@@ -58,7 +72,7 @@ interface TripAnalysis {
   chargingTime: number;
   co2Saved: number;
   efficiency: number;
-  weather: WeatherData;
+  weather: RouteWeatherData | null;
 }
 
 // Norske byer koordinater
@@ -161,14 +175,34 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   const [activeTab, setActiveTab] = useState("analysis");
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [allChargingStations, setAllChargingStations] = useState<ChargingStation[]>(basicChargingStations);
+  const [weatherData, setWeatherData] = useState<RouteWeatherData | null>(null);
 
-  // Simuler værdata
-  const getWeatherData = (): WeatherData => ({
-    temperature: Math.round(Math.random() * 20 - 5),
-    wind: Math.round(Math.random() * 15),
-    condition: ["Overskyet", "Sol", "Regn", "Snø"][Math.floor(Math.random() * 4)],
-    impactOnRange: Math.round((Math.random() - 0.5) * 20)
-  });
+  // Hent værdata fra Supabase edge function
+  const fetchWeatherData = async (startCoords: { lat: number; lng: number }, endCoords: { lat: number; lng: number }) => {
+    try {
+      console.log('🌤️ Henter værdata for ruten...');
+      
+      const { data, error } = await supabase.functions.invoke('weather-service', {
+        body: {
+          startLat: startCoords.lat,
+          startLng: startCoords.lng,
+          endLat: endCoords.lat,
+          endLng: endCoords.lng
+        }
+      });
+
+      if (error) {
+        console.error('Feil ved henting av værdata:', error);
+        return null;
+      }
+
+      console.log('✅ Værdata hentet:', data);
+      return data as RouteWeatherData;
+    } catch (error) {
+      console.error('Nettverksfeil ved henting av værdata:', error);
+      return null;
+    }
+  };
 
   // Beregn distanse mellom to punkter
   const getDistance = (point1: { lat: number; lng: number }, point2: { lat: number; lng: number }) => {
@@ -236,7 +270,10 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     // Hengervekt-påvirkning
     const trailerImpact = routeData.trailerWeight / 1000 * 0.25; // 25% reduksjon per tonn
     
-    const actualRange = maxRange * (1 - trailerImpact);
+    // Vær-påvirkning fra weather service eller fallback
+    const weatherFactor = weatherData?.rangeFactor || 1.0;
+    
+    const actualRange = maxRange * (1 - trailerImpact) * weatherFactor;
     const currentRange = (actualRange * currentBattery / 100);
     
     console.log('=== LADEBEREGNING ===');
@@ -244,8 +281,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     console.log('Maks rekkevidde:', maxRange, 'km');
     console.log('Hengervekt:', routeData.trailerWeight, 'kg');
     console.log('Hengervekt-påvirkning:', (trailerImpact * 100).toFixed(1) + '%');
-    console.log('Hengervekt-påvirkning:', (trailerImpact * 100).toFixed(1) + '%');
-    console.log('Faktisk rekkevidde (etter henger/vær):', actualRange.toFixed(1), 'km'); 
+    console.log('Vær-påvirkning:', ((1 - weatherFactor) * 100).toFixed(1) + '%');
+    console.log('Faktisk rekkevidde (etter henger/vær):', actualRange.toFixed(1), 'km');
     console.log('Nåværende rekkevidde:', currentRange.toFixed(1), 'km');
     console.log('Rute-avstand:', routeDistance, 'km');
 
@@ -340,13 +377,15 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     return [];
   };
 
-  // Beregn vær-påvirkning
+  // Beregn vær-påvirkning (fallback hvis weather service ikke fungerer)
   const calculateWeatherImpact = (): WeatherData => {
     return {
       temperature: Math.round(Math.random() * 20 - 5), // -5 til 15°C
-      wind: Math.round(Math.random() * 15), // 0-15 m/s
-      condition: ['Sol', 'Skyet', 'Regn', 'Snø'][Math.floor(Math.random() * 4)],
-      impactOnRange: Math.round(Math.random() * 15) // 0-15% påvirkning
+      windSpeed: Math.round(Math.random() * 15), // 0-15 m/s
+      windDirection: Math.round(Math.random() * 360),
+      humidity: Math.round(Math.random() * 40 + 30), // 30-70%
+      weatherCondition: ['Sol', 'Skyet', 'Regn', 'Snø'][Math.floor(Math.random() * 4)],
+      visibility: Math.round(Math.random() * 10 + 5) // 5-15 km
     };
   };
 
@@ -366,7 +405,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         chargingTime: (chargingTime * 60) || 0,
         co2Saved: co2Saved || 0,
         efficiency: Math.min(efficiency || 85, 100),
-        weather: getWeatherData()
+        weather: weatherData
       };
       
       console.log('✅ Trip analysis calculated:', analysis);
@@ -381,7 +420,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         chargingTime: 0,
         co2Saved: 0,
         efficiency: 85,
-        weather: getWeatherData()
+        weather: weatherData
       };
     }
   };
@@ -511,6 +550,10 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     }
 
     console.log('Koordinater funnet:', { fromCoords, toCoords });
+
+    // Hent værdata for ruten
+    const weather = await fetchWeatherData(fromCoords, toCoords);
+    setWeatherData(weather);
 
     cleanupMap();
 
@@ -912,7 +955,58 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
                 </div>
               </Card>
              </div>
-         </TabsContent>
+
+             {/* Weather Impact Section */}
+             {weatherData && (
+               <Card className="p-4 mt-4">
+                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                   <Thermometer className="h-5 w-5 text-primary" />
+                   Værpåvirkning på rekkevidde
+                 </h3>
+                 
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                   <div className="text-center">
+                     <p className="text-sm text-muted-foreground">Start</p>
+                     <p className="text-lg font-bold">{weatherData.startWeather.temperature}°C</p>
+                     <p className="text-sm">{weatherData.startWeather.weatherCondition}</p>
+                   </div>
+                   
+                   <div className="text-center">
+                     <p className="text-sm text-muted-foreground">Destinasjon</p>
+                     <p className="text-lg font-bold">{weatherData.endWeather.temperature}°C</p>
+                     <p className="text-sm">{weatherData.endWeather.weatherCondition}</p>
+                   </div>
+                   
+                   <div className="text-center">
+                     <p className="text-sm text-muted-foreground">Gjennomsnitt vind</p>
+                     <p className="text-lg font-bold flex items-center gap-1 justify-center">
+                       <Wind className="h-4 w-4" />
+                       {weatherData.averageConditions.windSpeed} km/t
+                     </p>
+                   </div>
+                   
+                   <div className="text-center">
+                     <p className="text-sm text-muted-foreground">Rekkevidde-påvirkning</p>
+                     <p className={`text-lg font-bold ${weatherData.rangeFactor >= 1 ? 'text-green-600' : 'text-red-600'}`}>
+                       {weatherData.rangeFactor >= 1 ? '+' : ''}{Math.round((weatherData.rangeFactor - 1) * 100)}%
+                     </p>
+                   </div>
+                 </div>
+
+                 <div className="bg-muted/50 p-3 rounded-lg">
+                   <p className="text-sm">
+                     <strong>Værfaktorer som påvirker rekkevidde:</strong>
+                   </p>
+                   <ul className="text-sm mt-2 space-y-1">
+                     <li>• Temperatur: {weatherData.averageConditions.temperature}°C</li>
+                     <li>• Luftfuktighet: {weatherData.averageConditions.humidity}%</li>
+                     <li>• Vindforhold: {weatherData.averageConditions.windSpeed} km/t</li>
+                     <li>• Værforhold: {weatherData.startWeather.weatherCondition}</li>
+                   </ul>
+                 </div>
+                </Card>
+             )}
+          </TabsContent>
 
         <TabsContent value="stations" className="space-y-4">
           <div className="grid gap-4">
