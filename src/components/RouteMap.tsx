@@ -908,7 +908,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           <h4 className="text-lg font-semibold text-foreground">Ruteanalyse</h4>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full bg-transparent" style={{backgroundColor: 'transparent'}}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full bg-transparent hidden" style={{backgroundColor: 'transparent'}}>
           <TabsList className="grid w-full grid-cols-2 mb-4 !bg-transparent border border-border" style={{backgroundColor: 'transparent'}}>
             <TabsTrigger 
               value="analysis" 
