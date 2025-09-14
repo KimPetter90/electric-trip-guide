@@ -186,6 +186,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     }
 
     console.log(`Funnet ${stationsNearRoute.length} stasjoner langs ruten`);
+    console.log('Stasjoner langs ruten:', stationsNearRoute.map(s => s.name));
 
     // Beregn hvor langt vi kan kjøre med nåværende batteri (med 10% buffer)
     const safeRange = currentRange * 0.9; // 10% sikkerhetsbuffer
@@ -256,6 +257,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     }
 
     console.log('Obligatoriske ladestasjoner funnet:', requiredStations.length);
+    console.log('Stasjonene:', requiredStations.map(s => s.name));
     return requiredStations;
   };
 
@@ -490,6 +492,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         const analysis = calculateTripAnalysis(distance, optimizedStations);
         setRouteAnalysis(analysis);
 
+        console.log('Legger til markører for', optimizedStations.length, 'ladestasjoner');
+        
         // Legg til ladestasjonsmarkører med tydelig skille mellom obligatoriske og valgfrie
         optimizedStations.forEach((station, index) => {
           const isRequired = (station as any).isRequired;
