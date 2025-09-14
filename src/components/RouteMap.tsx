@@ -823,70 +823,71 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           </TabsList>
 
         <TabsContent value="analysis" className="space-y-4">
-          {routeAnalysis && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-4">Ruteanalyse</h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <Card className="p-4">
                 <div className="flex items-center space-x-2">
-                  <Route className="h-4 w-4 text-blue-500" />
+                  <Route className="h-4 w-4 text-primary" />
                   <div>
                     <p className="text-sm font-medium">Total distanse</p>
-                    <p className="text-2xl font-bold">{Math.round(routeAnalysis.totalDistance)} km</p>
+                    <p className="text-2xl font-bold">{routeAnalysis ? Math.round(routeAnalysis.totalDistance) : '---'} km</p>
                   </div>
                 </div>
               </Card>
 
               <Card className="p-4">
                 <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-orange-500" />
+                  <Clock className="h-4 w-4 text-primary" />
                   <div>
                     <p className="text-sm font-medium">Total tid</p>
-                    <p className="text-2xl font-bold">{Math.round(routeAnalysis.totalTime)}t</p>
+                    <p className="text-2xl font-bold">{routeAnalysis ? Math.round(routeAnalysis.totalTime) : '---'}t</p>
                   </div>
                 </div>
               </Card>
 
               <Card className="p-4">
                 <div className="flex items-center space-x-2">
-                  <DollarSign className="h-4 w-4 text-green-500" />
+                  <DollarSign className="h-4 w-4 text-primary" />
                   <div>
                     <p className="text-sm font-medium">Ladekostnad</p>
-                    <p className="text-2xl font-bold">{Math.round(routeAnalysis.totalCost)} kr</p>
+                    <p className="text-2xl font-bold">{routeAnalysis ? Math.round(routeAnalysis.totalCost) : '---'} kr</p>
                   </div>
                 </div>
               </Card>
 
               <Card className="p-4">
                 <div className="flex items-center space-x-2">
-                  <Zap className="h-4 w-4 text-yellow-500" />
+                  <Zap className="h-4 w-4 text-primary" />
                   <div>
                     <p className="text-sm font-medium">Ladetid</p>
-                    <p className="text-2xl font-bold">{Math.round(routeAnalysis.chargingTime)} min</p>
+                    <p className="text-2xl font-bold">{routeAnalysis ? Math.round(routeAnalysis.chargingTime) : '---'} min</p>
                   </div>
                 </div>
               </Card>
 
               <Card className="p-4">
                 <div className="flex items-center space-x-2">
-                  <TrendingUp className="h-4 w-4 text-green-500" />
+                  <TrendingUp className="h-4 w-4 text-primary" />
                   <div>
                     <p className="text-sm font-medium">CO₂ spart</p>
-                    <p className="text-2xl font-bold">{Math.round(routeAnalysis.co2Saved)} kg</p>
+                    <p className="text-2xl font-bold">{routeAnalysis ? Math.round(routeAnalysis.co2Saved) : '---'} kg</p>
                   </div>
                 </div>
               </Card>
 
               <Card className="p-4">
                 <div className="flex items-center space-x-2">
-                  <Battery className="h-4 w-4 text-purple-500" />
+                  <Battery className="h-4 w-4 text-primary" />
                   <div>
                     <p className="text-sm font-medium">Effektivitet</p>
-                    <p className="text-2xl font-bold">{Math.round(routeAnalysis.efficiency)}%</p>
+                    <p className="text-2xl font-bold">{routeAnalysis ? Math.round(routeAnalysis.efficiency) : '---'}%</p>
                   </div>
                 </div>
               </Card>
-            </div>
-          )}
-        </TabsContent>
+             </div>
+         </TabsContent>
 
         <TabsContent value="stations" className="space-y-4">
           <div className="grid gap-4">
