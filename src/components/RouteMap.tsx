@@ -558,6 +558,11 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         setRouteAnalysis(analysis);
 
         console.log('Legger til markører for', optimizedStations.length, 'ladestasjoner');
+        console.log('Optimized stations data:', optimizedStations.map(s => ({ name: s.name, isRequired: (s as any).isRequired })));
+        
+        // Fjern eksisterende markører først
+        markers.forEach(marker => marker.remove());
+        const chargingMarkers: mapboxgl.Marker[] = [];
         
         // Legg til ladestasjonsmarkører med tydelig skille mellom obligatoriske og valgfrie
         optimizedStations.forEach((station, index) => {
@@ -619,10 +624,13 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
             `))
             .addTo(map.current!);
           
-          newMarkers.push(marker);
+          chargingMarkers.push(marker);
         });
-
-        setMarkers(newMarkers);
+        
+        // Kombiner alle markører
+        const allNewMarkers = [...newMarkers, ...chargingMarkers];
+        setMarkers(allNewMarkers);
+        console.log('Lagt til', chargingMarkers.length, 'ladestasjonsmarkører på kartet');
         
         // Tilpass visningen til ruten
         const bounds = new mapboxgl.LngLatBounds();
@@ -677,7 +685,15 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     
     if (map.current && routeData.from && routeData.to && selectedCar && mapboxToken) {
       console.log('🔄 Oppdaterer rute på grunn av endring i data...');
-      updateMapRoute();
+      // Eksplisitt cleanup før oppdatering
+      cleanupMap();
+      setOptimizedStations([]);
+      setRouteAnalysis(null);
+      
+      // Kort delay for å sikre cleanup er ferdig
+      setTimeout(() => {
+        updateMapRoute();
+      }, 100);
     }
   }, [routeData.from, routeData.to, routeData.batteryPercentage, routeData.trailerWeight, selectedCar?.id, mapboxToken]);
 
