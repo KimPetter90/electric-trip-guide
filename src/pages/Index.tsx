@@ -36,8 +36,12 @@ function Index() {
   const [showRoute, setShowRoute] = useState(false);
 
   const handlePlanRoute = () => {
+    console.log('🚀 Plan route clicked:', { selectedCar: !!selectedCar, from: routeData.from, to: routeData.to });
     if (selectedCar && routeData.from && routeData.to) {
+      console.log('✅ Setting showRoute to true');
       setShowRoute(true);
+    } else {
+      console.log('❌ Missing requirements for route planning');
     }
   };
 

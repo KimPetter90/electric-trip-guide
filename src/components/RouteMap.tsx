@@ -779,7 +779,13 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     }
   }, [routeData.from, routeData.to, routeData.batteryPercentage, routeData.trailerWeight, selectedCar?.id, mapboxToken]);
 
-  if (!isVisible) return null;
+  console.log('🔍 RouteMap render status:', { isVisible, hasRouteData: !!routeData.from && !!routeData.to, hasSelectedCar: !!selectedCar });
+  
+  // MIDLERTIDIG: Viser alltid komponenten for debugging
+  // if (!isVisible) {
+  //   console.log('❌ RouteMap not visible, returning null');
+  //   return null;
+  // }
 
   return (
     <div className="space-y-6">
@@ -825,9 +831,9 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         </Card>
       </div>
 
-      {/* Analyse og ladestasjoner - FORENKLET */}
+      {/* Analyse og ladestasjoner - FORENKLET MED STERK STYLING */}
       <div className="w-full mt-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="bg-red-100 border-4 border-red-500 rounded-lg p-6" style={{ backgroundColor: '#fee2e2', minHeight: '200px' }}>
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             🔧 RUTEANALYSE (Forenklet versjon)
           </h2>
