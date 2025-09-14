@@ -146,7 +146,7 @@ function Index() {
                 </p>
               </Card>
             ) : (
-              <div className="space-y-6 animate-float animation-delay-300">
+              <div className="w-full">
                 <RouteMap 
                   isVisible={showRoute} 
                   routeData={routeData}
