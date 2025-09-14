@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import CarSelector from "@/components/CarSelector";
 import RouteInput from "@/components/RouteInput";
 import ChargingMap from "@/components/ChargingMap";
+import RouteMap from "@/components/RouteMap";
 import { Zap, Route, MapPin, Car } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 
@@ -35,16 +36,8 @@ function Index() {
   const [showRoute, setShowRoute] = useState(false);
 
   const handlePlanRoute = () => {
-    console.log('🚀 Planlegger rute med data:', { selectedCar, routeData });
     if (selectedCar && routeData.from && routeData.to) {
-      console.log('✅ Alle kriterier oppfylt, setter showRoute til true');
       setShowRoute(true);
-    } else {
-      console.log('❌ Mangler data:', { 
-        harValgtBil: !!selectedCar, 
-        harFra: !!routeData.from, 
-        harTil: !!routeData.to 
-      });
     }
   };
 
@@ -150,6 +143,11 @@ function Index() {
               </Card>
             ) : (
               <div className="space-y-6 animate-float animation-delay-300">
+                <RouteMap 
+                  isVisible={showRoute} 
+                  routeData={routeData}
+                  selectedCar={selectedCar}
+                />
                 <ChargingMap isVisible={showRoute} />
               </div>
             )}
