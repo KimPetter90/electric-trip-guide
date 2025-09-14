@@ -253,8 +253,9 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     const stationsNearRoute = findStationsNearRoute(routeGeometry);
     console.log('Stasjoner langs ruten:', stationsNearRoute.length);
 
+    // Realistisk sjekk: Hvis batteriet holder hele veien, ikke vis noen markører
     if (currentRange >= routeDistance) {
-      console.log('✅ Ingen lading nødvendig - batteriet holder hele veien');
+      console.log('✅ Batteriet holder hele veien - ingen lademarkører nødvendig');
       return [];
     }
 
@@ -273,37 +274,20 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     let distanceCovered = 0;
 
     const sortedStations = stationsNearRoute
-      .filter(station => (station as any).routeDistance > 50) // Ikke for nær start (økt fra 30 til 50km)
       .filter(station => station.available > 0) // Bare tilgjengelige stasjoner
-      .filter(station => station.fastCharger || station.chargeAmount >= 45) // Foretrekk hurtigladere eller stasjoner med god lading
-      .sort((a, b) => {
-        // Prioriter hurtigladere og tilgjengelighet
-        const aScore = (a.fastCharger ? 100 : 0) + (a.available / a.total * 50) + (a.chargeAmount > 50 ? 20 : 0);
-        const bScore = (b.fastCharger ? 100 : 0) + (b.available / b.total * 50) + (b.chargeAmount > 50 ? 20 : 0);
-        if (Math.abs(aScore - bScore) > 10) {
-          return bScore - aScore; // Høyere score først
-        }
-        return (a as any).routeDistance - (b as any).routeDistance; // Så nærmeste
-      });
+      .sort((a, b) => (a as any).routeDistance - (b as any).routeDistance); // Sorter etter avstand langs ruten
 
     console.log('Sorterte stasjoner:', sortedStations.map(s => `${s.name} (${((s as any).routeDistance).toFixed(1)}km fra rute-start, ${s.fastCharger ? 'Hurtig' : 'Vanlig'}, ${s.available}/${s.total} ledig, ${s.chargeAmount}kWh)`));
 
+    // Realistisk beregning: Finn kun de stasjonene som faktisk trengs
     while (remainingDistance > 0) {
-      const rangeLeft = (actualRange * currentBattery_remaining / 100) * 0.9; // 10% sikkerhetsbuffer
+      const rangeLeft = (actualRange * currentBattery_remaining / 100) * 0.95; // 5% sikkerhetsbuffer (mer realistisk)
       console.log(`Batterinivå: ${currentBattery_remaining.toFixed(1)}%, rekkevidde igjen: ${rangeLeft.toFixed(1)}km, avstand igjen: ${remainingDistance.toFixed(1)}km`);
       
+      // Realistisk sjekk: Hvis vi kan nå målet, stopp
       if (rangeLeft >= remainingDistance) {
         console.log('✅ Kan nå målet uten mer lading');
         break;
-      }
-
-      // Ikke foreslå lading hvis batteriet er over 50% og vi har mer enn 150km rekkevidde igjen
-      if (currentBattery_remaining > 50 && rangeLeft > 150) {
-        console.log(`⏭️ Hopper over lading - batteriet er fortsatt ${currentBattery_remaining.toFixed(1)}% med ${rangeLeft.toFixed(1)}km rekkevidde`);
-        distanceCovered += Math.min(rangeLeft - 50, remainingDistance / 2); // Hopp fremover, men ikke for langt
-        remainingDistance = routeDistance - distanceCovered;
-        currentBattery_remaining = Math.max(20, currentBattery_remaining - 25); // Simuler batteribruk
-        continue;
       }
 
       // Finn neste stasjon vi kan nå
@@ -356,18 +340,39 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         break;
       }
 
-      // Velg best stasjon
-      const bestStation = reachableStations[0]; // Ta den første (nærmeste)
+      // Realistisk stasjonsvalg: Foretrekk hurtigladere og beste tilgjengelighet
+      const bestStation = reachableStations.sort((a, b) => {
+        // Prioritet 1: Hurtigladere
+        if (a.fastCharger !== b.fastCharger) {
+          return b.fastCharger ? 1 : -1;
+        }
+        // Prioritet 2: Bedre tilgjengelighet (høyere ratio)
+        const aRatio = a.available / a.total;
+        const bRatio = b.available / b.total;
+        if (Math.abs(aRatio - bRatio) > 0.1) {
+          return bRatio - aRatio;
+        }
+        // Prioritet 3: Nærmeste
+        return (a as any).routeDistance - (b as any).routeDistance;
+      })[0];
+      
       const stationDistance = (bestStation as any).routeDistance;
       const batteryUsed = ((stationDistance - distanceCovered) / actualRange) * 100;
       const arrivalBattery = Math.max(5, currentBattery_remaining - batteryUsed);
-      const departureBattery = Math.min(80, arrivalBattery + bestStation.chargeAmount); // Maksimalt 80%
+      
+      // Realistisk lading: Lad bare så mye som nødvendig (ikke alltid til 80%)
+      const distanceAfterStation = routeDistance - stationDistance;
+      const rangeNeededAfterStation = distanceAfterStation * 1.1; // 10% buffer for resten av turen
+      const batteryNeededAfterStation = (rangeNeededAfterStation / actualRange) * 100;
+      const targetBattery = Math.min(80, Math.max(batteryNeededAfterStation, arrivalBattery + 20)); // Minimum 20% tillegg
+      
+      const departureBattery = Math.min(targetBattery, arrivalBattery + bestStation.chargeAmount);
 
       console.log(`📍 Velger stasjon: ${bestStation.name} på ${stationDistance.toFixed(1)}km`);
       console.log(`   Ankomst batteri: ${arrivalBattery.toFixed(1)}%`);
-      console.log(`   Avgang batteri: ${departureBattery.toFixed(1)}% (maks 80%)`);
+      console.log(`   Avgang batteri: ${departureBattery.toFixed(1)}% (tilpasset behov)`);
+      console.log(`   Resterende avstand: ${distanceAfterStation.toFixed(1)}km`);
       console.log(`   Påvirkning av henger: -${((maxRange - actualRange)).toFixed(1)}km rekkevidde`);
-      console.log(`   Ladetid: ${bestStation.chargeTime} min for ${(departureBattery - arrivalBattery).toFixed(1)}% lading`);
 
       requiredStations.push({
         ...bestStation,
@@ -382,8 +387,11 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       currentBattery_remaining = departureBattery;
       remainingDistance = routeDistance - distanceCovered;
       
-      // Sikkerhet: max 3 stasjoner
-      if (requiredStations.length >= 3) break;
+      // Realistisk stopp: Maksimalt 2 ladestasjoner for de fleste turer
+      if (requiredStations.length >= 2) {
+        console.log('🛑 Maksimalt 2 ladestasjoner valgt for realistisk tur');
+        break;
+      }
     }
 
     console.log('🏁 RESULTAT: Funnet', requiredStations.length, 'obligatoriske ladestasjoner');
