@@ -257,50 +257,67 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
   // Oppdater rute på kart
   const updateMapRoute = async () => {
+    console.log('updateMapRoute startet');
+    
     if (!map || !routeData.from || !routeData.to || !selectedCar) {
+      console.log('Mangler data for rute-oppdatering', { map: !!map, from: routeData.from, to: routeData.to, car: !!selectedCar });
       return;
     }
 
     const fromCity = routeData.from.toLowerCase().trim();
     const toCity = routeData.to.toLowerCase().trim();
     
+    console.log('Søker etter koordinater for:', { fromCity, toCity });
+    
     const fromCoords = cityCoordinates[fromCity];
     const toCoords = cityCoordinates[toCity];
 
     if (!fromCoords || !toCoords) {
+      console.error('Koordinater ikke funnet for byer');
       setError(`Kunne ikke finne koordinater for ${fromCity} eller ${toCity}`);
       return;
     }
 
+    console.log('Koordinater funnet:', { fromCoords, toCoords });
+
     cleanupMap();
 
     try {
+      console.log('Importerer Leaflet for rute...');
       const L = await import('leaflet');
       
+      console.log('Beregner distanse...');
       // Enklere tilnærming - bruk bare rett linje mellom punkter
       const distance = getDistance(fromCoords, toCoords);
+      console.log('Distanse beregnet:', distance);
       
+      console.log('Oppretter start-markør...');
       // Legg til start- og sluttpunkt
       const startMarker = L.marker([fromCoords.lat, fromCoords.lng])
         .addTo(map)
         .bindPopup(`Start: ${routeData.from}`);
       
+      console.log('Oppretter slutt-markør...');
       const endMarker = L.marker([toCoords.lat, toCoords.lng])
         .addTo(map)
         .bindPopup(`Mål: ${routeData.to}`);
       
+      console.log('Tegner rute-linje...');
       // Tegn linje mellom punktene
       const routeLine = L.polyline([
         [fromCoords.lat, fromCoords.lng],
         [toCoords.lat, toCoords.lng]
       ], { color: '#3b82f6', weight: 4, opacity: 0.8 }).addTo(map);
       
+      console.log('Optimaliserer ladestasjoner...');
       const optimizedStations = optimizeChargingStations(distance);
       setOptimizedStations(optimizedStations);
       
+      console.log('Beregner analyse...');
       const analysis = calculateTripAnalysis(distance, optimizedStations);
       setRouteAnalysis(analysis);
 
+      console.log('Legger til ladestasjoner...');
       // Legg til ladestasjonsmarkører
       const newMarkers: any[] = [startMarker, endMarker, routeLine];
       
@@ -332,6 +349,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
       setMarkers(newMarkers);
       
+      console.log('Tilpasser kart-visning...');
       if (optimizedStations.length > 0) {
         const bounds = L.latLngBounds([
           [fromCoords.lat, fromCoords.lng],
@@ -346,6 +364,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         ]);
         map.fitBounds(bounds, { padding: [50, 50] });
       }
+
+      console.log('Rute-oppdatering fullført suksessfullt!');
 
     } catch (error) {
       console.error('Feil ved rute-oppdatering:', error);
