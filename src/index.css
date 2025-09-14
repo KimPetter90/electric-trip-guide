@@ -47,8 +47,8 @@ All colors MUST be HSL.
     --gradient-neon: linear-gradient(45deg, hsl(140 100% 45%), hsl(180 100% 45%), hsl(220 100% 45%));
     
     /* Glass effects */
-    --glass-bg: rgba(20, 255, 150, 0.1);
-    --glass-border: rgba(20, 255, 150, 0.2);
+    --glass-bg: 225 25% 12% / 0.8;
+    --glass-border: 140 100% 45% / 0.2;
     
     /* Neon shadows */
     --shadow-electric: 0 0 20px hsl(140 100% 45% / 0.5), 0 0 40px hsl(140 100% 45% / 0.3);
@@ -125,7 +125,7 @@ All colors MUST be HSL.
 
 /* Leaflet map styling */
 .leaflet-popup-content-wrapper {
-  @apply bg-background border border-glass-border shadow-neon;
+  @apply bg-background border border-border shadow-lg;
   border-radius: 8px;
 }
 

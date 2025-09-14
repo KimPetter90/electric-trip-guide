@@ -46,7 +46,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
               placeholder="Oslo"
               value={routeData.from}
               onChange={(e) => handleInputChange('from', e.target.value)}
-              className="bg-background/50 border-glass-border focus:border-primary focus:shadow-glow"
+              className="bg-background/50 border-border focus:border-primary focus:shadow-lg"
             />
           </div>
 
@@ -60,7 +60,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
               placeholder="Bergen"
               value={routeData.to}
               onChange={(e) => handleInputChange('to', e.target.value)}
-              className="bg-background/50 border-glass-border focus:border-primary focus:shadow-glow"
+              className="bg-background/50 border-border focus:border-primary focus:shadow-lg"
             />
           </div>
         </div>
@@ -76,7 +76,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
             placeholder="80"
             value={routeData.batteryPercentage || ''}
             onChange={(e) => handleInputChange('batteryPercentage', parseInt(e.target.value) || 80)}
-            className="bg-background/50 border-glass-border focus:border-primary focus:shadow-glow"
+            className="bg-background/50 border-border focus:border-primary focus:shadow-lg"
             min="0"
             max="100"
           />
@@ -98,7 +98,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
             placeholder="0"
             value={routeData.trailerWeight || ''}
             onChange={(e) => handleInputChange('trailerWeight', parseInt(e.target.value) || 0)}
-            className="bg-background/50 border-glass-border focus:border-primary focus:shadow-glow"
+            className="bg-background/50 border-border focus:border-primary focus:shadow-lg"
           />
           {routeData.trailerWeight > 0 && (
             <Badge variant="outline" className="text-xs">

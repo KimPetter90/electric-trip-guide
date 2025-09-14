@@ -320,7 +320,7 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
 
   return (
     <div className="space-y-4">
-      <Card className="p-4 bg-glass-bg backdrop-blur-sm border-glass-border">
+      <Card className="p-4 bg-card/80 backdrop-blur-sm border-border">
         <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <div className="w-2 h-2 bg-gradient-electric rounded-full animate-pulse-neon"></div>
           Google Maps Rutekart
@@ -350,7 +350,7 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
         
         <div 
           ref={mapRef}
-          className="h-96 rounded-lg overflow-hidden border border-glass-border shadow-neon bg-background/20"
+          className="h-96 rounded-lg overflow-hidden border border-border shadow-lg bg-background/20"
           style={{ minHeight: '384px' }}
         >
           {isLoading && (
@@ -392,7 +392,7 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
 
       {/* Charging Stations List */}
       {requiredStations.length > 0 && (
-        <Card className="p-4 bg-glass-bg backdrop-blur-sm border-glass-border">
+        <Card className="p-4 bg-card/80 backdrop-blur-sm border-border">
           <h4 className="font-semibold mb-3 text-foreground flex items-center gap-2">
             <Zap className="h-4 w-4 text-primary" />
             Ladestasjoner på ruten
@@ -405,7 +405,7 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
                 className={`bg-background/50 rounded-lg p-3 border ${
                   station.requiredStop 
                     ? 'border-destructive bg-destructive/5' 
-                    : 'border-glass-border'
+                    : 'border-border'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">

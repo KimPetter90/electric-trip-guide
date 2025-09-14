@@ -936,7 +936,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
                             </div>
                             <p className="text-sm text-muted-foreground">{station.location}</p>
                             
-                            <div className="bg-white p-3 rounded border">
+                            <div className="bg-card/90 p-3 rounded border border-border">
                               <p className="text-sm font-medium text-red-600 mb-2">
                                 Du må lade her - batteriet blir {Math.round((station as any).arrivalBattery || 0)}% ved ankomst
                               </p>

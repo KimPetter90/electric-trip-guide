@@ -36,8 +36,8 @@ export default {
           glow: "hsl(var(--accent-glow))",
         },
         glass: {
-          bg: "var(--glass-bg)",
-          border: "var(--glass-border)",
+          bg: "hsl(var(--glass-bg))",
+          border: "hsl(var(--glass-border))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",

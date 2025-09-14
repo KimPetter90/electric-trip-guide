@@ -84,15 +84,15 @@ function Index() {
               Intelligent ruteplanlegging for fremtidens elbiler
             </p>
             <div className="flex flex-wrap items-center justify-center gap-6 text-muted-foreground">
-              <div className="flex items-center gap-2 bg-glass-bg backdrop-blur-sm rounded-full px-4 py-2 border border-glass-border animate-pulse-neon">
+              <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full px-4 py-2 border border-border animate-pulse-neon">
                 <Car className="h-5 w-5 text-primary" />
                 <span>Alle elbilmodeller</span>
               </div>
-              <div className="flex items-center gap-2 bg-glass-bg backdrop-blur-sm rounded-full px-4 py-2 border border-glass-border animate-pulse-neon animation-delay-500">
+              <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full px-4 py-2 border border-border animate-pulse-neon animation-delay-500">
                 <Route className="h-5 w-5 text-secondary" />
                 <span>AI-optimalisering</span>
               </div>
-              <div className="flex items-center gap-2 bg-glass-bg backdrop-blur-sm rounded-full px-4 py-2 border border-glass-border animate-pulse-neon animation-delay-1000">
+              <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full px-4 py-2 border border-border animate-pulse-neon animation-delay-1000">
                 <MapPin className="h-5 w-5 text-accent" />
                 <span>Sanntids data</span>
               </div>
@@ -122,7 +122,7 @@ function Index() {
             </div>
 
             {selectedCar && (
-              <Card className="p-4 bg-glass-bg backdrop-blur-sm border-glass-border shadow-electric animate-pulse-neon">
+              <Card className="p-4 bg-card/80 backdrop-blur-sm border-border shadow-lg animate-pulse-neon">
                 <h4 className="font-semibold mb-2 text-primary">Valgt bil:</h4>
                 <p className="text-sm text-muted-foreground">
                   {selectedCar.brand} {selectedCar.model} - {selectedCar.batteryCapacity} kWh, {selectedCar.range} km rekkevidde
@@ -134,7 +134,7 @@ function Index() {
           {/* Right Column - Results */}
           <div className="space-y-8">
             {!showRoute ? (
-              <Card className="p-8 text-center bg-glass-bg backdrop-blur-sm border-glass-border shadow-glow animate-float">
+              <Card className="p-8 text-center bg-card/80 backdrop-blur-sm border-border shadow-lg animate-float">
                 <MapPin className="h-12 w-12 text-primary mx-auto mb-4 animate-glow-pulse" />
                 <h3 className="text-lg font-semibold mb-2 text-foreground">Klar for ruteplanlegging</h3>
                 <p className="text-muted-foreground">
@@ -156,7 +156,7 @@ function Index() {
       </div>
 
       {/* Footer */}
-      <footer className="relative bg-glass-bg backdrop-blur-sm border-t border-glass-border py-8 mt-16">
+      <footer className="relative bg-card/60 backdrop-blur-sm border-t border-border py-8 mt-16">
         <div className="container mx-auto px-4 text-center">
           <p className="text-muted-foreground">
             ElRoute - Fremtidens ruteplanlegging for elbiler i Norge
