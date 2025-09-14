@@ -908,18 +908,18 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           <h4 className="text-lg font-semibold text-foreground">Ruteanalyse</h4>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full bg-transparent">
-          <TabsList className="grid w-full grid-cols-2 mb-4 bg-card/80 backdrop-blur-sm border border-border">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full bg-transparent" style={{backgroundColor: 'transparent'}}>
+          <TabsList className="grid w-full grid-cols-2 mb-4 !bg-transparent border border-border" style={{backgroundColor: 'transparent'}}>
             <TabsTrigger 
               value="analysis" 
-              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground !bg-transparent hover:bg-primary/10"
             >
               <TrendingUp className="h-4 w-4" />
               Analyse
             </TabsTrigger>
             <TabsTrigger 
               value="stations" 
-              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground !bg-transparent hover:bg-primary/10"
             >
               <Zap className="h-4 w-4" />
               Ladestasjoner
