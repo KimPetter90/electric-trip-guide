@@ -216,9 +216,18 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
     const sortedStations = stationsNearRoute
       .filter(station => (station as any).routeDistance > 30) // Ikke for nær start
-      .sort((a, b) => (a as any).routeDistance - (b as any).routeDistance);
+      .filter(station => station.available > 0) // Bare tilgjengelige stasjoner
+      .sort((a, b) => {
+        // Prioriter hurtigladere og tilgjengelighet
+        const aScore = (a.fastCharger ? 100 : 0) + (a.available / a.total * 50);
+        const bScore = (b.fastCharger ? 100 : 0) + (b.available / b.total * 50);
+        if (Math.abs(aScore - bScore) > 10) {
+          return bScore - aScore; // Høyere score først
+        }
+        return (a as any).routeDistance - (b as any).routeDistance; // Så nærmeste
+      });
 
-    console.log('Sorterte stasjoner:', sortedStations.map(s => `${s.name} (${((s as any).routeDistance).toFixed(1)}km fra rute-start)`));
+    console.log('Sorterte stasjoner:', sortedStations.map(s => `${s.name} (${((s as any).routeDistance).toFixed(1)}km fra rute-start, ${s.fastCharger ? 'Hurtig' : 'Vanlig'}, ${s.available}/${s.total} ledig)`));
 
     while (remainingDistance > 0) {
       const rangeLeft = (actualRange * currentBattery_remaining / 100) * 0.85; // 15% sikkerhetsbuffer
