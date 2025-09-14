@@ -410,6 +410,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     }
     
     console.log(`🏁 RESULTAT: ${chargingStops.length} ladingstopp nødvendig`);
+    console.log('🔍 DEBUG: Returnerer følgende stasjoner:', chargingStops.map(s => ({ name: s.name, distance: s.distance })));
     chargingStops.forEach((stop, index) => {
       console.log(`   ${index + 1}. ${stop.name} (${stop.distance.toFixed(1)}km) - ${stop.arrivalBattery.toFixed(1)}% → ${stop.departureBattery.toFixed(1)}%`);
     });
@@ -714,6 +715,10 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         
         console.log('Optimaliserer ladestasjoner...');
         const optimizedStations = optimizeChargingStations(distance, route.geometry);
+        console.log('🔍 RESULTAT fra optimizeChargingStations:', optimizedStations.length, 'stasjoner');
+        optimizedStations.forEach((station, i) => {
+          console.log(`📍 Stasjon ${i + 1}: ${station.name} på ${station.distance?.toFixed(1)}km - ${station.arrivalBattery?.toFixed(1)}% → ${station.departureBattery?.toFixed(1)}%`);
+        });
         setOptimizedStations(optimizedStations);
         
         // Sjekk om brukeren trenger å lade hjemme
