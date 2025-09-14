@@ -500,7 +500,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       console.log('Oppretter nytt Mapbox-kart...');
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
+        style: 'mapbox://styles/mapbox/satellite-streets-v12', // Satellite map with street labels
         center: [8.4689, 60.472],
         zoom: 5
       });
