@@ -352,21 +352,38 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
   // Beregn reiseanalyse
   const calculateTripAnalysis = (distance: number, stations: ChargingStation[]): TripAnalysis => {
-    const totalTime = distance / 80; // Antatt snittfart 80 km/t
-    const chargingTime = stations.reduce((total, station) => total + station.chargeTime, 0) / 60;
-    const totalCost = stations.reduce((total, station) => total + station.cost, 0);
-    const co2Saved = distance * 0.12; // 120g CO2/km for bensinbil
-    const efficiency = selectedCar ? (selectedCar.range / selectedCar.batteryCapacity) * 100 / distance : 85;
-    
-    return {
-      totalDistance: distance,
-      totalTime: totalTime + chargingTime,
-      totalCost,
-      chargingTime: chargingTime * 60,
-      co2Saved,
-      efficiency: Math.min(efficiency, 100),
-      weather: getWeatherData()
-    };
+    try {
+      const totalTime = distance / 80; // Antatt snittfart 80 km/t
+      const chargingTime = stations.reduce((total, station) => total + station.chargeTime, 0) / 60;
+      const totalCost = stations.reduce((total, station) => total + station.cost, 0);
+      const co2Saved = distance * 0.12; // 120g CO2/km for bensinbil
+      const efficiency = selectedCar ? (selectedCar.range / selectedCar.batteryCapacity) * 100 / distance : 85;
+      
+      const analysis = {
+        totalDistance: distance || 0,
+        totalTime: (totalTime + chargingTime) || 0,
+        totalCost: totalCost || 0,
+        chargingTime: (chargingTime * 60) || 0,
+        co2Saved: co2Saved || 0,
+        efficiency: Math.min(efficiency || 85, 100),
+        weather: getWeatherData()
+      };
+      
+      console.log('✅ Trip analysis calculated:', analysis);
+      return analysis;
+    } catch (error) {
+      console.error('❌ Error calculating trip analysis:', error);
+      // Return default analysis if calculation fails
+      return {
+        totalDistance: 0,
+        totalTime: 0,
+        totalCost: 0,
+        chargingTime: 0,
+        co2Saved: 0,
+        efficiency: 85,
+        weather: getWeatherData()
+      };
+    }
   };
 
   // Rydd opp kart
@@ -600,7 +617,12 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         
         console.log('Beregner analyse...');
         const analysis = calculateTripAnalysis(distance, optimizedStations);
-        setRouteAnalysis(analysis);
+        if (analysis && typeof analysis === 'object' && analysis.totalDistance !== undefined) {
+          setRouteAnalysis(analysis);
+          console.log('✅ Route analysis set successfully:', analysis);
+        } else {
+          console.error('❌ Invalid analysis object:', analysis);
+        }
 
         console.log('Legger til markører for', optimizedStations.length, 'ladestasjoner');
         console.log('Optimized stations data:', optimizedStations.map(s => ({ name: s.name, isRequired: (s as any).isRequired })));
@@ -832,7 +854,10 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
                   <Route className="h-4 w-4 text-primary" />
                   <div>
                     <p className="text-sm font-medium">Total distanse</p>
-                    <p className="text-2xl font-bold">{routeAnalysis ? Math.round(routeAnalysis.totalDistance) : '---'} km</p>
+                    <p className="text-2xl font-bold">{(() => {
+                      console.log('🔍 RouteAnalysis status:', { routeAnalysis, hasData: !!routeAnalysis });
+                      return routeAnalysis ? Math.round(routeAnalysis.totalDistance) : '---';
+                    })()} km</p>
                   </div>
                 </div>
               </Card>
