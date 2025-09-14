@@ -295,7 +295,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
     // Finn stasjoner som ligger langs ruten
     const stationsNearRoute = findStationsNearRoute(routeGeometry);
-    console.log('Stasjoner langs ruten:', stationsNearRoute.length);
+    console.log('📍 Stasjoner langs ruten:', stationsNearRoute.length);
+    console.log('📍 Første 5 stasjoner:', stationsNearRoute.slice(0, 5).map(s => ({ name: s.name, distance: (s as any).routeDistance })));
 
     // Realistisk sjekk: Hvis batteriet holder hele veien, ikke vis noen markører
     if (currentRange >= routeDistance) {
@@ -321,7 +322,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       .filter(station => station.available > 0) // Bare tilgjengelige stasjoner
       .sort((a, b) => (a as any).routeDistance - (b as any).routeDistance); // Sorter etter avstand langs ruten
 
-    console.log('Sorterte stasjoner:', sortedStations.map(s => `${s.name} (${((s as any).routeDistance).toFixed(1)}km fra rute-start, ${s.fastCharger ? 'Hurtig' : 'Vanlig'}, ${s.available}/${s.total} ledig, ${s.chargeAmount}kWh)`));
+    console.log('🔢 Sorterte stasjoner med tilgjengelighet:', sortedStations.length);
+    console.log('🔢 Sorterte stasjoner (første 3):', sortedStations.slice(0, 3).map(s => `${s.name} (${((s as any).routeDistance || 0).toFixed(1)}km fra start, ${s.fastCharger ? 'Hurtig' : 'Vanlig'}, ${s.available}/${s.total} ledig, ${s.chargeAmount}kWh)`));
 
     // Simuler reise og finn alle nødvendige ladingstopp
     const lowBatteryThreshold = 15; // Anbefal lading når batteriet kommer under 15%
@@ -335,7 +337,10 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     console.log('📏 Total rutedistanse:', routeDistance, 'km');
     console.log('🎯 Faktisk rekkevidde med bil:', actualRange, 'km');
     
-    while (currentPosition < routeDistance) {
+    let loopCounter = 0; // Sikkerhet mot uendelig løkke
+    while (currentPosition < routeDistance && loopCounter < 10) {
+      loopCounter++;
+      console.log(`\n=== LOOP ${loopCounter} ===`);
       // Beregn hvor langt vi kan komme med nåværende batteri
       const maxDistanceWithCurrentBattery = (currentBatteryLevel / 100) * actualRange;
       const remainingDistance = routeDistance - currentPosition;
@@ -351,6 +356,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       }
       
       // Vi trenger lading - finn nærmeste tilgjengelige stasjon vi kan nå
+      console.log(`🔍 Leter etter tilgjengelige stasjoner fra posisjon ${currentPosition.toFixed(1)}km...`);
       const reachableStations = sortedStations.filter(station => {
         const stationDistance = (station as any).routeDistance;
         const distanceToStation = stationDistance - currentPosition;
@@ -363,6 +369,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         return canReachStation && isAheadOnRoute && station.available > 0;
       });
       
+      console.log(`📊 Fant ${reachableStations.length} tilgjengelige stasjoner innen rekkevidde`);
       if (reachableStations.length === 0) {
         console.log('❌ Ingen tilgjengelige ladestasjoner innen rekkevidde!');
         // I stedet for å stoppe, finn den nærmeste stasjonen fremover og legg til et kritisk stopp
