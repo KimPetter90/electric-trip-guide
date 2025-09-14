@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Zap, Clock, DollarSign, MapPin, AlertCircle, Route, Thermometer, Wind, Car, Battery, TrendingUp, Navigation } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -101,6 +102,7 @@ interface RouteMapProps {
 }
 
 export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMapProps) {
+  const { toast } = useToast();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [loading, setLoading] = useState(true);
@@ -268,8 +270,26 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
       if (reachableStations.length === 0) {
         console.log('❌ Ingen reachable stasjoner funnet!');
-        // Emergency: velg nærmeste stasjon
+        
+        // Sjekk om vi kan nå første stasjon i det hele tatt
         if (sortedStations.length > 0) {
+          const firstStation = sortedStations[0];
+          const distanceToFirst = (firstStation as any).routeDistance;
+          
+          if (distanceToFirst > rangeLeft && distanceCovered === 0) {
+            // Kan ikke nå første stasjon fra start - vis varsel
+            console.log('🚨 Kan ikke nå første ladestasjon! Anbefaler lading hjemme');
+            return [{
+              ...firstStation,
+              distance: distanceToFirst,
+              arrivalBattery: 0,
+              departureBattery: 0,
+              isRequired: true,
+              needsHomeCharging: true
+            } as any];
+          }
+          
+          // Emergency: velg nærmeste stasjon
           const emergency = sortedStations[0];
           console.log('🚨 Nødløsning: bruker', emergency.name);
           const stationDistance = (emergency as any).routeDistance;
@@ -563,6 +583,15 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         console.log('Optimaliserer ladestasjoner...');
         const optimizedStations = optimizeChargingStations(distance, route.geometry);
         setOptimizedStations(optimizedStations);
+        
+        // Sjekk om brukeren trenger å lade hjemme
+        if (optimizedStations.length > 0 && (optimizedStations[0] as any).needsHomeCharging) {
+          toast({
+            title: "⚡ Lade hjemme anbefales",
+            description: `Med ${routeData.batteryPercentage}% batteri kan du ikke nå første ladestasjon. Vi anbefaler å lade til minst 80% hjemme før avreise.`,
+            variant: "destructive",
+          });
+        }
         
         console.log('Beregner analyse...');
         const analysis = calculateTripAnalysis(distance, optimizedStations);
