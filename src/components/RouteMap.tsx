@@ -836,12 +836,10 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         
         <div 
           ref={mapContainer} 
-          className="w-full h-96 rounded-lg border-2 border-primary shadow-lg"
+          className="w-full h-96 rounded-lg border-2 border-primary shadow-lg relative"
           style={{ 
             minHeight: '400px',
-            maxHeight: '600px',
-            position: 'relative',
-            zIndex: 1
+            maxHeight: '600px'
           }}
         />
         
@@ -857,17 +855,24 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="analysis" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Analyse
-          </TabsTrigger>
-          <TabsTrigger value="stations" className="flex items-center gap-2">
-            <Zap className="h-4 w-4" />
-            Ladestasjoner
-          </TabsTrigger>
-        </TabsList>
+      {/* Analyse og ladestasjoner */}
+      <div className="w-full mt-6">
+        <div className="flex items-center gap-2 mb-4">
+          <TrendingUp className="h-5 w-5 text-primary" />
+          <h4 className="text-lg font-semibold text-foreground">Ruteanalyse</h4>
+        </div>
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="analysis" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Analyse
+            </TabsTrigger>
+            <TabsTrigger value="stations" className="flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              Ladestasjoner
+            </TabsTrigger>
+          </TabsList>
 
         <TabsContent value="analysis" className="space-y-4">
           {routeAnalysis && (
@@ -1059,7 +1064,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
             )}
           </div>
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
     </div>
   );
 }
