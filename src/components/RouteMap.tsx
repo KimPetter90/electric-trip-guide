@@ -251,7 +251,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
             ...emergency,
             distance: stationDistance,
             arrivalBattery,
-            departureBattery: Math.min(90, arrivalBattery + emergency.chargeAmount),
+            departureBattery: Math.min(80, arrivalBattery + emergency.chargeAmount), // Maksimalt 80%
             isRequired: true
           } as any);
         }
@@ -263,11 +263,12 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       const stationDistance = (bestStation as any).routeDistance;
       const batteryUsed = ((stationDistance - distanceCovered) / actualRange) * 100;
       const arrivalBattery = Math.max(5, currentBattery_remaining - batteryUsed);
-      const departureBattery = Math.min(90, arrivalBattery + bestStation.chargeAmount);
+      const departureBattery = Math.min(80, arrivalBattery + bestStation.chargeAmount); // Maksimalt 80%
 
       console.log(`📍 Velger stasjon: ${bestStation.name} på ${stationDistance.toFixed(1)}km`);
       console.log(`   Ankomst batteri: ${arrivalBattery.toFixed(1)}%`);
-      console.log(`   Avgang batteri: ${departureBattery.toFixed(1)}%`);
+      console.log(`   Avgang batteri: ${departureBattery.toFixed(1)}% (maks 80%)`);
+      console.log(`   Ladetid: ${bestStation.chargeTime} min for ${(departureBattery - arrivalBattery).toFixed(1)}% lading`);
 
       requiredStations.push({
         ...bestStation,
