@@ -430,9 +430,24 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         
         <div 
           ref={mapRef} 
-          className={`w-full h-96 rounded-lg border shadow-sm ${loading ? 'hidden' : ''}`}
-          style={{ minHeight: '400px' }}
+          className="w-full h-96 rounded-lg border-2 border-primary shadow-lg bg-gray-100"
+          style={{ 
+            minHeight: '400px',
+            maxHeight: '600px',
+            position: 'relative',
+            zIndex: 1
+          }}
         />
+        
+        {/* Debug info */}
+        <Card className="p-4 bg-blue-50">
+          <p className="text-sm">
+            <strong>Debug:</strong> 
+            Kart lastet: {!loading ? '✅' : '❌'}, 
+            Markører: {markers.length}, 
+            Ladestasjoner: {optimizedStations.length}
+          </p>
+        </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
