@@ -670,10 +670,16 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
   // Effekt for rute-oppdatering
   useEffect(() => {
+    console.log('RouteData endret:', routeData);
+    console.log('SelectedCar:', selectedCar?.model);
+    console.log('MapboxToken:', !!mapboxToken);
+    console.log('Map ready:', !!map.current);
+    
     if (map.current && routeData.from && routeData.to && selectedCar && mapboxToken) {
+      console.log('🔄 Oppdaterer rute på grunn av endring i data...');
       updateMapRoute();
     }
-  }, [map.current, routeData, selectedCar, mapboxToken]);
+  }, [routeData.from, routeData.to, routeData.batteryPercentage, routeData.trailerWeight, selectedCar?.id, mapboxToken]);
 
   if (!isVisible) return null;
 
