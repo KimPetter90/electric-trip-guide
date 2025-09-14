@@ -28,7 +28,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
   };
 
   return (
-    <Card className="p-6 bg-glass-bg backdrop-blur-sm border-glass-border shadow-glow">
+    <Card className="p-6 bg-card/80 backdrop-blur-sm border-border shadow-lg">
       <div className="flex items-center gap-2 mb-4">
         <Route className="h-5 w-5 text-primary animate-glow-pulse" />
         <h3 className="text-lg font-semibold text-foreground">Planlegg rute</h3>
