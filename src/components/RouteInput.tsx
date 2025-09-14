@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 interface RouteData {
   from: string;
   to: string;
+  via?: string;
   trailerWeight: number;
   batteryPercentage: number;
   travelDate?: Date;
@@ -65,6 +66,20 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
               placeholder="Bergen"
               value={routeData.to}
               onChange={(e) => handleInputChange('to', e.target.value)}
+              className="bg-background/50 border-border focus:border-primary focus:shadow-lg"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="via" className="flex items-center gap-2">
+              <MapPin className="h-3 w-3" />
+              Via (valgfritt)
+            </Label>
+            <Input
+              id="via"
+              placeholder="Lillehammer"
+              value={routeData.via || ''}
+              onChange={(e) => handleInputChange('via', e.target.value)}
               className="bg-background/50 border-border focus:border-primary focus:shadow-lg"
             />
           </div>

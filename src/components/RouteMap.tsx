@@ -24,6 +24,7 @@ interface CarModel {
 interface RouteData {
   from: string;
   to: string;
+  via?: string;
   trailerWeight: number;
   batteryPercentage: number;
   travelDate?: Date;
@@ -539,11 +540,13 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
     const fromCity = routeData.from.toLowerCase().trim();
     const toCity = routeData.to.toLowerCase().trim();
+    const viaCity = routeData.via?.toLowerCase().trim();
     
-    console.log('Søker etter koordinater for:', { fromCity, toCity });
+    console.log('Søker etter koordinater for:', { fromCity, toCity, viaCity });
     
     const fromCoords = cityCoordinates[fromCity];
     const toCoords = cityCoordinates[toCity];
+    const viaCoords = viaCity ? cityCoordinates[viaCity] : null;
 
     if (!fromCoords || !toCoords) {
       console.error('Koordinater ikke funnet for byer');
@@ -551,7 +554,13 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       return;
     }
 
-    console.log('Koordinater funnet:', { fromCoords, toCoords });
+    if (viaCity && !viaCoords) {
+      console.error('Koordinater ikke funnet for via-by');
+      setError(`Kunne ikke finne koordinater for via-by: ${viaCity}`);
+      return;
+    }
+
+    console.log('Koordinater funnet:', { fromCoords, toCoords, viaCoords });
 
     // Hent værdata for ruten
     const weather = await fetchWeatherData(fromCoords, toCoords, routeData.travelDate);
@@ -562,8 +571,15 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     try {
       console.log('Henter rute fra Mapbox Directions API...');
       
+      // Bygg rute-URL med via-punkt hvis det er spesifisert
+      let coordinatesString = `${fromCoords.lng},${fromCoords.lat}`;
+      if (viaCoords) {
+        coordinatesString += `;${viaCoords.lng},${viaCoords.lat}`;
+      }
+      coordinatesString += `;${toCoords.lng},${toCoords.lat}`;
+      
       // Bruk høyere oppløsning og flere parametere for mer nøyaktig rute
-      const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${fromCoords.lng},${fromCoords.lat};${toCoords.lng},${toCoords.lat}?geometries=geojson&overview=full&steps=true&continue_straight=true&annotations=duration,distance,speed&access_token=${mapboxToken}`;
+      const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinatesString}?geometries=geojson&overview=full&steps=true&continue_straight=true&annotations=duration,distance,speed&access_token=${mapboxToken}`;
       
       const response = await fetch(directionsUrl);
       const data = await response.json();
@@ -632,7 +648,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           }
         });
 
-        // Legg til start- og sluttpunkt
+        // Legg til start-, via- og sluttpunkt
         const newMarkers: mapboxgl.Marker[] = [];
         
         const startMarker = new mapboxgl.Marker({ color: '#10b981' })
@@ -640,12 +656,24 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           .setPopup(new mapboxgl.Popup().setHTML(`<h4>Start: ${routeData.from}</h4>`))
           .addTo(map.current!);
         
+        newMarkers.push(startMarker);
+        
+        // Legg til via-markør hvis via-punkt er spesifisert
+        if (viaCoords && routeData.via) {
+          const viaMarker = new mapboxgl.Marker({ color: '#f59e0b' })
+            .setLngLat([viaCoords.lng, viaCoords.lat])
+            .setPopup(new mapboxgl.Popup().setHTML(`<h4>Via: ${routeData.via}</h4>`))
+            .addTo(map.current!);
+          
+          newMarkers.push(viaMarker);
+        }
+        
         const endMarker = new mapboxgl.Marker({ color: '#ef4444' })
           .setLngLat([toCoords.lng, toCoords.lat])
           .setPopup(new mapboxgl.Popup().setHTML(`<h4>Mål: ${routeData.to}</h4>`))
           .addTo(map.current!);
         
-        newMarkers.push(startMarker, endMarker);
+        newMarkers.push(endMarker);
         
         console.log('Optimaliserer ladestasjoner...');
         const optimizedStations = optimizeChargingStations(distance, route.geometry);
@@ -747,6 +775,9 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         // Tilpass visningen til ruten
         const bounds = new mapboxgl.LngLatBounds();
         bounds.extend([fromCoords.lng, fromCoords.lat]);
+        if (viaCoords) {
+          bounds.extend([viaCoords.lng, viaCoords.lat]);
+        }
         bounds.extend([toCoords.lng, toCoords.lat]);
         
         optimizedStations.forEach(station => {
@@ -822,7 +853,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         updateMapRoute();
       }, 100);
     }
-  }, [routeData.from, routeData.to, routeData.batteryPercentage, routeData.trailerWeight, selectedCar?.id, mapboxToken]);
+  }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, routeData.trailerWeight, selectedCar?.id, mapboxToken]);
 
   if (!isVisible) return null;
 

@@ -21,6 +21,7 @@ interface CarModel {
 interface RouteData {
   from: string;
   to: string;
+  via?: string;
   trailerWeight: number;
   batteryPercentage: number;
   travelDate?: Date;
@@ -31,6 +32,7 @@ function Index() {
   const [routeData, setRouteData] = useState<RouteData>({
     from: "",
     to: "",
+    via: "",
     trailerWeight: 0,
     batteryPercentage: 80,
     travelDate: undefined
