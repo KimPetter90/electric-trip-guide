@@ -36,12 +36,8 @@ function Index() {
   const [showRoute, setShowRoute] = useState(false);
 
   const handlePlanRoute = () => {
-    console.log('🚀 Plan route clicked:', { selectedCar: !!selectedCar, from: routeData.from, to: routeData.to });
     if (selectedCar && routeData.from && routeData.to) {
-      console.log('✅ Setting showRoute to true');
       setShowRoute(true);
-    } else {
-      console.log('❌ Missing requirements for route planning');
     }
   };
 
@@ -146,7 +142,7 @@ function Index() {
                 </p>
               </Card>
             ) : (
-              <div className="w-full">
+              <div className="space-y-6 animate-float animation-delay-300">
                 <RouteMap 
                   isVisible={showRoute} 
                   routeData={routeData}
