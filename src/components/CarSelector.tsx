@@ -1,8 +1,6 @@
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Zap, Car, Battery, ChevronDown, ChevronUp } from "lucide-react";
+import { Zap, Car, Battery } from "lucide-react";
 
 interface CarModel {
   id: string;
@@ -271,19 +269,6 @@ interface CarSelectorProps {
 }
 
 export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const filteredCars = carModels.filter(car => 
-    car.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    car.model.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleCarSelect = (car: CarModel) => {
-    onCarSelect(car);
-    setIsOpen(false);
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
@@ -291,119 +276,52 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
         <h3 className="text-lg font-semibold text-foreground">Velg elbil</h3>
       </div>
 
-      {/* Dropdown selector */}
-      <div className="relative">
-        <Button
-          variant="outline"
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-full justify-between h-14 px-4 bg-background/50 border-2 border-primary/20 hover:border-primary/40 backdrop-blur-sm"
-        >
-          <div className="flex items-center gap-3">
-            {selectedCar ? (
-              <>
-                <span className="text-2xl">{selectedCar.image}</span>
-                <div className="text-left">
-                  <p className="font-semibold text-foreground">
-                    {selectedCar.brand} {selectedCar.model}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedCar.batteryCapacity} kWh • {selectedCar.range} km rekkevidde
-                  </p>
+      {/* Car grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+        {carModels.map((car) => (
+          <Card
+            key={car.id}
+            className={`p-4 cursor-pointer transition-all duration-200 ${
+              selectedCar?.id === car.id 
+                ? 'ring-2 ring-primary bg-primary/10 border-primary/40 shadow-lg' 
+                : 'bg-card/80 backdrop-blur-sm border-border hover:bg-primary/5 hover:border-primary/30 hover:shadow-md'
+            }`}
+            onClick={() => onCarSelect(car)}
+          >
+            <div className="flex flex-col items-center text-center space-y-3">
+              <span className="text-3xl">{car.image}</span>
+              
+              <div className="space-y-1">
+                <h5 className="font-semibold text-sm text-foreground">
+                  {car.brand}
+                </h5>
+                <p className="text-xs text-muted-foreground font-medium">
+                  {car.model}
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-1 text-xs text-muted-foreground w-full">
+                <div className="flex items-center justify-center gap-1">
+                  <Battery className="h-3 w-3" />
+                  <span>{car.batteryCapacity} kWh</span>
                 </div>
-              </>
-            ) : (
-              <>
-                <Car className="h-6 w-6 text-muted-foreground" />
-                <div className="text-left">
-                  <p className="font-semibold text-foreground">Alle elbiler</p>
-                  <p className="text-sm text-muted-foreground">Klikk for å velge bilmodell</p>
+                <div className="flex items-center justify-center gap-1">
+                  <Zap className="h-3 w-3" />
+                  <span>{car.range} km</span>
                 </div>
-              </>
-            )}
-          </div>
-          {isOpen ? 
-            <ChevronUp className="h-4 w-4 text-muted-foreground" /> : 
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          }
-        </Button>
+                <div className="flex items-center justify-center gap-1">
+                  <Car className="h-3 w-3" />
+                  <span>{car.consumption} kWh/100km</span>
+                </div>
+              </div>
 
-        {/* Dropdown menu */}
-        {isOpen && (
-          <div className="absolute top-full left-0 right-0 z-50 mt-2 bg-background/95 border-2 border-primary/20 rounded-lg shadow-xl backdrop-blur-md">
-            {/* Search */}
-            <div className="p-3 border-b border-primary/10">
-              <input
-                type="text"
-                placeholder="Søk etter bilmerke eller modell..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 bg-background/50 border border-primary/20 rounded-md focus:outline-none focus:border-primary/40 text-foreground placeholder-muted-foreground"
-              />
-            </div>
-
-            {/* Car list */}
-            <div className="max-h-80 overflow-y-auto p-2">
-              {filteredCars.length > 0 ? (
-                <div className="space-y-1">
-                  {filteredCars.map((car) => (
-                    <Card
-                      key={car.id}
-                      className={`p-3 cursor-pointer transition-all duration-200 ${
-                        selectedCar?.id === car.id 
-                          ? 'ring-2 ring-primary bg-primary/10 border-primary/40' 
-                          : 'bg-background/80 border-primary/10 hover:bg-primary/5 hover:border-primary/30'
-                      }`}
-                      onClick={() => handleCarSelect(car)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl">{car.image}</span>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                            <h5 className="font-semibold text-sm text-foreground">
-                              {car.brand} {car.model}
-                            </h5>
-                            {selectedCar?.id === car.id && (
-                              <Badge variant="default" className="text-xs">Valgt</Badge>
-                            )}
-                          </div>
-                          
-                          <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Battery className="h-3 w-3" />
-                              <span>{car.batteryCapacity} kWh</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Zap className="h-3 w-3" />
-                              <span>{car.range} km</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Car className="h-3 w-3" />
-                              <span>{car.consumption} kWh/100km</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-4 text-center text-muted-foreground">
-                  <Car className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Ingen biler funnet</p>
-                </div>
+              {selectedCar?.id === car.id && (
+                <Badge variant="default" className="text-xs animate-pulse-neon">Valgt</Badge>
               )}
             </div>
-          </div>
-        )}
+          </Card>
+        ))}
       </div>
-
-      {/* Close dropdown when clicking outside */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setIsOpen(false)}
-        />
-      )}
 
       {/* Valgt bil info */}
       {selectedCar && (
