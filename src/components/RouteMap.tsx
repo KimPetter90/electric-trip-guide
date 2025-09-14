@@ -215,27 +215,37 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     let distanceCovered = 0;
 
     const sortedStations = stationsNearRoute
-      .filter(station => (station as any).routeDistance > 30) // Ikke for nær start
+      .filter(station => (station as any).routeDistance > 50) // Ikke for nær start (økt fra 30 til 50km)
       .filter(station => station.available > 0) // Bare tilgjengelige stasjoner
+      .filter(station => station.fastCharger || station.chargeAmount >= 45) // Foretrekk hurtigladere eller stasjoner med god lading
       .sort((a, b) => {
         // Prioriter hurtigladere og tilgjengelighet
-        const aScore = (a.fastCharger ? 100 : 0) + (a.available / a.total * 50);
-        const bScore = (b.fastCharger ? 100 : 0) + (b.available / b.total * 50);
+        const aScore = (a.fastCharger ? 100 : 0) + (a.available / a.total * 50) + (a.chargeAmount > 50 ? 20 : 0);
+        const bScore = (b.fastCharger ? 100 : 0) + (b.available / b.total * 50) + (b.chargeAmount > 50 ? 20 : 0);
         if (Math.abs(aScore - bScore) > 10) {
           return bScore - aScore; // Høyere score først
         }
         return (a as any).routeDistance - (b as any).routeDistance; // Så nærmeste
       });
 
-    console.log('Sorterte stasjoner:', sortedStations.map(s => `${s.name} (${((s as any).routeDistance).toFixed(1)}km fra rute-start, ${s.fastCharger ? 'Hurtig' : 'Vanlig'}, ${s.available}/${s.total} ledig)`));
+    console.log('Sorterte stasjoner:', sortedStations.map(s => `${s.name} (${((s as any).routeDistance).toFixed(1)}km fra rute-start, ${s.fastCharger ? 'Hurtig' : 'Vanlig'}, ${s.available}/${s.total} ledig, ${s.chargeAmount}kWh)`));
 
     while (remainingDistance > 0) {
-      const rangeLeft = (actualRange * currentBattery_remaining / 100) * 0.85; // 15% sikkerhetsbuffer
-      console.log(`Batterinivå: ${currentBattery_remaining}%, rekkevidde igjen: ${rangeLeft.toFixed(1)}km, avstand igjen: ${remainingDistance.toFixed(1)}km`);
+      const rangeLeft = (actualRange * currentBattery_remaining / 100) * 0.75; // 25% sikkerhetsbuffer (mindre aggressiv)
+      console.log(`Batterinivå: ${currentBattery_remaining.toFixed(1)}%, rekkevidde igjen: ${rangeLeft.toFixed(1)}km, avstand igjen: ${remainingDistance.toFixed(1)}km`);
       
       if (rangeLeft >= remainingDistance) {
         console.log('✅ Kan nå målet uten mer lading');
         break;
+      }
+
+      // Ikke foreslå lading hvis batteriet er over 50% og vi har mer enn 150km rekkevidde igjen
+      if (currentBattery_remaining > 50 && rangeLeft > 150) {
+        console.log(`⏭️ Hopper over lading - batteriet er fortsatt ${currentBattery_remaining.toFixed(1)}% med ${rangeLeft.toFixed(1)}km rekkevidde`);
+        distanceCovered += Math.min(rangeLeft - 50, remainingDistance / 2); // Hopp fremover, men ikke for langt
+        remainingDistance = routeDistance - distanceCovered;
+        currentBattery_remaining = Math.max(20, currentBattery_remaining - 25); // Simuler batteribruk
+        continue;
       }
 
       // Finn neste stasjon vi kan nå
