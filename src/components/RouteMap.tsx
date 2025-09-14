@@ -889,7 +889,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           }}
         />
         
-        {/* Debug info */}
+        {/* Debug info - HIDDEN for now */}
+        {false && (
         <Card className="p-4 bg-blue-50">
           <p className="text-sm">
             <strong>Debug:</strong> 
@@ -899,6 +900,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
             Token: {mapboxToken ? '✅' : '❌'}
           </p>
         </Card>
+        )}
       </div>
 
       {/* Analyse og ladestasjoner */}
@@ -908,7 +910,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           <h4 className="text-lg font-semibold text-foreground">Ruteanalyse</h4>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full bg-transparent hidden" style={{backgroundColor: 'transparent'}}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full bg-transparent" style={{backgroundColor: 'transparent'}}>
           <TabsList className="grid w-full grid-cols-2 mb-4 !bg-transparent border border-border" style={{backgroundColor: 'transparent'}}>
             <TabsTrigger 
               value="analysis" 
