@@ -182,12 +182,10 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     const currentBattery = routeData.batteryPercentage;
     const maxRange = selectedCar.range;
     
-    // Mer aggressiv hengervekt-påvirkning
-    const trailerImpact = routeData.trailerWeight / 1000 * 0.25; // 25% reduksjon per tonn (økt fra 15%)
-    const weatherImpact = 0.05; // 5% for værforhold
-    const totalImpact = trailerImpact + weatherImpact;
+    // Hengervekt-påvirkning
+    const trailerImpact = routeData.trailerWeight / 1000 * 0.25; // 25% reduksjon per tonn
     
-    const actualRange = maxRange * (1 - totalImpact);
+    const actualRange = maxRange * (1 - trailerImpact);
     const currentRange = (actualRange * currentBattery / 100);
     
     console.log('=== LADEBEREGNING ===');
@@ -195,7 +193,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     console.log('Maks rekkevidde:', maxRange, 'km');
     console.log('Hengervekt:', routeData.trailerWeight, 'kg');
     console.log('Hengervekt-påvirkning:', (trailerImpact * 100).toFixed(1) + '%');
-    console.log('Total påvirkning:', (totalImpact * 100).toFixed(1) + '%');
+    console.log('Hengervekt-påvirkning:', (trailerImpact * 100).toFixed(1) + '%');
     console.log('Faktisk rekkevidde (etter henger/vær):', actualRange.toFixed(1), 'km'); 
     console.log('Nåværende rekkevidde:', currentRange.toFixed(1), 'km');
     console.log('Rute-avstand:', routeDistance, 'km');
