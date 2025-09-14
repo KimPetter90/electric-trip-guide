@@ -274,20 +274,46 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
   // Initialiser kart med Leaflet
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     const initializeMap = async () => {
       try {
+        console.log('Starter kart-initialisering...');
         setLoading(true);
         setError(null);
         
-        // Sjekk at map container eksisterer
-        if (!mapRef.current) {
-          console.error('Map container ikke funnet');
-          setError('Kartcontainer ikke tilgjengelig');
-          setLoading(false);
-          return;
-        }
+        // Vent på at DOM-elementet er tilgjengelig
+        const waitForContainer = () => {
+          return new Promise<HTMLDivElement>((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 50; // 5 sekunder total
+            
+            const checkContainer = () => {
+              attempts++;
+              console.log(`Sjekker kartcontainer, forsøk ${attempts}/${maxAttempts}`);
+              
+              if (mapRef.current) {
+                console.log('Kartcontainer funnet!');
+                resolve(mapRef.current);
+                return;
+              }
+              
+              if (attempts >= maxAttempts) {
+                reject(new Error('Kartcontainer ikke funnet etter maksimum forsøk'));
+                return;
+              }
+              
+              setTimeout(checkContainer, 100);
+            };
+            
+            checkContainer();
+          });
+        };
 
+        const container = await waitForContainer();
+        
         // Importer Leaflet
+        console.log('Importerer Leaflet...');
         const L = await import('leaflet');
         
         // Fikse ikonproblem
@@ -303,11 +329,13 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         if (map && map.remove) {
           try {
             map.remove();
-          } catch (e) {}
+          } catch (e) {
+            console.log('Feil ved fjerning av gammelt kart:', e);
+          }
         }
         
         console.log('Oppretter nytt kart...');
-        const leafletMap = L.map(mapRef.current).setView([60.472, 8.4689], 6);
+        const leafletMap = L.map(container).setView([60.472, 8.4689], 6);
         
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap contributors',
@@ -316,12 +344,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         
         console.log('Kart opprettet suksessfullt');
         setMap(leafletMap);
-        
-        // Vente litt før vi setter loading til false
-        setTimeout(() => {
-          setLoading(false);
-          console.log('Kart ferdig lastet');
-        }, 300);
+        setLoading(false);
+        console.log('Kart ferdig lastet');
         
       } catch (err) {
         console.error('Feil ved kart-initialisering:', err);
@@ -331,16 +355,23 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     };
 
     if (isVisible) {
-      console.log('Starter kart-initialisering...');
-      initializeMap();
+      // Bruk en kort forsinkelse for å sikre at komponenten er fullt rendret
+      timeoutId = setTimeout(() => {
+        initializeMap();
+      }, 100);
     }
     
     return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       cleanupMap();
       if (map && map.remove) {
         try {
           map.remove();
-        } catch (e) {}
+        } catch (e) {
+          console.log('Cleanup error:', e);
+        }
       }
     };
   }, [isVisible]);
