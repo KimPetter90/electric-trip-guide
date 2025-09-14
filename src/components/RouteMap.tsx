@@ -131,14 +131,27 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     return R * c;
   };
 
-  // Intelligent ladestasjonsoptimalisering
+  // Intelligent ladestasjonsoptimalisering med obligatoriske stopp
   const optimizeChargingStations = (routeDistance: number) => {
     if (!selectedCar) return [];
 
-    const currentRange = (selectedCar.range * routeData.batteryPercentage / 100);
-    const rangeWithTrailer = currentRange * (1 - routeData.trailerWeight / 1000 * 0.1);
+    const currentBattery = routeData.batteryPercentage;
+    const maxRange = selectedCar.range;
+    const trailerImpact = routeData.trailerWeight / 1000 * 0.15; // 15% reduksjon per tonn
+    const actualRange = maxRange * (1 - trailerImpact);
+    const currentRange = (actualRange * currentBattery / 100);
     
-    if (rangeWithTrailer >= routeDistance) {
+    console.log('Ladeberegning:', { 
+      currentBattery, 
+      maxRange, 
+      actualRange, 
+      currentRange, 
+      routeDistance,
+      trailerWeight: routeData.trailerWeight 
+    });
+
+    if (currentRange >= routeDistance) {
+      console.log('Ingen lading nødvendig - batteriet holder hele veien');
       return [];
     }
 
@@ -149,30 +162,92 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
     if (!fromCoords || !toCoords) return [];
 
+    // Beregn hvor langt vi kan kjøre med nåværende batteri (med 10% buffer)
+    const safeRange = currentRange * 0.9; // 10% sikkerhetsbuffer
+    const criticalRange = currentRange * 0.95; // 5% buffer for kritisk
+
     const stationsWithDistance = allChargingStations.map(station => {
       const distanceFromStart = getDistance(fromCoords, { lat: station.lat, lng: station.lng });
       const distanceToEnd = getDistance({ lat: station.lat, lng: station.lng }, toCoords);
       return {
         ...station,
         distance: distanceFromStart,
+        distanceToEnd,
         totalRouteDistance: distanceFromStart + distanceToEnd
       };
     });
 
-    const suitableStations = stationsWithDistance
-      .filter(station => station.distance > 50 && station.distance < routeDistance - 50)
-      .sort((a, b) => {
-        const scoreA = (a.fastCharger ? 2 : 1) * a.available / a.total - a.cost / 1000;
-        const scoreB = (b.fastCharger ? 2 : 1) * b.available / b.total - b.cost / 1000;
-        return scoreB - scoreA;
-      })
-      .slice(0, 3);
+    // Sorter stasjoner etter avstand fra start
+    const sortedStations = stationsWithDistance
+      .filter(station => station.distance > 20) // Ikke for nær start
+      .sort((a, b) => a.distance - b.distance);
 
-    return suitableStations.map((station, index) => ({
-      ...station,
-      arrivalBattery: Math.max(10, routeData.batteryPercentage - (station.distance / selectedCar.range * 100)),
-      departureBattery: Math.min(90, (routeData.batteryPercentage - (station.distance / selectedCar.range * 100)) + station.chargeAmount)
-    }));
+    const requiredStations: ChargingStation[] = [];
+    let currentPosition = 0;
+    let remainingBattery = currentBattery;
+    let remainingDistance = routeDistance;
+
+    while (remainingDistance > 0 && currentPosition < routeDistance) {
+      const rangeFromHere = (actualRange * remainingBattery / 100) * 0.9; // Med buffer
+      
+      if (rangeFromHere >= remainingDistance) {
+        // Vi kan nå målet uten mer lading
+        break;
+      }
+
+      // Find neste nødvendige ladestasjon
+      const reachableStations = sortedStations.filter(station => 
+        station.distance > currentPosition && 
+        station.distance <= currentPosition + rangeFromHere &&
+        station.available > 0
+      );
+
+      if (reachableStations.length === 0) {
+        console.warn('Ingen reachable stasjoner funnet!');
+        break;
+      }
+
+      // Velg best stasjon (balanse mellom avstand og kvalitet)
+      const bestStation = reachableStations.reduce((best, station) => {
+        const distanceScore = (rangeFromHere - (station.distance - currentPosition)) / rangeFromHere;
+        const qualityScore = (station.fastCharger ? 1.5 : 1) * (station.available / station.total);
+        const totalScore = distanceScore * 0.6 + qualityScore * 0.4;
+        
+        const bestDistanceScore = (rangeFromHere - (best.distance - currentPosition)) / rangeFromHere;
+        const bestQualityScore = (best.fastCharger ? 1.5 : 1) * (best.available / best.total);
+        const bestTotalScore = bestDistanceScore * 0.6 + bestQualityScore * 0.4;
+        
+        return totalScore > bestTotalScore ? station : best;
+      });
+
+      // Beregn batteristatusen ved ankomst til stasjonen
+      const batteryUsedToStation = ((bestStation.distance - currentPosition) / actualRange) * 100;
+      const arrivalBattery = Math.max(5, remainingBattery - batteryUsedToStation);
+      
+      // Beregn hvor mye vi trenger å lade (til 85% eller nok til å nå neste stasjon/mål)
+      const distanceToDestination = routeDistance - bestStation.distance;
+      const batteryNeededForRest = Math.min(85, (distanceToDestination / actualRange) * 100 * 1.2); // 20% buffer
+      const targetBattery = Math.max(bestStation.chargeAmount, batteryNeededForRest);
+      const departureBattery = Math.min(90, arrivalBattery + targetBattery);
+
+      const stationWithCalculations = {
+        ...bestStation,
+        arrivalBattery,
+        departureBattery,
+        isRequired: true,
+        batteryUsedToHere: batteryUsedToStation
+      };
+
+      requiredStations.push(stationWithCalculations);
+
+      // Oppdater posisjon og batteri for neste iterasjon
+      currentPosition = bestStation.distance;
+      remainingBattery = departureBattery;
+      remainingDistance = routeDistance - currentPosition;
+    }
+
+    console.log('Obligatoriske ladestasjoner funnet:', requiredStations.length);
+    return requiredStations;
   };
 
   // Beregn reiseanalyse
@@ -406,34 +481,62 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         const analysis = calculateTripAnalysis(distance, optimizedStations);
         setRouteAnalysis(analysis);
 
-        // Legg til ladestasjonsmarkører
+        // Legg til ladestasjonsmarkører med tydelig skille mellom obligatoriske og valgfrie
         optimizedStations.forEach((station, index) => {
+          const isRequired = (station as any).isRequired;
+          const arrivalBattery = (station as any).arrivalBattery || 50;
+          
           const el = document.createElement('div');
           el.className = 'charging-marker';
-          el.style.backgroundColor = station.available / station.total > 0.5 ? '#10b981' : 
-                                    station.available > 0 ? '#f59e0b' : '#ef4444';
-          el.style.width = '30px';
-          el.style.height = '30px';
+          
+          if (isRequired) {
+            // Obligatorisk ladestasjon - rød/orange
+            el.style.backgroundColor = arrivalBattery < 20 ? '#ef4444' : '#f59e0b';
+            el.style.border = '3px solid #dc2626';
+            el.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.6)';
+          } else {
+            // Valgfri ladestasjon - grønn/blå
+            el.style.backgroundColor = '#10b981';
+            el.style.border = '2px solid #059669';
+            el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+          }
+          
+          el.style.width = isRequired ? '35px' : '28px';
+          el.style.height = isRequired ? '35px' : '28px';
           el.style.borderRadius = '50%';
           el.style.color = 'white';
           el.style.display = 'flex';
           el.style.alignItems = 'center';
           el.style.justifyContent = 'center';
-          el.style.fontSize = '14px';
+          el.style.fontSize = isRequired ? '16px' : '12px';
           el.style.fontWeight = 'bold';
-          el.style.border = '2px solid white';
-          el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
-          el.textContent = (index + 1).toString();
+          el.style.position = 'relative';
+          
+          // Legg til ikon for obligatoriske stasjoner
+          if (isRequired) {
+            el.innerHTML = `<span style="position: absolute; top: -5px; right: -5px; background: #dc2626; border-radius: 50%; width: 15px; height: 15px; display: flex; align-items: center; justify-content: center; font-size: 10px;">!</span>${index + 1}`;
+          } else {
+            el.textContent = (index + 1).toString();
+          }
 
           const marker = new mapboxgl.Marker(el)
             .setLngLat([station.lng, station.lat])
             .setPopup(new mapboxgl.Popup().setHTML(`
-              <div class="p-2">
-                <h4 class="font-semibold">${station.name}</h4>
-                <p class="text-sm">${station.location}</p>
-                <p class="text-xs">Tilgjengelig: ${station.available}/${station.total}</p>
-                <p class="text-xs">Lading: ${station.chargeAmount} kWh (${station.chargeTime} min)</p>
-                <p class="text-xs">Kostnad: ${station.cost} kr</p>
+              <div class="p-3 max-w-xs">
+                <div class="flex items-center gap-2 mb-2">
+                  <h4 class="font-semibold text-sm">${station.name}</h4>
+                  ${isRequired ? '<span class="bg-red-500 text-white text-xs px-2 py-1 rounded">OBLIGATORISK</span>' : '<span class="bg-green-500 text-white text-xs px-2 py-1 rounded">VALGFRI</span>'}
+                </div>
+                <p class="text-sm text-gray-600 mb-2">${station.location}</p>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <div><strong>Avstand:</strong> ${Math.round(station.distance || 0)} km</div>
+                  <div><strong>Tilgjengelig:</strong> ${station.available}/${station.total}</div>
+                  <div><strong>Ankomst batteri:</strong> ${Math.round(arrivalBattery)}%</div>
+                  <div><strong>Ladetid:</strong> ${station.chargeTime} min</div>
+                  <div><strong>Lading:</strong> ${station.chargeAmount} kWh</div>
+                  <div><strong>Kostnad:</strong> ${station.cost} kr</div>
+                </div>
+                ${isRequired ? '<p class="text-xs text-red-600 mt-2 font-medium">⚠️ Du må lade her for å nå målet</p>' : ''}
               </div>
             `))
             .addTo(map.current!);
@@ -623,49 +726,116 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         <TabsContent value="stations" className="space-y-4">
           <div className="grid gap-4">
             {optimizedStations.length > 0 ? (
-              optimizedStations.map((station, index) => (
-                <Card key={station.id} className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Badge variant={station.fastCharger ? "default" : "secondary"}>
-                          Stopp {index + 1}
-                        </Badge>
-                        <h4 className="font-semibold">{station.name}</h4>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{station.location}</p>
-                      
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p><strong>Distanse:</strong> {Math.round(station.distance || 0)} km</p>
-                          <p><strong>Ladetid:</strong> {station.chargeTime} min</p>
+              <>
+                {/* Vis obligatoriske stasjoner først */}
+                {optimizedStations.filter((station: any) => station.isRequired).length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-lg font-semibold text-red-600 flex items-center gap-2">
+                      ⚠️ Obligatoriske ladestoppler
+                    </h4>
+                    {optimizedStations.filter((station: any) => station.isRequired).map((station, index) => (
+                      <Card key={station.id} className="p-4 border-red-200 bg-red-50">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="destructive">
+                                OBLIGATORISK STOPP {index + 1}
+                              </Badge>
+                              <h4 className="font-semibold">{station.name}</h4>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{station.location}</p>
+                            
+                            <div className="bg-white p-3 rounded border">
+                              <p className="text-sm font-medium text-red-600 mb-2">
+                                Du må lade her - batteriet blir {Math.round((station as any).arrivalBattery || 0)}% ved ankomst
+                              </p>
+                              <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                  <p><strong>Avstand fra start:</strong> {Math.round(station.distance || 0)} km</p>
+                                  <p><strong>Ankomst batteri:</strong> <span className="text-red-600 font-bold">{Math.round((station as any).arrivalBattery || 0)}%</span></p>
+                                </div>
+                                <div>
+                                  <p><strong>Ladetid:</strong> {station.chargeTime} min</p>
+                                  <p><strong>Etter lading:</strong> <span className="text-green-600 font-bold">{Math.round((station as any).departureBattery || 0)}%</span></p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              <Progress 
+                                value={(station.available / station.total) * 100} 
+                                className="flex-1 h-2"
+                              />
+                              <span className="text-xs">
+                                {station.available}/{station.total}
+                              </span>
+                            </div>
+                            
+                            <Badge variant={
+                              station.available / station.total > 0.5 ? "default" : 
+                              station.available > 0 ? "secondary" : "destructive"
+                            }>
+                              {station.fastCharger ? "⚡ Hurtiglader" : "Standard"}
+                            </Badge>
+                          </div>
                         </div>
-                        <div>
-                          <p><strong>Lading:</strong> {station.chargeAmount} kWh</p>
-                          <p><strong>Kostnad:</strong> {station.cost} kr</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <Progress 
-                          value={(station.available / station.total) * 100} 
-                          className="flex-1 h-2"
-                        />
-                        <span className="text-xs">
-                          {station.available}/{station.total}
-                        </span>
-                      </div>
-                      
-                      <Badge variant={
-                        station.available / station.total > 0.5 ? "default" : 
-                        station.available > 0 ? "secondary" : "destructive"
-                      }>
-                        {station.fastCharger ? "⚡ Hurtiglader" : "Standard"}
-                      </Badge>
-                    </div>
+                      </Card>
+                    ))}
                   </div>
-                </Card>
-              ))
+                )}
+                
+                {/* Vis valgfrie stasjoner */}
+                {optimizedStations.filter((station: any) => !(station as any).isRequired).length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-lg font-semibold text-green-600 flex items-center gap-2">
+                      💡 Alternative ladestoppler
+                    </h4>
+                    {optimizedStations.filter((station: any) => !(station as any).isRequired).map((station, index) => (
+                      <Card key={station.id} className="p-4 border-green-200 bg-green-50">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary">
+                                Valgfritt stopp {index + 1}
+                              </Badge>
+                              <h4 className="font-semibold">{station.name}</h4>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{station.location}</p>
+                            
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <p><strong>Distanse:</strong> {Math.round(station.distance || 0)} km</p>
+                                <p><strong>Ladetid:</strong> {station.chargeTime} min</p>
+                              </div>
+                              <div>
+                                <p><strong>Lading:</strong> {station.chargeAmount} kWh</p>
+                                <p><strong>Kostnad:</strong> {station.cost} kr</p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              <Progress 
+                                value={(station.available / station.total) * 100} 
+                                className="flex-1 h-2"
+                              />
+                              <span className="text-xs">
+                                {station.available}/{station.total}
+                              </span>
+                            </div>
+                            
+                            <Badge variant={
+                              station.available / station.total > 0.5 ? "default" : 
+                              station.available > 0 ? "secondary" : "destructive"
+                            }>
+                              {station.fastCharger ? "⚡ Hurtiglader" : "Standard"}
+                            </Badge>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </>
             ) : (
               <Card className="p-8 text-center">
                 <Battery className="h-12 w-12 mx-auto mb-4 text-green-500" />
