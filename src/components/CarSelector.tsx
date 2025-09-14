@@ -1172,12 +1172,14 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
     return acc;
   }, {} as Record<string, CarModel[]>);
 
-  // Get unique brands with their representative images
-  const brands = Object.keys(carsByBrand).map(brand => ({
-    name: brand,
-    count: carsByBrand[brand].length,
-    image: carsByBrand[brand][0].image // Use first car's image as brand representative
-  }));
+  // Get unique brands with their representative images, sorted alphabetically
+  const brands = Object.keys(carsByBrand)
+    .sort() // Sort brands alphabetically
+    .map(brand => ({
+      name: brand,
+      count: carsByBrand[brand].length,
+      image: carsByBrand[brand][0].image // Use first car's image as brand representative
+    }));
 
   const handleBrandSelect = (brandName: string) => {
     setSelectedBrand(brandName);
