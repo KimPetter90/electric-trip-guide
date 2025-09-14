@@ -109,9 +109,6 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   const [routeAnalysis, setRouteAnalysis] = useState<TripAnalysis | null>(null);
   const [optimizedStations, setOptimizedStations] = useState<ChargingStation[]>([]);
   const [activeTab, setActiveTab] = useState("map");
-  const [routingControl, setRoutingControl] = useState<any>(null);
-  const [alternativeRoutes, setAlternativeRoutes] = useState<any[]>([]);
-  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
 
   // Simuler værdata
   const getWeatherData = (): WeatherData => ({
@@ -207,14 +204,6 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         }
       });
       setMarkers([]);
-      
-      if (routingControl && map) {
-        try {
-          map.removeControl(routingControl);
-        } catch (e) {}
-      }
-      setRoutingControl(null);
-      setAlternativeRoutes([]);
     } catch (error) {}
   };
 
@@ -311,7 +300,6 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
       control.on('routesfound', function(e: any) {
         const routes = e.routes;
-        setAlternativeRoutes(routes);
         
         if (routes.length > 0) {
           const mainRoute = routes[0];
@@ -372,7 +360,6 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       });
 
       control.addTo(map);
-      setRoutingControl(control);
 
     } catch (error) {
       console.error('Feil ved rute-oppdatering:', error);
@@ -380,24 +367,28 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     }
   };
 
-  // Effekt for initialisering av kart
+  // Effekt for initialisering av kart - kjører alltid når komponenten blir synlig
   useEffect(() => {
-    if (isVisible && activeTab === "map") {
+    if (isVisible) {
+      console.log('Komponenten er synlig, initialiserer kart...');
       const timer = setTimeout(() => {
         initializeMap();
-      }, 100);
+      }, 200);
       
       return () => {
         clearTimeout(timer);
-        cleanupMap();
-        if (map && map.remove) {
-          try {
-            map.remove();
-          } catch (e) {}
-        }
       };
     }
-  }, [isVisible, activeTab]);
+    
+    return () => {
+      cleanupMap();
+      if (map && map.remove) {
+        try {
+          map.remove();
+        } catch (e) {}
+      }
+    };
+  }, [isVisible]);
 
   // Effekt for rute-oppdatering
   useEffect(() => {
@@ -422,12 +413,24 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         </Alert>
       )}
 
+      {/* Kart-container som alltid er tilgjengelig */}
+      <div className="space-y-4">
+        {loading && (
+          <Card className="p-8 text-center">
+            <div className="animate-spin mx-auto mb-4 w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+            <p className="text-muted-foreground">Laster kart...</p>
+          </Card>
+        )}
+        
+        <div 
+          ref={mapRef} 
+          className={`w-full h-96 rounded-lg border shadow-sm ${loading ? 'hidden' : ''}`}
+          style={{ minHeight: '400px' }}
+        />
+      </div>
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="map" className="flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            Kart
-          </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="analysis" className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
             Analyse
@@ -437,21 +440,6 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
             Ladestasjoner
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="map" className="space-y-4">
-          {loading && (
-            <Card className="p-8 text-center">
-              <div className="animate-spin mx-auto mb-4 w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
-              <p className="text-muted-foreground">Laster kart...</p>
-            </Card>
-          )}
-          
-          <div 
-            ref={mapRef} 
-            className={`w-full h-96 rounded-lg border shadow-sm ${loading ? 'hidden' : ''}`}
-            style={{ minHeight: '400px' }}
-          />
-        </TabsContent>
 
         <TabsContent value="analysis" className="space-y-4">
           {routeAnalysis && (
