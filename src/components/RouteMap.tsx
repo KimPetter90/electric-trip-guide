@@ -238,7 +238,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     console.log('Sorterte stasjoner:', sortedStations.map(s => `${s.name} (${((s as any).routeDistance).toFixed(1)}km fra rute-start, ${s.fastCharger ? 'Hurtig' : 'Vanlig'}, ${s.available}/${s.total} ledig, ${s.chargeAmount}kWh)`));
 
     while (remainingDistance > 0) {
-      const rangeLeft = (actualRange * currentBattery_remaining / 100) * 0.75; // 25% sikkerhetsbuffer
+      const rangeLeft = (actualRange * currentBattery_remaining / 100) * 0.9; // 10% sikkerhetsbuffer
       console.log(`Batterinivå: ${currentBattery_remaining.toFixed(1)}%, rekkevidde igjen: ${rangeLeft.toFixed(1)}km, avstand igjen: ${remainingDistance.toFixed(1)}km`);
       
       if (rangeLeft >= remainingDistance) {
