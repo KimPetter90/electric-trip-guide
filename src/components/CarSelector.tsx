@@ -568,6 +568,303 @@ const carModels: CarModel[] = [
     range: 320,
     consumption: 17.3,
     image: "🚙"
+  },
+  {
+    id: "mg-marvel-r",
+    brand: "MG",
+    model: "Marvel R",
+    batteryCapacity: 70,
+    range: 402,
+    consumption: 18.5,
+    image: "🚙"
+  },
+
+  // Mazda
+  {
+    id: "mazda-mx30",
+    brand: "Mazda",
+    model: "MX-30",
+    batteryCapacity: 35.5,
+    range: 200,
+    consumption: 19.0,
+    image: "🚙"
+  },
+
+  // Citroën
+  {
+    id: "citroen-ec4",
+    brand: "Citroën",
+    model: "ë-C4",
+    batteryCapacity: 54,
+    range: 350,
+    consumption: 16.3,
+    image: "🚗"
+  },
+  {
+    id: "citroen-berlingo",
+    brand: "Citroën",
+    model: "ë-Berlingo",
+    batteryCapacity: 50,
+    range: 280,
+    consumption: 19.1,
+    image: "🚐"
+  },
+
+  // Peugeot
+  {
+    id: "peugeot-e208",
+    brand: "Peugeot",
+    model: "e-208",
+    batteryCapacity: 50,
+    range: 362,
+    consumption: 15.9,
+    image: "🚗"
+  },
+  {
+    id: "peugeot-e2008",
+    brand: "Peugeot",
+    model: "e-2008",
+    batteryCapacity: 54,
+    range: 345,
+    consumption: 17.0,
+    image: "🚙"
+  },
+  {
+    id: "peugeot-e3008",
+    brand: "Peugeot",
+    model: "e-3008",
+    batteryCapacity: 73,
+    range: 525,
+    consumption: 15.6,
+    image: "🚙"
+  },
+
+  // Opel
+  {
+    id: "opel-corsa-e",
+    brand: "Opel",
+    model: "Corsa-e",
+    batteryCapacity: 50,
+    range: 359,
+    consumption: 16.0,
+    image: "🚗"
+  },
+  {
+    id: "opel-mokka-e",
+    brand: "Opel",
+    model: "Mokka-e",
+    batteryCapacity: 54,
+    range: 338,
+    consumption: 17.2,
+    image: "🚙"
+  },
+
+  // Renault
+  {
+    id: "renault-zoe",
+    brand: "Renault",
+    model: "ZOE",
+    batteryCapacity: 52,
+    range: 395,
+    consumption: 14.8,
+    image: "🚗"
+  },
+  {
+    id: "renault-megane-e-tech",
+    brand: "Renault",
+    model: "Megane E-TECH",
+    batteryCapacity: 60,
+    range: 450,
+    consumption: 15.8,
+    image: "🚗"
+  },
+  {
+    id: "renault-scenic-e-tech",
+    brand: "Renault",
+    model: "Scenic E-TECH",
+    batteryCapacity: 87,
+    range: 625,
+    consumption: 15.8,
+    image: "🚙"
+  },
+
+  // Dacia
+  {
+    id: "dacia-spring",
+    brand: "Dacia",
+    model: "Spring",
+    batteryCapacity: 26.8,
+    range: 230,
+    consumption: 13.9,
+    image: "🚗"
+  },
+
+  // Fiat
+  {
+    id: "fiat-500e",
+    brand: "Fiat",
+    model: "500e",
+    batteryCapacity: 42,
+    range: 320,
+    consumption: 14.9,
+    image: "🚗"
+  },
+
+  // MINI
+  {
+    id: "mini-cooper-se",
+    brand: "MINI",
+    model: "Cooper SE",
+    batteryCapacity: 32.6,
+    range: 234,
+    consumption: 15.2,
+    image: "🚗"
+  },
+  {
+    id: "mini-countryman-se",
+    brand: "MINI",
+    model: "Countryman SE",
+    batteryCapacity: 66.45,
+    range: 462,
+    consumption: 16.0,
+    image: "🚙"
+  },
+
+  // DS
+  {
+    id: "ds-3-crossback",
+    brand: "DS",
+    model: "3 Crossback E-Tense",
+    batteryCapacity: 50,
+    range: 320,
+    consumption: 16.7,
+    image: "🚙"
+  },
+
+  // Smart
+  {
+    id: "smart-eq-fortwo",
+    brand: "Smart",
+    model: "EQfortwo",
+    batteryCapacity: 17.6,
+    range: 159,
+    consumption: 13.1,
+    image: "🚗"
+  },
+  {
+    id: "smart-1",
+    brand: "Smart",
+    model: "#1",
+    batteryCapacity: 66,
+    range: 440,
+    consumption: 16.7,
+    image: "🚙"
+  },
+
+  // Xpeng
+  {
+    id: "xpeng-p7",
+    brand: "XPeng",
+    model: "P7",
+    batteryCapacity: 80.9,
+    range: 706,
+    consumption: 13.8,
+    image: "🚗"
+  },
+  {
+    id: "xpeng-g9",
+    brand: "XPeng",
+    model: "G9",
+    batteryCapacity: 98,
+    range: 570,
+    consumption: 18.3,
+    image: "🚙"
+  },
+
+  // NIO
+  {
+    id: "nio-et7",
+    brand: "NIO",
+    model: "ET7",
+    batteryCapacity: 100,
+    range: 580,
+    consumption: 17.2,
+    image: "🚗"
+  },
+  {
+    id: "nio-es8",
+    brand: "NIO",
+    model: "ES8",
+    batteryCapacity: 100,
+    range: 500,
+    consumption: 21.4,
+    image: "🚙"
+  },
+
+  // Aiways
+  {
+    id: "aiways-u5",
+    brand: "Aiways",
+    model: "U5",
+    batteryCapacity: 63,
+    range: 410,
+    consumption: 16.7,
+    image: "🚙"
+  },
+
+  // ORA
+  {
+    id: "ora-funky-cat",
+    brand: "ORA",
+    model: "Funky Cat",
+    batteryCapacity: 63,
+    range: 420,
+    consumption: 16.0,
+    image: "🚗"
+  },
+
+  // Alpine
+  {
+    id: "alpine-a290",
+    brand: "Alpine",
+    model: "A290",
+    batteryCapacity: 52,
+    range: 380,
+    consumption: 15.4,
+    image: "🚗"
+  },
+
+  // Lexus
+  {
+    id: "lexus-ux300e",
+    brand: "Lexus",
+    model: "UX 300e",
+    batteryCapacity: 72.8,
+    range: 450,
+    consumption: 17.1,
+    image: "🚙"
+  },
+
+  // Toyota
+  {
+    id: "toyota-bz4x",
+    brand: "Toyota",
+    model: "bZ4X",
+    batteryCapacity: 71.4,
+    range: 516,
+    consumption: 14.4,
+    image: "🚙"
+  },
+
+  // Subaru
+  {
+    id: "subaru-solterra",
+    brand: "Subaru",
+    model: "Solterra",
+    batteryCapacity: 71.4,
+    range: 466,
+    consumption: 16.9,
+    image: "🚙"
   }
 ];
 
@@ -648,6 +945,24 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
                     {brand === 'Jaguar' && '🐆'}
                     {brand === 'Fisker' && '🌊'}
                     {brand === 'MG' && '🎯'}
+                    {brand === 'Mazda' && '🔴'}
+                    {brand === 'Citroën' && '🔵'}
+                    {brand === 'Peugeot' && '🦁'}
+                    {brand === 'Opel' && '⚡'}
+                    {brand === 'Renault' && '💎'}
+                    {brand === 'Dacia' && '🔶'}
+                    {brand === 'Fiat' && '🇮🇹'}
+                    {brand === 'MINI' && '🎯'}
+                    {brand === 'DS' && '💫'}
+                    {brand === 'Smart' && '🤖'}
+                    {brand === 'XPeng' && '🚀'}
+                    {brand === 'NIO' && '🌐'}
+                    {brand === 'Aiways' && '🌊'}
+                    {brand === 'ORA' && '😸'}
+                    {brand === 'Alpine' && '🏔️'}
+                    {brand === 'Lexus' && '⭐'}
+                    {brand === 'Toyota' && '🔺'}
+                    {brand === 'Subaru' && '⭐'}
                   </div>
                   <div className="text-left">
                     <h4 className="font-semibold text-foreground">{brand}</h4>
