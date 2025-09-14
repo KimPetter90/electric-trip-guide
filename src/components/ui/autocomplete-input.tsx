@@ -26,12 +26,14 @@ export function AutocompleteInput({
   const listRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
-    if (value.length > 0) {
-      const filtered = suggestions.filter(suggestion =>
-        suggestion.toLowerCase().includes(value.toLowerCase())
-      );
+    if (value.length >= 1) { // Show suggestions after just 1 character
+      const filtered = suggestions
+        .filter(suggestion =>
+          suggestion.toLowerCase().startsWith(value.toLowerCase()) // Use startsWith for faster matching
+        )
+        .slice(0, 8); // Limit to 8 suggestions for better performance
       setFilteredSuggestions(filtered);
-      setIsOpen(filtered.length > 0);
+      setIsOpen(filtered.length > 0 && value.length > 0);
       setHighlightedIndex(-1);
     } else {
       setFilteredSuggestions([]);
@@ -103,22 +105,34 @@ export function AutocompleteInput({
       {isOpen && filteredSuggestions.length > 0 && (
         <ul
           ref={listRef}
-          className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto"
+          className="absolute z-[100] w-full mt-1 bg-background/95 backdrop-blur-sm border border-border rounded-md shadow-xl max-h-48 overflow-auto"
         >
-          {filteredSuggestions.map((suggestion, index) => (
-            <li
-              key={suggestion}
-              className={cn(
-                "px-3 py-2 cursor-pointer text-sm capitalize",
-                index === highlightedIndex
-                  ? "bg-primary/10 text-primary"
-                  : "hover:bg-muted text-foreground"
-              )}
-              onClick={() => handleSuggestionClick(suggestion)}
-            >
-              {suggestion}
-            </li>
-          ))}
+          {filteredSuggestions.map((suggestion, index) => {
+            // Highlight matching part
+            const matchIndex = suggestion.toLowerCase().indexOf(value.toLowerCase());
+            const beforeMatch = suggestion.substring(0, matchIndex);
+            const match = suggestion.substring(matchIndex, matchIndex + value.length);
+            const afterMatch = suggestion.substring(matchIndex + value.length);
+            
+            return (
+              <li
+                key={suggestion}
+                className={cn(
+                  "px-3 py-2 cursor-pointer text-sm capitalize transition-colors duration-150",
+                  index === highlightedIndex
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted/80 text-foreground"
+                )}
+                onClick={() => handleSuggestionClick(suggestion)}
+              >
+                <span>
+                  {beforeMatch}
+                  <span className="font-semibold">{match}</span>
+                  {afterMatch}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
