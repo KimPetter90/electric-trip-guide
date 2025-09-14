@@ -181,15 +181,23 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
     const currentBattery = routeData.batteryPercentage;
     const maxRange = selectedCar.range;
-    const trailerImpact = routeData.trailerWeight / 1000 * 0.15; // 15% reduksjon per tonn
-    const actualRange = maxRange * (1 - trailerImpact);
+    
+    // Mer aggressiv hengervekt-påvirkning
+    const trailerImpact = routeData.trailerWeight / 1000 * 0.25; // 25% reduksjon per tonn (økt fra 15%)
+    const weatherImpact = 0.05; // 5% for værforhold
+    const totalImpact = trailerImpact + weatherImpact;
+    
+    const actualRange = maxRange * (1 - totalImpact);
     const currentRange = (actualRange * currentBattery / 100);
     
     console.log('=== LADEBEREGNING ===');
     console.log('Nåværende batteri:', currentBattery + '%');
     console.log('Maks rekkevidde:', maxRange, 'km');
-    console.log('Faktisk rekkevidde (etter henger):', actualRange, 'km'); 
-    console.log('Nåværende rekkevidde:', currentRange, 'km');
+    console.log('Hengervekt:', routeData.trailerWeight, 'kg');
+    console.log('Hengervekt-påvirkning:', (trailerImpact * 100).toFixed(1) + '%');
+    console.log('Total påvirkning:', (totalImpact * 100).toFixed(1) + '%');
+    console.log('Faktisk rekkevidde (etter henger/vær):', actualRange.toFixed(1), 'km'); 
+    console.log('Nåværende rekkevidde:', currentRange.toFixed(1), 'km');
     console.log('Rute-avstand:', routeDistance, 'km');
 
     // Finn stasjoner som ligger langs ruten
@@ -202,6 +210,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     }
 
     console.log('⚠️ Trenger lading! Mangler:', (routeDistance - currentRange).toFixed(1), 'km');
+    console.log('💡 Hengervekt reduserte rekkevidde med:', ((maxRange - actualRange)).toFixed(1), 'km');
 
     if (stationsNearRoute.length === 0) {
       console.log('❌ Ingen stasjoner funnet langs ruten');
@@ -287,6 +296,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       console.log(`📍 Velger stasjon: ${bestStation.name} på ${stationDistance.toFixed(1)}km`);
       console.log(`   Ankomst batteri: ${arrivalBattery.toFixed(1)}%`);
       console.log(`   Avgang batteri: ${departureBattery.toFixed(1)}% (maks 80%)`);
+      console.log(`   Påvirkning av henger: -${((maxRange - actualRange)).toFixed(1)}km rekkevidde`);
       console.log(`   Ladetid: ${bestStation.chargeTime} min for ${(departureBattery - arrivalBattery).toFixed(1)}% lading`);
 
       requiredStations.push({
