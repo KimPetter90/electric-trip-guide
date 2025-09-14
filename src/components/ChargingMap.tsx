@@ -85,7 +85,7 @@ export default function ChargingMap({ isVisible }: ChargingMapProps) {
       {/* Charging Stops */}
       <div className="space-y-3">
         {mockChargingStops.map((stop, index) => (
-          <Card key={stop.id} className="p-4 bg-glass-bg backdrop-blur-sm border-glass-border hover:shadow-neon hover:border-primary/50 transition-all duration-300 animate-float" style={{ animationDelay: `${index * 200}ms` }}>
+          <Card key={stop.id} className="p-4 bg-card/80 backdrop-blur-sm border-border hover:shadow-lg hover:border-primary/50 transition-all duration-300 animate-float" style={{ animationDelay: `${index * 200}ms` }}>
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-gradient-electric text-primary-foreground flex items-center justify-center text-sm font-semibold shadow-neon animate-pulse-neon">
