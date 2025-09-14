@@ -825,220 +825,102 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         </Card>
       </div>
 
-      {/* Analyse og ladestasjoner */}
+      {/* Analyse og ladestasjoner - FORENKLET */}
       <div className="w-full mt-6">
-        <div className="flex items-center gap-2 mb-4">
-          <TrendingUp className="h-5 w-5 text-primary" />
-          <h4 className="text-lg font-semibold text-foreground">Ruteanalyse</h4>
-        </div>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="analysis" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Analyse
-            </TabsTrigger>
-            <TabsTrigger value="stations" className="flex items-center gap-2">
-              <Zap className="h-4 w-4" />
-              Ladestasjoner
-            </TabsTrigger>
-          </TabsList>
-
-        <TabsContent value="analysis" className="space-y-4">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold mb-4">Ruteanalyse</h3>
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            🔧 RUTEANALYSE (Forenklet versjon)
+          </h2>
+          
+          {/* Debug info */}
+          <div className="bg-gray-100 p-4 rounded mb-4 text-sm">
+            <p><strong>Status:</strong></p>
+            <p>• Komponent synlig: {isVisible ? '✅' : '❌'}</p>
+            <p>• Valgt bil: {selectedCar ? `✅ ${selectedCar.brand} ${selectedCar.model}` : '❌'}</p>
+            <p>• Rute: {routeData.from} → {routeData.to}</p>
+            <p>• RouteAnalysis data: {routeAnalysis ? '✅ Lastet' : '❌ Ikke lastet'}</p>
+            <p>• Ladestasjoner: {optimizedStations.length} funnet</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <Card className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Route className="h-4 w-4 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium">Total distanse</p>
-                    <p className="text-2xl font-bold">{(() => {
-                      console.log('🔍 RouteAnalysis status:', { routeAnalysis, hasData: !!routeAnalysis });
-                      return routeAnalysis ? Math.round(routeAnalysis.totalDistance) : '---';
-                    })()} km</p>
-                  </div>
-                </div>
-              </Card>
 
-              <Card className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium">Total tid</p>
-                    <p className="text-2xl font-bold">{routeAnalysis ? Math.round(routeAnalysis.totalTime) : '---'}t</p>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="analysis">📊 Analyse</TabsTrigger>
+              <TabsTrigger value="stations">⚡ Ladestasjoner</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="analysis" className="space-y-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-semibold mb-3">Rutedata</h3>
+                {routeAnalysis ? (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600">Distanse</p>
+                      <p className="text-xl font-bold text-blue-600">{Math.round(routeAnalysis.totalDistance)} km</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600">Tid</p>
+                      <p className="text-xl font-bold text-green-600">{Math.round(routeAnalysis.totalTime)} timer</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600">Kostnad</p>
+                      <p className="text-xl font-bold text-orange-600">{Math.round(routeAnalysis.totalCost)} kr</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600">Effektivitet</p>
+                      <p className="text-xl font-bold text-purple-600">{Math.round(routeAnalysis.efficiency)}%</p>
+                    </div>
                   </div>
-                </div>
-              </Card>
-
-              <Card className="p-4">
-                <div className="flex items-center space-x-2">
-                  <DollarSign className="h-4 w-4 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium">Ladekostnad</p>
-                    <p className="text-2xl font-bold">{routeAnalysis ? Math.round(routeAnalysis.totalCost) : '---'} kr</p>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 text-lg">Venter på ruteberegning...</p>
+                    <p className="text-sm text-gray-400 mt-2">Planlegg en rute for å se analysedata</p>
                   </div>
-                </div>
-              </Card>
+                )}
+              </div>
+            </TabsContent>
 
-              <Card className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Zap className="h-4 w-4 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium">Ladetid</p>
-                    <p className="text-2xl font-bold">{routeAnalysis ? Math.round(routeAnalysis.chargingTime) : '---'} min</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-4">
-                <div className="flex items-center space-x-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium">CO₂ spart</p>
-                    <p className="text-2xl font-bold">{routeAnalysis ? Math.round(routeAnalysis.co2Saved) : '---'} kg</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Battery className="h-4 w-4 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium">Effektivitet</p>
-                    <p className="text-2xl font-bold">{routeAnalysis ? Math.round(routeAnalysis.efficiency) : '---'}%</p>
-                  </div>
-                </div>
-              </Card>
-             </div>
-         </TabsContent>
-
-        <TabsContent value="stations" className="space-y-4">
-          <div className="grid gap-4">
-            {optimizedStations.length > 0 ? (
-              <>
-                {/* Vis obligatoriske stasjoner først */}
-                {optimizedStations.filter((station: any) => station.isRequired).length > 0 && (
+            <TabsContent value="stations" className="space-y-4">
+              <div className="bg-green-50 p-4 rounded-lg">
+                <h3 className="font-semibold mb-3">Ladestasjoner ({optimizedStations.length})</h3>
+                {optimizedStations.length > 0 ? (
                   <div className="space-y-3">
-                    <h4 className="text-lg font-semibold text-red-600 flex items-center gap-2">
-                      ⚠️ Obligatoriske ladestoppler
-                    </h4>
-                    {optimizedStations.filter((station: any) => station.isRequired).map((station, index) => (
-                      <Card key={station.id} className="p-4 border-red-200 bg-red-50">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="destructive">
-                                OBLIGATORISK STOPP {index + 1}
-                              </Badge>
-                              <h4 className="font-semibold">{station.name}</h4>
-                            </div>
-                            <p className="text-sm text-muted-foreground">{station.location}</p>
-                            
-                            <div className="bg-white p-3 rounded border">
-                              <p className="text-sm font-medium text-red-600 mb-2">
-                                Du må lade her - batteriet blir {Math.round((station as any).arrivalBattery || 0)}% ved ankomst
+                    {optimizedStations.map((station, index) => (
+                      <div key={station.id} className="bg-white p-4 rounded border shadow-sm">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium text-lg">{station.name}</p>
+                            <p className="text-sm text-gray-600">{station.location}</p>
+                            <p className="text-sm font-medium mt-1">
+                              {(station as any).isRequired ? 
+                                <span className="text-red-600">⚠️ Obligatorisk stopp</span> : 
+                                <span className="text-green-600">✅ Valgfritt stopp</span>
+                              }
+                            </p>
+                            {(station as any).arrivalBattery && (
+                              <p className="text-sm text-blue-600 mt-1">
+                                Ankomst batteri: {Math.round((station as any).arrivalBattery)}%
                               </p>
-                              <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                  <p><strong>Avstand fra start:</strong> {Math.round(station.distance || 0)} km</p>
-                                  <p><strong>Ankomst batteri:</strong> <span className="text-red-600 font-bold">{Math.round((station as any).arrivalBattery || 0)}%</span></p>
-                                </div>
-                                <div>
-                                  <p><strong>Ladetid:</strong> {station.chargeTime} min</p>
-                                  <p><strong>Etter lading:</strong> <span className="text-green-600 font-bold">{Math.round((station as any).departureBattery || 0)}%</span></p>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <Progress 
-                                value={(station.available / station.total) * 100} 
-                                className="flex-1 h-2"
-                              />
-                              <span className="text-xs">
-                                {station.available}/{station.total}
-                              </span>
-                            </div>
-                            
-                            <Badge variant={
-                              station.available / station.total > 0.5 ? "default" : 
-                              station.available > 0 ? "secondary" : "destructive"
-                            }>
-                              {station.fastCharger ? "⚡ Hurtiglader" : "Standard"}
-                            </Badge>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-blue-600">{station.chargeTime} min</p>
+                            <p className="text-sm text-gray-600">{station.cost} kr</p>
+                            <p className="text-xs text-gray-500">{station.available}/{station.total} ledige</p>
                           </div>
                         </div>
-                      </Card>
+                      </div>
                     ))}
                   </div>
-                )}
-                
-                {/* Vis valgfrie stasjoner */}
-                {optimizedStations.filter((station: any) => !(station as any).isRequired).length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="text-lg font-semibold text-green-600 flex items-center gap-2">
-                      💡 Alternative ladestoppler
-                    </h4>
-                    {optimizedStations.filter((station: any) => !(station as any).isRequired).map((station, index) => (
-                      <Card key={station.id} className="p-4 border-green-200 bg-green-50">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary">
-                                Valgfritt stopp {index + 1}
-                              </Badge>
-                              <h4 className="font-semibold">{station.name}</h4>
-                            </div>
-                            <p className="text-sm text-muted-foreground">{station.location}</p>
-                            
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div>
-                                <p><strong>Distanse:</strong> {Math.round(station.distance || 0)} km</p>
-                                <p><strong>Ladetid:</strong> {station.chargeTime} min</p>
-                              </div>
-                              <div>
-                                <p><strong>Lading:</strong> {station.chargeAmount} kWh</p>
-                                <p><strong>Kostnad:</strong> {station.cost} kr</p>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <Progress 
-                                value={(station.available / station.total) * 100} 
-                                className="flex-1 h-2"
-                              />
-                              <span className="text-xs">
-                                {station.available}/{station.total}
-                              </span>
-                            </div>
-                            
-                            <Badge variant={
-                              station.available / station.total > 0.5 ? "default" : 
-                              station.available > 0 ? "secondary" : "destructive"
-                            }>
-                              {station.fastCharger ? "⚡ Hurtiglader" : "Standard"}
-                            </Badge>
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 text-lg">Ingen ladestasjoner nødvendig</p>
+                    <p className="text-sm text-gray-400 mt-2">Batteriet holder hele veien eller rute ikke beregnet</p>
                   </div>
                 )}
-              </>
-            ) : (
-              <Card className="p-8 text-center">
-                <Battery className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                <h3 className="text-lg font-semibold mb-2">Ingen lading nødvendig!</h3>
-                <p className="text-muted-foreground">
-                  Ditt {routeData.batteryPercentage}% batteri holder hele veien til {routeData.to}.
-                </p>
-              </Card>
-            )}
-          </div>
-        </TabsContent>
-        </Tabs>
+              </div>
+            </TabsContent>
+          </Tabs>
+         </div>
       </div>
     </div>
   );
