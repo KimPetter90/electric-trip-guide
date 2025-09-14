@@ -365,21 +365,34 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       
       if (reachableStations.length === 0) {
         console.log('❌ Ingen tilgjengelige ladestasjoner innen rekkevidde!');
-        // Fallback: returner den nærmeste stasjonen vi fant, selv om vi ikke kan nå den
-        const nearestStation = sortedStations.find(s => (s as any).routeDistance > currentPosition);
-        if (nearestStation) {
-          const arrivalBattery = Math.max(0, currentBatteryLevel - ((nearestStation as any).routeDistance - currentPosition) / actualRange * 100);
-          console.log(`⚠️ FALLBACK: Anbefaler ${nearestStation.name} selv om batteriet blir kritisk lavt (${arrivalBattery.toFixed(1)}%)`);
-          chargingStops.push({
-            ...nearestStation,
-            distance: (nearestStation as any).routeDistance,
-            arrivalBattery,
-            departureBattery: Math.min(80, arrivalBattery + nearestStation.chargeAmount),
-            isRequired: true,
-            isCritical: true
-          });
+        // I stedet for å stoppe, finn den nærmeste stasjonen fremover og legg til et kritisk stopp
+        const futureStations = sortedStations.filter(s => 
+          (s as any).routeDistance > currentPosition && s.available > 0
+        );
+        
+        if (futureStations.length === 0) {
+          console.log('❌ Ingen flere stasjoner funnet på ruten - kan ikke fullføre reisen');
+          break;
         }
-        break;
+        
+        // Ta den nærmeste stasjonen fremover, selv om vi ikke kan nå den
+        const nearestFutureStation = futureStations[0];
+        const arrivalBattery = Math.max(0, currentBatteryLevel - ((nearestFutureStation as any).routeDistance - currentPosition) / actualRange * 100);
+        
+        console.log(`⚠️ KRITISK: Må lade ved ${nearestFutureStation.name} selv om batteriet blir svært lavt (${arrivalBattery.toFixed(1)}%)`);
+        chargingStops.push({
+          ...nearestFutureStation,
+          distance: (nearestFutureStation as any).routeDistance,
+          arrivalBattery,
+          departureBattery: Math.min(80, arrivalBattery + nearestFutureStation.chargeAmount),
+          isRequired: true,
+          isCritical: true
+        });
+        
+        // Oppdater posisjon og batteri for å fortsette fra denne stasjonen
+        currentPosition = (nearestFutureStation as any).routeDistance;
+        currentBatteryLevel = Math.min(80, arrivalBattery + nearestFutureStation.chargeAmount);
+        continue;
       }
       
       // Velg beste stasjon (prioriter hurtiglading, deretter kortest avstand)
