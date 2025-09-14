@@ -6,7 +6,8 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Zap, Clock, DollarSign, MapPin, AlertCircle, Route, Thermometer, Wind, Car, Battery, TrendingUp, Navigation } from "lucide-react";
-import 'leaflet/dist/leaflet.css';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface CarModel {
   id: string;
@@ -100,14 +101,15 @@ interface RouteMapProps {
 }
 
 export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMapProps) {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<any>(null);
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [markers, setMarkers] = useState<any[]>([]);
+  const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
   const [routeAnalysis, setRouteAnalysis] = useState<TripAnalysis | null>(null);
   const [optimizedStations, setOptimizedStations] = useState<ChargingStation[]>([]);
   const [activeTab, setActiveTab] = useState("analysis");
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
 
   // Simuler værdata
   const getWeatherData = (): WeatherData => ({
@@ -194,16 +196,37 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
   // Rydd opp kart
   const cleanupMap = () => {
+    markers.forEach(marker => marker.remove());
+    setMarkers([]);
+    
+    if (map.current && map.current.getSource('route')) {
+      map.current.removeLayer('route');
+      map.current.removeSource('route');
+    }
+  };
+
+  // Hent Mapbox token
+  const fetchMapboxToken = async () => {
     try {
-      markers.forEach(marker => {
-        if (marker && marker.remove) {
-          try {
-            marker.remove();
-          } catch (e) {}
+      const response = await fetch('https://vwmopjkrnjrxkbxsswnb.supabase.co/functions/v1/mapbox-token', {
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3bW9wamtybmpyeGtieHNzd25iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3OTQ0MDgsImV4cCI6MjA3MzM3MDQwOH0.KdDS_tT7LV7HuXN8Nw3dxUU3YRGobsJrkE2esDxgJH8'}`
         }
       });
-      setMarkers([]);
-    } catch (error) {}
+      
+      const data = await response.json();
+      
+      if (data.token) {
+        setMapboxToken(data.token);
+        return data.token;
+      } else {
+        throw new Error(data.error || 'Kunne ikke hente Mapbox token');
+      }
+    } catch (error) {
+      console.error('Feil ved henting av Mapbox token:', error);
+      setError('Kunne ikke hente kart-token. Sjekk at Mapbox token er konfigurert i Supabase secrets.');
+      return null;
+    }
   };
 
   // Initialiser kart
@@ -213,39 +236,29 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       setLoading(true);
       setError(null);
       
-      if (!mapRef.current) {
+      if (!mapContainer.current) {
         throw new Error('Map container ikke tilgjengelig');
       }
 
-      // Importer Leaflet
-      const L = await import('leaflet');
+      const token = await fetchMapboxToken();
+      if (!token) return;
+
+      mapboxgl.accessToken = token;
       
-      // Fikse ikonproblem
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+      console.log('Oppretter nytt Mapbox-kart...');
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [8.4689, 60.472],
+        zoom: 5
       });
 
-      // Rydd opp eksisterende kart
-      cleanupMap();
-      if (map && map.remove) {
-        try {
-          map.remove();
-        } catch (e) {}
-      }
+      map.current.addControl(
+        new mapboxgl.NavigationControl(),
+        'top-right'
+      );
       
-      console.log('Oppretter nytt kart...');
-      const leafletMap = L.map(mapRef.current).setView([60.472, 8.4689], 6);
-      
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
-      }).addTo(leafletMap);
-      
-      console.log('Kart opprettet suksessfullt');
-      setMap(leafletMap);
+      console.log('Mapbox-kart opprettet suksessfullt');
       setLoading(false);
       
     } catch (err) {
@@ -255,12 +268,18 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     }
   };
 
-  // Oppdater rute på kart
+  // Oppdater rute på kart med Mapbox Directions API
   const updateMapRoute = async () => {
     console.log('updateMapRoute startet');
     
-    if (!map || !routeData.from || !routeData.to || !selectedCar) {
-      console.log('Mangler data for rute-oppdatering', { map: !!map, from: routeData.from, to: routeData.to, car: !!selectedCar });
+    if (!map.current || !routeData.from || !routeData.to || !selectedCar || !mapboxToken) {
+      console.log('Mangler data for rute-oppdatering', { 
+        map: !!map.current, 
+        from: routeData.from, 
+        to: routeData.to, 
+        car: !!selectedCar,
+        token: !!mapboxToken
+      });
       return;
     }
 
@@ -283,89 +302,119 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     cleanupMap();
 
     try {
-      console.log('Importerer Leaflet for rute...');
-      const L = await import('leaflet');
+      console.log('Henter rute fra Mapbox Directions API...');
       
-      console.log('Beregner distanse...');
-      // Enklere tilnærming - bruk bare rett linje mellom punkter
-      const distance = getDistance(fromCoords, toCoords);
-      console.log('Distanse beregnet:', distance);
+      const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${fromCoords.lng},${fromCoords.lat};${toCoords.lng},${toCoords.lat}?geometries=geojson&access_token=${mapboxToken}`;
       
-      console.log('Oppretter start-markør...');
-      // Legg til start- og sluttpunkt
-      const startMarker = L.marker([fromCoords.lat, fromCoords.lng])
-        .addTo(map)
-        .bindPopup(`Start: ${routeData.from}`);
+      const response = await fetch(directionsUrl);
+      const data = await response.json();
       
-      console.log('Oppretter slutt-markør...');
-      const endMarker = L.marker([toCoords.lat, toCoords.lng])
-        .addTo(map)
-        .bindPopup(`Mål: ${routeData.to}`);
-      
-      console.log('Tegner rute-linje...');
-      // Tegn linje mellom punktene
-      const routeLine = L.polyline([
-        [fromCoords.lat, fromCoords.lng],
-        [toCoords.lat, toCoords.lng]
-      ], { color: '#3b82f6', weight: 4, opacity: 0.8 }).addTo(map);
-      
-      console.log('Optimaliserer ladestasjoner...');
-      const optimizedStations = optimizeChargingStations(distance);
-      setOptimizedStations(optimizedStations);
-      
-      console.log('Beregner analyse...');
-      const analysis = calculateTripAnalysis(distance, optimizedStations);
-      setRouteAnalysis(analysis);
-
-      console.log('Legger til ladestasjoner...');
-      // Legg til ladestasjonsmarkører
-      const newMarkers: any[] = [startMarker, endMarker, routeLine];
-      
-      optimizedStations.forEach((station, index) => {
-        const availabilityColor = station.available / station.total > 0.5 ? '#10b981' : 
-                                 station.available > 0 ? '#f59e0b' : '#ef4444';
+      if (data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        const distance = route.distance / 1000; // Konverter til km
         
-        const chargingIcon = L.divIcon({
-          html: `<div style="background: ${availabilityColor}; color: white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">${index + 1}</div>`,
-          className: 'custom-marker',
-          iconSize: [35, 35],
-          iconAnchor: [17.5, 17.5]
+        console.log('Rute mottatt fra Mapbox:', { distance, duration: route.duration });
+        
+        // Legg til rute på kartet
+        map.current!.addSource('route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: route.geometry
+          }
         });
 
-        const marker = L.marker([station.lat, station.lng], { icon: chargingIcon })
-          .addTo(map)
-          .bindPopup(`
-            <div class="p-2">
-              <h4 class="font-semibold">${station.name}</h4>
-              <p class="text-sm">${station.location}</p>
-              <p class="text-xs">Tilgjengelig: ${station.available}/${station.total}</p>
-              <p class="text-xs">Lading: ${station.chargeAmount} kWh (${station.chargeTime} min)</p>
-              <p class="text-xs">Kostnad: ${station.cost} kr</p>
-            </div>
-          `);
+        map.current!.addLayer({
+          id: 'route',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#3b82f6',
+            'line-width': 6
+          }
+        });
+
+        // Legg til start- og sluttpunkt
+        const newMarkers: mapboxgl.Marker[] = [];
         
-        newMarkers.push(marker);
-      });
+        const startMarker = new mapboxgl.Marker({ color: '#10b981' })
+          .setLngLat([fromCoords.lng, fromCoords.lat])
+          .setPopup(new mapboxgl.Popup().setHTML(`<h4>Start: ${routeData.from}</h4>`))
+          .addTo(map.current!);
+        
+        const endMarker = new mapboxgl.Marker({ color: '#ef4444' })
+          .setLngLat([toCoords.lng, toCoords.lat])
+          .setPopup(new mapboxgl.Popup().setHTML(`<h4>Mål: ${routeData.to}</h4>`))
+          .addTo(map.current!);
+        
+        newMarkers.push(startMarker, endMarker);
+        
+        console.log('Optimaliserer ladestasjoner...');
+        const optimizedStations = optimizeChargingStations(distance);
+        setOptimizedStations(optimizedStations);
+        
+        console.log('Beregner analyse...');
+        const analysis = calculateTripAnalysis(distance, optimizedStations);
+        setRouteAnalysis(analysis);
 
-      setMarkers(newMarkers);
-      
-      console.log('Tilpasser kart-visning...');
-      if (optimizedStations.length > 0) {
-        const bounds = L.latLngBounds([
-          [fromCoords.lat, fromCoords.lng],
-          [toCoords.lat, toCoords.lng],
-          ...optimizedStations.map(s => [s.lat, s.lng] as [number, number])
-        ]);
-        map.fitBounds(bounds, { padding: [20, 20] });
+        // Legg til ladestasjonsmarkører
+        optimizedStations.forEach((station, index) => {
+          const el = document.createElement('div');
+          el.className = 'charging-marker';
+          el.style.backgroundColor = station.available / station.total > 0.5 ? '#10b981' : 
+                                    station.available > 0 ? '#f59e0b' : '#ef4444';
+          el.style.width = '30px';
+          el.style.height = '30px';
+          el.style.borderRadius = '50%';
+          el.style.color = 'white';
+          el.style.display = 'flex';
+          el.style.alignItems = 'center';
+          el.style.justifyContent = 'center';
+          el.style.fontSize = '14px';
+          el.style.fontWeight = 'bold';
+          el.style.border = '2px solid white';
+          el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+          el.textContent = (index + 1).toString();
+
+          const marker = new mapboxgl.Marker(el)
+            .setLngLat([station.lng, station.lat])
+            .setPopup(new mapboxgl.Popup().setHTML(`
+              <div class="p-2">
+                <h4 class="font-semibold">${station.name}</h4>
+                <p class="text-sm">${station.location}</p>
+                <p class="text-xs">Tilgjengelig: ${station.available}/${station.total}</p>
+                <p class="text-xs">Lading: ${station.chargeAmount} kWh (${station.chargeTime} min)</p>
+                <p class="text-xs">Kostnad: ${station.cost} kr</p>
+              </div>
+            `))
+            .addTo(map.current!);
+          
+          newMarkers.push(marker);
+        });
+
+        setMarkers(newMarkers);
+        
+        // Tilpass visningen til ruten
+        const bounds = new mapboxgl.LngLatBounds();
+        bounds.extend([fromCoords.lng, fromCoords.lat]);
+        bounds.extend([toCoords.lng, toCoords.lat]);
+        
+        optimizedStations.forEach(station => {
+          bounds.extend([station.lng, station.lat]);
+        });
+        
+        map.current!.fitBounds(bounds, { padding: 50 });
+
+        console.log('Rute-oppdatering fullført suksessfullt!');
+        
       } else {
-        const bounds = L.latLngBounds([
-          [fromCoords.lat, fromCoords.lng],
-          [toCoords.lat, toCoords.lng]
-        ]);
-        map.fitBounds(bounds, { padding: [50, 50] });
+        throw new Error('Ingen rute funnet');
       }
-
-      console.log('Rute-oppdatering fullført suksessfullt!');
 
     } catch (error) {
       console.error('Feil ved rute-oppdatering:', error);
@@ -388,20 +437,18 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     
     return () => {
       cleanupMap();
-      if (map && map.remove) {
-        try {
-          map.remove();
-        } catch (e) {}
+      if (map.current) {
+        map.current.remove();
       }
     };
   }, [isVisible]);
 
   // Effekt for rute-oppdatering
   useEffect(() => {
-    if (map && routeData.from && routeData.to && selectedCar) {
+    if (map.current && routeData.from && routeData.to && selectedCar && mapboxToken) {
       updateMapRoute();
     }
-  }, [map, routeData, selectedCar]);
+  }, [map.current, routeData, selectedCar, mapboxToken]);
 
   if (!isVisible) return null;
 
@@ -419,7 +466,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         </Alert>
       )}
 
-      {/* Kart-container som alltid er tilgjengelig */}
+      {/* Kart-container */}
       <div className="space-y-4">
         {loading && (
           <Card className="p-8 text-center">
@@ -429,8 +476,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         )}
         
         <div 
-          ref={mapRef} 
-          className="w-full h-96 rounded-lg border-2 border-primary shadow-lg bg-gray-100"
+          ref={mapContainer} 
+          className="w-full h-96 rounded-lg border-2 border-primary shadow-lg"
           style={{ 
             minHeight: '400px',
             maxHeight: '600px',
@@ -445,7 +492,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
             <strong>Debug:</strong> 
             Kart lastet: {!loading ? '✅' : '❌'}, 
             Markører: {markers.length}, 
-            Ladestasjoner: {optimizedStations.length}
+            Ladestasjoner: {optimizedStations.length},
+            Token: {mapboxToken ? '✅' : '❌'}
           </p>
         </Card>
       </div>
