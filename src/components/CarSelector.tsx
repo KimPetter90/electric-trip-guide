@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Zap, Car, Battery } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Zap, Car, Battery, ArrowLeft } from "lucide-react";
 
 interface CarModel {
   id: string;
@@ -269,61 +271,123 @@ interface CarSelectorProps {
 }
 
 export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorProps) {
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+
+  // Group cars by brand
+  const carsByBrand = carModels.reduce((acc, car) => {
+    if (!acc[car.brand]) {
+      acc[car.brand] = [];
+    }
+    acc[car.brand].push(car);
+    return acc;
+  }, {} as Record<string, CarModel[]>);
+
+  // Get unique brands with their representative images
+  const brands = Object.keys(carsByBrand).map(brand => ({
+    name: brand,
+    count: carsByBrand[brand].length,
+    image: carsByBrand[brand][0].image // Use first car's image as brand representative
+  }));
+
+  const handleBrandSelect = (brandName: string) => {
+    setSelectedBrand(brandName);
+  };
+
+  const handleBackToBrands = () => {
+    setSelectedBrand(null);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
         <Car className="h-5 w-5 text-primary animate-glow-pulse" />
-        <h3 className="text-lg font-semibold text-foreground">Velg elbil</h3>
-      </div>
-
-      {/* Car grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
-        {carModels.map((car) => (
-          <Card
-            key={car.id}
-            className={`p-4 cursor-pointer transition-all duration-200 ${
-              selectedCar?.id === car.id 
-                ? 'ring-2 ring-primary bg-primary/10 border-primary/40 shadow-lg' 
-                : 'bg-card/80 backdrop-blur-sm border-border hover:bg-primary/5 hover:border-primary/30 hover:shadow-md'
-            }`}
-            onClick={() => onCarSelect(car)}
+        <h3 className="text-lg font-semibold text-foreground">
+          {selectedBrand ? `${selectedBrand} modeller` : 'Velg bilmerke'}
+        </h3>
+        {selectedBrand && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleBackToBrands}
+            className="ml-auto"
           >
-            <div className="flex flex-col items-center text-center space-y-3">
-              <span className="text-3xl">{car.image}</span>
-              
-              <div className="space-y-1">
-                <h5 className="font-semibold text-sm text-foreground">
-                  {car.brand}
-                </h5>
-                <p className="text-xs text-muted-foreground font-medium">
-                  {car.model}
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-1 text-xs text-muted-foreground w-full">
-                <div className="flex items-center justify-center gap-1">
-                  <Battery className="h-3 w-3" />
-                  <span>{car.batteryCapacity} kWh</span>
-                </div>
-                <div className="flex items-center justify-center gap-1">
-                  <Zap className="h-3 w-3" />
-                  <span>{car.range} km</span>
-                </div>
-                <div className="flex items-center justify-center gap-1">
-                  <Car className="h-3 w-3" />
-                  <span>{car.consumption} kWh/100km</span>
-                </div>
-              </div>
-
-              {selectedCar?.id === car.id && (
-                <Badge variant="default" className="text-xs animate-pulse-neon">Valgt</Badge>
-              )}
-            </div>
-          </Card>
-        ))}
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Tilbake
+          </Button>
+        )}
       </div>
 
-      {/* Valgt bil info */}
+      {!selectedBrand ? (
+        /* Brand selection */
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {brands.map((brand) => (
+            <Card
+              key={brand.name}
+              className="p-4 cursor-pointer transition-all duration-200 bg-card/80 backdrop-blur-sm border-border hover:bg-primary/5 hover:border-primary/30 hover:shadow-md"
+              onClick={() => handleBrandSelect(brand.name)}
+            >
+              <div className="flex flex-col items-center text-center space-y-3">
+                <span className="text-3xl">{brand.image}</span>
+                
+                <div className="space-y-1">
+                  <h5 className="font-semibold text-sm text-foreground">
+                    {brand.name}
+                  </h5>
+                  <p className="text-xs text-muted-foreground">
+                    {brand.count} modell{brand.count !== 1 ? 'er' : ''}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        /* Model selection for selected brand */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+          {carsByBrand[selectedBrand].map((car) => (
+            <Card
+              key={car.id}
+              className={`p-4 cursor-pointer transition-all duration-200 ${
+                selectedCar?.id === car.id 
+                  ? 'ring-2 ring-primary bg-primary/10 border-primary/40 shadow-lg' 
+                  : 'bg-card/80 backdrop-blur-sm border-border hover:bg-primary/5 hover:border-primary/30 hover:shadow-md'
+              }`}
+              onClick={() => onCarSelect(car)}
+            >
+              <div className="flex flex-col items-center text-center space-y-3">
+                <span className="text-3xl">{car.image}</span>
+                
+                <div className="space-y-1">
+                  <h5 className="font-semibold text-sm text-foreground">
+                    {car.model}
+                  </h5>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-1 text-xs text-muted-foreground w-full">
+                  <div className="flex items-center justify-center gap-1">
+                    <Battery className="h-3 w-3" />
+                    <span>{car.batteryCapacity} kWh</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-1">
+                    <Zap className="h-3 w-3" />
+                    <span>{car.range} km</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-1">
+                    <Car className="h-3 w-3" />
+                    <span>{car.consumption} kWh/100km</span>
+                  </div>
+                </div>
+
+                {selectedCar?.id === car.id && (
+                  <Badge variant="default" className="text-xs animate-pulse-neon">Valgt</Badge>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Selected car info */}
       {selectedCar && (
         <Card className="p-4 bg-primary/10 border-primary/30 shadow-lg">
           <div className="flex items-center gap-3">
