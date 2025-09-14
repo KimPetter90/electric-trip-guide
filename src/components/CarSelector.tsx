@@ -1208,18 +1208,18 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
       </div>
 
       {!selectedBrand ? (
-        /* Brand selection */
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        /* Brand selection - vertical list */
+        <div className="space-y-2 max-h-96 overflow-y-auto">
           {brands.map((brand) => (
             <Card
               key={brand.name}
               className="p-4 cursor-pointer transition-all duration-200 bg-card/80 backdrop-blur-sm border-border hover:bg-primary/5 hover:border-primary/30 hover:shadow-md"
               onClick={() => handleBrandSelect(brand.name)}
             >
-              <div className="flex flex-col items-center text-center space-y-3">
-                <span className="text-3xl">{brand.image}</span>
+              <div className="flex items-center space-x-4">
+                <span className="text-2xl">{brand.image}</span>
                 
-                <div className="space-y-1">
+                <div className="flex-1">
                   <h5 className="font-semibold text-sm text-foreground">
                     {brand.name}
                   </h5>
@@ -1227,13 +1227,15 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
                     {brand.count} modell{brand.count !== 1 ? 'er' : ''}
                   </p>
                 </div>
+                
+                <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180" />
               </div>
             </Card>
           ))}
         </div>
       ) : (
-        /* Model selection for selected brand */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+        /* Model selection for selected brand - vertical list */
+        <div className="space-y-3 max-h-96 overflow-y-auto">
           {carsByBrand[selectedBrand].map((car) => (
             <Card
               key={car.id}
@@ -1244,27 +1246,27 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
               }`}
               onClick={() => onCarSelect(car)}
             >
-              <div className="flex flex-col items-center text-center space-y-3">
-                <span className="text-3xl">{car.image}</span>
+              <div className="flex items-center space-x-4">
+                <span className="text-2xl">{car.image}</span>
                 
-                <div className="space-y-1">
+                <div className="flex-1">
                   <h5 className="font-semibold text-sm text-foreground">
                     {car.model}
                   </h5>
-                </div>
-                
-                <div className="grid grid-cols-1 gap-1 text-xs text-muted-foreground w-full">
-                  <div className="flex items-center justify-center gap-1">
-                    <Battery className="h-3 w-3" />
-                    <span>{car.batteryCapacity} kWh</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-1">
-                    <Zap className="h-3 w-3" />
-                    <span>{car.range} km</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-1">
-                    <Car className="h-3 w-3" />
-                    <span>{car.consumption} kWh/100km</span>
+                  
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                    <div className="flex items-center gap-1">
+                      <Battery className="h-3 w-3" />
+                      <span>{car.batteryCapacity} kWh</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Zap className="h-3 w-3" />
+                      <span>{car.range} km</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Car className="h-3 w-3" />
+                      <span>{car.consumption} kWh/100km</span>
+                    </div>
                   </div>
                 </div>
 
