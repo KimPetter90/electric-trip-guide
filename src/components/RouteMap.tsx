@@ -282,36 +282,17 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         setLoading(true);
         setError(null);
         
-        // Vent på at DOM-elementet er tilgjengelig
-        const waitForContainer = () => {
-          return new Promise<HTMLDivElement>((resolve, reject) => {
-            let attempts = 0;
-            const maxAttempts = 50; // 5 sekunder total
-            
-            const checkContainer = () => {
-              attempts++;
-              console.log(`Sjekker kartcontainer, forsøk ${attempts}/${maxAttempts}`);
-              
-              if (mapRef.current) {
-                console.log('Kartcontainer funnet!');
-                resolve(mapRef.current);
-                return;
-              }
-              
-              if (attempts >= maxAttempts) {
-                reject(new Error('Kartcontainer ikke funnet etter maksimum forsøk'));
-                return;
-              }
-              
-              setTimeout(checkContainer, 100);
-            };
-            
-            checkContainer();
-          });
-        };
-
-        const container = await waitForContainer();
+        // Vent litt ekstra for å sikre at DOM er klar
+        await new Promise(resolve => setTimeout(resolve, 200));
         
+        // Sjekk at container finnes
+        if (!mapRef.current) {
+          console.error('Kartcontainer ikke tilgjengelig');
+          setError('Kartcontainer ikke tilgjengelig');
+          setLoading(false);
+          return;
+        }
+
         // Importer Leaflet
         console.log('Importerer Leaflet...');
         const L = await import('leaflet');
@@ -335,7 +316,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         }
         
         console.log('Oppretter nytt kart...');
-        const leafletMap = L.map(container).setView([60.472, 8.4689], 6);
+        const leafletMap = L.map(mapRef.current).setView([60.472, 8.4689], 6);
         
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap contributors',
@@ -354,11 +335,12 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       }
     };
 
-    if (isVisible) {
-      // Bruk en kort forsinkelse for å sikre at komponenten er fullt rendret
+    if (isVisible && activeTab === "map") {
+      console.log('Initialiserer kart for map tab');
+      // Bruk en kort forsinkelse for å sikre at TabsContent er rendret
       timeoutId = setTimeout(() => {
         initializeMap();
-      }, 100);
+      }, 300);
     }
     
     return () => {
@@ -374,7 +356,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         }
       }
     };
-  }, [isVisible]);
+  }, [isVisible, activeTab]);
 
   // Oppdater kart når ruteinformasjon endres
   useEffect(() => {
