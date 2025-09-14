@@ -258,9 +258,12 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       // Finn neste stasjon vi kan nå
       const reachableStations = sortedStations.filter(station => {
         const stationDistance = (station as any).routeDistance;
-        return stationDistance > distanceCovered && 
-               (stationDistance - distanceCovered) <= rangeLeft &&
+        const distanceToStation = stationDistance - distanceCovered;
+        const canReach = stationDistance > distanceCovered && 
+               distanceToStation <= rangeLeft &&
                station.available > 0;
+        console.log(`🔍 Sjekker ${station.name}: ${distanceToStation.toFixed(1)}km unna, kan nå: ${canReach} (range: ${rangeLeft.toFixed(1)}km)`);
+        return canReach;
       });
 
       if (reachableStations.length === 0) {
