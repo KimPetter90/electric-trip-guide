@@ -5,7 +5,8 @@ import CarSelector from "@/components/CarSelector";
 import RouteInput from "@/components/RouteInput";
 import ChargingMap from "@/components/ChargingMap";
 import RouteMap from "@/components/RouteMap";
-import { Zap, Route, MapPin, Car } from "lucide-react";
+import TestApp from "@/components/TestApp";
+import { Zap, Route, MapPin, Car, TestTube } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 
 interface CarModel {
@@ -34,12 +35,17 @@ function Index() {
     batteryPercentage: 80
   });
   const [showRoute, setShowRoute] = useState(false);
+  const [showTestApp, setShowTestApp] = useState(false);
 
   const handlePlanRoute = () => {
     if (selectedCar && routeData.from && routeData.to) {
       setShowRoute(true);
     }
   };
+
+  if (showTestApp) {
+    return <TestApp />;
+  }
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -96,6 +102,16 @@ function Index() {
                 <MapPin className="h-5 w-5 text-accent" />
                 <span>Sanntids data</span>
               </div>
+            </div>
+            <div className="mt-8">
+              <Button 
+                onClick={() => setShowTestApp(true)}
+                variant="outline"
+                className="bg-card/80 backdrop-blur-sm border-primary/40 hover:bg-primary/10"
+              >
+                <TestTube className="h-4 w-4 mr-2" />
+                Test App Versjon
+              </Button>
             </div>
           </div>
         </div>
