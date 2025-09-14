@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Zap, Clock, DollarSign, MapPin, AlertCircle, Route, Thermometer, Wind, Car, Battery, TrendingUp, Navigation } from "lucide-react";
 import 'leaflet/dist/leaflet.css';
-import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 
 interface CarModel {
   id: string;
@@ -108,7 +107,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   const [markers, setMarkers] = useState<any[]>([]);
   const [routeAnalysis, setRouteAnalysis] = useState<TripAnalysis | null>(null);
   const [optimizedStations, setOptimizedStations] = useState<ChargingStation[]>([]);
-  const [activeTab, setActiveTab] = useState("map");
+  const [activeTab, setActiveTab] = useState("analysis");
 
   // Simuler værdata
   const getWeatherData = (): WeatherData => ({
@@ -277,89 +276,76 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
     try {
       const L = await import('leaflet');
-      const LRM = await import('leaflet-routing-machine');
       
-      const control = (LRM as any).control({
-        waypoints: [
-          L.latLng(fromCoords.lat, fromCoords.lng),
-          L.latLng(toCoords.lat, toCoords.lng)
-        ],
-        router: (LRM as any).osrmv1({
-          serviceUrl: 'https://router.project-osrm.org/route/v1',
-          profile: 'driving'
-        }),
-        routeWhileDragging: false,
-        addWaypoints: false,
-        createMarker: function() { return null; },
-        lineOptions: {
-          styles: [{ color: '#3b82f6', opacity: 0.8, weight: 8 }]
-        },
-        show: false,
-        collapsible: false
-      });
+      // Enklere tilnærming - bruk bare rett linje mellom punkter
+      const distance = getDistance(fromCoords, toCoords);
+      
+      // Legg til start- og sluttpunkt
+      const startMarker = L.marker([fromCoords.lat, fromCoords.lng])
+        .addTo(map)
+        .bindPopup(`Start: ${routeData.from}`);
+      
+      const endMarker = L.marker([toCoords.lat, toCoords.lng])
+        .addTo(map)
+        .bindPopup(`Mål: ${routeData.to}`);
+      
+      // Tegn linje mellom punktene
+      const routeLine = L.polyline([
+        [fromCoords.lat, fromCoords.lng],
+        [toCoords.lat, toCoords.lng]
+      ], { color: '#3b82f6', weight: 4, opacity: 0.8 }).addTo(map);
+      
+      const optimizedStations = optimizeChargingStations(distance);
+      setOptimizedStations(optimizedStations);
+      
+      const analysis = calculateTripAnalysis(distance, optimizedStations);
+      setRouteAnalysis(analysis);
 
-      control.on('routesfound', function(e: any) {
-        const routes = e.routes;
+      // Legg til ladestasjonsmarkører
+      const newMarkers: any[] = [startMarker, endMarker, routeLine];
+      
+      optimizedStations.forEach((station, index) => {
+        const availabilityColor = station.available / station.total > 0.5 ? '#10b981' : 
+                                 station.available > 0 ? '#f59e0b' : '#ef4444';
         
-        if (routes.length > 0) {
-          const mainRoute = routes[0];
-          const distance = mainRoute.summary.totalDistance / 1000;
-          
-          const optimizedStations = optimizeChargingStations(distance);
-          setOptimizedStations(optimizedStations);
-          
-          const analysis = calculateTripAnalysis(distance, optimizedStations);
-          setRouteAnalysis(analysis);
+        const chargingIcon = L.divIcon({
+          html: `<div style="background: ${availabilityColor}; color: white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">${index + 1}</div>`,
+          className: 'custom-marker',
+          iconSize: [35, 35],
+          iconAnchor: [17.5, 17.5]
+        });
 
-          // Legg til ladestasjonsmarkører
-          const newMarkers: any[] = [];
-          
-          optimizedStations.forEach((station, index) => {
-            const availabilityColor = station.available / station.total > 0.5 ? '#10b981' : 
-                                     station.available > 0 ? '#f59e0b' : '#ef4444';
-            
-            const chargingIcon = L.divIcon({
-              html: `<div style="background: ${availabilityColor}; color: white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">${index + 1}</div>`,
-              className: 'custom-marker',
-              iconSize: [35, 35],
-              iconAnchor: [17.5, 17.5]
-            });
-
-            const marker = L.marker([station.lat, station.lng], { icon: chargingIcon })
-              .addTo(map)
-              .bindPopup(`
-                <div class="p-2">
-                  <h4 class="font-semibold">${station.name}</h4>
-                  <p class="text-sm">${station.location}</p>
-                  <p class="text-xs">Tilgjengelig: ${station.available}/${station.total}</p>
-                  <p class="text-xs">Lading: ${station.chargeAmount} kWh (${station.chargeTime} min)</p>
-                  <p class="text-xs">Kostnad: ${station.cost} kr</p>
-                </div>
-              `);
-            
-            newMarkers.push(marker);
-          });
-
-          setMarkers(newMarkers);
-          
-          if (optimizedStations.length > 0) {
-            const bounds = L.latLngBounds([
-              [fromCoords.lat, fromCoords.lng],
-              [toCoords.lat, toCoords.lng],
-              ...optimizedStations.map(s => [s.lat, s.lng] as [number, number])
-            ]);
-            map.fitBounds(bounds, { padding: [20, 20] });
-          } else {
-            const bounds = L.latLngBounds([
-              [fromCoords.lat, fromCoords.lng],
-              [toCoords.lat, toCoords.lng]
-            ]);
-            map.fitBounds(bounds, { padding: [50, 50] });
-          }
-        }
+        const marker = L.marker([station.lat, station.lng], { icon: chargingIcon })
+          .addTo(map)
+          .bindPopup(`
+            <div class="p-2">
+              <h4 class="font-semibold">${station.name}</h4>
+              <p class="text-sm">${station.location}</p>
+              <p class="text-xs">Tilgjengelig: ${station.available}/${station.total}</p>
+              <p class="text-xs">Lading: ${station.chargeAmount} kWh (${station.chargeTime} min)</p>
+              <p class="text-xs">Kostnad: ${station.cost} kr</p>
+            </div>
+          `);
+        
+        newMarkers.push(marker);
       });
 
-      control.addTo(map);
+      setMarkers(newMarkers);
+      
+      if (optimizedStations.length > 0) {
+        const bounds = L.latLngBounds([
+          [fromCoords.lat, fromCoords.lng],
+          [toCoords.lat, toCoords.lng],
+          ...optimizedStations.map(s => [s.lat, s.lng] as [number, number])
+        ]);
+        map.fitBounds(bounds, { padding: [20, 20] });
+      } else {
+        const bounds = L.latLngBounds([
+          [fromCoords.lat, fromCoords.lng],
+          [toCoords.lat, toCoords.lng]
+        ]);
+        map.fitBounds(bounds, { padding: [50, 50] });
+      }
 
     } catch (error) {
       console.error('Feil ved rute-oppdatering:', error);
@@ -367,7 +353,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     }
   };
 
-  // Effekt for initialisering av kart - kjører alltid når komponenten blir synlig
+  // Effekt for initialisering av kart
   useEffect(() => {
     if (isVisible) {
       console.log('Komponenten er synlig, initialiserer kart...');
