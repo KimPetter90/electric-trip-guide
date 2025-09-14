@@ -262,10 +262,14 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       return minDistance <= maxDistanceFromRoute;
     }).sort((a, b) => (a as any).routeDistance - (b as any).routeDistance);
   };
-
+  
   // Intelligent ladestasjonsoptimalisering med obligatoriske stopp
   const optimizeChargingStations = (routeDistance: number, routeGeometry: any) => {
-    if (!selectedCar) return [];
+    console.log('🔧 optimizeChargingStations startet med distanse:', routeDistance, 'km');
+    if (!selectedCar) {
+      console.log('❌ Ingen bil valgt');
+      return [];
+    }
 
     const currentBattery = routeData.batteryPercentage;
     const maxRange = selectedCar.range;
@@ -326,13 +330,18 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     let currentPosition = 0;
     
     console.log('🔄 Starter simulering av hele reisen for å finne alle ladingstopp...');
+    console.log('🚗 Bil valgt:', selectedCar.brand, selectedCar.model, '- Rekkevidde:', selectedCar.range, 'km');
+    console.log('🔋 Startbatteri:', currentBattery, '%');
+    console.log('📏 Total rutedistanse:', routeDistance, 'km');
+    console.log('🎯 Faktisk rekkevidde med bil:', actualRange, 'km');
     
     while (currentPosition < routeDistance) {
       // Beregn hvor langt vi kan komme med nåværende batteri
       const maxDistanceWithCurrentBattery = (currentBatteryLevel / 100) * actualRange;
       const remainingDistance = routeDistance - currentPosition;
       
-      console.log(`På posisjon ${currentPosition.toFixed(1)}km, batteri: ${currentBatteryLevel.toFixed(1)}%, kan kjøre: ${maxDistanceWithCurrentBattery.toFixed(1)}km, gjenstår: ${remainingDistance.toFixed(1)}km`);
+      console.log(`🎯 På posisjon ${currentPosition.toFixed(1)}km, batteri: ${currentBatteryLevel.toFixed(1)}%, kan kjøre: ${maxDistanceWithCurrentBattery.toFixed(1)}km, gjenstår: ${remainingDistance.toFixed(1)}km`);
+      console.log(`   Hvis vi kjører hele resten nå, vil batteriet være: ${(currentBatteryLevel - (remainingDistance / actualRange) * 100).toFixed(1)}%`);
       
       // Hvis vi kan nå målet med nåværende batteri
       if (maxDistanceWithCurrentBattery >= remainingDistance) {
