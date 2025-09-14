@@ -77,8 +77,8 @@ const cityCoordinates: Record<string, { lat: number; lng: number }> = {
   'molde': { lat: 62.7372, lng: 7.1607 }
 };
 
-// Utvidet database av ladestasjoner
-const allChargingStations: ChargingStation[] = [
+// Basis ladestasjoner (vil bli utvidet med API data)
+const basicChargingStations: ChargingStation[] = [
   { id: "1", name: "Tesla Supercharger Gardermoen", location: "Oslo Lufthavn", lat: 60.1939, lng: 11.1004, chargeTime: 20, chargeAmount: 50, cost: 250, fastCharger: true, available: 8, total: 12 },
   { id: "2", name: "Ionity Jessheim", location: "Jessheim", lat: 60.1567, lng: 11.1675, chargeTime: 25, chargeAmount: 55, cost: 275, fastCharger: true, available: 4, total: 6 },
   { id: "3", name: "Circle K Lillestrøm", location: "Lillestrøm", lat: 59.9561, lng: 11.0461, chargeTime: 35, chargeAmount: 40, cost: 200, fastCharger: false, available: 2, total: 4 },
@@ -94,6 +94,65 @@ const allChargingStations: ChargingStation[] = [
   { id: "13", name: "Ionity Ålesund", location: "Ålesund", lat: 62.4722, lng: 6.1549, chargeTime: 25, chargeAmount: 50, cost: 250, fastCharger: true, available: 5, total: 6 },
   { id: "14", name: "Circle K Molde", location: "Molde", lat: 62.7372, lng: 7.1607, chargeTime: 33, chargeAmount: 38, cost: 190, fastCharger: false, available: 2, total: 4 }
 ];
+
+// Funksjon for å hente norske ladestasjoner fra OpenChargeMap
+const fetchNorwegianChargingStations = async (): Promise<ChargingStation[]> => {
+  try {
+    console.log('🔍 Henter norske ladestasjoner fra OpenChargeMap...');
+    
+    // OpenChargeMap API for Norge (country code 155)
+    const response = await fetch(
+      'https://api.openchargemap.io/v3/poi/?output=json&countrycode=NO&maxresults=500&compact=true&verbose=false',
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`📍 Mottok ${data.length} ladestasjoner fra OpenChargeMap`);
+    
+    // Konverter OpenChargeMap data til vårt format
+    const convertedStations: ChargingStation[] = data.map((station: any, index: number) => {
+      const connections = station.Connections || [];
+      const isRapidCharger = connections.some((conn: any) => 
+        conn.PowerKW && conn.PowerKW >= 50
+      );
+      
+      const maxPower = Math.max(...connections.map((conn: any) => conn.PowerKW || 11));
+      const chargeTime = isRapidCharger ? Math.round(20 + Math.random() * 15) : Math.round(30 + Math.random() * 20);
+      const chargeAmount = isRapidCharger ? Math.round(45 + Math.random() * 15) : Math.round(30 + Math.random() * 15);
+      
+      return {
+        id: `ocm_${station.ID}`,
+        name: station.AddressInfo?.Title || `Ladestasjon ${station.ID}`,
+        location: `${station.AddressInfo?.Town || ''}, ${station.AddressInfo?.StateOrProvince || ''}`.trim().replace(/^,/, ''),
+        lat: station.AddressInfo?.Latitude || 0,
+        lng: station.AddressInfo?.Longitude || 0,
+        chargeTime,
+        chargeAmount,
+        cost: Math.round(150 + Math.random() * 150),
+        fastCharger: isRapidCharger,
+        available: Math.floor(Math.random() * 4) + 1,
+        total: Math.floor(Math.random() * 6) + 2
+      };
+    }).filter((station: ChargingStation) => 
+      station.lat !== 0 && station.lng !== 0 && station.name.length > 0
+    );
+    
+    console.log(`✅ Konverterte ${convertedStations.length} ladestasjoner`);
+    return convertedStations;
+    
+  } catch (error) {
+    console.error('❌ Feil ved henting av ladestasjoner:', error);
+    return [];
+  }
+};
 
 interface RouteMapProps {
   isVisible: boolean;
@@ -112,6 +171,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   const [optimizedStations, setOptimizedStations] = useState<ChargingStation[]>([]);
   const [activeTab, setActiveTab] = useState("analysis");
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [allChargingStations, setAllChargingStations] = useState<ChargingStation[]>(basicChargingStations);
 
   // Simuler værdata
   const getWeatherData = (): WeatherData => ({
@@ -715,6 +775,21 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       }
     };
   }, [isVisible]);
+
+  // Effekt for lasting av ladestasjoner
+  useEffect(() => {
+    const loadChargingStations = async () => {
+      const norwegianStations = await fetchNorwegianChargingStations();
+      if (norwegianStations.length > 0) {
+        // Kombiner basis stasjoner med API data
+        const combinedStations = [...basicChargingStations, ...norwegianStations];
+        setAllChargingStations(combinedStations);
+        console.log(`🎯 Totalt ${combinedStations.length} ladestasjoner tilgjengelig`);
+      }
+    };
+    
+    loadChargingStations();
+  }, []);
 
   // Effekt for rute-oppdatering
   useEffect(() => {
