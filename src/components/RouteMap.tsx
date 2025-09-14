@@ -199,9 +199,18 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     markers.forEach(marker => marker.remove());
     setMarkers([]);
     
-    if (map.current && map.current.getSource('route')) {
-      map.current.removeLayer('route');
-      map.current.removeSource('route');
+    if (map.current) {
+      // Fjern alle rute-lag
+      const layers = ['route-center', 'route', 'route-outline'];
+      layers.forEach(layerId => {
+        if (map.current!.getLayer(layerId)) {
+          map.current!.removeLayer(layerId);
+        }
+      });
+      
+      if (map.current.getSource('route')) {
+        map.current.removeSource('route');
+      }
     }
   };
 
@@ -304,7 +313,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     try {
       console.log('Henter rute fra Mapbox Directions API...');
       
-      const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${fromCoords.lng},${fromCoords.lat};${toCoords.lng},${toCoords.lat}?geometries=geojson&access_token=${mapboxToken}`;
+      // Bruk høyere oppløsning og flere parametere for mer nøyaktig rute
+      const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${fromCoords.lng},${fromCoords.lat};${toCoords.lng},${toCoords.lat}?geometries=geojson&overview=full&steps=true&continue_straight=true&annotations=duration,distance,speed&access_token=${mapboxToken}`;
       
       const response = await fetch(directionsUrl);
       const data = await response.json();
@@ -315,7 +325,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         
         console.log('Rute mottatt fra Mapbox:', { distance, duration: route.duration });
         
-        // Legg til rute på kartet
+        // Legg til rute på kartet med forbedret styling
         map.current!.addSource('route', {
           type: 'geojson',
           data: {
@@ -325,6 +335,23 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           }
         });
 
+        // Legg til en outline (bakgrunn) for ruten
+        map.current!.addLayer({
+          id: 'route-outline',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#ffffff',
+            'line-width': 10,
+            'line-opacity': 0.8
+          }
+        });
+
+        // Legg til hovedruten oppå
         map.current!.addLayer({
           id: 'route',
           type: 'line',
@@ -335,7 +362,24 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           },
           paint: {
             'line-color': '#3b82f6',
-            'line-width': 6
+            'line-width': 6,
+            'line-opacity': 1
+          }
+        });
+
+        // Legg til en lysere linje i midten for ekstra tydelighet
+        map.current!.addLayer({
+          id: 'route-center',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#60a5fa',
+            'line-width': 2,
+            'line-opacity': 0.8
           }
         });
 
