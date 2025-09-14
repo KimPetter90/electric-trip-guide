@@ -19,6 +19,11 @@ export default function TestApp() {
     email: "",
     device: ""
   });
+  const [errors, setErrors] = useState({
+    name: "",
+    email: "",
+    device: ""
+  });
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [isRunningTests, setIsRunningTests] = useState(false);
   const { toast } = useToast();
@@ -31,7 +36,45 @@ export default function TestApp() {
     { id: 'performance', test: 'Ytelse og Hastighet' }
   ];
 
+  const validateForm = () => {
+    const newErrors = { name: "", email: "", device: "" };
+    let isValid = true;
+
+    if (!userInfo.name.trim()) {
+      newErrors.name = "Navn er påkrevd";
+      isValid = false;
+    } else if (userInfo.name.length < 2) {
+      newErrors.name = "Navn må være minst 2 tegn";
+      isValid = false;
+    }
+
+    if (!userInfo.email.trim()) {
+      newErrors.email = "E-post er påkrevd";
+      isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userInfo.email)) {
+      newErrors.email = "Ugyldig e-postformat";
+      isValid = false;
+    }
+
+    if (!userInfo.device.trim()) {
+      newErrors.device = "Enhet/nettleser informasjon er påkrevd";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const runTests = async () => {
+    if (!validateForm()) {
+      toast({
+        title: "Skjemafeil",
+        description: "Vennligst rett opp feilene i skjemaet før du starter tester",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsRunningTests(true);
     setTestResults([]);
     
@@ -46,9 +89,15 @@ export default function TestApp() {
       
       await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
       
-      // Randomly pass/fail tests for demo
-      const passed = Math.random() > 0.2;
-      const message = passed ? 'Alle tester bestått!' : 'Noen problemer funnet, men ikke kritiske';
+      // Special handling for form validation test
+      let passed = Math.random() > 0.2;
+      let message = passed ? 'Alle tester bestått!' : 'Noen problemer funnet, men ikke kritiske';
+      
+      if (test.id === 'forms') {
+        // Always pass form validation if we got this far (form was validated)
+        passed = true;
+        message = 'Skjemavalidering fungerer perfekt!';
+      }
       
       setTestResults(prev => 
         prev.map(r => 
@@ -65,6 +114,14 @@ export default function TestApp() {
       description: "Alle tester er utført. Sjekk resultatet nedenfor.",
       variant: "default"
     });
+  };
+
+  const handleInputChange = (field: keyof typeof userInfo, value: string) => {
+    setUserInfo(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
+    }
   };
 
   const downloadReport = () => {
@@ -127,34 +184,37 @@ export default function TestApp() {
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Navn</label>
+                  <label className="block text-sm font-medium mb-2">Navn *</label>
                   <Input
                     placeholder="Skriv inn ditt navn"
                     value={userInfo.name}
-                    onChange={(e) => setUserInfo(prev => ({ ...prev, name: e.target.value }))}
-                    className="bg-background/50 border-border"
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    className={`bg-background/50 border-border ${errors.name ? 'border-red-500' : ''}`}
                   />
+                  {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-2">E-post</label>
+                  <label className="block text-sm font-medium mb-2">E-post *</label>
                   <Input
                     type="email"
                     placeholder="din@epost.no"
                     value={userInfo.email}
-                    onChange={(e) => setUserInfo(prev => ({ ...prev, email: e.target.value }))}
-                    className="bg-background/50 border-border"
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    className={`bg-background/50 border-border ${errors.email ? 'border-red-500' : ''}`}
                   />
+                  {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Enhet/Nettleser</label>
+                  <label className="block text-sm font-medium mb-2">Enhet/Nettleser *</label>
                   <Input
                     placeholder="iPhone 15, Chrome, osv."
                     value={userInfo.device}
-                    onChange={(e) => setUserInfo(prev => ({ ...prev, device: e.target.value }))}
-                    className="bg-background/50 border-border"
+                    onChange={(e) => handleInputChange('device', e.target.value)}
+                    className={`bg-background/50 border-border ${errors.device ? 'border-red-500' : ''}`}
                   />
+                  {errors.device && <p className="text-red-500 text-xs mt-1">{errors.device}</p>}
                 </div>
               </div>
             </Card>
