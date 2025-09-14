@@ -26,6 +26,7 @@ interface RouteData {
   to: string;
   trailerWeight: number;
   batteryPercentage: number;
+  travelDate?: Date;
 }
 
 interface ChargingStation {
@@ -178,16 +179,17 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   const [weatherData, setWeatherData] = useState<RouteWeatherData | null>(null);
 
   // Hent værdata fra Supabase edge function
-  const fetchWeatherData = async (startCoords: { lat: number; lng: number }, endCoords: { lat: number; lng: number }) => {
+  const fetchWeatherData = async (startCoords: { lat: number; lng: number }, endCoords: { lat: number; lng: number }, travelDate?: Date) => {
     try {
-      console.log('🌤️ Henter værdata for ruten...');
+      console.log('🌤️ Henter værdata for ruten...', travelDate ? `for dato: ${travelDate.toLocaleDateString()}` : 'for i dag');
       
       const { data, error } = await supabase.functions.invoke('weather-service', {
         body: {
           startLat: startCoords.lat,
           startLng: startCoords.lng,
           endLat: endCoords.lat,
-          endLng: endCoords.lng
+          endLng: endCoords.lng,
+          travelDate: travelDate?.toISOString()
         }
       });
 
@@ -552,7 +554,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     console.log('Koordinater funnet:', { fromCoords, toCoords });
 
     // Hent værdata for ruten
-    const weather = await fetchWeatherData(fromCoords, toCoords);
+    const weather = await fetchWeatherData(fromCoords, toCoords, routeData.travelDate);
     setWeatherData(weather);
 
     cleanupMap();

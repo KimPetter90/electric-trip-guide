@@ -49,44 +49,88 @@ serve(async (req) => {
       );
     }
 
-    const { startLat, startLng, endLat, endLng } = await req.json();
+    const { startLat, startLng, endLat, endLng, travelDate } = await req.json();
     
-    console.log('Fetching weather data for route:', { startLat, startLng, endLat, endLng });
+    // Determine if we need forecast data (for future dates) or current weather
+    const now = new Date();
+    const requestDate = travelDate ? new Date(travelDate) : now;
+    const isCurrentWeather = requestDate.getTime() - now.getTime() < 24 * 60 * 60 * 1000; // Within 24 hours
+    
+    console.log('Fetching weather data for route:', { 
+      startLat, startLng, endLat, endLng, 
+      travelDate, isCurrentWeather, requestDate: requestDate.toISOString() 
+    });
 
-    // Fetch weather for start location
-    const startWeatherResponse = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${startLat}&lon=${startLng}&appid=${openWeatherApiKey}&units=metric`
-    );
+    // Fetch weather data for both locations (current or forecast based on date)
+    let startWeatherResponse, endWeatherResponse;
+    
+    if (isCurrentWeather) {
+      // Use current weather API
+      startWeatherResponse = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${startLat}&lon=${startLng}&appid=${openWeatherApiKey}&units=metric`
+      );
+      endWeatherResponse = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${endLat}&lon=${endLng}&appid=${openWeatherApiKey}&units=metric`
+      );
+    } else {
+      // Use forecast API for future dates (5-day forecast with 3-hour intervals)
+      startWeatherResponse = await fetch(
+        `https://api.openweathermap.org/data/2.5/forecast?lat=${startLat}&lon=${startLng}&appid=${openWeatherApiKey}&units=metric`
+      );
+      endWeatherResponse = await fetch(
+        `https://api.openweathermap.org/data/2.5/forecast?lat=${endLat}&lon=${endLng}&appid=${openWeatherApiKey}&units=metric`
+      );
+    }
+    
     const startWeatherData = await startWeatherResponse.json();
-
-    // Fetch weather for end location
-    const endWeatherResponse = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${endLat}&lon=${endLng}&appid=${openWeatherApiKey}&units=metric`
-    );
     const endWeatherData = await endWeatherResponse.json();
 
     if (!startWeatherResponse.ok || !endWeatherResponse.ok) {
       throw new Error('Failed to fetch weather data');
     }
 
-    // Process weather data
-    const startWeather: WeatherData = {
-      temperature: Math.round(startWeatherData.main.temp),
-      windSpeed: Math.round(startWeatherData.wind?.speed * 3.6 || 0), // Convert m/s to km/h
-      windDirection: startWeatherData.wind?.deg || 0,
-      humidity: startWeatherData.main.humidity,
-      weatherCondition: startWeatherData.weather[0].main,
-      visibility: Math.round((startWeatherData.visibility || 10000) / 1000) // Convert to km
+    // Helper function to process weather data
+    const processWeatherData = (data: any, isCurrentWeather: boolean): WeatherData => {
+      if (isCurrentWeather) {
+        // Current weather data structure
+        return {
+          temperature: Math.round(data.main.temp),
+          windSpeed: Math.round(data.wind?.speed * 3.6 || 0), // Convert m/s to km/h
+          windDirection: data.wind?.deg || 0,
+          humidity: data.main.humidity,
+          weatherCondition: data.weather[0].main,
+          visibility: Math.round((data.visibility || 10000) / 1000) // Convert to km
+        };
+      } else {
+        // Forecast data structure - find the closest forecast to the requested date
+        const targetTime = requestDate.getTime();
+        let closestForecast = data.list[0];
+        let closestTimeDiff = Math.abs(new Date(closestForecast.dt * 1000).getTime() - targetTime);
+        
+        for (const forecast of data.list) {
+          const forecastTime = new Date(forecast.dt * 1000).getTime();
+          const timeDiff = Math.abs(forecastTime - targetTime);
+          
+          if (timeDiff < closestTimeDiff) {
+            closestTimeDiff = timeDiff;
+            closestForecast = forecast;
+          }
+        }
+        
+        return {
+          temperature: Math.round(closestForecast.main.temp),
+          windSpeed: Math.round(closestForecast.wind?.speed * 3.6 || 0),
+          windDirection: closestForecast.wind?.deg || 0,
+          humidity: closestForecast.main.humidity,
+          weatherCondition: closestForecast.weather[0].main,
+          visibility: Math.round((closestForecast.visibility || 10000) / 1000)
+        };
+      }
     };
 
-    const endWeather: WeatherData = {
-      temperature: Math.round(endWeatherData.main.temp),
-      windSpeed: Math.round(endWeatherData.wind?.speed * 3.6 || 0),
-      windDirection: endWeatherData.wind?.deg || 0,
-      humidity: endWeatherData.main.humidity,
-      weatherCondition: endWeatherData.weather[0].main,
-      visibility: Math.round((endWeatherData.visibility || 10000) / 1000)
-    };
+    // Process weather data
+    const startWeather = processWeatherData(startWeatherData, isCurrentWeather);
+    const endWeather = processWeatherData(endWeatherData, isCurrentWeather);
 
     // Calculate average conditions
     const averageConditions = {

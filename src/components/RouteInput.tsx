@@ -4,13 +4,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Truck, Route, Battery } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { MapPin, Truck, Route, Battery, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface RouteData {
   from: string;
   to: string;
   trailerWeight: number;
   batteryPercentage: number;
+  travelDate?: Date;
 }
 
 interface RouteInputProps {
@@ -20,7 +25,7 @@ interface RouteInputProps {
 }
 
 export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: RouteInputProps) {
-  const handleInputChange = (field: keyof RouteData, value: string | number) => {
+  const handleInputChange = (field: keyof RouteData, value: string | number | Date) => {
     onRouteChange({
       ...routeData,
       [field]: value
@@ -107,7 +112,43 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
           )}
         </div>
 
-        <Button 
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <CalendarIcon className="h-3 w-3" />
+            Reisedato
+          </Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal bg-background/50 border-border hover:border-primary",
+                  !routeData.travelDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {routeData.travelDate ? format(routeData.travelDate, "PPP") : "Velg reisedato"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={routeData.travelDate}
+                onSelect={(date) => handleInputChange('travelDate', date || new Date())}
+                disabled={(date) => date < new Date()}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+          {routeData.travelDate && (
+            <Badge variant="outline" className="text-xs">
+              Værvarsel for {format(routeData.travelDate, "dd.MM.yyyy")}
+            </Badge>
+          )}
+        </div>
+
+        <Button
           onClick={onPlanRoute}
           className="w-full bg-gradient-electric hover:bg-gradient-eco shadow-neon hover:shadow-glow animate-pulse-neon"
           size="lg"

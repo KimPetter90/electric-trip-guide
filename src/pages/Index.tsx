@@ -23,6 +23,7 @@ interface RouteData {
   to: string;
   trailerWeight: number;
   batteryPercentage: number;
+  travelDate?: Date;
 }
 
 function Index() {
@@ -31,7 +32,8 @@ function Index() {
     from: "",
     to: "",
     trailerWeight: 0,
-    batteryPercentage: 80
+    batteryPercentage: 80,
+    travelDate: undefined
   });
   const [showRoute, setShowRoute] = useState(false);
 
