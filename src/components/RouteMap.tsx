@@ -279,33 +279,59 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         setLoading(true);
         setError(null);
         
+        // Sjekk at map container eksisterer
+        if (!mapRef.current) {
+          console.error('Map container ikke funnet');
+          setError('Kartcontainer ikke tilgjengelig');
+          setLoading(false);
+          return;
+        }
+
+        // Importer Leaflet
         const L = await import('leaflet');
         
-        if (mapRef.current) {
-          cleanupMap();
-          if (map && map.remove) {
-            try {
-              map.remove();
-            } catch (e) {}
-          }
-          
-          const leafletMap = L.map(mapRef.current).setView([60.472, 8.4689], 6);
-          
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-          }).addTo(leafletMap);
-          
-          setMap(leafletMap);
-          setLoading(false);
+        // Fikse ikonproblem
+        delete (L.Icon.Default.prototype as any)._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        });
+
+        // Rydd opp eksisterende kart
+        cleanupMap();
+        if (map && map.remove) {
+          try {
+            map.remove();
+          } catch (e) {}
         }
+        
+        console.log('Oppretter nytt kart...');
+        const leafletMap = L.map(mapRef.current).setView([60.472, 8.4689], 6);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors',
+          maxZoom: 19
+        }).addTo(leafletMap);
+        
+        console.log('Kart opprettet suksessfullt');
+        setMap(leafletMap);
+        
+        // Vente litt før vi setter loading til false
+        setTimeout(() => {
+          setLoading(false);
+          console.log('Kart ferdig lastet');
+        }, 300);
+        
       } catch (err) {
         console.error('Feil ved kart-initialisering:', err);
-        setError('Kunne ikke laste kart');
+        setError('Kunne ikke laste kart. Prøv å oppdatere siden.');
         setLoading(false);
       }
     };
 
     if (isVisible) {
+      console.log('Starter kart-initialisering...');
       initializeMap();
     }
     
