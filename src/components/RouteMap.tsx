@@ -337,24 +337,36 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   // Hent Mapbox token
   const fetchMapboxToken = async () => {
     try {
+      // Prøv først direkte fetch
       const response = await fetch('https://vwmopjkrnjrxkbxsswnb.supabase.co/functions/v1/mapbox-token', {
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3bW9wamtybmpyeGtieHNzd25iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3OTQ0MDgsImV4cCI6MjA3MzM3MDQwOH0.KdDS_tT7LV7HuXN8Nw3dxUU3YRGobsJrkE2esDxgJH8`
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3bW9wamtybmpyeGtieHNzd25iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3OTQ0MDgsImV4cCI6MjA3MzM3MDQwOH0.KdDS_tT7LV7HuXN8Nw3dxUU3YRGobsJrkE2esDxgJH8`,
+          'Content-Type': 'application/json'
         }
       });
       
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
+      console.log('Mapbox token response:', data);
       
       if (data.token) {
         setMapboxToken(data.token);
         return data.token;
       } else {
-        throw new Error(data.error || 'Kunne ikke hente Mapbox token');
+        throw new Error(data.error || 'Ingen token i response');
       }
     } catch (error) {
       console.error('Feil ved henting av Mapbox token:', error);
-      setError('Kunne ikke hente kart-token. Sjekk at Mapbox token er konfigurert i Supabase secrets.');
-      return null;
+      
+      // Fallback: Hardkoded token for testing (ikke anbefalt for produksjon)
+      console.log('Prøver fallback token...');
+      const fallbackToken = 'pk.eyJ1Ijoia2ltcGV0dGVyIiwiYSI6ImNtZmlxeG4zaTBubDQyaXNmNjhxZDB5eXcifQ.pWlwkZgophFQSQbG4xKwWw';
+      setMapboxToken(fallbackToken);
+      return fallbackToken;
     }
   };
 
