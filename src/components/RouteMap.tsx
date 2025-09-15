@@ -540,8 +540,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           }
         }
         
-        // Bestem farge basert på avstand: Rød hvis innenfor 1 km, grønn ellers
-        const isNearRoute = minDistance <= 1.0; // 1 km
+        // Bestem farge basert på avstand: Rød hvis innenfor 2 km, grønn ellers
+        const isNearRoute = minDistance <= 2.0; // 2 km
         const markerColor = isNearRoute ? '#ff0000' : '#00ff41';
         const markerSize = isNearRoute ? '10px' : '8px';
         const borderWidth = isNearRoute ? '2px' : '1px';
@@ -563,7 +563,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
             <h4 style="margin: 0 0 8px 0; color: ${isNearRoute ? '#dc2626' : '#00aa33'};"><strong>${isNearRoute ? '🔴' : '🟢'} ${station.name}</strong></h4>
             <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
             <p style="margin: 4px 0; color: #333;">🛣️ <strong>Avstand til rute:</strong> ${minDistance.toFixed(1)} km</p>
-            ${isNearRoute ? '<p style="margin: 4px 0; color: #dc2626;"><strong>🔴 Nær ruten (< 1 km)</strong></p>' : ''}
+            ${isNearRoute ? '<p style="margin: 4px 0; color: #dc2626;"><strong>🔴 Nær ruten (< 2 km)</strong></p>' : ''}
             <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
             <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
             <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${station.available}/${station.total} ladepunkter</p>
@@ -593,10 +593,10 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
             minDistance = distance;
           }
         }
-        return minDistance <= 1.0;
+        return minDistance <= 2.0;
       }).length;
       
-      console.log(`✅ ALLE ${chargingStations.length} MARKØRER LAGT TIL! (${nearRouteCount} røde innenfor 1km, ${chargingStations.length - nearRouteCount} grønne)`);
+      console.log(`✅ ALLE ${chargingStations.length} MARKØRER LAGT TIL! (${nearRouteCount} røde innenfor 2km, ${chargingStations.length - nearRouteCount} grønne)`);
 
       // DERETTER: Legg til markører for optimerte ladestasjoner (større og mer synlige)
       console.log('⚡ LEGGER TIL ANBEFALTE STASJONER...');
@@ -651,7 +651,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         console.log('ℹ️ Optimerte stasjoner (lyn-markører) er nå erstattet med avstandsbaserte røde markører');
       });
       
-      console.log('ℹ️ Ladestasjoner er nå fargekodet basert på avstand til ruten (røde < 1km, grønne > 1km)');
+      console.log('ℹ️ Ladestasjoner er nå fargekodet basert på avstand til ruten (røde < 2km, grønne > 2km)');
 
       // Tilpass kart til å vise hele ruten
       console.log('🗺️ Setter kartbounds...');
