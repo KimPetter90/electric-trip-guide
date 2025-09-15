@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -263,7 +263,34 @@ interface RouteInputProps {
 }
 
 export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: RouteInputProps) {
+  const [allCities, setAllCities] = useState<string[]>([]);
+
+  // Last inn lærte steder når komponenten starter
+  useEffect(() => {
+    const learnedCities = JSON.parse(localStorage.getItem('learnedCities') || '[]');
+    const uniqueCities = [...new Set([...norwegianCities, ...learnedCities])].sort();
+    setAllCities(uniqueCities);
+  }, []);
+
+  // Funksjon for å lagre nye steder
+  const learnNewPlace = (place: string) => {
+    const trimmedPlace = place.trim().toLowerCase();
+    if (trimmedPlace && !allCities.includes(trimmedPlace)) {
+      const learnedCities = JSON.parse(localStorage.getItem('learnedCities') || '[]');
+      const updatedLearned = [...learnedCities, trimmedPlace];
+      localStorage.setItem('learnedCities', JSON.stringify(updatedLearned));
+      
+      const newAllCities = [...allCities, trimmedPlace].sort();
+      setAllCities(newAllCities);
+    }
+  };
+
   const handleInputChange = (field: keyof RouteData, value: string | number | Date) => {
+    // Hvis det er et stedsnavn og ikke finnes i listen, lær det
+    if ((field === 'from' || field === 'to' || field === 'via') && typeof value === 'string') {
+      learnNewPlace(value);
+    }
+    
     onRouteChange({
       ...routeData,
       [field]: value
@@ -289,7 +316,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
               placeholder=""
               value={routeData.from}
               onChange={(value) => handleInputChange('from', value)}
-              suggestions={norwegianCities}
+              suggestions={allCities}
               className="bg-background/50 border-border focus:border-primary focus:shadow-lg"
             />
           </div>
@@ -304,7 +331,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
               placeholder=""
               value={routeData.to}
               onChange={(value) => handleInputChange('to', value)}
-              suggestions={norwegianCities}
+              suggestions={allCities}
               className="bg-background/50 border-border focus:border-primary focus:shadow-lg"
             />
           </div>
@@ -319,7 +346,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
               placeholder=""
               value={routeData.via || ''}
               onChange={(value) => handleInputChange('via', value)}
-              suggestions={norwegianCities}
+              suggestions={allCities}
               className="bg-background/50 border-border focus:border-primary focus:shadow-lg"
             />
           </div>
