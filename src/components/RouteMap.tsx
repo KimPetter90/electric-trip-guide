@@ -1318,6 +1318,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
                  </Card>
                )}
            </div>
+           </div>
         </TabsContent>
 
         <TabsContent value="stations" className="space-y-4 bg-transparent">
@@ -1448,4 +1449,6 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
       </div>
     </div>
   );
-};
+}
+
+export default RouteMap;
