@@ -400,7 +400,13 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         .addTo(map.current!);
 
       // Optimaliser ladestasjoner basert på bilens rekkevidde
-      console.log('Optimaliserer ladestasjoner...');
+      console.log('🔧 Optimaliserer ladestasjoner...');
+      console.log('📊 Input til optimalisering:', {
+        routeCoordinates: route.geometry.coordinates.length + ' punkter',
+        routeDistance: routeDistance + ' km',
+        batteryPercentage: routeData.batteryPercentage + '%',
+        chargingStationsCount: chargingStations.length
+      });
       const optimized = optimizeChargingStations(
         route.geometry.coordinates,
         routeDistance,
@@ -409,13 +415,20 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         chargingStations
       );
 
+      console.log('✅ Optimalisering fullført. Funnet', optimized.length, 'ladestsjoner');
       setOptimizedStations(optimized);
 
       // Legg til markører for optimerte ladestasjoner
-      console.log('⚡ Sjekker ladestasjoner...');
+      console.log('⚡ STARTER MARKØR-TILLEGGING...');
       console.log('📊 Antall optimerte stasjoner:', optimized.length);
+      console.log('📊 Liste over stasjoner som skal vises:', optimized.map(s => s.name));
+      
+      if (optimized.length === 0) {
+        console.log('🚫 INGEN LADESTASJONER Å VISE - ingen markører legges til');
+      }
       
       optimized.forEach((station, index) => {
+        console.log('🔧 Legger til markør for:', station.name, 'på posisjon:', station.latitude, station.longitude);
         const el = document.createElement('div');
         el.className = 'charging-station-marker';
         el.style.cssText = `
@@ -448,7 +461,11 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           .setLngLat([station.longitude, station.latitude])
           .setPopup(popup)
           .addTo(map.current!);
+        
+        console.log('✅ Markør lagt til for:', station.name);
       });
+      
+      console.log('🎯 ALLE MARKØRER LAGT TIL! Total antall:', optimized.length);
 
       // Tilpass kart til å vise hele ruten
       console.log('🗺️ Setter kartbounds...');
