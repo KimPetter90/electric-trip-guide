@@ -125,13 +125,19 @@ async function fetchNorwegianChargingStations(): Promise<ChargingStation[]> {
     
     if (error) {
       console.error('❌ Feil ved henting av ladestasjoner:', error);
-      return [];
+      return []; // Returnerer tom array ved feil
     }
     
     console.log('✅ Hentet', data?.length || 0, 'ladestasjoner fra database');
+    console.log('📊 Første 3 stasjoner:', data?.slice(0, 3).map(s => s.name));
+    
+    if (!data || data.length === 0) {
+      console.log('⚠️ Ingen ladestasjoner funnet i database');
+      return [];
+    }
     
     // Konverter database-format til intern format
-    const stations: ChargingStation[] = (data || []).map(station => ({
+    const stations: ChargingStation[] = data.map(station => ({
       id: station.id,
       name: station.name,
       location: station.location,
@@ -144,9 +150,11 @@ async function fetchNorwegianChargingStations(): Promise<ChargingStation[]> {
       cost: Number(station.cost)
     }));
     
+    console.log('🔄 Konverterte', stations.length, 'stasjoner til intern format');
     return stations;
   } catch (error) {
     console.error('❌ Uventet feil ved henting av ladestasjoner:', error);
+    console.log('🔄 Returnerer tom array på grunn av exception');
     return [];
   }
 }
