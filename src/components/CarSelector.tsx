@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Zap, Car, Battery, ArrowLeft } from "lucide-react";
+import { Zap, Car, Battery, ArrowLeft, ChevronDown } from "lucide-react";
 
 interface CarModel {
   id: string;
@@ -1163,6 +1163,8 @@ interface CarSelectorProps {
 export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorProps) {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [showBrands, setShowBrands] = useState<boolean>(false);
+  const [canScrollDown, setCanScrollDown] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Group cars by brand
   const carsByBrand = carModels.reduce((acc, car) => {
@@ -1194,6 +1196,23 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
     setShowBrands(!showBrands);
   };
 
+  // Check if content can scroll
+  const checkScrollable = () => {
+    if (scrollContainerRef.current) {
+      const { scrollHeight, clientHeight, scrollTop } = scrollContainerRef.current;
+      setCanScrollDown(scrollHeight > clientHeight && scrollTop < scrollHeight - clientHeight - 10);
+    }
+  };
+
+  useEffect(() => {
+    checkScrollable();
+    if (scrollContainerRef.current) {
+      const handleScroll = () => checkScrollable();
+      scrollContainerRef.current.addEventListener('scroll', handleScroll);
+      return () => scrollContainerRef.current?.removeEventListener('scroll', handleScroll);
+    }
+  }, [showBrands, selectedBrand]);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
@@ -1224,73 +1243,105 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
         null
       ) : !selectedBrand ? (
         /* Brand selection - vertical list */
-        <div className="space-y-2 max-h-96 overflow-y-auto">
-          {brands.map((brand) => (
-            <Card
-              key={brand.name}
-              className="p-4 cursor-pointer transition-all duration-200 bg-card/80 backdrop-blur-sm border-border hover:bg-primary/5 hover:border-primary/30 hover:shadow-md"
-              onClick={() => handleBrandSelect(brand.name)}
-            >
-              <div className="flex items-center space-x-4">
-                <span className="text-2xl">{brand.image}</span>
-                
-                <div className="flex-1">
-                  <h5 className="font-semibold text-sm text-foreground">
-                    {brand.name}
-                  </h5>
-                  <p className="text-xs text-muted-foreground">
-                    {brand.count} modell{brand.count !== 1 ? 'er' : ''}
-                  </p>
+        <div className="relative">
+          <div 
+            ref={scrollContainerRef}
+            className="space-y-2 max-h-96 overflow-y-auto"
+            onScroll={checkScrollable}
+          >
+            {brands.map((brand) => (
+              <Card
+                key={brand.name}
+                className="p-4 cursor-pointer transition-all duration-200 bg-card/80 backdrop-blur-sm border-border hover:bg-primary/5 hover:border-primary/30 hover:shadow-md"
+                onClick={() => handleBrandSelect(brand.name)}
+              >
+                <div className="flex items-center space-x-4">
+                  <span className="text-2xl">{brand.image}</span>
+                  
+                  <div className="flex-1">
+                    <h5 className="font-semibold text-sm text-foreground">
+                      {brand.name}
+                    </h5>
+                    <p className="text-xs text-muted-foreground">
+                      {brand.count} modell{brand.count !== 1 ? 'er' : ''}
+                    </p>
+                  </div>
+                  
+                  <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180" />
                 </div>
-                
-                <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180" />
+              </Card>
+            ))}
+          </div>
+          
+          {canScrollDown && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background via-background/80 to-transparent h-16 flex items-end justify-center pb-2 pointer-events-none">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground animate-bounce">
+                <ChevronDown className="h-3 w-3" />
+                <span>Scroll ned for flere biler</span>
+                <ChevronDown className="h-3 w-3" />
               </div>
-            </Card>
-          ))}
+            </div>
+          )}
         </div>
       ) : (
         /* Model selection for selected brand - vertical list */
-        <div className="space-y-3 max-h-96 overflow-y-auto">
-          {carsByBrand[selectedBrand].map((car) => (
-            <Card
-              key={car.id}
-              className={`p-4 cursor-pointer transition-all duration-200 ${
-                selectedCar?.id === car.id 
-                  ? 'ring-2 ring-primary bg-primary/10 border-primary/40 shadow-lg' 
-                  : 'bg-card/80 backdrop-blur-sm border-border hover:bg-primary/5 hover:border-primary/30 hover:shadow-md'
-              }`}
-              onClick={() => onCarSelect(car)}
-            >
-              <div className="flex items-center space-x-4">
-                <span className="text-2xl">{car.image}</span>
-                
-                <div className="flex-1">
-                  <h5 className="font-semibold text-sm text-foreground">
-                    {car.model}
-                  </h5>
+        <div className="relative">
+          <div 
+            ref={scrollContainerRef}
+            className="space-y-3 max-h-96 overflow-y-auto"
+            onScroll={checkScrollable}
+          >
+            {carsByBrand[selectedBrand].map((car) => (
+              <Card
+                key={car.id}
+                className={`p-4 cursor-pointer transition-all duration-200 ${
+                  selectedCar?.id === car.id 
+                    ? 'ring-2 ring-primary bg-primary/10 border-primary/40 shadow-lg' 
+                    : 'bg-card/80 backdrop-blur-sm border-border hover:bg-primary/5 hover:border-primary/30 hover:shadow-md'
+                }`}
+                onClick={() => onCarSelect(car)}
+              >
+                <div className="flex items-center space-x-4">
+                  <span className="text-2xl">{car.image}</span>
                   
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                    <div className="flex items-center gap-1">
-                      <Battery className="h-3 w-3" />
-                      <span>{car.batteryCapacity} kWh</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Zap className="h-3 w-3" />
-                      <span>{car.range} km</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Car className="h-3 w-3" />
-                      <span>{car.consumption} kWh/100km</span>
+                  <div className="flex-1">
+                    <h5 className="font-semibold text-sm text-foreground">
+                      {car.model}
+                    </h5>
+                    
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                      <div className="flex items-center gap-1">
+                        <Battery className="h-3 w-3" />
+                        <span>{car.batteryCapacity} kWh</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Zap className="h-3 w-3" />
+                        <span>{car.range} km</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Car className="h-3 w-3" />
+                        <span>{car.consumption} kWh/100km</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {selectedCar?.id === car.id && (
-                  <Badge variant="default" className="text-xs animate-pulse-neon">Valgt</Badge>
-                )}
+                  {selectedCar?.id === car.id && (
+                    <Badge variant="default" className="text-xs animate-pulse-neon">Valgt</Badge>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+          
+          {canScrollDown && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background via-background/80 to-transparent h-16 flex items-end justify-center pb-2 pointer-events-none">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground animate-bounce">
+                <ChevronDown className="h-3 w-3" />
+                <span>Scroll ned for flere modeller</span>
+                <ChevronDown className="h-3 w-3" />
               </div>
-            </Card>
-          ))}
+            </div>
+          )}
         </div>
       )}
 
