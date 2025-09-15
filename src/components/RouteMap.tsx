@@ -410,7 +410,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           distance: (nearestFutureStation as any).routeDistance,
           arrivalBattery,
           departureBattery: Math.min(80, arrivalBattery + nearestFutureStation.chargeAmount),
-          isRequired: true,
+          isRequired: true, // Alltid obligatorisk i kritisk situasjon
           isCritical: true
         });
         
@@ -443,7 +443,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         distance: stationDistance,
         arrivalBattery,
         departureBattery,
-        isRequired: true
+        isRequired: arrivalBattery < 25 // Kun obligatorisk hvis batteriet blir kritisk lavt
       });
       
       // Oppdater posisjon og batterinivå for neste iterasjon
