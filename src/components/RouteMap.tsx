@@ -519,27 +519,51 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       console.log('✅ Optimalisering fullført. Funnet', optimized.length, 'ladestsjoner');
       setOptimizedStations(optimized);
 
-      // FØRST: Legg til ALLE ladestasjoner som små grønne markører
-      console.log('🟢 LEGGER TIL ALLE LADESTASJONER SOM GRØNNE...');
+      // FØRST: Legg til ALLE ladestasjoner med fargekoding basert på avstand til rute
+      console.log('🟢🔴 LEGGER TIL ALLE LADESTASJONER MED AVSTANDSBASERT FARGEKODING...');
       console.log('📊 Totalt antall ladestasjoner:', chargingStations.length);
       
+      const mapRouteCoords = route.geometry.coordinates;
+      
       chargingStations.forEach((station, index) => {
+        // Beregn korteste avstand fra stasjon til ruten
+        let minDistance = Infinity;
+        for (let i = 0; i < mapRouteCoords.length; i++) {
+          const distance = getDistance(
+            station.latitude,
+            station.longitude,
+            mapRouteCoords[i][1],
+            mapRouteCoords[i][0]
+          );
+          if (distance < minDistance) {
+            minDistance = distance;
+          }
+        }
+        
+        // Bestem farge basert på avstand: Rød hvis innenfor 1 km, grønn ellers
+        const isNearRoute = minDistance <= 1.0; // 1 km
+        const markerColor = isNearRoute ? '#ff0000' : '#00ff41';
+        const markerSize = isNearRoute ? '10px' : '8px';
+        const borderWidth = isNearRoute ? '2px' : '1px';
+        
         const el = document.createElement('div');
-        el.className = 'all-charging-station-marker';
+        el.className = isNearRoute ? 'near-route-station-marker' : 'all-charging-station-marker';
         el.style.cssText = `
-          background-color: #00ff41;
-          width: 8px;
-          height: 8px;
+          background-color: ${markerColor};
+          width: ${markerSize};
+          height: ${markerSize};
           border-radius: 50%;
-          border: 1px solid white;
+          border: ${borderWidth} solid white;
           cursor: pointer;
-          z-index: 1;
+          z-index: ${isNearRoute ? 5 : 1};
         `;
 
         const popup = new mapboxgl.Popup().setHTML(`
           <div style="font-family: Arial, sans-serif; color: #333;">
-            <h4 style="margin: 0 0 8px 0; color: #00aa33;"><strong>${station.name}</strong></h4>
+            <h4 style="margin: 0 0 8px 0; color: ${isNearRoute ? '#dc2626' : '#00aa33'};"><strong>${isNearRoute ? '🔴' : '🟢'} ${station.name}</strong></h4>
             <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
+            <p style="margin: 4px 0; color: #333;">🛣️ <strong>Avstand til rute:</strong> ${minDistance.toFixed(1)} km</p>
+            ${isNearRoute ? '<p style="margin: 4px 0; color: #dc2626;"><strong>🔴 Nær ruten (< 1 km)</strong></p>' : ''}
             <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
             <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
             <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${station.available}/${station.total} ladepunkter</p>
@@ -552,11 +576,27 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           .addTo(map.current!);
         
         if (index < 10) {
-          console.log(`✅ GRØNN MARKØR ${index + 1}: ${station.name}`);
+          console.log(`${isNearRoute ? '🔴' : '🟢'} MARKØR ${index + 1}: ${station.name} (${minDistance.toFixed(1)}km)`);
         }
       });
       
-      console.log(`✅ ALLE ${chargingStations.length} GRØNNE MARKØRER LAGT TIL!`);
+      const nearRouteCount = chargingStations.filter(station => {
+        let minDistance = Infinity;
+        for (let i = 0; i < mapRouteCoords.length; i++) {
+          const distance = getDistance(
+            station.latitude,
+            station.longitude,
+            mapRouteCoords[i][1],
+            mapRouteCoords[i][0]
+          );
+          if (distance < minDistance) {
+            minDistance = distance;
+          }
+        }
+        return minDistance <= 1.0;
+      }).length;
+      
+      console.log(`✅ ALLE ${chargingStations.length} MARKØRER LAGT TIL! (${nearRouteCount} røde innenfor 1km, ${chargingStations.length - nearRouteCount} grønne)`);
 
       // DERETTER: Legg til markører for optimerte ladestasjoner (større og mer synlige)
       console.log('⚡ LEGGER TIL ANBEFALTE STASJONER...');
@@ -608,10 +648,10 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           .setPopup(popup)
           .addTo(map.current!);
         
-        console.log('✅ Rød rutemarkør lagt til for:', station.name);
+        console.log('ℹ️ Optimerte stasjoner (lyn-markører) er nå erstattet med avstandsbaserte røde markører');
       });
       
-      console.log('🎯 ALLE MARKØRER LAGT TIL! Total antall:', optimized.length);
+      console.log('ℹ️ Ladestasjoner er nå fargekodet basert på avstand til ruten (røde < 1km, grønne > 1km)');
 
       // Tilpass kart til å vise hele ruten
       console.log('🗺️ Setter kartbounds...');
