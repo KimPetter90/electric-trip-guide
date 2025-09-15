@@ -559,8 +559,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     
     const criticalBatteryLevel = 10; // Kritisk batterinivå på 10%
     const maxChargingLevel = 80; // Lad til maks 80%
-    const maxDetourDistance = 5; // KUN 5km avvik fra ruten!
-    const maxStationsToShow = 10; // Redusert til 10 stasjoner for kun de nærmeste
+    const maxDetourDistance = 3; // KUN 3km avvik fra ruten for å være rød
+    const maxStationsToShow = 100; // Økt igjen for å fange alle stasjoner på ruten
 
     console.log('🔋 DETALJERT BEREGNING:');
     console.log('   - Start batteri:', batteryPercentage + '%');
@@ -572,10 +572,10 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     const totalRangeWithStartBattery = (batteryPercentage / 100) * car.range;
     console.log('   - Total rekkevidde med ' + batteryPercentage + '%:', totalRangeWithStartBattery.toFixed(1) + 'km');
 
-    // Hvis total rekkevidde holder hele veien, ingen lading nødvendig
+    // Selv om batteriet holder hele veien, vil vi fortsatt vise alle stasjoner på ruten som røde
     if (totalRangeWithStartBattery >= routeDistance) {
-      console.log('✅ BATTERIET HOLDER HELE VEIEN!');
-      return [];
+      console.log('✅ BATTERIET HOLDER HELE VEIEN, men viser fortsatt stasjoner på ruten');
+      // Ikke returner tom array - fortsett å finne stasjoner på ruten
     }
 
     console.log('🚨 TRENGER LADING! Rekkevidde mangler:', (routeDistance - totalRangeWithStartBattery).toFixed(1) + 'km');
@@ -672,32 +672,31 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       });
     }
 
-    // LEGG TIL ALLE STASJONER LANGS RUTEN DIREKTE!
-    console.log('🔧 LEGGER TIL ALLE', stationsBeforeCritical.length, 'STASJONER DIREKTE TIL OPTIMIZED ARRAY!');
+    // RETURNER ALLE STASJONER SOM LIGGER PÅ RUTEN (innen 3km) SOM RØDE MARKØRER
+    console.log('🔴 RETURNERER ALLE', stationsAlongRoute.length, 'STASJONER PÅ RUTEN SOM RØDE MARKØRER!');
     
-    stationsBeforeCritical.forEach((station, index) => {
+    const allStationsOnRoute = stationsAlongRoute.map((station, index) => {
       const arrivalBattery = batteryPercentage - (station.distanceAlongRoute / car.range) * 100;
       
-      console.log('🎯 LEGGER TIL STASJON:', station.name, 'ved', station.distanceAlongRoute.toFixed(1) + 'km');
-      console.log('   - Batteriprosent ved ankomst:', arrivalBattery.toFixed(1) + '%');
+      console.log('🔴 RØD STASJON PÅ RUTEN:', station.name, 'ved', station.distanceAlongRoute.toFixed(1) + 'km, avstand fra rute:', station.distanceFromRoute.toFixed(1) + 'km');
       
-      optimizedStations.push({
+      return {
         ...station,
         arrivalBatteryPercentage: arrivalBattery,
         targetBatteryPercentage: 80,
-        isRequired: true,
+        isRequired: false, // Ikke nødvendigvis påkrevd, men på ruten
         chargingTime: calculateChargingTime(arrivalBattery, 80, station.fastCharger)
-      });
+      };
     });
 
-    console.log('📊 RESULTAT: Lagt til', optimizedStations.length, 'ladestasjoner i optimized array');
+    console.log('📊 RESULTAT: Returnerer', allStationsOnRoute.length, 'ladestasjoner som ligger på ruten');
     
-    optimizedStations.forEach((station, index) => {
-      console.log('📍 Stasjon', (index + 1) + ':', station.name, 'på', station.distanceAlongRoute?.toFixed(1) + 'km -', station.arrivalBatteryPercentage?.toFixed(1) + '% →', station.targetBatteryPercentage?.toFixed(1) + '%');
+    allStationsOnRoute.forEach((station, index) => {
+      console.log('📍 Rød stasjon', (index + 1) + ':', station.name, 'på', station.distanceAlongRoute?.toFixed(1) + 'km fra start, avstand fra rute:', station.distanceFromRoute?.toFixed(1) + 'km');
     });
 
-    console.log('🔍 RESULTAT fra optimizeChargingStations:', optimizedStations.length, 'stasjoner');
-    return optimizedStations;
+    console.log('🔍 RESULTAT fra optimizeChargingStations:', allStationsOnRoute.length, 'stasjoner');
+    return allStationsOnRoute;
   };
 
   // Beregn ladetid
