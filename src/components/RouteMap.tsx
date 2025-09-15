@@ -845,23 +845,34 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         markers.forEach(marker => marker.remove());
         const chargingMarkers: mapboxgl.Marker[] = [];
         
-        // Legg til markører kun for obligatoriske ladestasjoner
+        // Legg til markører for alle ladestasjoner som er funnet
         optimizedStations.forEach((station, index) => {
           const isRequired = (station as any).isRequired;
-          
-          // Kun vis markører for obligatoriske stasjoner
-          if (!isRequired) {
-            return; // Hopp over valgfrie stasjoner
-          }
           const arrivalBattery = (station as any).arrivalBattery || 50;
+          
+          console.log(`🔍 Lager markør for ${station.name}:`, { 
+            isRequired, 
+            arrivalBattery, 
+            lat: station.lat, 
+            lng: station.lng,
+            distance: station.distance 
+          });
           
           const el = document.createElement('div');
           el.className = 'charging-marker';
           
-          // Obligatorisk ladestasjon - rød/orange basert på batterinivå
-          el.style.backgroundColor = arrivalBattery < 10 ? '#ef4444' : '#f59e0b';
-          el.style.border = '3px solid #dc2626';
-          el.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.6)';
+          if (isRequired) {
+            // Obligatorisk ladestasjon - rød/orange basert på batterinivå
+            el.style.backgroundColor = arrivalBattery < 10 ? '#ef4444' : '#f59e0b';
+            el.style.border = '3px solid #dc2626';
+            el.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.6)';
+          } else {
+            // Valgfri ladestasjon - grønn
+            el.style.backgroundColor = '#10b981';
+            el.style.border = '3px solid #059669';
+            el.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.6)';
+          }
+          
           el.style.width = '35px';
           el.style.height = '35px';
           el.style.borderRadius = '50%';
@@ -874,10 +885,16 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           el.style.position = 'relative';
           
           // Legg til varselikon for kritisk batterinivå
-          if (arrivalBattery < 10) {
+          if (isRequired && arrivalBattery < 10) {
             el.innerHTML = `<span style="position: absolute; top: -5px; right: -5px; background: #dc2626; border-radius: 50%; width: 15px; height: 15px; display: flex; align-items: center; justify-content: center; font-size: 10px;">!</span>${index + 1}`;
           } else {
             el.textContent = (index + 1).toString();
+          }
+
+          // Sjekk at vi har gyldige koordinater
+          if (!station.lat || !station.lng) {
+            console.error(`❌ Ugyldig koordinater for ${station.name}:`, station);
+            return;
           }
 
           const marker = new mapboxgl.Marker(el)
@@ -886,7 +903,9 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
               <div class="p-3 max-w-xs">
                 <div class="flex items-center gap-2 mb-2">
                   <h4 class="font-semibold text-sm">${station.name}</h4>
-                  <span class="bg-red-500 text-white text-xs px-2 py-1 rounded">OBLIGATORISK</span>
+                  <span class="bg-${isRequired ? 'red' : 'green'}-500 text-white text-xs px-2 py-1 rounded">
+                    ${isRequired ? 'OBLIGATORISK' : 'VALGFRITT'}
+                  </span>
                 </div>
                 <p class="text-sm text-gray-600 mb-2">${station.location}</p>
                 <div class="grid grid-cols-2 gap-2 text-xs">
@@ -897,18 +916,22 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
                   <div><strong>Lading:</strong> ${station.chargeAmount} kWh</div>
                   <div><strong>Kostnad:</strong> ${station.cost} kr</div>
                 </div>
-                <p class="text-xs text-red-600 mt-2 font-medium">⚠️ Du må lade her for å nå målet</p>
+                ${isRequired ? 
+                  '<p class="text-xs text-red-600 mt-2 font-medium">⚠️ Du må lade her for å nå målet</p>' : 
+                  '<p class="text-xs text-green-600 mt-2 font-medium">💡 Valgfri ladestasjon</p>'
+                }
               </div>
             `))
             .addTo(map.current!);
           
           chargingMarkers.push(marker);
+          console.log(`✅ Markør lagt til for ${station.name} på [${station.lng}, ${station.lat}]`);
         });
         
         // Kombiner alle markører
         const allNewMarkers = [...newMarkers, ...chargingMarkers];
         setMarkers(allNewMarkers);
-        console.log('Lagt til', chargingMarkers.length, 'ladestasjonsmarkører på kartet');
+        console.log('Lagt til', chargingMarkers.length, 'ladestasjonsmarkører på kartet (obligatoriske og valgfrie)');
         
         // Tilpass visningen til ruten
         const bounds = new mapboxgl.LngLatBounds();
