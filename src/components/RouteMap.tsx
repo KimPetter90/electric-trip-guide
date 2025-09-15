@@ -18,7 +18,6 @@ interface CarModel {
   batteryCapacity: number;
   range: number;
   consumption: number;
-  image: string;
 }
 
 interface RouteData {
@@ -27,44 +26,54 @@ interface RouteData {
   via?: string;
   trailerWeight: number;
   batteryPercentage: number;
-  travelDate?: Date;
 }
 
 interface ChargingStation {
   id: string;
   name: string;
   location: string;
-  lat: number;
-  lng: number;
-  chargeTime: number;
-  chargeAmount: number;
-  cost: number;
-  fastCharger: boolean;
+  latitude: number;
+  longitude: number;
   available: number;
   total: number;
-  distance?: number;
-  arrivalBattery?: number;
-  departureBattery?: number;
+  fastCharger: boolean;
+  power: string;
+  cost: number;
+  distanceFromRoute?: number;
+  distanceAlongRoute?: number;
+  arrivalBatteryPercentage?: number;
+  isRequired?: boolean;
+  chargingTime?: number;
+  targetBatteryPercentage?: number;
 }
 
 interface WeatherData {
-  temperature: number;
-  windSpeed: number;
-  windDirection: number;
-  humidity: number;
-  weatherCondition: string;
-  visibility: number;
-}
-
-interface RouteWeatherData {
-  startWeather: WeatherData;
-  endWeather: WeatherData;
+  startWeather: {
+    temperature: number;
+    windSpeed: number;
+    windDirection: number;
+    humidity: number;
+    weatherCondition: string;
+    visibility: number;
+  };
+  endWeather: {
+    temperature: number;
+    windSpeed: number;
+    windDirection: number;
+    humidity: number;
+    weatherCondition: string;
+    visibility: number;
+  };
   averageConditions: {
     temperature: number;
     windSpeed: number;
     humidity: number;
   };
   rangeFactor: number;
+}
+
+interface RouteWeatherData {
+  weather: WeatherData;
 }
 
 interface TripAnalysis {
@@ -74,967 +83,707 @@ interface TripAnalysis {
   chargingTime: number;
   co2Saved: number;
   efficiency: number;
-  weather: RouteWeatherData | null;
+  weather?: WeatherData;
 }
-
-// Norske byer koordinater
-const cityCoordinates: Record<string, { lat: number; lng: number }> = {
-  'oslo': { lat: 59.9139, lng: 10.7522 },
-  'bergen': { lat: 60.3913, lng: 5.3221 },
-  'trondheim': { lat: 63.4305, lng: 10.3951 },
-  'stavanger': { lat: 58.9700, lng: 5.7331 },
-  'tromsø': { lat: 69.6492, lng: 18.9553 },
-  'ålesund': { lat: 62.4722, lng: 6.1549 },
-  'kristiansand': { lat: 58.1599, lng: 8.0182 },
-  'drammen': { lat: 59.7439, lng: 10.2045 },
-  'fredrikstad': { lat: 59.2181, lng: 10.9298 },
-  'lillehammer': { lat: 61.1153, lng: 10.4662 },
-  'bodø': { lat: 67.2804, lng: 14.4040 },
-  'molde': { lat: 62.7372, lng: 7.1607 }
-};
-
-// Basis ladestasjoner (vil bli utvidet med API data)
-const basicChargingStations: ChargingStation[] = [
-  { id: "1", name: "Tesla Supercharger Gardermoen", location: "Oslo Lufthavn", lat: 60.1939, lng: 11.1004, chargeTime: 20, chargeAmount: 50, cost: 250, fastCharger: true, available: 8, total: 12 },
-  { id: "2", name: "Ionity Jessheim", location: "Jessheim", lat: 60.1567, lng: 11.1675, chargeTime: 25, chargeAmount: 55, cost: 275, fastCharger: true, available: 4, total: 6 },
-  { id: "3", name: "Circle K Lillestrøm", location: "Lillestrøm", lat: 59.9561, lng: 11.0461, chargeTime: 35, chargeAmount: 40, cost: 200, fastCharger: false, available: 2, total: 4 },
-  { id: "4", name: "Ionity Bergen Flesland", location: "Bergen", lat: 60.2934, lng: 5.2181, chargeTime: 22, chargeAmount: 52, cost: 260, fastCharger: true, available: 6, total: 8 },
-  { id: "5", name: "Mer Bergen Sentrum", location: "Bergen", lat: 60.3913, lng: 5.3221, chargeTime: 40, chargeAmount: 35, cost: 175, fastCharger: false, available: 3, total: 6 },
-  { id: "6", name: "Ionity Lillehammer", location: "Lillehammer", lat: 61.1153, lng: 10.4662, chargeTime: 24, chargeAmount: 54, cost: 270, fastCharger: true, available: 5, total: 8 },
-  { id: "7", name: "Tesla Supercharger Hønefoss", location: "Hønefoss", lat: 60.1681, lng: 10.2597, chargeTime: 21, chargeAmount: 51, cost: 255, fastCharger: true, available: 7, total: 10 },
-  { id: "8", name: "Eviny Fagernes", location: "Fagernes", lat: 61.0067, lng: 9.2881, chargeTime: 30, chargeAmount: 45, cost: 225, fastCharger: true, available: 2, total: 4 },
-  { id: "9", name: "Mer Gol", location: "Gol", lat: 60.6856, lng: 9.0072, chargeTime: 35, chargeAmount: 42, cost: 210, fastCharger: false, available: 1, total: 3 },
-  { id: "10", name: "Tesla Supercharger Trondheim", location: "Trondheim", lat: 63.4305, lng: 10.3951, chargeTime: 19, chargeAmount: 56, cost: 280, fastCharger: true, available: 12, total: 16 },
-  { id: "11", name: "Ionity Oppdal", location: "Oppdal", lat: 62.5948, lng: 9.6915, chargeTime: 26, chargeAmount: 48, cost: 240, fastCharger: true, available: 3, total: 6 },
-  { id: "12", name: "Eviny Stavanger", location: "Stavanger", lat: 58.9700, lng: 5.7331, chargeTime: 28, chargeAmount: 46, cost: 230, fastCharger: true, available: 4, total: 8 },
-  { id: "13", name: "Ionity Ålesund", location: "Ålesund", lat: 62.4722, lng: 6.1549, chargeTime: 25, chargeAmount: 50, cost: 250, fastCharger: true, available: 5, total: 6 },
-  { id: "14", name: "Circle K Molde", location: "Molde", lat: 62.7372, lng: 7.1607, chargeTime: 33, chargeAmount: 38, cost: 190, fastCharger: false, available: 2, total: 4 }
-];
-
-// Funksjon for å hente norske ladestasjoner (fallback til statisk data)
-const fetchNorwegianChargingStations = async (): Promise<ChargingStation[]> => {
-  try {
-    console.log('🔍 Laster utvidet ladestasjonsdatabase...');
-    
-    // For nå bruker vi en utvidet statisk database med mange flere stasjoner
-    const extendedStations: ChargingStation[] = [
-      // Oslo-området
-      { id: "ocm_1001", name: "Circle K Ryen", location: "Oslo", lat: 59.8847, lng: 10.8061, chargeTime: 35, chargeAmount: 40, cost: 200, fastCharger: false, available: 3, total: 4 },
-      { id: "ocm_1002", name: "Tesla Supercharger Vinterbro", location: "Ås", lat: 59.7465, lng: 10.8156, chargeTime: 18, chargeAmount: 58, cost: 290, fastCharger: true, available: 6, total: 8 },
-      { id: "ocm_1003", name: "Ionity Rygge", location: "Moss", lat: 59.3789, lng: 10.7856, chargeTime: 22, chargeAmount: 54, cost: 270, fastCharger: true, available: 4, total: 6 },
-      { id: "ocm_1004", name: "Mer Fornebu", location: "Bærum", lat: 59.8956, lng: 10.6161, chargeTime: 40, chargeAmount: 35, cost: 175, fastCharger: false, available: 2, total: 4 },
-      
-      // På ruten Oslo-Ålesund (E6/E136)
-      { id: "ocm_1005", name: "Circle K Harestua", location: "Lunner", lat: 60.3167, lng: 10.5333, chargeTime: 30, chargeAmount: 42, cost: 210, fastCharger: false, available: 2, total: 3 },
-      { id: "ocm_1006", name: "Tesla Supercharger Mjøsbrua", location: "Moelv", lat: 60.9344, lng: 10.6911, chargeTime: 20, chargeAmount: 52, cost: 260, fastCharger: true, available: 5, total: 8 },
-      { id: "ocm_1007", name: "Eviny Dombås", location: "Dovre", lat: 62.0744, lng: 9.1200, chargeTime: 28, chargeAmount: 48, cost: 240, fastCharger: true, available: 3, total: 5 },
-      { id: "ocm_1008", name: "Circle K Otta", location: "Sel", lat: 61.7711, lng: 9.5278, chargeTime: 32, chargeAmount: 38, cost: 190, fastCharger: false, available: 1, total: 2 },
-      { id: "ocm_1009", name: "Ionity Lom", location: "Lom", lat: 61.8367, lng: 8.5678, chargeTime: 25, chargeAmount: 50, cost: 250, fastCharger: true, available: 4, total: 6 },
-      { id: "ocm_1010", name: "Tesla Supercharger Stryn", location: "Stryn", lat: 61.9111, lng: 6.7189, chargeTime: 21, chargeAmount: 54, cost: 270, fastCharger: true, available: 6, total: 10 },
-      
-      // Nær start (Ålesund-området)
-      { id: "ocm_1011", name: "Circle K Moa", location: "Ålesund", lat: 62.4167, lng: 6.2833, chargeTime: 35, chargeAmount: 40, cost: 200, fastCharger: false, available: 2, total: 3 },
-      { id: "ocm_1012", name: "Mer Langevåg", location: "Giske", lat: 62.4500, lng: 6.0833, chargeTime: 40, chargeAmount: 35, cost: 175, fastCharger: false, available: 1, total: 2 },
-      { id: "ocm_1013", name: "Eviny Volda", location: "Volda", lat: 62.1489, lng: 6.0711, chargeTime: 30, chargeAmount: 45, cost: 225, fastCharger: true, available: 3, total: 4 },
-      { id: "ocm_1014", name: "Tesla Supercharger Fosnavåg", location: "Herøy", lat: 62.3233, lng: 5.7500, chargeTime: 19, chargeAmount: 56, cost: 280, fastCharger: true, available: 8, total: 12 },
-      
-      // Tidlige stopp langs ruten (50-150km fra Ålesund)
-      { id: "ocm_1015", name: "Circle K Sjøholt", location: "Ørsta", lat: 62.1944, lng: 6.1389, chargeTime: 33, chargeAmount: 38, cost: 190, fastCharger: false, available: 2, total: 3 },
-      { id: "ocm_1016", name: "Ionity Hellesylt", location: "Stranda", lat: 62.0833, lng: 7.1167, chargeTime: 24, chargeAmount: 52, cost: 260, fastCharger: true, available: 4, total: 6 },
-      { id: "ocm_1017", name: "Mer Hornindal", location: "Hornindal", lat: 61.9667, lng: 6.5333, chargeTime: 38, chargeAmount: 36, cost: 180, fastCharger: false, available: 1, total: 2 },
-      { id: "ocm_1018", name: "Eviny Loen", location: "Stryn", lat: 61.8667, lng: 6.8500, chargeTime: 26, chargeAmount: 46, cost: 230, fastCharger: true, available: 3, total: 5 },
-      
-      // Flere alternativer rundt Lillehammer (300-400km)
-      { id: "ocm_1019", name: "Circle K Hamar", location: "Hamar", lat: 60.7945, lng: 11.0680, chargeTime: 32, chargeAmount: 40, cost: 200, fastCharger: false, available: 2, total: 4 },
-      { id: "ocm_1020", name: "Tesla Supercharger Elverum", location: "Elverum", lat: 60.8811, lng: 11.5644, chargeTime: 20, chargeAmount: 54, cost: 270, fastCharger: true, available: 7, total: 10 },
-      { id: "ocm_1021", name: "Ionity Vinstra", location: "Nord-Fron", lat: 61.5356, lng: 9.9333, chargeTime: 23, chargeAmount: 53, cost: 265, fastCharger: true, available: 5, total: 8 },
-      
-      // Sørlandet
-      { id: "ocm_2001", name: "Ionity Kristiansand", location: "Kristiansand", lat: 58.1599, lng: 8.0182, chargeTime: 24, chargeAmount: 52, cost: 260, fastCharger: true, available: 5, total: 8 },
-      { id: "ocm_2002", name: "Tesla Supercharger Mandal", location: "Mandal", lat: 58.0289, lng: 7.4611, chargeTime: 20, chargeAmount: 55, cost: 275, fastCharger: true, available: 4, total: 6 },
-      { id: "ocm_2003", name: "Circle K Arendal", location: "Arendal", lat: 58.4611, lng: 8.7722, chargeTime: 30, chargeAmount: 42, cost: 210, fastCharger: false, available: 2, total: 3 },
-      { id: "ocm_2004", name: "Mer Grimstad", location: "Grimstad", lat: 58.3405, lng: 8.5936, chargeTime: 35, chargeAmount: 38, cost: 190, fastCharger: false, available: 1, total: 2 },
-      { id: "ocm_2005", name: "Eviny Lillesand", location: "Lillesand", lat: 58.2544, lng: 8.3739, chargeTime: 40, chargeAmount: 35, cost: 175, fastCharger: false, available: 2, total: 3 },
-      
-      // Vestlandet
-      { id: "ocm_3001", name: "Ionity Bergen Flesland", location: "Bergen", lat: 60.2934, lng: 5.2181, chargeTime: 22, chargeAmount: 52, cost: 260, fastCharger: true, available: 6, total: 8 },
-      { id: "ocm_3002", name: "Tesla Supercharger Stavanger", location: "Stavanger", lat: 58.9700, lng: 5.7331, chargeTime: 19, chargeAmount: 56, cost: 280, fastCharger: true, available: 7, total: 10 },
-      { id: "ocm_3003", name: "Circle K Haugesund", location: "Haugesund", lat: 59.4138, lng: 5.2681, chargeTime: 30, chargeAmount: 42, cost: 210, fastCharger: false, available: 3, total: 4 },
-      { id: "ocm_3004", name: "Mer Odda", location: "Odda", lat: 60.0667, lng: 6.5444, chargeTime: 35, chargeAmount: 40, cost: 200, fastCharger: false, available: 2, total: 3 },
-      
-      // Midt-Norge
-      { id: "ocm_4001", name: "Tesla Supercharger Trondheim", location: "Trondheim", lat: 63.4305, lng: 10.3951, chargeTime: 18, chargeAmount: 58, cost: 290, fastCharger: true, available: 8, total: 12 },
-      { id: "ocm_4002", name: "Circle K Steinkjer", location: "Steinkjer", lat: 64.0186, lng: 11.4952, chargeTime: 32, chargeAmount: 40, cost: 200, fastCharger: false, available: 2, total: 3 },
-      { id: "ocm_4003", name: "Ionity Røros", location: "Røros", lat: 62.5744, lng: 11.3914, chargeTime: 25, chargeAmount: 50, cost: 250, fastCharger: true, available: 4, total: 6 }
-    ];
-    
-    console.log(`✅ Lastet ${extendedStations.length} ekstra ladestasjoner`);
-    return extendedStations;
-    
-  } catch (error) {
-    console.error('❌ Feil ved henting av ladestasjoner:', error);
-    return [];
-  }
-};
 
 interface RouteMapProps {
   isVisible: boolean;
   routeData: RouteData;
-  selectedCar: CarModel | null;
-  routeTrigger?: number; // Trigger for manual updates
+  selectedCar: CarModel;
 }
 
-export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigger = 0 }: RouteMapProps) {
-  const { toast } = useToast();
+// Koordinater for norske byer
+const cityCoordinates: Record<string, [number, number]> = {
+  'oslo': [10.7522, 59.9139],
+  'bergen': [5.3221, 60.3913],
+  'trondheim': [10.3951, 63.4305],
+  'stavanger': [5.7331, 58.9700],
+  'tromsø': [18.9553, 69.6696],
+  'drammen': [10.2045, 59.7436],
+  'fredrikstad': [10.9298, 59.2181],
+  'kristiansand': [8.0182, 58.1599],
+  'sandnes': [5.7357, 58.8516],
+  'tønsberg': [10.4078, 59.2674],
+  'sarpsborg': [11.1070, 59.2839],
+  'skien': [9.6090, 59.2085],
+  'ålesund': [6.1575, 62.4722],
+  'sandefjord': [10.2280, 59.1289],
+  'bodø': [14.3951, 67.2804],
+  'molde': [7.1574, 62.7378],
+  'harstad': [16.5639, 68.7989],
+  'lillehammer': [10.4662, 61.1272]
+};
+
+// Basis ladestasjoner
+const basicChargingStations: ChargingStation[] = [
+  {
+    id: "fosnavag-tesla",
+    name: "Tesla Supercharger Fosnavåg",
+    location: "Fosnavåg, Møre og Romsdal",
+    latitude: 62.3216,
+    longitude: 5.6592,
+    available: 8,
+    total: 12,
+    fastCharger: true,
+    power: "250 kW",
+    cost: 4.50,
+  },
+  {
+    id: "circle-k-sjoholt",
+    name: "Circle K Sjøholt",
+    location: "Sjøholt, Møre og Romsdal",
+    latitude: 62.2453,
+    longitude: 6.1231,
+    available: 3,
+    total: 4,
+    fastCharger: true,
+    power: "150 kW",
+    cost: 5.20,
+  },
+  {
+    id: "eviny-volda",
+    name: "Eviny Volda",
+    location: "Volda, Møre og Romsdal",
+    latitude: 62.1473,
+    longitude: 6.0716,
+    available: 2,
+    total: 3,
+    fastCharger: false,
+    power: "50 kW",
+    cost: 3.80,
+  },
+  {
+    id: "mer-hornindal",
+    name: "Mer Hornindal",
+    location: "Hornindal, Vestland",
+    latitude: 61.9642,
+    longitude: 6.5331,
+    available: 4,
+    total: 6,
+    fastCharger: true,
+    power: "175 kW",
+    cost: 4.90,
+  },
+  {
+    id: "tesla-supercharger-stryn",
+    name: "Tesla Supercharger Stryn",
+    location: "Stryn, Vestland",
+    latitude: 61.9115,
+    longitude: 6.7156,
+    available: 6,
+    total: 8,
+    fastCharger: true,
+    power: "250 kW",
+    cost: 4.50,
+  }
+];
+
+async function fetchNorwegianChargingStations(): Promise<ChargingStation[]> {
+  const extendedStations: ChargingStation[] = [
+    ...basicChargingStations,
+    {
+      id: "circle-k-geiranger",
+      name: "Circle K Geiranger",
+      location: "Geiranger, Møre og Romsdal",
+      latitude: 62.1015,
+      longitude: 7.2066,
+      available: 2,
+      total: 4,
+      fastCharger: true,
+      power: "150 kW",
+      cost: 5.20,
+    },
+    {
+      id: "eviny-alesund",
+      name: "Eviny Ålesund",
+      location: "Ålesund, Møre og Romsdal",
+      latitude: 62.4722,
+      longitude: 6.1575,
+      available: 5,
+      total: 8,
+      fastCharger: true,
+      power: "175 kW",
+      cost: 4.80,
+    },
+    {
+      id: "tesla-supercharger-molde",
+      name: "Tesla Supercharger Molde",
+      location: "Molde, Møre og Romsdal",
+      latitude: 62.7378,
+      longitude: 7.1574,
+      available: 7,
+      total: 10,
+      fastCharger: true,
+      power: "250 kW",
+      cost: 4.50,
+    },
+    {
+      id: "fortum-kristiansund",
+      name: "Fortum Kristiansund",
+      location: "Kristiansund, Møre og Romsdal",
+      latitude: 63.1109,
+      longitude: 7.7285,
+      available: 3,
+      total: 6,
+      fastCharger: true,
+      power: "150 kW",
+      cost: 5.00,
+    },
+    {
+      id: "mer-trondheim",
+      name: "Mer Trondheim",
+      location: "Trondheim, Trøndelag",
+      latitude: 63.4305,
+      longitude: 10.3951,
+      available: 8,
+      total: 12,
+      fastCharger: true,
+      power: "300 kW",
+      cost: 5.50,
+    }
+  ];
+  
+  return extendedStations;
+}
+
+function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const lastRouteDataRef = useRef<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
-  const [routeAnalysis, setRouteAnalysis] = useState<TripAnalysis | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [chargingStations, setChargingStations] = useState<ChargingStation[]>([]);
   const [optimizedStations, setOptimizedStations] = useState<ChargingStation[]>([]);
-  const [activeTab, setActiveTab] = useState("analysis");
-  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
-  const [allChargingStations, setAllChargingStations] = useState<ChargingStation[]>(basicChargingStations);
-  const [weatherData, setWeatherData] = useState<RouteWeatherData | null>(null);
+  const [routeAnalysis, setRouteAnalysis] = useState<TripAnalysis | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("analysis");
+  const { toast } = useToast();
 
-  // Hent værdata fra Supabase edge function
-  const fetchWeatherData = async (startCoords: { lat: number; lng: number }, endCoords: { lat: number; lng: number }, travelDate?: Date) => {
-    try {
-      console.log('🌤️ Henter værdata for ruten...', travelDate ? `for dato: ${travelDate.toLocaleDateString()}` : 'for i dag');
-      
-      const { data, error } = await supabase.functions.invoke('weather-service', {
-        body: {
-          startLat: startCoords.lat,
-          startLng: startCoords.lng,
-          endLat: endCoords.lat,
-          endLng: endCoords.lng,
-          travelDate: travelDate?.toISOString()
-        }
-      });
-
-      if (error) {
-        console.error('Feil ved henting av værdata:', error);
-        return null;
+  // Mapbox token henting
+  useEffect(() => {
+    const fetchMapboxToken = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('mapbox-token');
+        if (error) throw error;
+        setAccessToken(data.token);
+      } catch (error) {
+        console.error('Error fetching Mapbox token:', error);
+        setError('Kunne ikke hente Mapbox-token');
       }
-
-      console.log('✅ Værdata hentet:', data);
-      return data as RouteWeatherData;
-    } catch (error) {
-      console.error('Nettverksfeil ved henting av værdata:', error);
-      return null;
-    }
-  };
-
-  // Beregn distanse mellom to punkter
-  const getDistance = (point1: { lat: number; lng: number }, point2: { lat: number; lng: number }) => {
-    const R = 6371;
-    const dLat = (point2.lat - point1.lat) * Math.PI / 180;
-    const dLon = (point2.lng - point1.lng) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(point1.lat * Math.PI / 180) * Math.cos(point2.lat * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
-
-  // Finn stasjoner som ligger nær den faktiske ruten (BEGRENSET)
-  const findStationsNearRoute = (routeGeometry: any) => {
-    if (!routeGeometry || !routeGeometry.coordinates) {
-      console.log('❌ Ingen rute-geometri tilgjengelig');
-      return [];
-    }
-
-    const routeCoords = routeGeometry.coordinates;
-    const maxDistanceFromRoute = 10; // KUN 10 km fra ruten
-    
-    const stationsAlongRoute = allChargingStations.filter(station => {
-      // Finn nærmeste punkt på ruten til stasjonen
-      let minDistance = Infinity;
-      let routeDistance = 0;
-      let closestSegmentIndex = 0;
-      
-      for (let i = 0; i < routeCoords.length - 1; i++) {
-        const routePoint = { lat: routeCoords[i][1], lng: routeCoords[i][0] };
-        const distanceToStation = getDistance(routePoint, { lat: station.lat, lng: station.lng });
-        
-        if (distanceToStation < minDistance) {
-          minDistance = distanceToStation;
-          closestSegmentIndex = i;
-        }
-      }
-      
-      // Beregn avstand langs ruten til dette punktet
-      routeDistance = 0;
-      for (let j = 0; j < closestSegmentIndex; j++) {
-        const segmentDistance = getDistance(
-          { lat: routeCoords[j][1], lng: routeCoords[j][0] },
-          { lat: routeCoords[j + 1][1], lng: routeCoords[j + 1][0] }
-        );
-        routeDistance += segmentDistance;
-      }
-      
-      // Legg til avstand fra ruten og avstand langs ruten
-      (station as any).distanceFromRoute = minDistance;
-      (station as any).routeDistance = routeDistance;
-      
-      return minDistance <= maxDistanceFromRoute;
-    });
-
-    // Sorter etter avstand langs ruten og ta kun de 5 første
-    const sortedStations = stationsAlongRoute
-      .sort((a, b) => (a as any).routeDistance - (b as any).routeDistance)
-      .slice(0, 5); // MAKS 5 stasjoner totalt
-
-    console.log(`📍 Fant ${sortedStations.length} stasjoner langs ruten (maks 5, innen ${maxDistanceFromRoute}km)`);
-    return sortedStations;
-  };
-  
-  // KORREKT LOGIKK: Finn NØYAKTIG hvor batteriet når 10% og plasser ladestasjon DER
-  const optimizeChargingStations = (routeDistance: number, routeGeometry: any) => {
-    console.log('🚀 OPTIMIZE CHARGING STATIONS KALT!');
-    console.log('📊 BATTERIPROSENT INPUT:', routeData.batteryPercentage, '%');
-    console.log('📊 RouteDistance:', routeDistance, 'km');
-    
-    if (!selectedCar) {
-      console.log('❌ Ingen bil valgt');
-      return [];
-    }
-
-    const startBattery = routeData.batteryPercentage;
-    const actualRange = selectedCar.range * 0.85;
-    
-    // STEG 1: Beregn HVOR på ruten batteriet når 10%
-    const batteryUsableFor10Percent = startBattery - 10;
-    const distanceWhenBatteryIs10Percent = (batteryUsableFor10Percent / 100) * actualRange;
-    
-    console.log(`🧮 KORREKT BEREGNING:`);
-    console.log(`   - Start batteri: ${startBattery}%`);
-    console.log(`   - Bil rekkevidde: ${actualRange}km`);
-    console.log(`   - Kan bruke ${batteryUsableFor10Percent}% batteri (ned til 10%)`);
-    console.log(`   - Batteriet når 10% etter: ${distanceWhenBatteryIs10Percent.toFixed(1)}km`);
-    console.log(`   - Total rutelengde: ${routeDistance.toFixed(1)}km`);
-    
-    if (distanceWhenBatteryIs10Percent >= routeDistance) {
-      console.log(`✅ TRENGER IKKE LADING! Batteriet holder hele veien`);
-      return [];
-    }
-    
-    // STEG 2: Trenger lading - finn stasjon nærmest punktet hvor batteriet når 10%
-    console.log(`🚨 TRENGER LADING! Batteriet når 10% ved ${distanceWhenBatteryIs10Percent.toFixed(1)}km`);
-    
-    const stationsNearRoute = findStationsNearRoute(routeGeometry);
-    const nearbyStations = stationsNearRoute
-      .filter(s => s.available > 0)
-      .map(s => {
-        const stationDist = (s as any).routeDistance || 0;
-        const distanceFrom10PercentPoint = Math.abs(stationDist - distanceWhenBatteryIs10Percent);
-        const batteryAtStation = startBattery - ((stationDist / actualRange) * 100);
-        
-        console.log(`🔍 ${s.name}: ${stationDist.toFixed(1)}km, avstand fra 10%-punkt: ${distanceFrom10PercentPoint.toFixed(1)}km, batteri: ${batteryAtStation.toFixed(1)}%`);
-        
-        return {
-          ...s,
-          distanceFromTarget: distanceFrom10PercentPoint,
-          calculatedBattery: batteryAtStation,
-          stationDistance: stationDist
-        };
-      })
-      .filter(s => s.distanceFromTarget <= 100) // Maks 100km fra 10%-punktet
-      .sort((a, b) => a.distanceFromTarget - b.distanceFromTarget);
-      
-    if (nearbyStations.length === 0) {
-      console.log(`❌ Ingen stasjon funnet nær ${distanceWhenBatteryIs10Percent.toFixed(1)}km`);
-      return [];
-    }
-    
-    const station = nearbyStations[0];
-    console.log(`🎯 VALGT: ${station.name} ved ${station.stationDistance.toFixed(1)}km`);
-    console.log(`   - Batteriprosent ved ankomst: ${station.calculatedBattery.toFixed(1)}%`);
-    
-    return [{
-      id: station.id,
-      name: station.name,
-      location: station.location,
-      lat: station.lat,
-      lng: station.lng,
-      chargeTime: station.chargeTime,
-      chargeAmount: station.chargeAmount,
-      cost: station.cost,
-      fastCharger: station.fastCharger,
-      available: station.available,
-      total: station.total,
-      distance: station.stationDistance,
-      arrivalBattery: Math.max(station.calculatedBattery, 0),
-      departureBattery: 80,
-      isRequired: true
-    }];
-  };
-  // Beregn vær-påvirkning (fallback hvis weather service ikke fungerer)
-      return [];
-    }
-
-    const startBattery = routeData.batteryPercentage;
-    const actualRange = selectedCar.range * 0.85;
-    
-    console.log(`🔋 DETALJERT BEREGNING:`);
-    console.log(`   - Start batteri: ${startBattery}%`);  
-    console.log(`   - Bil rekkevidde: ${actualRange}km`);
-    console.log(`   - Rutelengde: ${routeDistance.toFixed(1)}km`);
-
-    // DETALJERT beregning 
-    const batteryForTravel = startBattery - 10;
-    const distanceUntil10Percent = (batteryForTravel / 100) * actualRange;
-    
-    console.log(`🧮 STEG-FOR-STEG:`);
-    console.log(`   1. Batteri tilgjengelig: ${startBattery}% - 10% = ${batteryForTravel}%`);
-    console.log(`   2. Kjøredistanse med ${batteryForTravel}%: (${batteryForTravel}/100) × ${actualRange}km = ${distanceUntil10Percent.toFixed(1)}km`);
-    console.log(`   3. Sammenligning: ${distanceUntil10Percent.toFixed(1)}km VS ${routeDistance.toFixed(1)}km`);
-    console.log(`   4. Batteriet holder hele veien? ${distanceUntil10Percent >= routeDistance ? 'JA' : 'NEI'}`);
-    
-    if (distanceUntil10Percent >= routeDistance) {
-      console.log(`🚨 FEIL! Dette kan ikke stemme - ${distanceUntil10Percent.toFixed(1)}km er ikke nok for ${routeDistance.toFixed(1)}km`);
-    }
-    
-    if (distanceUntil10Percent >= routeDistance) {
-      const finalBattery = startBattery - ((routeDistance / actualRange) * 100);
-      console.log(`✅ BATTERIET HOLDER! Sluttbatteri vil være: ${finalBattery.toFixed(1)}%`);
-      console.log(`📍 MEN VISER LIKEVEL HVOR BATTERIET VILLE NÅDD 10% (VED ${distanceUntil10Percent.toFixed(1)}km)`);
-      // IKKE returner tom array - fortsett å vise hvor 10% ville vært
-    } else {
-      console.log(`🚨 BATTERIET NÅR 10% VED ${distanceUntil10Percent.toFixed(1)}km av ${routeDistance.toFixed(1)}km`);
-    }
-    
-    console.log(`📍 LETER ETTER LADESTASJONER NÆR ${distanceUntil10Percent.toFixed(1)}km...`);
-
-    // Finn ladestasjon som gir batteriprosent nærmest 10% ved ankomst
-    const stationsNearRoute = findStationsNearRoute(routeGeometry);
-    console.log(`🔍 Fant ${stationsNearRoute.length} stasjoner langs ruten totalt`);
-    
-    const suitableStations = stationsNearRoute
-      .filter(s => s.available > 0)
-      .map(s => {
-        const stationDist = (s as any).routeDistance || 0;
-        const batteryUsedToStation = (stationDist / actualRange) * 100;
-        const batteryAtStation = startBattery - batteryUsedToStation;
-        const differenceFrom10Percent = Math.abs(batteryAtStation - 10);
-        
-        console.log(`🔍 ${s.name}: ${stationDist.toFixed(1)}km, batteri: ${batteryAtStation.toFixed(1)}%, diff fra 10%: ${differenceFrom10Percent.toFixed(1)}%`);
-        
-        return {
-          ...s,
-          calculatedDistance: stationDist,
-          calculatedBattery: batteryAtStation,
-          differenceFrom10: differenceFrom10Percent
-        };
-      })
-      .filter(s => s.calculatedBattery >= 0 && s.calculatedBattery <= 50) // Utvid filter: 0-50% ved ankomst
-      .sort((a, b) => a.differenceFrom10 - b.differenceFrom10); // Sorter etter nærmest 10%
-
-    console.log(`📍 Etter filtrering: ${suitableStations.length} egnede stasjoner (0-50% batteri ved ankomst)`);
-    
-    if (suitableStations.length > 0) {
-      console.log(`🏆 BESTE STASJON: ${suitableStations[0].name} med ${suitableStations[0].calculatedBattery.toFixed(1)}% batteri ved ankomst`);
-    }
-
-    if (suitableStations.length === 0) {
-      console.log(`❌ Ingen egnet stasjon funnet som gir 5-25% batteri ved ankomst`);
-      return [];
-    }
-
-    const station = suitableStations[0];
-    const stationDistance = station.calculatedDistance;
-    const batteryAtStation = station.calculatedBattery;
-    
-    // Sjekk om dette er obligatorisk eller valgfri lading
-    const isRequired = distanceUntil10Percent < routeDistance;
-
-    console.log(`🎯 VALGT: ${station.name} ved ${stationDistance.toFixed(1)}km`);
-    console.log(`   - Batteriprosent ved ankomst: ${batteryAtStation.toFixed(1)}%`);
-    console.log(`   - Type: ${isRequired ? 'OBLIGATORISK' : 'VALGFRI'} lading`);
-
-    const results = [{
-      id: station.id,
-      name: station.name,
-      location: station.location,
-      lat: station.lat,
-      lng: station.lng,
-      chargeTime: station.chargeTime,
-      chargeAmount: station.chargeAmount,
-      cost: station.cost,
-      fastCharger: station.fastCharger,
-      available: station.available,
-      total: station.total,
-      distance: stationDistance,
-      arrivalBattery: Math.max(batteryAtStation, 0),
-      departureBattery: 80,
-      isRequired: isRequired
-    }];
-
-    // Sjekk om vi trenger flere stasjoner etter første lading
-    const remainingDistanceAfterFirstStation = routeDistance - stationDistance;
-    console.log(`🔄 SJEKKER OM VI TRENGER FLERE STASJONER:`);
-    console.log(`   - Gjenstående rute etter første stasjon: ${remainingDistanceAfterFirstStation.toFixed(1)}km`);
-    
-    const distanceWith80Percent = (70 / 100) * actualRange; // 80% ned til 10%
-    console.log(`   - Med 80% batteri kan vi kjøre: ${distanceWith80Percent.toFixed(1)}km til 10%`);
-    
-    if (remainingDistanceAfterFirstStation > distanceWith80Percent) {
-      console.log(`🚨 TRENGER EN STASJON TIL!`);
-      const secondStationPosition = stationDistance + distanceWith80Percent;
-      
-      const secondStations = stationsNearRoute
-        .filter(s => s.available > 0)
-        .filter(s => {
-          const sDist = (s as any).routeDistance || 0;
-          return Math.abs(sDist - secondStationPosition) <= 75;
-        })
-        .sort((a, b) => {
-          const aDist = Math.abs(((a as any).routeDistance || 0) - secondStationPosition);
-  
-  // Beregn vær-påvirkning (fallback hvis weather service ikke fungerer)
-  const calculateWeatherImpact = (): WeatherData => {
-    return {
-      temperature: Math.round(Math.random() * 20 - 5), // -5 til 15°C
-      windSpeed: Math.round(Math.random() * 15), // 0-15 m/s
-      windDirection: Math.round(Math.random() * 360),
-      humidity: Math.round(Math.random() * 40 + 30), // 30-70%
-      weatherCondition: ['Sol', 'Skyet', 'Regn', 'Snø'][Math.floor(Math.random() * 4)],
-      visibility: Math.round(Math.random() * 10 + 5) // 5-15 km
     };
-  };
 
-  // Beregn reiseanalyse
-  const calculateTripAnalysis = (distance: number, stations: ChargingStation[]): TripAnalysis => {
-    try {
-      const totalTime = distance / 80; // Antatt snittfart 80 km/t
-      const chargingTime = stations.reduce((total, station) => total + station.chargeTime, 0) / 60;
-      const totalCost = stations.reduce((total, station) => total + station.cost, 0);
-      const co2Saved = distance * 0.12; // 120g CO2/km for bensinbil
-      const efficiency = selectedCar ? (selectedCar.range / selectedCar.batteryCapacity) * 100 / distance : 85;
-      
-      const analysis = {
-        totalDistance: distance || 0,
-        totalTime: (totalTime + chargingTime) || 0,
-        totalCost: totalCost || 0,
-        chargingTime: (chargingTime * 60) || 0,
-        co2Saved: co2Saved || 0,
-        efficiency: Math.min(efficiency || 85, 100),
-        weather: weatherData
-      };
-      
-      console.log('✅ Trip analysis calculated:', analysis);
-      return analysis;
-    } catch (error) {
-      console.error('❌ Error calculating trip analysis:', error);
-      // Return default analysis if calculation fails
-      return {
-        totalDistance: 0,
-        totalTime: 0,
-        totalCost: 0,
-        chargingTime: 0,
-        co2Saved: 0,
-        efficiency: 85,
-        weather: weatherData
-      };
-    }
-  };
+    fetchMapboxToken();
+  }, []);
 
-  // Kraftig cleanup av alle markører
-  const forceCleanupAllMarkers = () => {
-    console.log('🔧 KRAFT-CLEANUP: Fjerner alle markører i hele appen');
-    
-    // Fjern fra state
-    markers.forEach(marker => {
-      try {
-        marker.remove();
-      } catch (e) {
-        // ignore
-      }
-    });
-    setMarkers([]);
-    
-    // Fjern fra DOM
-    const allChargingMarkers = document.querySelectorAll('.charging-marker');
-    console.log(`🧹 Finner ${allChargingMarkers.length} gamle markører i DOM`);
-    allChargingMarkers.forEach(el => {
-      try {
-        el.remove();
-        console.log('🗑️ Fjernet gammel markør fra DOM');
-      } catch (e) {
-        console.log('Element allerede fjernet');
-      }
-    });
-    
-    // Sjekk også for mapbox markører generelt
-    const allMapboxMarkers = document.querySelectorAll('.mapboxgl-marker');
-    console.log(`🗺️ Finner ${allMapboxMarkers.length} totale mapbox markører`);
-  };
-
-  // Rydd opp kart
-  const cleanupMap = () => {
-    markers.forEach(marker => marker.remove());
-    setMarkers([]);
-    
-    if (map.current) {
-      // Fjern alle rute-lag
-      const layers = ['route-center', 'route', 'route-outline'];
-      layers.forEach(layerId => {
-        if (map.current!.getLayer(layerId)) {
-          map.current!.removeLayer(layerId);
-        }
-      });
-      
-      if (map.current.getSource('route')) {
-        map.current.removeSource('route');
-      }
-    }
-  };
-
-  // Hent Mapbox token
-  const fetchMapboxToken = async () => {
-    try {
-      // Prøv først direkte fetch
-      const response = await fetch('https://vwmopjkrnjrxkbxsswnb.supabase.co/functions/v1/mapbox-token', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3bW9wamtybmpyeGtieHNzd25iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3OTQ0MDgsImV4cCI6MjA3MzM3MDQwOH0.KdDS_tT7LV7HuXN8Nw3dxUU3YRGobsJrkE2esDxgJH8`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('Mapbox token response:', data);
-      
-      if (data.token) {
-        setMapboxToken(data.token);
-        return data.token;
-      } else {
-        throw new Error(data.error || 'Ingen token i response');
-      }
-    } catch (error) {
-      console.error('Feil ved henting av Mapbox token:', error);
-      
-      // Fallback: Hardkoded token for testing (ikke anbefalt for produksjon)
-      console.log('Prøver fallback token...');
-      const fallbackToken = 'pk.eyJ1Ijoia2ltcGV0dGVyIiwiYSI6ImNtZmlxeG4zaTBubDQyaXNmNjhxZDB5eXcifQ.pWlwkZgophFQSQbG4xKwWw';
-      setMapboxToken(fallbackToken);
-      return fallbackToken;
-    }
-  };
-
-  // Initialiser kart
+  // Initialisering av kart
   const initializeMap = async () => {
+    if (!mapContainer.current || !accessToken) return;
+
     try {
-      console.log('Starter kart-initialisering...');
-      setLoading(true);
-      setError(null);
+      mapboxgl.accessToken = accessToken;
       
-      if (!mapContainer.current) {
-        throw new Error('Map container ikke tilgjengelig');
+      if (map.current) {
+        map.current.remove();
       }
 
-      const token = await fetchMapboxToken();
-      if (!token) return;
-
-      mapboxgl.accessToken = token;
-      
-      console.log('Oppretter nytt Mapbox-kart...');
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/satellite-streets-v12', // Satellite map with street labels
-        center: [8.4689, 60.472],
-        zoom: 5
+        style: 'mapbox://styles/mapbox/light-v11',
+        center: [10.7522, 59.9139], // Oslo som standard
+        zoom: 6,
+        pitch: 30,
       });
 
-      map.current.addControl(
-        new mapboxgl.NavigationControl(),
-        'top-right'
-      );
-      
-      console.log('Mapbox-kart opprettet suksessfullt');
-      setLoading(false);
-      
-    } catch (err) {
-      console.error('Feil ved kart-initialisering:', err);
-      setError('Kunne ikke laste kart. Prøv å oppdatere siden.');
-      setLoading(false);
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+      map.current.on('load', () => {
+        console.log('Kart lastet');
+      });
+
+    } catch (error) {
+      console.error('Feil ved initialisering av kart:', error);
+      setError('Kunne ikke initialisere kartet');
     }
   };
 
-  // Hent koordinater for et stedsnavn via Mapbox Geocoding API
-  const getCoordinatesForPlace = async (placeName: string): Promise<{ lat: number; lng: number } | null> => {
-    // Sjekk først hardkodede koordinater
-    const hardcodedCoords = cityCoordinates[placeName.toLowerCase().trim()];
-    if (hardcodedCoords) {
-      console.log(`Bruker hardkodede koordinater for ${placeName}:`, hardcodedCoords);
-      return hardcodedCoords;
+  // Cleanup funksjon
+  const cleanupMap = () => {
+    if (map.current) {
+      try {
+        const sources = map.current.getStyle()?.sources || {};
+        Object.keys(sources).forEach(sourceId => {
+          if (sourceId.startsWith('route') || sourceId.startsWith('station')) {
+            const layers = map.current!.getStyle()?.layers || [];
+            layers.forEach(layer => {
+              if (layer.source === sourceId) {
+                map.current!.removeLayer(layer.id);
+              }
+            });
+            map.current!.removeSource(sourceId);
+          }
+        });
+      } catch (error) {
+        console.log('Cleanup feil (ikke kritisk):', error);
+      }
+    }
+  };
+
+  // Funksjon for å konvertere stedsnavn til koordinater
+  const getCoordinatesForPlace = async (place: string): Promise<[number, number] | null> => {
+    const lowerPlace = place.toLowerCase().trim();
+    
+    if (cityCoordinates[lowerPlace]) {
+      return cityCoordinates[lowerPlace];
     }
 
     try {
-      // Bruk Mapbox Geocoding API for andre steder
-      const encodedPlace = encodeURIComponent(`${placeName}, Norge`);
-      const geocodingUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodedPlace}.json?country=NO&types=place,locality,district,region&access_token=${mapboxToken}`;
-      
-      console.log(`Søker koordinater via Mapbox for: ${placeName}`);
-      const response = await fetch(geocodingUrl);
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(place)}.json?access_token=${accessToken}&country=NO&limit=1`;
+      const response = await fetch(url);
       const data = await response.json();
       
       if (data.features && data.features.length > 0) {
-        const feature = data.features[0];
-        const coords = {
-          lng: feature.center[0],
-          lat: feature.center[1]
-        };
-        console.log(`Fant koordinater for ${placeName}:`, coords);
-        return coords;
-      } else {
-        console.warn(`Ingen koordinater funnet for ${placeName}`);
-        return null;
+        const [lng, lat] = data.features[0].center;
+        return [lng, lat];
       }
     } catch (error) {
-      console.error(`Feil ved søk etter koordinater for ${placeName}:`, error);
-      return null;
+      console.error('Geocoding feil:', error);
     }
+    
+    return null;
   };
 
-  // Oppdater rute på kart med Mapbox Directions API
+  // Oppdater kart med rute
   const updateMapRoute = async () => {
-    console.log('updateMapRoute startet');
-    
-    if (!map.current || !routeData.from || !routeData.to || !selectedCar || !mapboxToken) {
-      console.log('Mangler data for rute-oppdatering', { 
-        map: !!map.current, 
-        from: routeData.from, 
-        to: routeData.to, 
-        car: !!selectedCar,
-        token: !!mapboxToken
-      });
-      return;
-    }
+    if (!map.current || !accessToken || !routeData.from || !routeData.to) return;
 
-    const fromCity = routeData.from.trim();
-    const toCity = routeData.to.trim();
-    const viaCity = routeData.via?.trim();
-    
-    console.log('Søker etter koordinater for:', { fromCity, toCity, viaCity });
-    
-    // Hent koordinater via Geocoding API
-    const fromCoords = await getCoordinatesForPlace(fromCity);
-    const toCoords = await getCoordinatesForPlace(toCity);
-    const viaCoords = viaCity ? await getCoordinatesForPlace(viaCity) : null;
-
-    if (!fromCoords || !toCoords) {
-      console.error('Koordinater ikke funnet for steder');
-      const missingPlaces = [];
-      if (!fromCoords) missingPlaces.push(fromCity);
-      if (!toCoords) missingPlaces.push(toCity);
-      setError(`Kunne ikke finne koordinater for: ${missingPlaces.join(', ')}`);
-      return;
-    }
-
-    if (viaCity && !viaCoords) {
-      console.error('Koordinater ikke funnet for via-sted');
-      setError(`Kunne ikke finne koordinater for via-sted: ${viaCity}`);
-      return;
-    }
-
-    console.log('Koordinater funnet:', { fromCoords, toCoords, viaCoords });
-
-    // Hent værdata for ruten
-    const weather = await fetchWeatherData(fromCoords, toCoords, routeData.travelDate);
-    setWeatherData(weather);
-
-    cleanupMap();
+    setLoading(true);
+    setError(null);
 
     try {
+      console.log('Henter koordinater for start og slutt...');
+      const startCoords = await getCoordinatesForPlace(routeData.from);
+      const endCoords = await getCoordinatesForPlace(routeData.to);
+
+      if (!startCoords || !endCoords) {
+        throw new Error('Kunne ikke finne koordinater for start eller slutt');
+      }
+
+      console.log(`Start: ${routeData.from} -> ${startCoords}`);
+      console.log(`Slutt: ${routeData.to} -> ${endCoords}`);
+
+      // Hent værdata før ruteberegning
+      console.log('🌤️ Henter værdata...');
+      const weatherData = await fetchWeatherData(startCoords, endCoords);
+      console.log('✅ Værdata hentet:', weatherData);
+
+      // Få rute fra Mapbox Directions API
       console.log('Henter rute fra Mapbox Directions API...');
       
-      // Bygg rute-URL med via-punkt hvis det er spesifisert
-      let coordinatesString = `${fromCoords.lng},${fromCoords.lat}`;
-      if (viaCoords) {
-        coordinatesString += `;${viaCoords.lng},${viaCoords.lat}`;
-      }
-      coordinatesString += `;${toCoords.lng},${toCoords.lat}`;
+      console.log('🔍 RouteAnalysis status:', { routeAnalysis, hasData: !!routeAnalysis });
       
-      // Bruk høyere oppløsning og flere parametere for mer nøyaktig rute
-      const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinatesString}?geometries=geojson&overview=full&steps=true&continue_straight=true&annotations=duration,distance,speed&access_token=${mapboxToken}`;
+      const waypoints = [startCoords, endCoords];
+      const coordinates = waypoints.map(coord => coord.join(',')).join(';');
       
-      const response = await fetch(directionsUrl);
-      const data = await response.json();
+      const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinates}?geometries=geojson&access_token=${accessToken}`;
       
-      if (data.routes && data.routes.length > 0) {
-        const route = data.routes[0];
-        const distance = route.distance / 1000; // Konverter til km
-        
-        console.log('Rute mottatt fra Mapbox:', { distance, duration: route.duration });
-        
-        // SIKRE CLEANUP FØR NY RUTE
-        console.log('🧹 Eksplisitt cleanup før ny rute...');
-        const layers = ['route-center', 'route', 'route-outline'];
-        layers.forEach(layerId => {
-          if (map.current!.getLayer(layerId)) {
-            console.log(`🗑️ Fjerner eksisterende layer: ${layerId}`);
-            map.current!.removeLayer(layerId);
-          }
-        });
-        
-        if (map.current!.getSource('route')) {
-          console.log('🗑️ Fjerner eksisterende route source');
-          map.current!.removeSource('route');
-        }
-        
-        // Legg til rute på kartet med forbedret styling
-        console.log('➕ Legger til ny route source...');
-        map.current!.addSource('route', {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: route.geometry
-          }
-        });
+      const directionsResponse = await fetch(directionsUrl);
+      const directionsData = await directionsResponse.json();
 
-        // Legg til en outline (bakgrunn) for ruten
-        map.current!.addLayer({
-          id: 'route-outline',
-          type: 'line',
-          source: 'route',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          paint: {
-            'line-color': '#ffffff',
-            'line-width': 10,
-            'line-opacity': 0.8
-          }
-        });
-
-        // Legg til hovedruten oppå
-        map.current!.addLayer({
-          id: 'route',
-          type: 'line',
-          source: 'route',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          paint: {
-            'line-color': '#3b82f6',
-            'line-width': 6,
-            'line-opacity': 1
-          }
-        });
-
-        // Legg til en lysere linje i midten for ekstra tydelighet
-        map.current!.addLayer({
-          id: 'route-center',
-          type: 'line',
-          source: 'route',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          paint: {
-            'line-color': '#60a5fa',
-            'line-width': 2,
-            'line-opacity': 0.8
-          }
-        });
-
-        // KRAFTIG CLEANUP - fjern ALLE markører
-        console.log('🧹 KRAFTIG CLEANUP - fjerner alle markører...');
-        
-        // Fjern alle eksisterende markører fra state
-        markers.forEach(marker => {
-          try {
-            marker.remove();
-          } catch (e) {
-            console.log('Markør allerede fjernet:', e);
-          }
-        });
-        
-        // Fjern alle DOM elementer med charging-marker klasse
-        const oldChargingMarkers = document.querySelectorAll('.charging-marker');
-        oldChargingMarkers.forEach(el => {
-          try {
-            el.remove();
-          } catch (e) {
-            console.log('DOM element allerede fjernet');
-          }
-        });
-        
-        // Tøm markers state
-        setMarkers([]);
-        
-        console.log('🧹 Cleanup fullført - starter på nytt...');
-        
-        // Start helt på nytt med markører
-        const allNewMarkers: mapboxgl.Marker[] = [];
-        
-        // BARE start og slutt markører
-        console.log('📍 Legger til start markør...');
-        const startMarker = new mapboxgl.Marker({ color: '#10b981' })
-          .setLngLat([fromCoords.lng, fromCoords.lat])
-          .setPopup(new mapboxgl.Popup().setHTML(`<h4>Start: ${routeData.from}</h4>`))
-          .addTo(map.current!);
-        allNewMarkers.push(startMarker);
-        
-        // Via-markør hvis spesifisert
-        if (viaCoords && routeData.via) {
-          console.log('📍 Legger til via markør...');
-          const viaMarker = new mapboxgl.Marker({ color: '#f59e0b' })
-            .setLngLat([viaCoords.lng, viaCoords.lat])
-            .setPopup(new mapboxgl.Popup().setHTML(`<h4>Via: ${routeData.via}</h4>`))
-            .addTo(map.current!);
-          allNewMarkers.push(viaMarker);
-        }
-        
-        console.log('📍 Legger til slutt markør...');
-        const endMarker = new mapboxgl.Marker({ color: '#ef4444' })
-          .setLngLat([toCoords.lng, toCoords.lat])
-          .setPopup(new mapboxgl.Popup().setHTML(`<h4>Mål: ${routeData.to}</h4>`))
-          .addTo(map.current!);
-        allNewMarkers.push(endMarker);
-        
-        console.log('Optimaliserer ladestasjoner...');
-        
-        // Lagre rutedata for senere bruk
-        lastRouteDataRef.current = {
-          distance: distance,
-          geometry: route.geometry
-        };
-        
-        const optimizedStations = optimizeChargingStations(distance, route.geometry);
-        console.log('🔍 RESULTAT fra optimizeChargingStations:', optimizedStations.length, 'stasjoner');
-        optimizedStations.forEach((station, i) => {
-          console.log(`📍 Stasjon ${i + 1}: ${station.name} på ${station.distance?.toFixed(1)}km - ${station.arrivalBattery?.toFixed(1)}% → ${station.departureBattery?.toFixed(1)}%`);
-        });
-        setOptimizedStations(optimizedStations);
-        
-        // Sjekk om brukeren trenger å lade hjemme
-        if (optimizedStations.length > 0 && (optimizedStations[0] as any).needsHomeCharging) {
-          toast({
-            title: "⚡ Lade hjemme anbefales",
-            description: `Med ${routeData.batteryPercentage}% batteri kan du ikke nå første ladestasjon. Vi anbefaler å lade til minst 80% hjemme før avreise.`,
-            variant: "destructive",
-          });
-        }
-        
-        console.log('Beregner analyse...');
-        const analysis = calculateTripAnalysis(distance, optimizedStations);
-        if (analysis && typeof analysis === 'object' && analysis.totalDistance !== undefined) {
-          setRouteAnalysis(analysis);
-          console.log('✅ Route analysis set successfully:', analysis);
-        } else {
-          console.error('❌ Invalid analysis object:', analysis);
-        }
-
-        console.log('⚡ Sjekker ladestasjoner...');
-        console.log('📊 Antall optimerte stasjoner:', optimizedStations.length);
-        
-        // BARE legg til ladestasjoner hvis de er obligatoriske
-        optimizedStations.forEach((station, index) => {
-          const isRequired = (station as any).isRequired;
-          const arrivalBattery = (station as any).arrivalBattery || 50;
-          
-          if (!isRequired) {
-            console.log(`⏭️ HOPPER OVER ${station.name} - ikke obligatorisk`);
-            return;
-          }
-          
-          console.log(`🚨 LEGGER TIL NY OBLIGATORISK STASJON: ${station.name}`);
-          console.log(`📍 Koordinater: ${station.lat}, ${station.lng}`);
-          
-          const el = document.createElement('div');
-          el.className = 'charging-marker charging-marker-' + Date.now(); // Unik klasse
-          el.style.cssText = `
-            background-color: #dc2626;
-            border: 4px solid #ffffff;
-            box-shadow: 0 0 20px rgba(220, 38, 38, 0.8);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 1000;
-            position: relative;
-          `;
-          
-          if (arrivalBattery <= 15) {
-            el.innerHTML = `
-              <span style="position: absolute; top: -8px; right: -8px; background: #fbbf24; color: #000; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid white;">!</span>
-              ⚡
-            `;
-          } else {
-            el.textContent = '⚡';
-          }
-
-          if (!station.lat || !station.lng) {
-            console.error(`❌ Ugyldig koordinater for ${station.name}`);
-            return;
-          }
-
-          const marker = new mapboxgl.Marker(el)
-            .setLngLat([station.lng, station.lat])
-            .setPopup(new mapboxgl.Popup().setHTML(`
-              <div class="p-3">
-                <h4 class="font-semibold text-sm mb-2">${station.name}</h4>
-                <span class="bg-red-500 text-white text-xs px-2 py-1 rounded mb-2 inline-block">OBLIGATORISK</span>
-                <p class="text-sm text-gray-600 mb-2">${station.location}</p>
-                <div class="text-xs">
-                  <div><strong>Ankomst batteri:</strong> <span class="text-red-600 font-bold">${Math.round(arrivalBattery)}%</span></div>
-                  <div><strong>Avstand:</strong> ${Math.round(station.distance || 0)} km</div>
-                  <div><strong>Ladetid:</strong> ${station.chargeTime} min</div>
-                </div>
-              </div>
-            `))
-            .addTo(map.current!);
-
-          allNewMarkers.push(marker);
-        });
-        
-        // Oppdater state med alle markører
-        setMarkers(allNewMarkers);
-        console.log(`✅ TOTALT ${allNewMarkers.length} markører på kartet:`, {
-          start_slutt: allNewMarkers.length - optimizedStations.filter(s => (s as any).isRequired).length,
-          obligatoriske_ladestasjoner: optimizedStations.filter(s => (s as any).isRequired).length
-        });
-        
-        // Tilpass visningen til ruten
-        const bounds = new mapboxgl.LngLatBounds();
-        bounds.extend([fromCoords.lng, fromCoords.lat]);
-        if (viaCoords) {
-          bounds.extend([viaCoords.lng, viaCoords.lat]);
-        }
-        bounds.extend([toCoords.lng, toCoords.lat]);
-        
-        optimizedStations.forEach(station => {
-          bounds.extend([station.lng, station.lat]);
-        });
-        
-        map.current!.fitBounds(bounds, { padding: 50 });
-
-        console.log('Rute-oppdatering fullført suksessfullt!');
-        
-      } else {
+      if (!directionsData.routes || directionsData.routes.length === 0) {
         throw new Error('Ingen rute funnet');
       }
 
+      const route = directionsData.routes[0];
+      const routeDistance = route.distance / 1000; // Konverter til km
+      const routeDuration = route.duration / 3600; // Konverter til timer
+
+      console.log('Rute mottatt fra Mapbox:', { distance: routeDistance, duration: route.duration });
+
+      // Cleanup eksisterende rute og markører
+      console.log('🧹 Eksplisitt cleanup før ny rute...');
+      cleanupMap();
+
+      // Legg til ny rute
+      console.log('➕ Legger til ny route source...');
+      if (map.current!.getSource('route')) {
+        map.current!.removeSource('route');
+      }
+
+      map.current!.addSource('route', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: route.geometry
+        }
+      });
+
+      if (map.current!.getLayer('route')) {
+        map.current!.removeLayer('route');
+      }
+
+      map.current!.addLayer({
+        id: 'route',
+        type: 'line',
+        source: 'route',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#3b82f6',
+          'line-width': 4
+        }
+      });
+
+      // Rydd opp markører først
+      console.log('🧹 KRAFTIG CLEANUP - fjerner alle markører...');
+      const allMarkers = document.querySelectorAll('.mapboxgl-marker');
+      allMarkers.forEach(marker => marker.remove());
+      console.log('🧹 Cleanup fullført - starter på nytt...');
+
+      // Legg til start markør
+      console.log('📍 Legger til start markør...');
+      new mapboxgl.Marker({ color: '#22c55e' })
+        .setLngLat(startCoords)
+        .setPopup(new mapboxgl.Popup().setHTML(`<strong>Start:</strong> ${routeData.from}`))
+        .addTo(map.current!);
+
+      // Legg til slutt markør
+      console.log('📍 Legger til slutt markør...');
+      new mapboxgl.Marker({ color: '#ef4444' })
+        .setLngLat(endCoords)
+        .setPopup(new mapboxgl.Popup().setHTML(`<strong>Slutt:</strong> ${routeData.to}`))
+        .addTo(map.current!);
+
+      // Optimaliser ladestasjoner basert på bilens rekkevidde
+      console.log('Optimaliserer ladestasjoner...');
+      const optimized = optimizeChargingStations(
+        route.geometry.coordinates,
+        routeDistance,
+        selectedCar,
+        routeData.batteryPercentage,
+        chargingStations
+      );
+
+      setOptimizedStations(optimized);
+
+      // Legg til markører for optimerte ladestasjoner
+      console.log('⚡ Sjekker ladestasjoner...');
+      console.log('📊 Antall optimerte stasjoner:', optimized.length);
+      
+      optimized.forEach((station, index) => {
+        const el = document.createElement('div');
+        el.className = 'charging-station-marker';
+        el.style.cssText = `
+          background-color: ${station.isRequired ? '#ef4444' : '#f59e0b'};
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          border: 2px solid white;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 10px;
+          color: white;
+          font-weight: bold;
+        `;
+        el.innerHTML = '⚡';
+
+        const popup = new mapboxgl.Popup().setHTML(`
+          <strong>${station.name}</strong><br/>
+          <em>${station.location}</em><br/>
+          📍 ${station.distanceFromRoute?.toFixed(1)} km langs ruten<br/>
+          🔋 Batterinivå ved ankomst: ${station.arrivalBatteryPercentage?.toFixed(1)}%<br/>
+          ${station.isRequired ? '⚠️ <strong>Obligatorisk ladestasjon</strong>' : '🔄 Valgfri ladestasjon'}<br/>
+          ⚡ ${station.power} | 💰 ${station.cost} kr/kWh<br/>
+          📊 ${station.available}/${station.total} tilgjengelige
+        `);
+
+        new mapboxgl.Marker(el)
+          .setLngLat([station.longitude, station.latitude])
+          .setPopup(popup)
+          .addTo(map.current!);
+      });
+
+      // Tilpass kart til å vise hele ruten
+      const bounds = new mapboxgl.LngLatBounds();
+      bounds.extend(startCoords);
+      bounds.extend(endCoords);
+      optimized.forEach(station => {
+        bounds.extend([station.longitude, station.latitude]);
+      });
+
+      map.current!.fitBounds(bounds, { padding: 50 });
+
+      // Beregn analyse
+      console.log('Beregner analyse...');
+      const analysis = calculateTripAnalysis(routeDistance, routeDuration, optimized, weatherData);
+      setRouteAnalysis(analysis);
+      console.log('✅ Trip analysis calculated:', analysis);
+      console.log('✅ Route analysis set successfully:', analysis);
+
     } catch (error) {
-      console.error('Feil ved rute-oppdatering:', error);
-      setError('Kunne ikke beregne rute');
+      console.error('Feil ved oppdatering av rute:', error);
+      setError(`Kunne ikke oppdatere ruten: ${error instanceof Error ? error.message : 'Ukjent feil'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Optimaliser ladestasjoner
+  const optimizeChargingStations = (
+    routeCoordinates: number[][],
+    routeDistance: number,
+    car: CarModel,
+    batteryPercentage: number,
+    availableStations: ChargingStation[]
+  ): ChargingStation[] => {
+    console.log('🚀 OPTIMIZE CHARGING STATIONS KALT!');
+    console.log('📊 BATTERIPROSENT INPUT:', batteryPercentage, '%');
+    console.log('📊 RouteDistance:', routeDistance, 'km');
+    
+    // Tidsstempel for debugging
+    const now = new Date();
+    console.log('🕐 Tidsstempel:', now.toLocaleTimeString());
+
+    const minBatteryReserve = 10; // Minimum 10% reserve
+    const maxChargingLevel = 80; // Lad til maks 80%
+    const maxDetourDistance = 10; // Maks 10km avvik fra ruten
+    const maxStationsToShow = 5; // Vis maks 5 stasjoner
+
+    console.log('🔋 DETALJERT BEREGNING:');
+    console.log('   - Start batteri:', batteryPercentage + '%');
+    console.log('   - Bil rekkevidde:', car.range + 'km');
+    console.log('   - Rutelengde:', routeDistance + 'km');
+
+    // Beregn hvor langt bilen kan kjøre med gjeldende batteri
+    const usableBatteryPercentage = batteryPercentage - minBatteryReserve;
+    const drivableDistance = (usableBatteryPercentage / 100) * car.range;
+
+    console.log('🧮 STEG-FOR-STEG:');
+    console.log('   1. Batteri tilgjengelig:', batteryPercentage + '% - ' + minBatteryReserve + '% = ' + usableBatteryPercentage + '%');
+    console.log('   2. Kjøredistanse med ' + usableBatteryPercentage + '%: (' + usableBatteryPercentage + '/100) × ' + car.range + 'km = ' + drivableDistance.toFixed(1) + 'km');
+    console.log('   3. Sammenligning:', drivableDistance.toFixed(1) + 'km VS ' + routeDistance.toFixed(1) + 'km');
+    console.log('   4. Batteriet holder hele veien?', drivableDistance >= routeDistance ? 'JA' : 'NEI');
+
+    // Hvis batteriet holder hele veien, returner tom liste
+    if (drivableDistance >= routeDistance) {
+      console.log('✅ BATTERIET HOLDER HELE VEIEN!');
+      return [];
+    }
+
+    console.log('🚨 BATTERIET NÅR ' + minBatteryReserve + '% VED ' + drivableDistance.toFixed(1) + 'km av ' + routeDistance.toFixed(1) + 'km');
+
+    // Finn point hvor batteriet når minimum reserve
+    const criticalPoint = drivableDistance;
+    console.log('📍 LETER ETTER LADESTASJONER NÆR ' + criticalPoint.toFixed(1) + 'km...');
+
+    // Finn stasjoner langs ruten
+    const stationsAlongRoute = availableStations
+      .map(station => {
+        // Finn nærmeste punkt på ruten til stasjonen
+        let minDistance = Infinity;
+        let closestPointIndex = 0;
+        let distanceAlongRoute = 0;
+
+        for (let i = 0; i < routeCoordinates.length - 1; i++) {
+          const distance = getDistance(
+            station.latitude,
+            station.longitude,
+            routeCoordinates[i][1],
+            routeCoordinates[i][0]
+          );
+
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestPointIndex = i;
+          }
+        }
+
+        // Beregn distanse langs ruten til nærmeste punkt
+        for (let i = 0; i < closestPointIndex; i++) {
+          distanceAlongRoute += getDistance(
+            routeCoordinates[i][1],
+            routeCoordinates[i][0],
+            routeCoordinates[i + 1][1],
+            routeCoordinates[i + 1][0]
+          );
+        }
+
+        return {
+          ...station,
+          distanceFromRoute: minDistance,
+          distanceAlongRoute: distanceAlongRoute
+        };
+      })
+      .filter(station => station.distanceFromRoute <= maxDetourDistance)
+      .slice(0, maxStationsToShow);
+
+    console.log('📍 Fant', stationsAlongRoute.length, 'stasjoner langs ruten (maks', maxStationsToShow + ', innen', maxDetourDistance + 'km)');
+
+    const optimizedStations: ChargingStation[] = [];
+    let currentBatteryLevel = batteryPercentage;
+    let currentDistance = 0;
+
+    console.log('🔍 Fant', stationsAlongRoute.length, 'stasjoner langs ruten totalt');
+
+    // Sorter stasjoner etter distanse langs ruten
+    stationsAlongRoute.sort((a, b) => a.distanceAlongRoute - b.distanceAlongRoute);
+
+    // Finn stasjoner før kritisk punkt
+    const stationsBeforeCritical = stationsAlongRoute.filter(station => {
+      const batteryAtStation = batteryPercentage - (station.distanceAlongRoute / car.range) * 100;
+      const diffFromMinReserve = batteryAtStation - minBatteryReserve;
+      
+      console.log('🔍', station.name + ':', station.distanceAlongRoute.toFixed(1) + 'km, batteri:', batteryAtStation.toFixed(1) + '%, diff fra ' + minBatteryReserve + '%:', diffFromMinReserve.toFixed(1) + '%');
+      
+      return batteryAtStation >= minBatteryReserve && batteryAtStation <= 50; // Stasjoner hvor vi har 10-50% batteri
+    });
+
+    console.log('📍 Etter filtrering:', stationsBeforeCritical.length, 'egnede stasjoner (0-50% batteri ved ankomst)');
+
+    if (stationsBeforeCritical.length > 0) {
+      // Velg stasjonen med lavest batteri ved ankomst (nærmest kritisk punkt)
+      const bestStation = stationsBeforeCritical.reduce((best, current) => {
+        const bestBattery = batteryPercentage - (best.distanceAlongRoute / car.range) * 100;
+        const currentBattery = batteryPercentage - (current.distanceAlongRoute / car.range) * 100;
+        return currentBattery < bestBattery ? current : best;
+      });
+
+      const arrivalBattery = batteryPercentage - (bestStation.distanceAlongRoute / car.range) * 100;
+      
+      console.log('🏆 BESTE STASJON:', bestStation.name, 'med', arrivalBattery.toFixed(1) + '% batteri ved ankomst');
+      console.log('🎯 VALGT:', bestStation.name, 'ved', bestStation.distanceAlongRoute.toFixed(1) + 'km');
+      console.log('   - Batteriprosent ved ankomst:', arrivalBattery.toFixed(1) + '%');
+      console.log('   - Type: OBLIGATORISK lading');
+
+      optimizedStations.push({
+        ...bestStation,
+        arrivalBatteryPercentage: arrivalBattery,
+        targetBatteryPercentage: maxChargingLevel,
+        isRequired: true,
+        chargingTime: calculateChargingTime(arrivalBattery, maxChargingLevel, bestStation.fastCharger)
+      });
+
+      currentBatteryLevel = maxChargingLevel;
+      currentDistance = bestStation.distanceAlongRoute;
+
+      // Sjekk om vi trenger flere stasjoner
+      const remainingDistance = routeDistance - currentDistance;
+      const rangeAfterCharging = (currentBatteryLevel - minBatteryReserve) / 100 * car.range;
+      
+      console.log('🔄 SJEKKER OM VI TRENGER FLERE STASJONER:');
+      console.log('   - Gjenstående rute etter første stasjon:', remainingDistance.toFixed(1) + 'km');
+      console.log('   - Med ' + currentBatteryLevel + '% batteri kan vi kjøre:', rangeAfterCharging.toFixed(1) + 'km til ' + minBatteryReserve + '%');
+
+      if (remainingDistance > rangeAfterCharging) {
+        console.log('🚨 TRENGER EN STASJON TIL!');
+        // Her kan vi legge til logikk for flere stasjoner hvis nødvendig
+      }
+    }
+
+    console.log('📊 RESULTAT:', optimizedStations.length, 'ladestasjoner nødvendig');
+    
+    optimizedStations.forEach((station, index) => {
+      console.log('📍 Stasjon', (index + 1) + ':', station.name, 'på', station.distanceAlongRoute?.toFixed(1) + 'km -', station.arrivalBatteryPercentage?.toFixed(1) + '% →', station.targetBatteryPercentage?.toFixed(1) + '%');
+    });
+
+    console.log('🔍 RESULTAT fra optimizeChargingStations:', optimizedStations.length, 'stasjoner');
+    return optimizedStations;
+  };
+
+  // Beregn ladetid
+  const calculateChargingTime = (fromBattery: number, toBattery: number, fastCharger: boolean): number => {
+    const batteryDifference = toBattery - fromBattery;
+    const chargingSpeed = fastCharger ? 5 : 2; // %/min (ca)
+    return Math.ceil(batteryDifference / chargingSpeed);
+  };
+
+  // Beregn reiseanalyse
+  const calculateTripAnalysis = (
+    distance: number,
+    timeHours: number,
+    stations: ChargingStation[],
+    weatherData?: WeatherData
+  ): TripAnalysis => {
+    const totalChargingTime = stations.reduce((sum, station) => sum + (station.chargingTime || 0), 0);
+    const totalCost = stations.reduce((sum, station) => {
+      const chargingAmount = ((station.targetBatteryPercentage || 80) - (station.arrivalBatteryPercentage || 20)) / 100 * selectedCar.batteryCapacity;
+      return sum + (chargingAmount * station.cost);
+    }, 0);
+
+    // CO2-besparelse sammenlignet med bensinbil (ca 120g CO2/km)
+    const co2Saved = distance * 0.12; // kg CO2
+
+    // Effektivitet basert på værforhold og rute
+    const weatherFactor = weatherData?.rangeFactor || 1;
+    const efficiency = weatherFactor * 0.8; // Base effektivitet 80%
+
+    return {
+      totalDistance: distance,
+      totalTime: timeHours + (totalChargingTime / 60), // Legg til ladetid
+      totalCost: Math.round(totalCost),
+      chargingTime: totalChargingTime,
+      co2Saved: co2Saved,
+      efficiency: efficiency,
+      weather: weatherData
+    };
+  };
+
+  // Hent værdata
+  const fetchWeatherData = async (startCoords: [number, number], endCoords: [number, number]): Promise<WeatherData> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('weather-service', {
+        body: {
+          startLat: startCoords[1],
+          startLon: startCoords[0],
+          endLat: endCoords[1],
+          endLon: endCoords[0]
+        }
+      });
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Feil ved henting av værdata:', error);
+      // Returner dummy værdata
+      return {
+        startWeather: {
+          temperature: 15,
+          windSpeed: 10,
+          windDirection: 180,
+          humidity: 70,
+          weatherCondition: "Clear",
+          visibility: 10
+        },
+        endWeather: {
+          temperature: 15,
+          windSpeed: 10,
+          windDirection: 180,
+          humidity: 70,
+          weatherCondition: "Clear",
+          visibility: 10
+        },
+        averageConditions: {
+          temperature: 15,
+          windSpeed: 10,
+          humidity: 70
+        },
+        rangeFactor: 1.0
+      };
     }
   };
 
@@ -1062,70 +811,28 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
   // Effekt for lasting av ladestasjoner
   useEffect(() => {
     const loadChargingStations = async () => {
-      const norwegianStations = await fetchNorwegianChargingStations();
-      if (norwegianStations.length > 0) {
-        // Kombiner basis stasjoner med API data
-        const combinedStations = [...basicChargingStations, ...norwegianStations];
-        setAllChargingStations(combinedStations);
-        console.log(`🎯 Totalt ${combinedStations.length} ladestasjoner tilgjengelig`);
+      try {
+        const stations = await fetchNorwegianChargingStations();
+        setChargingStations(stations);
+      } catch (error) {
+        console.error('Feil ved lasting av ladestasjoner:', error);
       }
     };
-    
+
     loadChargingStations();
   }, []);
 
-  // Effekt for rute-oppdatering
+  // Effekt for oppdatering av rute når data endres
   useEffect(() => {
-    console.log('🔄 RouteData ENDRET! Sjekker alle verdier:');
-    console.log('- From:', routeData.from);
-    console.log('- To:', routeData.to);
-    console.log('- Via:', routeData.via);
-    console.log('- 🔋 BATTERIPROSENT:', routeData.batteryPercentage, '%');
-    console.log('- TrailerWeight:', routeData.trailerWeight);
-    console.log('- SelectedCar:', selectedCar?.model);
-    console.log('- MapboxToken tilgjengelig:', !!mapboxToken);
-    console.log('- Map initialisert:', !!map.current);
-    
-    if (map.current && routeData.from && routeData.to && selectedCar && mapboxToken) {
-      console.log('✅ ALLE KRITERIER OPPFYLT - oppdaterer rute med nye batteriprosent!');
-      console.log('🔋 Oppdaterer med batteriprosent:', routeData.batteryPercentage, '%');
-      
-      // Fjern tidligere feil når vi prøver igjen
-      setError(null);
-      
-      // BRUK KRAFT-CLEANUP
-      forceCleanupAllMarkers();
-      
-      // Også traditional cleanup
-      cleanupMap();
-      setOptimizedStations([]);
-      setRouteAnalysis(null);
-      
-      // Lengre delay for å sikre total cleanup
-      setTimeout(() => {
-        console.log('🚀 STARTER FULL RUTE-OPPDATERING med batteri:', routeData.batteryPercentage, '%');
-        updateMapRoute();
-      }, 200);  // Økt delay
-    } else {
-      console.log('❌ MANGLER KRITERIER for rute-oppdatering:');
-      console.log('- Map:', !!map.current);
-      console.log('- From:', !!routeData.from);
-      console.log('- To:', !!routeData.to);
-      console.log('- Car:', !!selectedCar);
-      console.log('- Token:', !!mapboxToken);
+    if (map.current && routeData.from && routeData.to && selectedCar) {
+      console.log('🔄 Route data endret, oppdaterer kart...');
+      console.log('  - Fra:', routeData.from);
+      console.log('  - Til:', routeData.to); 
+      console.log('  - Via:', routeData.via);
+      console.log('  - Batteri:', routeData.batteryPercentage, '%');
+      console.log('  - Trailer:', routeData.trailerWeight);
+      console.log('💡 Trykk "Planlegg rute" for å oppdatere kartet med nye innstillinger');
     }
-  }, [routeData.from, routeData.to, routeData.via, selectedCar?.id, mapboxToken, routeTrigger]); // Lagt til routeTrigger
-
-  // Legg til en separat useEffect som bare logger endringer  
-  useEffect(() => {
-    console.log('🔄🔄🔄 BATTERIPROSENT ENDRET TIL:', routeData.batteryPercentage, '%');
-    console.log('🔄 Alle routeData verdier:');
-    console.log('  - Fra:', routeData.from);
-    console.log('  - Til:', routeData.to); 
-    console.log('  - Via:', routeData.via);
-    console.log('  - Batteri:', routeData.batteryPercentage, '%');
-    console.log('  - Trailer:', routeData.trailerWeight);
-    console.log('💡 Trykk "Planlegg rute" for å oppdatere kartet med nye innstillinger');
   }, [routeData.batteryPercentage, selectedCar]);
 
   if (!isVisible) return null;
@@ -1148,32 +855,30 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
       <div className="space-y-4">
         {loading && (
           <Card className="p-8 text-center">
-            <div className="animate-spin mx-auto mb-4 w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
-            <p className="text-muted-foreground">Laster kart...</p>
+            <div className="flex items-center justify-center space-x-2">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span>Planlegger rute...</span>
+            </div>
           </Card>
         )}
-        
-        <div 
-          ref={mapContainer} 
-          className="w-full h-96 rounded-lg border-2 border-primary shadow-lg relative"
-          style={{ 
-            minHeight: '400px',
-            maxHeight: '600px'
-          }}
-        />
-        
-        {/* Debug info - HIDDEN for now */}
-        {false && (
-        <Card className="p-4 bg-blue-50">
-          <p className="text-sm">
-            <strong>Debug:</strong> 
-            Kart lastet: {!loading ? '✅' : '❌'}, 
-            Markører: {markers.length}, 
-            Ladestasjoner: {optimizedStations.length},
-            Token: {mapboxToken ? '✅' : '❌'}
-          </p>
+
+        <Card className="overflow-hidden bg-card/95 backdrop-blur-sm border-border">
+          <div 
+            ref={mapContainer}
+            className="w-full h-96 bg-muted"
+            style={{ minHeight: '400px' }}
+          />
         </Card>
-        )}
+
+        <div className="flex items-center justify-center">
+          <Button 
+            onClick={updateMapRoute}
+            disabled={loading || !routeData.from || !routeData.to}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
+            {loading ? 'Planlegger...' : 'Planlegg rute'}
+          </Button>
+        </div>
       </div>
 
       {/* Analyse og ladestasjoner */}
@@ -1221,7 +926,9 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
                   <Clock className="h-4 w-4 text-primary" />
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Total tid</p>
-                    <p className="text-2xl font-bold text-foreground">{routeAnalysis ? Math.round(routeAnalysis.totalTime) : '---'}t</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {routeAnalysis ? `${Math.floor(routeAnalysis.totalTime)}t ${Math.round((routeAnalysis.totalTime % 1) * 60)}m` : '---'}
+                    </p>
                   </div>
                 </div>
               </Card>
@@ -1231,7 +938,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
                   <DollarSign className="h-4 w-4 text-primary" />
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Ladekostnad</p>
-                    <p className="text-2xl font-bold text-foreground">{routeAnalysis ? Math.round(routeAnalysis.totalCost) : '---'} kr</p>
+                    <p className="text-2xl font-bold text-foreground">{routeAnalysis?.totalCost || 0} kr</p>
                   </div>
                 </div>
               </Card>
@@ -1241,7 +948,17 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
                   <Zap className="h-4 w-4 text-primary" />
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Ladetid</p>
-                    <p className="text-2xl font-bold text-foreground">{routeAnalysis ? Math.round(routeAnalysis.chargingTime) : '---'} min</p>
+                    <p className="text-2xl font-bold text-foreground">{routeAnalysis?.chargingTime || 0} min</p>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-4 bg-card/80 backdrop-blur-sm border-border">
+                <div className="flex items-center space-x-2">
+                  <Car className="h-4 w-4 text-green-500" />
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">CO₂ spart</p>
+                    <p className="text-2xl font-bold text-foreground">{routeAnalysis ? Math.round(routeAnalysis.co2Saved) : 0} kg</p>
                   </div>
                 </div>
               </Card>
@@ -1250,74 +967,51 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
                 <div className="flex items-center space-x-2">
                   <TrendingUp className="h-4 w-4 text-primary" />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">CO₂ spart</p>
-                    <p className="text-2xl font-bold text-foreground">{routeAnalysis ? Math.round(routeAnalysis.co2Saved) : '---'} kg</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-4 bg-card/80 backdrop-blur-sm border-border">
-                <div className="flex items-center space-x-2">
-                  <Battery className="h-4 w-4 text-primary" />
-                  <div>
                     <p className="text-sm font-medium text-muted-foreground">Effektivitet</p>
-                    <p className="text-2xl font-bold text-foreground">{routeAnalysis ? Math.round(routeAnalysis.efficiency) : '---'}%</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {routeAnalysis ? Math.round(routeAnalysis.efficiency * 100) : 100}%
+                    </p>
                   </div>
                 </div>
               </Card>
-             </div>
 
-             {/* Weather Impact Section */}
-             {weatherData && (
-               <Card className="p-4 mt-4">
-                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                   <Thermometer className="h-5 w-5 text-primary" />
-                   Værpåvirkning på rekkevidde
-                 </h3>
-                 
-                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                   <div className="text-center">
-                     <p className="text-sm text-muted-foreground">Start</p>
-                     <p className="text-lg font-bold">{weatherData.startWeather.temperature}°C</p>
-                     <p className="text-sm">{weatherData.startWeather.weatherCondition}</p>
-                   </div>
-                   
-                   <div className="text-center">
-                     <p className="text-sm text-muted-foreground">Destinasjon</p>
-                     <p className="text-lg font-bold">{weatherData.endWeather.temperature}°C</p>
-                     <p className="text-sm">{weatherData.endWeather.weatherCondition}</p>
-                   </div>
-                   
-                   <div className="text-center">
-                     <p className="text-sm text-muted-foreground">Gjennomsnitt vind</p>
-                     <p className="text-lg font-bold flex items-center gap-1 justify-center">
-                       <Wind className="h-4 w-4" />
-                       {weatherData.averageConditions.windSpeed} km/t
-                     </p>
-                   </div>
-                   
-                   <div className="text-center">
-                     <p className="text-sm text-muted-foreground">Rekkevidde-påvirkning</p>
-                     <p className={`text-lg font-bold ${weatherData.rangeFactor >= 1 ? 'text-green-600' : 'text-red-600'}`}>
-                       {weatherData.rangeFactor >= 1 ? '+' : ''}{Math.round((weatherData.rangeFactor - 1) * 100)}%
-                     </p>
-                   </div>
-                 </div>
-
-                 <div className="bg-muted/50 p-3 rounded-lg">
-                   <p className="text-sm">
-                     <strong>Værfaktorer som påvirker rekkevidde:</strong>
-                   </p>
-                   <ul className="text-sm mt-2 space-y-1">
-                     <li>• Temperatur: {weatherData.averageConditions.temperature}°C</li>
-                     <li>• Luftfuktighet: {weatherData.averageConditions.humidity}%</li>
-                     <li>• Vindforhold: {weatherData.averageConditions.windSpeed} km/t</li>
-                     <li>• Værforhold: {weatherData.startWeather.weatherCondition}</li>
-                   </ul>
-                 </div>
+              {routeAnalysis?.weather && (
+                <Card className="p-4 bg-card/80 backdrop-blur-sm border-border md:col-span-3">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Thermometer className="h-4 w-4 text-primary" />
+                    <p className="text-sm font-medium text-muted-foreground">Værforhold</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-semibold">Start: {routeData.from}</p>
+                      <ul className="text-sm mt-1 space-y-1">
+                        <li>• Temperatur: {routeAnalysis.weather.startWeather.temperature}°C</li>
+                        <li>• Vindhastigher: {routeAnalysis.weather.startWeather.windSpeed} km/t</li>
+                        <li>• Luftfuktighet: {routeAnalysis.weather.startWeather.humidity}%</li>
+                        <li>• Værforhold: {routeAnalysis.weather.startWeather.weatherCondition}</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">Slutt: {routeData.to}</p>
+                      <ul className="text-sm mt-1 space-y-1">
+                        <li>• Temperatur: {routeAnalysis.weather.endWeather.temperature}°C</li>
+                        <li>• Vindhastigher: {routeAnalysis.weather.endWeather.windSpeed} km/t</li>
+                        <li>• Luftfuktighet: {routeAnalysis.weather.endWeather.humidity}%</li>
+                        <li>• Værforhold: {routeAnalysis.weather.endWeather.weatherCondition}</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="mt-3 p-3 bg-muted/50 rounded-lg">
+                    <p className="text-sm font-medium mb-1">Gjennomsnittlige forhold</p>
+                    <ul className="text-sm mt-2 space-y-1">
+                      <li>• Temperatur: {routeAnalysis.weather.averageConditions.temperature}°C</li>
+                      <li>• Luftfuktighet: {routeAnalysis.weather.averageConditions.humidity}%</li>
+                      <li>• Vindforhold: {routeAnalysis.weather.averageConditions.windSpeed} km/t</li>
+                      <li>• Værforhold: {routeAnalysis.weather.startWeather.weatherCondition}</li>
+                    </ul>
+                  </div>
                  </Card>
-               )}
-           </div>
+              )}
            </div>
         </TabsContent>
 
@@ -1331,42 +1025,35 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
                     <h4 className="text-lg font-semibold text-red-600 flex items-center gap-2">
                       ⚠️ Obligatoriske ladestoppler
                     </h4>
-                    {optimizedStations.filter((station: any) => station.isRequired).map((station, index) => (
-                      <Card key={station.id} className="p-4 border-red-200 bg-red-50">
+                    
+                    {optimizedStations.filter((station: any) => station.isRequired).map((station: any, index: number) => (
+                      <Card key={station.id} className="p-4 bg-card/80 backdrop-blur-sm border-border border-l-4 border-l-red-500">
                         <div className="flex items-start justify-between">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="destructive">
-                                OBLIGATORISK STOPP {index + 1}
-                              </Badge>
-                              <h4 className="font-semibold">{station.name}</h4>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <MapPin className="h-4 w-4 text-primary" />
+                              <h5 className="font-semibold text-foreground">{station.name}</h5>
                             </div>
-                            <p className="text-sm text-muted-foreground">{station.location}</p>
                             
-                            <div className="bg-card/90 p-3 rounded border border-border">
-                              <p className="text-sm font-medium text-red-600 mb-2">
-                                Du må lade her - batteriet blir {Math.round((station as any).arrivalBattery || 0)}% ved ankomst
-                              </p>
-                              <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                  <p><strong>Avstand fra start:</strong> {Math.round(station.distance || 0)} km</p>
-                                  <p><strong>Ankomst batteri:</strong> <span className="text-red-600 font-bold">{Math.round((station as any).arrivalBattery || 0)}%</span></p>
-                                </div>
-                                <div>
-                                  <p><strong>Ladetid:</strong> {station.chargeTime} min</p>
-                                  <p><strong>Etter lading:</strong> <span className="text-green-600 font-bold">{Math.round((station as any).departureBattery || 0)}%</span></p>
-                                </div>
+                            <p className="text-sm text-muted-foreground mb-2">{station.location}</p>
+                            
+                            <div className="grid grid-cols-2 gap-4 mb-3">
+                              <div>
+                                <p className="text-xs text-muted-foreground">Distanse langs ruten</p>
+                                <p className="font-medium">{station.distanceAlongRoute?.toFixed(1)} km</p>
                               </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <Progress 
-                                value={(station.available / station.total) * 100} 
-                                className="flex-1 h-2"
-                              />
-                              <span className="text-xs">
-                                {station.available}/{station.total}
-                              </span>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Batteri ved ankomst</p>
+                                <p className="font-medium text-red-600">{station.arrivalBatteryPercentage?.toFixed(1)}%</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Ladetid</p>
+                                <p className="font-medium">{station.chargingTime} min</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Kostnad</p>
+                                <p className="font-medium">{station.cost} kr/kWh</p>
+                              </div>
                             </div>
                             
                             <Badge variant={
@@ -1376,49 +1063,54 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
                               {station.fastCharger ? "⚡ Hurtiglader" : "Standard"}
                             </Badge>
                           </div>
+                          
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-primary mb-1">{station.power}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {station.available}/{station.total} ledige
+                            </div>
+                          </div>
                         </div>
                       </Card>
                     ))}
                   </div>
                 )}
-                
+
                 {/* Vis valgfrie stasjoner */}
-                {optimizedStations.filter((station: any) => !(station as any).isRequired).length > 0 && (
+                {optimizedStations.filter((station: any) => !station.isRequired).length > 0 && (
                   <div className="space-y-3">
-                    <h4 className="text-lg font-semibold text-green-600 flex items-center gap-2">
-                      💡 Alternative ladestoppler
+                    <h4 className="text-lg font-semibold text-blue-600 flex items-center gap-2">
+                      🔄 Valgfrie ladestoppler
                     </h4>
-                    {optimizedStations.filter((station: any) => !(station as any).isRequired).map((station, index) => (
-                      <Card key={station.id} className="p-4 border-green-200 bg-green-50">
+                    
+                    {optimizedStations.filter((station: any) => !station.isRequired).map((station: any, index: number) => (
+                      <Card key={station.id} className="p-4 bg-card/80 backdrop-blur-sm border-border border-l-4 border-l-blue-500">
                         <div className="flex items-start justify-between">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary">
-                                Valgfritt stopp {index + 1}
-                              </Badge>
-                              <h4 className="font-semibold">{station.name}</h4>
-                            </div>
-                            <p className="text-sm text-muted-foreground">{station.location}</p>
-                            
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div>
-                                <p><strong>Distanse:</strong> {Math.round(station.distance || 0)} km</p>
-                                <p><strong>Ladetid:</strong> {station.chargeTime} min</p>
-                              </div>
-                              <div>
-                                <p><strong>Lading:</strong> {station.chargeAmount} kWh</p>
-                                <p><strong>Kostnad:</strong> {station.cost} kr</p>
-                              </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <MapPin className="h-4 w-4 text-primary" />
+                              <h5 className="font-semibold text-foreground">{station.name}</h5>
                             </div>
                             
-                            <div className="flex items-center gap-2">
-                              <Progress 
-                                value={(station.available / station.total) * 100} 
-                                className="flex-1 h-2"
-                              />
-                              <span className="text-xs">
-                                {station.available}/{station.total}
-                              </span>
+                            <p className="text-sm text-muted-foreground mb-2">{station.location}</p>
+                            
+                            <div className="grid grid-cols-2 gap-4 mb-3">
+                              <div>
+                                <p className="text-xs text-muted-foreground">Distanse fra ruten</p>
+                                <p className="font-medium">{station.distanceFromRoute?.toFixed(1)} km</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Batteri ved ankomst</p>
+                                <p className="font-medium text-blue-600">{station.arrivalBatteryPercentage?.toFixed(1)}%</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Ladetid</p>
+                                <p className="font-medium">{station.chargingTime} min</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Kostnad</p>
+                                <p className="font-medium">{station.cost} kr/kWh</p>
+                              </div>
                             </div>
                             
                             <Badge variant={
@@ -1427,6 +1119,13 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
                             }>
                               {station.fastCharger ? "⚡ Hurtiglader" : "Standard"}
                             </Badge>
+                          </div>
+                          
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-primary mb-1">{station.power}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {station.available}/{station.total} ledige
+                            </div>
                           </div>
                         </div>
                       </Card>
@@ -1449,6 +1148,6 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
       </div>
     </div>
   );
-}
+};
 
 export default RouteMap;

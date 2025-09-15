@@ -168,7 +168,6 @@ function Index() {
                   isVisible={showRoute} 
                   routeData={routeData}
                   selectedCar={selectedCar}
-                  routeTrigger={routeTrigger}
                 />
                 <ChargingMap isVisible={showRoute} />
               </div>
