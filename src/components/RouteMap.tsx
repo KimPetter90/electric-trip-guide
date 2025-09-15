@@ -352,44 +352,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     console.log('✅ Batteriet holder over 10% hele ruten');
     return [];
   };
-    
-    // Beregn vær-påvirkning (fallback hvis weather service ikke fungerer)
-    
-    // Finn nærmeste ladestasjon ved dette punktet
-    const stationsNearRoute = findStationsNearRoute(routeGeometry);
-    const suitableStations = stationsNearRoute
-      .filter(s => s.available > 0)
-      .filter(s => {
-        const stationDist = (s as any).routeDistance || 0;
-        return stationDist <= distanceBeforeCritical + 30; // 30km margin
-      })
-      .sort((a, b) => {
-        const aDist = Math.abs(((a as any).routeDistance || 0) - distanceBeforeCritical);
-        const bDist = Math.abs(((b as any).routeDistance || 0) - distanceBeforeCritical);
-        return aDist - bDist;
-      });
-
-    if (suitableStations.length === 0) {
-      console.log('❌ Ingen passende stasjon funnet ved 10% batteri');
-      return [];
-    }
-
-    const bestStation = suitableStations[0];
-    const stationDistance = (bestStation as any).routeDistance || distanceBeforeCritical;
-    const arrivalBattery = Math.max(5, startBattery - (stationDistance / actualRange) * 100);
-
-    console.log(`🎯 VALGT STASJON: ${bestStation.name}`);
-    console.log(`📍 Avstand til stasjon: ${stationDistance.toFixed(1)}km`);
-    console.log(`🔋 Batteri ved ankomst: ${arrivalBattery.toFixed(1)}%`);
-
-    return [{
-      ...bestStation,
-      distance: stationDistance,
-      arrivalBattery,
-      departureBattery: 80,
-      isRequired: true
-    }];
-  };
+  // Beregn vær-påvirkning (fallback hvis weather service ikke fungerer)
   // Beregn vær-påvirkning (fallback hvis weather service ikke fungerer)
   const calculateWeatherImpact = (): WeatherData => {
     return {
