@@ -42,45 +42,8 @@ interface GoogleMapsRouteProps {
   routeData: RouteData;
 }
 
-// Mock charging stations in Norway
-const chargingStations: ChargingStation[] = [
-  {
-    id: "1",
-    name: "Circle K Gardermoen",
-    location: "Jessheim",
-    lat: 60.1939,
-    lng: 11.1004,
-    chargeTime: 25,
-    chargeAmount: 35,
-    cost: 175,
-    fastCharger: true,
-    requiredStop: false
-  },
-  {
-    id: "2",
-    name: "Ionity Lillehammer",
-    location: "Lillehammer", 
-    lat: 61.1153,
-    lng: 10.4662,
-    chargeTime: 30,
-    chargeAmount: 45,
-    cost: 225,
-    fastCharger: true,
-    requiredStop: false
-  },
-  {
-    id: "3",
-    name: "Mer Gol",
-    location: "Gol",
-    lat: 60.6856,
-    lng: 9.0072,
-    chargeTime: 35,
-    chargeAmount: 50,
-    cost: 250,
-    fastCharger: true,
-    requiredStop: false
-  }
-];
+// Load charging stations from database
+const [chargingStations, setChargingStations] = useState<ChargingStation[]>([]);
 
 export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: GoogleMapsRouteProps) {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -94,6 +57,43 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
   const [error, setError] = useState<string>('');
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
+
+  // Load charging stations from database
+  useEffect(() => {
+    const loadChargingStations = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('charging_stations')
+          .select('*');
+        
+        if (error) {
+          console.error('Error loading charging stations:', error);
+          return;
+        }
+
+        // Transform database data to component format
+        const stations: ChargingStation[] = data.map(station => ({
+          id: station.id,
+          name: station.name,
+          location: station.location,
+          lat: Number(station.latitude),
+          lng: Number(station.longitude),
+          chargeTime: station.fast_charger ? 30 : 60, // Estimate based on charger type
+          chargeAmount: station.fast_charger ? 50 : 35, // Estimate based on charger type
+          cost: Number(station.cost),
+          fastCharger: station.fast_charger,
+          requiredStop: false // Will be calculated based on route
+        }));
+
+        setChargingStations(stations);
+        console.log(`Loaded ${stations.length} charging stations from database`);
+      } catch (error) {
+        console.error('Error loading charging stations:', error);
+      }
+    };
+
+    loadChargingStations();
+  }, []);
 
   // Calculate if charging is needed based on battery percentage and route
   const calculateChargingNeeds = (distance: number, car: CarModel, batteryPercentage: number, trailerWeight: number) => {
@@ -274,7 +274,7 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
           }
         }
 
-        // Add charging station markers
+        // Add charging station markers for all stations
         const newMarkers: google.maps.Marker[] = [];
         chargingStations.forEach(station => {
           const marker = new google.maps.Marker({
@@ -314,7 +314,54 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
         setMarkers(newMarkers);
       }
     });
-  }, [map, directionsService, directionsRenderer, routeData, selectedCar]);
+  }, [map, directionsService, directionsRenderer, routeData, selectedCar, chargingStations]);
+
+  // Show all charging stations when map is loaded (even without route)
+  useEffect(() => {
+    if (!map || chargingStations.length === 0) return;
+
+    // If no route is planned, show all stations
+    if (!routeData.from || !routeData.to) {
+      // Clear existing markers
+      markers.forEach(marker => marker.setMap(null));
+      
+      const newMarkers: google.maps.Marker[] = [];
+      chargingStations.forEach(station => {
+        const marker = new google.maps.Marker({
+          position: { lat: station.lat, lng: station.lng },
+          map: map,
+          title: station.name,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 6,
+            fillColor: station.fastCharger ? "#00ff88" : "#ffaa00",
+            fillOpacity: 0.8,
+            strokeColor: "#ffffff",
+            strokeWeight: 1
+          }
+        });
+
+        const infoWindow = new google.maps.InfoWindow({
+          content: `
+            <div style="color: black; font-family: Arial, sans-serif;">
+              <h3>${station.name}</h3>
+              <p><strong>Lokasjon:</strong> ${station.location}</p>
+              <p><strong>Type:</strong> ${station.fastCharger ? 'Hurtiglader' : 'Standard lader'}</p>
+              <p><strong>Kostnad:</strong> ${station.cost} kr/kWh</p>
+            </div>
+          `
+        });
+
+        marker.addListener('click', () => {
+          infoWindow.open(map, marker);
+        });
+
+        newMarkers.push(marker);
+      });
+
+      setMarkers(newMarkers);
+    }
+  }, [map, chargingStations, routeData.from, routeData.to]);
 
   if (!isVisible) return null;
 
@@ -324,6 +371,9 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
         <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <div className="w-2 h-2 bg-gradient-electric rounded-full animate-pulse-neon"></div>
           Google Maps Rutekart
+          <Badge variant="secondary" className="ml-2">
+            {chargingStations.length} ladestasjoner
+          </Badge>
         </h3>
         
         {/* Battery Status Alert */}
