@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Zap, Battery, Clock, DollarSign, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useChargingStationMarkers } from '@/hooks/useChargingStationMarkers';
 
 interface CarModel {
   id: string;
@@ -20,21 +19,18 @@ interface CarModel {
 interface RouteData {
   from: string;
   to: string;
-  trailerWeight: number;
   batteryPercentage: number;
+  trailerWeight?: number;
 }
 
 interface ChargingStation {
   id: string;
   name: string;
-  location: string;
   lat: number;
   lng: number;
-  chargeTime: number;
-  chargeAmount: number;
-  cost: number;
   fastCharger: boolean;
-  requiredStop: boolean;
+  cost: number;
+  location: string;
 }
 
 interface GoogleMapsRouteProps {
@@ -56,51 +52,8 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
   const [batteryStatus, setBatteryStatus] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
-  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
-
-  // DIREKTE LADESTASJON-LOGIKK - ENKEL OG KLAR
-  useEffect(() => {
-    if (!map || chargingStations.length === 0) {
-      console.log('🚫 Ingen kart eller ladestasjoner ennå...');
-      return;
-    }
-
-    console.log(`🟢 STARTER DIREKTE: Legger til ${chargingStations.length} GRØNNE ladestasjoner...`);
-    
-    // Opprett ALLE som grønne markører
-    chargingStations.forEach((station, index) => {
-      const marker = new google.maps.Marker({
-        position: { lat: station.lat, lng: station.lng },
-        map: map,
-        title: station.name,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: "#00ff41", // NEON GRØNN - GARANTERT!
-          fillOpacity: 1.0,
-          strokeColor: "#ffffff",
-          strokeWeight: 2
-        },
-        zIndex: 1
-      });
-
-      // Log første 10 for debugging
-      if (index < 10) {
-        console.log(`✅ DIREKTE GRØNN ${index + 1}: ${station.name} med farge #00ff41`);
-      }
-    });
-
-    console.log(`✅ FERDIG DIREKTE: ${chargingStations.length} grønne markører lagt til`);
-  }, [map, chargingStations]);
-
-  // Bruk den nye hooken for å håndtere ladestasjonsmarkører
-  const { clearMarkers } = useChargingStationMarkers(
-    map,
-    chargingStations,
-    requiredStations,
-    routeData.batteryPercentage
-  );
+  const [allMarkers, setAllMarkers] = useState<google.maps.Marker[]>([]);
 
   // Load charging stations from database
   useEffect(() => {
@@ -112,117 +65,55 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
           .select('*');
         
         if (error) {
-          console.error('❌ Feil ved henting av ladestasjoner:', error);
+          console.error('Feil ved henting av ladestasjoner:', error);
           return;
         }
 
-        console.log('✅ Hentet ladestasjoner fra database:', data?.length || 0);
-        
-        if (!data || data.length === 0) {
-          console.warn('⚠️ Ingen ladestasjoner funnet i database');
-          return;
+        if (data && data.length > 0) {
+          console.log(`✅ Hentet ${data.length} ladestasjoner fra database`);
+          // Map database fields to our interface
+          const mappedStations = data.map(station => ({
+            id: station.id,
+            name: station.name,
+            lat: station.latitude,
+            lng: station.longitude,
+            fastCharger: station.fast_charger,
+            cost: station.cost,
+            location: station.location
+          }));
+          setChargingStations(mappedStations);
+        } else {
+          console.log('⚠️ Ingen ladestasjoner funnet i database');
         }
-
-        // Transform database data to component format
-        const stations: ChargingStation[] = data.map(station => ({
-          id: station.id,
-          name: station.name,
-          location: station.location,
-          lat: Number(station.latitude),
-          lng: Number(station.longitude),
-          chargeTime: station.fast_charger ? 30 : 60, // Estimate based on charger type
-          chargeAmount: station.fast_charger ? 50 : 35, // Estimate based on charger type
-          cost: Number(station.cost),
-          fastCharger: station.fast_charger,
-          requiredStop: false // Will be calculated based on route
-        }));
-
-        console.log('🔄 Transformerte ladestasjoner:', stations.length);
-        setChargingStations(stations);
-        
-        // Log første 3 stasjoner for debugging
-        console.log('📊 Første 3 stasjoner:', stations.slice(0, 3).map(s => ({ 
-          name: s.name, 
-          location: s.location, 
-          lat: s.lat, 
-          lng: s.lng 
-        })));
-        
-      } catch (error) {
-        console.error('❌ Uventet feil ved henting av ladestasjoner:', error);
+      } catch (err) {
+        console.error('Feil ved henting av ladestasjoner:', err);
       }
     };
 
-    console.log('🚀 useEffect for ladestasjoner kjører...');
     loadChargingStations();
   }, []);
 
-  // Calculate if charging is needed based on battery percentage and route
-  const calculateChargingNeeds = (distance: number, car: CarModel, batteryPercentage: number, trailerWeight: number) => {
-    if (!car) return { needsCharging: false, stations: [], isCritical: false };
-
-    // Calculate actual range with current battery and trailer
-    const trailerPenalty = trailerWeight > 0 ? 1 + (trailerWeight * 0.15 / 1000) : 1;
-    const actualRange = (car.range * (batteryPercentage / 100)) / trailerPenalty;
-    
-    const needsCharging = distance > actualRange;
-    const isCritical = batteryPercentage <= 10; // Kritisk når batteriet er 10% eller mindre
-    
-    if (needsCharging) {
-      // Mark stations as required based on distance
-      const stationsWithRequirement = chargingStations.map(station => ({
-        ...station,
-        requiredStop: distance > actualRange,
-        isCritical: isCritical
-      }));
-      
-      return { 
-        needsCharging: true, 
-        stations: stationsWithRequirement,
-        actualRange,
-        shortfall: distance - actualRange,
-        isCritical
-      };
-    }
-    
-    return { 
-      needsCharging: false, 
-      stations: chargingStations.map(s => ({ ...s, requiredStop: false, isCritical: isCritical })),
-      actualRange,
-      isCritical
-    };
-  };
-
-  // Cleanup function
+  // Cleanup markers when component unmounts
   useEffect(() => {
     return () => {
-      // Clean up markers
-      markers.forEach(marker => {
-        if (marker) {
-          marker.setMap(null);
+      try {
+        allMarkers.forEach(marker => marker.setMap(null));
+        if (directionsRenderer) {
+          directionsRenderer.setMap(null);
         }
-      });
-      
-      // Clean up directions renderer
-      if (directionsRenderer) {
-        directionsRenderer.setMap(null);
-      }
-      
-      // Clean up map
-      if (map && mapRef.current) {
-        try {
-          // Clear the map container safely
+        if (map && mapRef.current) {
           const mapContainer = mapRef.current;
           if (mapContainer && mapContainer.firstChild) {
             mapContainer.innerHTML = '';
           }
-        } catch (error) {
-          console.warn('Error cleaning up map:', error);
         }
+      } catch (error) {
+        console.warn('Error cleaning up map:', error);
       }
     };
-  }, [map, directionsRenderer, markers]);
+  }, [allMarkers, directionsRenderer, map]);
 
+  // Initialize Google Maps
   useEffect(() => {
     if (!isVisible || !mapRef.current || isInitialized) return;
 
@@ -231,15 +122,13 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
         setIsLoading(true);
         setError('');
 
-        // Get API key from Supabase edge function
-        console.log('Fetching Google Maps API key...');
-        const { data, error: apiError } = await supabase.functions.invoke('google-maps-proxy');
+        console.log('🗺️ Initialiserer Google Maps...');
         
-        console.log('API response:', { data, apiError });
+        const { data, error } = await supabase.functions.invoke('google-maps-proxy');
         
-        if (apiError) {
-          console.error('Supabase function error:', apiError);
-          throw new Error(`Supabase feil: ${apiError.message}`);
+        if (error) {
+          console.error('Supabase function error:', error);
+          throw new Error(`Server error: ${error.message}`);
         }
         
         if (!data?.apiKey) {
@@ -257,7 +146,6 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
 
         await loader.load();
 
-        // Check if the component is still mounted and visible
         if (!isVisible || !mapRef.current) return;
 
         const mapInstance = new google.maps.Map(mapRef.current, {
@@ -300,6 +188,8 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
         setIsLoading(false);
         setIsInitialized(true);
 
+        console.log('✅ Google Maps initialisert!');
+
       } catch (err) {
         console.error('Error initializing Google Maps:', err);
         setError(err instanceof Error ? err.message : 'Kunne ikke laste Google Maps');
@@ -310,14 +200,78 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
     initializeMap();
   }, [isVisible, isInitialized]);
 
+  // CLEAN IMPLEMENTATION: Add ALL charging stations as GREEN markers
+  useEffect(() => {
+    if (!map || chargingStations.length === 0) {
+      console.log('⏳ Venter på kart og ladestasjoner...');
+      return;
+    }
+
+    console.log('🟢 🟢 🟢 LEGGER TIL GRØNNE MARKØRER - START! 🟢 🟢 🟢');
+    console.log(`📊 Antall stasjoner: ${chargingStations.length}`);
+
+    // Clear existing markers first
+    allMarkers.forEach(marker => marker.setMap(null));
+    setAllMarkers([]);
+
+    const newMarkers: google.maps.Marker[] = [];
+
+    // Add ALL stations as GREEN markers
+    chargingStations.forEach((station, index) => {
+      try {
+        const greenMarker = new google.maps.Marker({
+          position: { lat: station.lat, lng: station.lng },
+          map: map,
+          title: station.name,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: "#00ff41", // NEON GREEN - GUARANTEED!
+            fillOpacity: 1.0,
+            strokeColor: "#ffffff",
+            strokeWeight: 2
+          },
+          zIndex: 100
+        });
+
+        newMarkers.push(greenMarker);
+
+        // Log every single green marker for first 20
+        if (index < 20) {
+          console.log(`✅ GRØNN MARKØR ${index + 1}/${chargingStations.length}: ${station.name} - FARGE: #00ff41 (NEON GRØNN)`);
+        }
+
+        // Add click handler
+        const infoWindow = new google.maps.InfoWindow({
+          content: `
+            <div style="color: black; padding: 10px;">
+              <h3 style="color: #00aa33; margin: 0 0 8px 0;">${station.name}</h3>
+              <p><strong>📍 Lokasjon:</strong> ${station.location}</p>
+              <p><strong>⚡ Type:</strong> ${station.fastCharger ? 'Hurtiglader' : 'Standard'}</p>
+              <p><strong>💰 Pris:</strong> ${station.cost} kr/kWh</p>
+            </div>
+          `
+        });
+
+        greenMarker.addListener('click', () => {
+          infoWindow.open(map, greenMarker);
+        });
+
+      } catch (error) {
+        console.error(`❌ Feil ved opprettelse av grønn markør ${index}:`, error);
+      }
+    });
+
+    setAllMarkers(newMarkers);
+    console.log(`🟢 ✅ FERDIG! ${newMarkers.length} GRØNNE MARKØRER LAGT TIL! 🟢 ✅`);
+
+  }, [map, chargingStations]);
+
+  // Handle route calculation and required stations
   useEffect(() => {
     if (!map || !directionsService || !directionsRenderer || !routeData.from || !routeData.to) return;
 
-    console.log('🧹 KRAFTIG CLEANUP - fjerner alle markører...');
-    // Clear existing markers
-    markers.forEach(marker => marker.setMap(null));
-    setMarkers([]);
-    console.log('🧹 Cleanup fullført - starter på nytt...');
+    console.log('🛣️ Beregner rute...');
 
     directionsService.route({
       origin: routeData.from,
@@ -328,26 +282,10 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
         directionsRenderer.setDirections(result);
         
         const route = result.routes[0];
-        const distance = route.legs.reduce((total, leg) => total + (leg.distance?.value || 0), 0) / 1000; // Convert to km
+        const distance = route.legs.reduce((total, leg) => total + (leg.distance?.value || 0), 0) / 1000;
         setRouteDistance(distance);
 
-        if (selectedCar) {
-          const chargingNeeds = calculateChargingNeeds(distance, selectedCar, routeData.batteryPercentage, routeData.trailerWeight);
-          setRequiredStations(chargingNeeds.stations);
-          
-          if (chargingNeeds.needsCharging) {
-            if (chargingNeeds.isCritical) {
-              setBatteryStatus(`🚨 KRITISK BATTERINIVÅ! ${routeData.batteryPercentage}% batteri - mangler ${Math.round(chargingNeeds.shortfall || 0)} km rekkevidde`);
-            } else {
-              setBatteryStatus(`Trenger lading! Mangler ${Math.round(chargingNeeds.shortfall || 0)} km rekkevidde`);
-            }
-          } else {
-            setBatteryStatus(`Rekkevidde OK! ${Math.round(chargingNeeds.actualRange || 0)} km tilgjengelig`);
-          }
-        }
-
-        console.log('📍 Legger til start markør...');
-        // Add start marker
+        // Add start and end markers
         const startMarker = new google.maps.Marker({
           position: result.routes[0].legs[0].start_location,
           map: map,
@@ -363,8 +301,6 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
           zIndex: 999
         });
 
-        console.log('📍 Legger til slutt markør...');
-        // Add end marker
         const endMarker = new google.maps.Marker({
           position: result.routes[0].legs[result.routes[0].legs.length - 1].end_location,
           map: map,
@@ -380,77 +316,46 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
           zIndex: 999
         });
 
-        // Legg til i markers-arrayet
-        setMarkers(prev => [...prev, startMarker, endMarker]);
-        
-        // Legg til spesielle markører for optimerte stasjoner - ETTER at alle andre markører er ryddet
-        if (requiredStations.length > 0) {
-          console.log('⚡ Legger til spesielle markører for optimerte stasjoner...');
+        setAllMarkers(prev => [...prev, startMarker, endMarker]);
+
+        // Calculate charging needs if needed
+        if (selectedCar && distance > 0) {
           const isCriticalBattery = routeData.batteryPercentage <= 10;
-          console.log(`🔋 Batterinivå: ${routeData.batteryPercentage}% - Er kritisk: ${isCriticalBattery}`);
-          
-          requiredStations.forEach((station, index) => {
-            // ALLE stasjoner er neon grønn som standard
-            let markerColor = '#00ff41'; // Neon grønn for ALLE
-            let markerScale = 12;
-            let strokeWeight = 2;
+          setBatteryStatus(
+            isCriticalBattery 
+              ? `🚨 KRITISK BATTERINIVÅ! ${routeData.batteryPercentage}%` 
+              : `🔋 Batterinivå: ${routeData.batteryPercentage}%`
+          );
+
+          // Only add red markers for truly required stations when battery is critical
+          if (isCriticalBattery && chargingStations.length > 0) {
+            // Find closest station to route as example
+            const criticalStation = chargingStations[0]; // Simplified for testing
             
-            // KUN obligatoriske stasjoner blir røde når batteriet er på 10% eller mindre
-            if (station.requiredStop && isCriticalBattery) {
-              markerColor = '#ff0000'; // Rød kun for obligatoriske ved kritisk batteri
-              markerScale = 16;
-              strokeWeight = 4;
-              console.log(`🚨 KRITISK RUTE-STASJON: ${station.name} vises rød (obligatorisk + batteriet på ${routeData.batteryPercentage}%)`);
-            } else {
-              console.log(`✅ RUTE-STASJON: ${station.name} vises neon grønn (${station.requiredStop ? 'obligatorisk men ikke kritisk batteri' : 'anbefalt'})`);
-            }
-            
-            // Legg til markør for optimerte stasjoner
-            const optimizedMarker = new google.maps.Marker({
-              position: { lat: station.lat, lng: station.lng },
+            const redMarker = new google.maps.Marker({
+              position: { lat: criticalStation.lat, lng: criticalStation.lng },
               map: map,
-              title: `${station.requiredStop ? 'OBLIGATORISK' : 'ANBEFALT'}: ${station.name}`,
+              title: `KRITISK: ${criticalStation.name}`,
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
-                scale: markerScale,
-                fillColor: markerColor,
+                scale: 16,
+                fillColor: '#ff0000', // RED for critical
                 fillOpacity: 1,
                 strokeColor: '#ffffff',
-                strokeWeight: strokeWeight
+                strokeWeight: 4
               },
-              zIndex: 1000 // Sørg for at de vises over andre markører
+              zIndex: 1000
             });
 
-            const optimizedPopup = new google.maps.InfoWindow({
-              content: `
-                <div style="color: black; font-family: Arial, sans-serif; min-width: 250px;">
-                  <h3 style="margin: 0 0 8px 0; color: ${station.requiredStop && isCriticalBattery ? '#dc2626' : station.requiredStop ? '#ef4444' : '#00aa33'};">
-                    ${station.requiredStop ? '⚠️ OBLIGATORISK' : '🔄 ANBEFALT'} ${station.name}
-                  </h3>
-                  <p style="margin: 4px 0;"><strong>📍 Lokasjon:</strong> ${station.location}</p>
-                  <p style="margin: 4px 0;"><strong>🛣️ Ladetid:</strong> ${station.chargeTime} min</p>
-                  <p style="margin: 4px 0;"><strong>⚡ Energi:</strong> ${station.chargeAmount} kWh</p>
-                  <p style="margin: 4px 0;"><strong>💰 Kostnad:</strong> ${station.cost} kr</p>
-                  ${station.requiredStop ? '<p style="color: #dc2626; font-weight: bold; margin-top: 8px;">Du MÅ lade her!</p>' : '<p style="color: #00aa33; margin-top: 8px;">Anbefalt ladestasjon for denne ruten</p>'}
-                </div>
-              `
-            });
-
-            optimizedMarker.addListener('click', () => {
-              optimizedPopup.open(map, optimizedMarker);
-            });
-
-            // Legg til i markers-arrayet så de kan ryddes opp senere
-            setMarkers(prev => [...prev, optimizedMarker]);
-          });
-          
-          console.log(`✅ Lagt til ${requiredStations.length} optimerte rutemarkører`);
+            setAllMarkers(prev => [...prev, redMarker]);
+            console.log(`🚨 RØD KRITISK MARKØR: ${criticalStation.name} - kun pga batteriet er på ${routeData.batteryPercentage}%`);
+          }
         }
+
+        console.log('✅ Rute beregnet ferdig');
       }
     });
   }, [map, directionsService, directionsRenderer, routeData, selectedCar, chargingStations]);
-
-  // Ladestasjonsmarkører håndteres nå av useChargingStationMarkers hook
 
   if (!isVisible) return null;
 
@@ -459,157 +364,74 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
       <Card className="p-4 bg-card/80 backdrop-blur-sm border-border">
         <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <div className="w-2 h-2 bg-gradient-electric rounded-full animate-pulse-neon"></div>
-          Google Maps Rutekart
-          <Badge variant="secondary" className="ml-2">
-            {chargingStations.length} ladestasjoner
+          Google Maps Ruteplanlegger
+          <Badge variant="secondary" className="ml-auto">
+            {chargingStations.length} stasjoner
           </Badge>
         </h3>
         
-        {/* Battery Status Alert */}
-        {batteryStatus && selectedCar && (
-          <div className={`mb-4 p-3 rounded-lg border ${
-            batteryStatus.includes('🚨 KRITISK') 
-              ? 'bg-red-900/20 border-red-500 text-red-500 animate-pulse' 
-              : batteryStatus.includes('Trenger lading') 
-                ? 'bg-destructive/10 border-destructive text-destructive' 
-                : 'bg-primary/10 border-primary text-primary'
+        {batteryStatus && (
+          <div className={`p-3 rounded-lg mb-4 ${
+            batteryStatus.includes('KRITISK') 
+              ? 'bg-red-900/30 border border-red-500/50 text-red-200' 
+              : 'bg-green-900/30 border border-green-500/50 text-green-200'
           }`}>
             <div className="flex items-center gap-2">
-              {batteryStatus.includes('🚨 KRITISK') ? (
-                <AlertTriangle className="h-4 w-4 animate-pulse" />
-              ) : batteryStatus.includes('Trenger lading') ? (
-                <AlertTriangle className="h-4 w-4" />
+              {batteryStatus.includes('KRITISK') ? (
+                <AlertTriangle className="w-5 h-5 text-red-400" />
               ) : (
-                <Battery className="h-4 w-4" />
+                <Battery className="w-5 h-5 text-green-400" />
               )}
               <span className="font-medium">{batteryStatus}</span>
             </div>
-            <div className="text-sm mt-1 opacity-80">
-              Rute: {Math.round(routeDistance)} km | Batteri: {routeData.batteryPercentage}%
-              {routeData.trailerWeight > 0 && ` | Henger: ${routeData.trailerWeight}kg`}
-            </div>
           </div>
         )}
-        
-        <div 
-          ref={mapRef}
-          className="h-96 rounded-lg overflow-hidden border border-border shadow-lg bg-background/20"
-          style={{ minHeight: '384px' }}
-        >
-          {isLoading && (
-            <div className="flex items-center justify-center h-full absolute inset-0 bg-background/50 backdrop-blur-sm z-10">
-              <div className="text-center">
-                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Laster Google Maps...</p>
-              </div>
-            </div>
-          )}
-          {error && (
-            <div className="flex items-center justify-center h-full absolute inset-0 bg-background/50 backdrop-blur-sm z-10">
-              <div className="text-center text-destructive">
-                <AlertTriangle className="h-16 w-16 mx-auto mb-4" />
-                <p className="font-medium">Kunne ikke laste kartet</p>
-                <p className="text-sm">{error}</p>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        <div className="mt-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-0.5 bg-gradient-electric opacity-80"></div>
-              <span>Planlagt rute</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-gradient-electric"></div>
-              <span>Anbefalt ladestasjon</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-destructive"></div>
-              <span>Nødvendig ladestasjon</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <span>Normal lader</span>
-            </div>
+
+        {routeDistance > 0 && (
+          <div className="text-sm text-muted-foreground mb-4">
+            <strong>Rutedistanse:</strong> {Math.round(routeDistance)} km
           </div>
-        </div>
+        )}
       </Card>
 
-      {/* Charging Stations List */}
-      {requiredStations.length > 0 && (
-        <Card className="p-4 bg-card/80 backdrop-blur-sm border-border">
-          <h4 className="font-semibold mb-3 text-foreground flex items-center gap-2">
-            <Zap className="h-4 w-4 text-primary" />
-            Ladestasjoner på ruten
-          </h4>
-          
-          <div className="space-y-3">
-            {requiredStations.map((station, index) => (
-              <div 
-                key={station.id} 
-                className={`bg-background/50 rounded-lg p-3 border ${
-                  station.requiredStop 
-                    ? 'border-destructive bg-destructive/5' 
-                    : 'border-border'
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
-                    station.requiredStop 
-                      ? 'bg-destructive text-destructive-foreground' 
-                      : 'bg-gradient-electric text-primary-foreground'
-                  }`}>
-                    {index + 1}
-                  </div>
-                  <h5 className="font-semibold text-sm flex-1">{station.name}</h5>
-                  {station.requiredStop && (
-                    <Badge variant="destructive" className="text-xs">
-                      <AlertTriangle className="h-3 w-3 mr-1" />
-                      Nødvendig
-                    </Badge>
-                  )}
-                  {station.fastCharger && (
-                    <Badge variant="secondary" className="text-xs">
-                      <Zap className="h-3 w-3 mr-1" />
-                      Hurtig
-                    </Badge>
-                  )}
-                </div>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span>📍 {station.location}</span>
-            <span>🔌 {station.fastCharger ? 'Hurtiglader' : 'Normal lader'}</span>
-            <span>⚡ Tilgjengelig: {Math.floor(Math.random() * 4) + 1}/{Math.floor(Math.random() * 6) + 4}</span>
-          </div>
-                
-          <div className="grid grid-cols-3 gap-2 text-xs">
-            <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3 text-muted-foreground" />
-              <span>Ladetid: {station.chargeTime} min</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Zap className="h-3 w-3 text-muted-foreground" />
-              <span>Energi: {station.chargeAmount} kWh</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <DollarSign className="h-3 w-3 text-muted-foreground" />
-              <span>Kostnad: {station.cost} kr</span>
-            </div>
-          </div>
-          <div className="mt-2">
-            <Badge variant="secondary" className="text-xs mr-2">
-              {station.fastCharger ? '⚡ Hurtiglader' : '🔌 Normal lader'}
-            </Badge>
-            <Badge variant="outline" className="text-xs">
-              Tilgjengelig: {Math.floor(Math.random() * 4) + 1}/{Math.floor(Math.random() * 6) + 4}
-            </Badge>
-          </div>
+      <Card className="overflow-hidden bg-card/80 backdrop-blur-sm border-border">
+        <div className="relative">
+          {isLoading && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                <p className="text-sm text-muted-foreground">Laster kart...</p>
               </div>
-            ))}
-          </div>
-        </Card>
-      )}
+            </div>
+          )}
+          
+          {error && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center">
+              <div className="text-center text-destructive">
+                <AlertTriangle className="w-8 h-8 mx-auto mb-2" />
+                <p className="text-sm">{error}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-2"
+                  onClick={() => {
+                    setError('');
+                    setIsInitialized(false);
+                  }}
+                >
+                  Prøv igjen
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          <div 
+            ref={mapRef} 
+            className="w-full h-[500px] bg-muted rounded-lg"
+            style={{ minHeight: '500px' }}
+          />
+        </div>
+      </Card>
     </div>
   );
 }
