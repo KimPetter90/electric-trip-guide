@@ -1060,7 +1060,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       console.log('- Car:', !!selectedCar);
       console.log('- Token:', !!mapboxToken);
     }
-  }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, routeData.trailerWeight, selectedCar?.id, mapboxToken]);
+  }, [routeData.from, routeData.to, routeData.via, selectedCar?.id, mapboxToken]); // FJERNET batteryPercentage og trailerWeight
 
   // Legg til en separat useEffect som bare logger endringer  
   useEffect(() => {
