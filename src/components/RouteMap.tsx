@@ -116,45 +116,38 @@ const fetchNorwegianChargingStations = async (): Promise<ChargingStation[]> => {
   try {
     console.log('🔍 Laster utvidet ladestasjonsdatabase...');
     
-    // For nå bruker vi en utvidet statisk database med mange flere stasjoner
+    // Redusert antall ladestasjoner - kun hovedruter og viktige stopp
     const extendedStations: ChargingStation[] = [
-      // Oslo-området
+      // Oslo-området (hovedstasjoner)
       { id: "ocm_1001", name: "Circle K Ryen", location: "Oslo", lat: 59.8847, lng: 10.8061, chargeTime: 35, chargeAmount: 40, cost: 200, fastCharger: false, available: 3, total: 4 },
       { id: "ocm_1002", name: "Tesla Supercharger Vinterbro", location: "Ås", lat: 59.7465, lng: 10.8156, chargeTime: 18, chargeAmount: 58, cost: 290, fastCharger: true, available: 6, total: 8 },
       { id: "ocm_1003", name: "Ionity Rygge", location: "Moss", lat: 59.3789, lng: 10.7856, chargeTime: 22, chargeAmount: 54, cost: 270, fastCharger: true, available: 4, total: 6 },
       { id: "ocm_1004", name: "Mer Fornebu", location: "Bærum", lat: 59.8956, lng: 10.6161, chargeTime: 40, chargeAmount: 35, cost: 175, fastCharger: false, available: 2, total: 4 },
       
-      // På ruten Oslo-Ålesund (E6/E136)
-      { id: "ocm_1005", name: "Circle K Harestua", location: "Lunner", lat: 60.3167, lng: 10.5333, chargeTime: 30, chargeAmount: 42, cost: 210, fastCharger: false, available: 2, total: 3 },
+      // Hovedrute E6 (kun viktigste stopp)
       { id: "ocm_1006", name: "Tesla Supercharger Mjøsbrua", location: "Moelv", lat: 60.9344, lng: 10.6911, chargeTime: 20, chargeAmount: 52, cost: 260, fastCharger: true, available: 5, total: 8 },
       { id: "ocm_1007", name: "Eviny Dombås", location: "Dovre", lat: 62.0744, lng: 9.1200, chargeTime: 28, chargeAmount: 48, cost: 240, fastCharger: true, available: 3, total: 5 },
-      { id: "ocm_1008", name: "Circle K Otta", location: "Sel", lat: 61.7711, lng: 9.5278, chargeTime: 32, chargeAmount: 38, cost: 190, fastCharger: false, available: 1, total: 2 },
       { id: "ocm_1009", name: "Ionity Lom", location: "Lom", lat: 61.8367, lng: 8.5678, chargeTime: 25, chargeAmount: 50, cost: 250, fastCharger: true, available: 4, total: 6 },
       { id: "ocm_1010", name: "Tesla Supercharger Stryn", location: "Stryn", lat: 61.9111, lng: 6.7189, chargeTime: 21, chargeAmount: 54, cost: 270, fastCharger: true, available: 6, total: 10 },
       
-      // Nær start (Ålesund-området)
-      { id: "ocm_1011", name: "Circle K Moa", location: "Ålesund", lat: 62.4167, lng: 6.2833, chargeTime: 35, chargeAmount: 40, cost: 200, fastCharger: false, available: 2, total: 3 },
-      { id: "ocm_1012", name: "Mer Langevåg", location: "Giske", lat: 62.4500, lng: 6.0833, chargeTime: 40, chargeAmount: 35, cost: 175, fastCharger: false, available: 1, total: 2 },
-      { id: "ocm_1013", name: "Eviny Volda", location: "Volda", lat: 62.1489, lng: 6.0711, chargeTime: 30, chargeAmount: 45, cost: 225, fastCharger: true, available: 3, total: 4 },
-      { id: "ocm_1014", name: "Tesla Supercharger Fosnavåg", location: "Herøy", lat: 62.3233, lng: 5.7500, chargeTime: 19, chargeAmount: 56, cost: 280, fastCharger: true, available: 8, total: 12 },
+      // Sørlandet (hovedstasjoner)
+      { id: "ocm_2001", name: "Ionity Kristiansand", location: "Kristiansand", lat: 58.1599, lng: 8.0182, chargeTime: 24, chargeAmount: 52, cost: 260, fastCharger: true, available: 5, total: 8 },
+      { id: "ocm_2002", name: "Tesla Supercharger Mandal", location: "Mandal", lat: 58.0289, lng: 7.4611, chargeTime: 20, chargeAmount: 55, cost: 275, fastCharger: true, available: 4, total: 6 },
+      { id: "ocm_2003", name: "Circle K Arendal", location: "Arendal", lat: 58.4611, lng: 8.7722, chargeTime: 30, chargeAmount: 42, cost: 210, fastCharger: false, available: 2, total: 3 },
       
-      // Tidlige stopp langs ruten (50-150km fra Ålesund)
-      { id: "ocm_1015", name: "Circle K Sjøholt", location: "Ørsta", lat: 62.1944, lng: 6.1389, chargeTime: 33, chargeAmount: 38, cost: 190, fastCharger: false, available: 2, total: 3 },
-      { id: "ocm_1016", name: "Ionity Hellesylt", location: "Stranda", lat: 62.0833, lng: 7.1167, chargeTime: 24, chargeAmount: 52, cost: 260, fastCharger: true, available: 4, total: 6 },
-      { id: "ocm_1017", name: "Mer Hornindal", location: "Hornindal", lat: 61.9667, lng: 6.5333, chargeTime: 38, chargeAmount: 36, cost: 180, fastCharger: false, available: 1, total: 2 },
-      { id: "ocm_1018", name: "Eviny Loen", location: "Stryn", lat: 61.8667, lng: 6.8500, chargeTime: 26, chargeAmount: 46, cost: 230, fastCharger: true, available: 3, total: 5 },
+      // Vestlandet (hovedstasjoner)
+      { id: "ocm_3001", name: "Ionity Bergen Flesland", location: "Bergen", lat: 60.2934, lng: 5.2181, chargeTime: 22, chargeAmount: 52, cost: 260, fastCharger: true, available: 6, total: 8 },
+      { id: "ocm_3002", name: "Tesla Supercharger Stavanger", location: "Stavanger", lat: 58.9700, lng: 5.7331, chargeTime: 19, chargeAmount: 56, cost: 280, fastCharger: true, available: 7, total: 10 },
+      { id: "ocm_3003", name: "Ionity Ålesund", location: "Ålesund", lat: 62.4722, lng: 6.1549, chargeTime: 25, chargeAmount: 50, cost: 250, fastCharger: true, available: 5, total: 6 },
       
-      // Flere alternativer rundt Lillehammer (300-400km)
-      { id: "ocm_1019", name: "Circle K Hamar", location: "Hamar", lat: 60.7945, lng: 11.0680, chargeTime: 32, chargeAmount: 40, cost: 200, fastCharger: false, available: 2, total: 4 },
-      { id: "ocm_1020", name: "Tesla Supercharger Elverum", location: "Elverum", lat: 60.8811, lng: 11.5644, chargeTime: 20, chargeAmount: 54, cost: 270, fastCharger: true, available: 7, total: 10 },
-      { id: "ocm_1021", name: "Ionity Vinstra", location: "Nord-Fron", lat: 61.5356, lng: 9.9333, chargeTime: 23, chargeAmount: 53, cost: 265, fastCharger: true, available: 5, total: 8 }
+      // Midt-Norge (hovedstasjoner)
+      { id: "ocm_4001", name: "Tesla Supercharger Trondheim", location: "Trondheim", lat: 63.4305, lng: 10.3951, chargeTime: 18, chargeAmount: 58, cost: 290, fastCharger: true, available: 8, total: 12 }
     ];
     
-    console.log(`✅ Lastet ${extendedStations.length} ekstra ladestasjoner`);
+    console.log(`✅ Lastet ${extendedStations.length} utvidede ladestasjoner`);
     return extendedStations;
-    
   } catch (error) {
-    console.error('❌ Feil ved henting av ladestasjoner:', error);
+    console.warn('⚠️ Feil ved lasting av utvidede ladestasjoner:', error);
     return [];
   }
 };
