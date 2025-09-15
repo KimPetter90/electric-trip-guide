@@ -973,6 +973,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     
     if (map.current && routeData.from && routeData.to && selectedCar && mapboxToken) {
       console.log('🔄 Oppdaterer rute på grunn av endring i data...');
+      // Fjern tidligere feil når vi prøver igjen
+      setError(null);
       // Eksplisitt cleanup før oppdatering
       cleanupMap();
       setOptimizedStations([]);
