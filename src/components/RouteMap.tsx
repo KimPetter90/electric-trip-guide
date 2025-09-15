@@ -970,11 +970,17 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       console.log('- Car:', !!selectedCar);
       console.log('- Token:', !!mapboxToken);
     }
-  }, [routeData, selectedCar, mapboxToken]); // Bruk hele routeData objektet
+  }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, routeData.trailerWeight, selectedCar?.id, mapboxToken]);
 
-  // Legg til en separat useEffect som logger endringer
+  // Legg til en separat useEffect som logger endringer  
   useEffect(() => {
     console.log('🔄🔄🔄 BATTERIPROSENT ENDRET TIL:', routeData.batteryPercentage, '%');
+    console.log('🔄 Alle routeData verdier:');
+    console.log('  - Fra:', routeData.from);
+    console.log('  - Til:', routeData.to); 
+    console.log('  - Via:', routeData.via);
+    console.log('  - Batteri:', routeData.batteryPercentage, '%');
+    console.log('  - Trailer:', routeData.trailerWeight);
   }, [routeData.batteryPercentage]);
 
   if (!isVisible) return null;
