@@ -291,7 +291,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   
   // STRENG LOGIKK: Vis kun EN obligatorisk stasjon når batteriet når 10%
   const optimizeChargingStations = (routeDistance: number, routeGeometry: any) => {
-    console.log('🔧 STRENG ANALYSE: Sjekker om lading trengs');
+    console.log('🔧 SIMULERING: Finner hvor batteriet blir 10% under reisen');
     console.log('📊 BATTERIPROSENT INPUT:', routeData.batteryPercentage, '%');
     
     if (!selectedCar) {
@@ -299,69 +299,70 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       return [];
     }
 
-    const currentBattery = routeData.batteryPercentage;
+    const startBattery = routeData.batteryPercentage;
     const actualRange = selectedCar.range * 0.85; // Realistisk rekkevidde
-    const currentRange = (currentBattery / 100) * actualRange;
+    const totalRangeWithCurrentBattery = (startBattery / 100) * actualRange;
 
-    console.log(`🔋 DETALJERT BATTERIBEREGNING:`);
-    console.log(`   - Start batteriprosent: ${currentBattery}%`);
-    console.log(`   - Bil teoretisk rekkevidde: ${selectedCar.range} km`);
-    console.log(`   - Realistisk rekkevidde (85%): ${actualRange} km`);
-    console.log(`   - Nåværende rekkevidde: ${currentRange.toFixed(1)} km`);
+    console.log(`🔋 SIMULERING AV REISE:`);
+    console.log(`   - Start batteriprosent: ${startBattery}%`);
+    console.log(`   - Total rekkevidde med dette batteriet: ${totalRangeWithCurrentBattery.toFixed(1)} km`);
     console.log(`🛣️ Total rute: ${routeDistance.toFixed(1)} km`);
 
-    // Hvis batteriet holder hele ruten - INGEN lading nødvendig
-    if (currentRange >= routeDistance) {
+    // Sjekk om batteriet holder hele ruten
+    if (totalRangeWithCurrentBattery >= routeDistance) {
       console.log('✅ BATTERIET HOLDER HELE RUTEN - ingen lading nødvendig');
       return [];
     }
 
-    // Beregn hvor langt vi kan kjøre før batteriet når 10%
-    const batteryAt10Percent = actualRange * 0.10;
-    const rangeBeforeCritical = currentRange - batteryAt10Percent;
+    // Simuler reisen og finn hvor batteriet blir 10%
+    let currentDistance = 0;
+    let currentBatteryPercent = startBattery;
     
-    console.log(`⚠️ Batteriet når 10% etter: ${rangeBeforeCritical.toFixed(1)} km`);
+    // Kjør gjennom ruten i 50km segmenter for å simulere batteriforbruk
+    const stepSize = 50; // km
+    while (currentDistance < routeDistance) {
+      // Beregn batteriforbruk for dette segmentet
+      const segmentDistance = Math.min(stepSize, routeDistance - currentDistance);
+      const batteryUsedPercent = (segmentDistance / actualRange) * 100;
+      currentBatteryPercent -= batteryUsedPercent;
+      currentDistance += segmentDistance;
+      
+      console.log(`📍 Etter ${currentDistance.toFixed(0)}km: ${currentBatteryPercent.toFixed(1)}% batteri igjen`);
+      
+      // Hvis batteriet er nede på 10% eller mindre, trenger vi lading her
+      if (currentBatteryPercent <= 10) {
+        console.log(`🚨 BATTERIET ER NEDE PÅ ${currentBatteryPercent.toFixed(1)}% etter ${currentDistance.toFixed(1)}km!`);
+        
+        // Finn nærmeste ladestasjon ved dette punktet på ruten
+        const stationsNearRoute = findStationsNearRoute(routeGeometry);
+        const suitableStations = stationsNearRoute
+          .filter(s => s.available > 0)
+          .filter(s => (s as any).routeDistance <= currentDistance + 20) // Litt margin
+          .filter(s => (s as any).routeDistance >= currentDistance - 20) // Ikke for langt tilbake
+          .sort((a, b) => Math.abs((a as any).routeDistance - currentDistance) - Math.abs((b as any).routeDistance - currentDistance));
 
-    // Hvis vi kan kjøre hele ruten før batteriet når 10%
-    if (rangeBeforeCritical >= routeDistance) {
-      console.log('✅ BATTERIET HOLDER OVER 10% HELE RUTEN');
-      return [];
+        if (suitableStations.length === 0) {
+          console.log('❌ INGEN PASSENDE STASJON FUNNET VED 10% BATTERI');
+          return [];
+        }
+
+        const criticalStation = suitableStations[0];
+        console.log('🎯 VALGT STASJON VED 10% BATTERI:', criticalStation.name);
+        console.log('📍 Stasjon avstand fra start:', ((criticalStation as any).routeDistance || 0).toFixed(1), 'km');
+        console.log('🔋 Batteri ved ankomst stasjon:', currentBatteryPercent.toFixed(1), '%');
+
+        return [{
+          ...criticalStation,
+          distance: (criticalStation as any).routeDistance || currentDistance,
+          arrivalBattery: currentBatteryPercent,
+          departureBattery: 80,
+          isRequired: true
+        }];
+      }
     }
-
-    // Nå må vi finne en ladestasjon
-    console.log('🚨 TRENGER LADING - finner stasjon...');
     
-    const stationsNearRoute = findStationsNearRoute(routeGeometry);
-    const suitableStations = stationsNearRoute
-      .filter(s => s.available > 0)
-      .filter(s => (s as any).routeDistance <= rangeBeforeCritical)
-      .sort((a, b) => Math.abs((a as any).routeDistance - rangeBeforeCritical) - Math.abs((b as any).routeDistance - rangeBeforeCritical));
-
-    if (suitableStations.length === 0) {
-      console.log('❌ INGEN PASSENDE STASJON FUNNET');
-      return [];
-    }
-
-    // VELG KUN DEN BESTE STASJONEN
-    const bestStation = suitableStations[0];
-    const stationDistance = (bestStation as any).routeDistance;
-    const arrivalBattery = Math.max(5, currentBattery - (stationDistance / actualRange) * 100);
-
-    console.log('🎯 VALGT STASJON:', bestStation.name);
-    console.log('📍 Avstand til stasjon:', stationDistance.toFixed(1), 'km');
-    console.log('🔋 Batteri ved ankomst:', arrivalBattery.toFixed(1), '%');
-
-    // RETURNER KUN DENNE ENE STASJONEN
-    const result = [{
-      ...bestStation,
-      distance: stationDistance,
-      arrivalBattery,
-      departureBattery: 80,
-      isRequired: true
-    }];
-    
-    console.log('📤 RETURNERER:', result.length, 'stasjon(er)');
-    return result;
+    console.log('✅ Batteriet holder over 10% hele ruten');
+    return [];
   };
   // Beregn vær-påvirkning (fallback hvis weather service ikke fungerer)
   const calculateWeatherImpact = (): WeatherData => {
