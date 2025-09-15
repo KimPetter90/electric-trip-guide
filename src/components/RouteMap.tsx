@@ -1057,18 +1057,53 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     console.log('  - Batteri:', routeData.batteryPercentage, '%');
     console.log('  - Trailer:', routeData.trailerWeight);
     
-    // FORCE oppdatering av ladestasjoner når batteri endres
-    if (routeData.from && routeData.to && lastRouteDataRef.current) {
-      console.log('🔄 TVUNGEN OPPDATERING: Batteriprosent endret, oppdaterer ladestasjoner...');
+    // AUTOMATISK oppdatering av ladestasjoner når batteri endres
+    if (routeData.from && routeData.to && lastRouteDataRef.current && selectedCar) {
+      console.log('🔄 AUTOMATISK OPPDATERING: Batteriprosent endret, oppdaterer ladestasjoner...');
       const mockGeometry = lastRouteDataRef.current.geometry;
       const mockDistance = lastRouteDataRef.current.distance;
       if (mockGeometry && mockDistance) {
+        console.log('🔄 Kaller optimizeChargingStations med:', mockDistance, 'km');
         const newStations = optimizeChargingStations(mockDistance, mockGeometry);
         console.log('🔄 Nye stasjoner beregnet:', newStations.length);
         setOptimizedStations(newStations);
+        
+        // Oppdater også markører på kartet
+        if (map.current && newStations.length > 0) {
+          console.log('🗺️ Oppdaterer ladestasjons-markører på kartet...');
+          
+          // Fjern eksisterende ladestasjons-markører
+          markers.forEach(marker => {
+            if ((marker as any).isChargingStation) {
+              marker.remove();
+            }
+          });
+          
+          // Legg til nye ladestasjons-markører
+          const newMarkers = markers.filter(m => !(m as any).isChargingStation);
+          
+          newStations.forEach((station, index) => {
+            const chargingMarker = new mapboxgl.Marker({ 
+              color: station.isRequired ? '#ef4444' : '#22c55e' 
+            })
+              .setLngLat([station.lng, station.lat])
+              .setPopup(new mapboxgl.Popup().setHTML(`
+                <strong>${station.name}</strong><br>
+                ${station.location}<br>
+                Batteri ved ankomst: ${station.arrivalBattery?.toFixed(1)}%<br>
+                ${station.isRequired ? 'OBLIGATORISK' : 'VALGFRI'} stopp
+              `))
+              .addTo(map.current!);
+            (chargingMarker as any).isChargingStation = true;
+            newMarkers.push(chargingMarker);
+          });
+          
+          setMarkers(newMarkers);
+          console.log('✅ Ladestasjons-markører oppdatert på kartet');
+        }
       }
     }
-  }, [routeData.batteryPercentage]);
+  }, [routeData.batteryPercentage, selectedCar]);
 
   if (!isVisible) return null;
 
