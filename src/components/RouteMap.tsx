@@ -424,14 +424,33 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         totalRoutes: directionsData.routes.length 
       });
 
-      console.log('Rute mottatt fra Mapbox:', { distance: routeDistance, duration: route.duration });
+      // FØRST: Cleanup eksisterende rute og markører GRUNDIG
+      console.log('🧹 GRUNDIG CLEANUP - fjerner alt eksisterende innhold...');
+      
+      // Fjern alle markører
+      const existingMarkers = document.querySelectorAll('.mapboxgl-marker');
+      existingMarkers.forEach(marker => marker.remove());
+      
+      // Fjern rute-lag og kilder
+      try {
+        if (map.current!.getLayer('route')) {
+          map.current!.removeLayer('route');
+          console.log('✅ Fjernet route layer');
+        }
+      } catch (e) { console.log('Route layer finnes ikke'); }
+      
+      try {
+        if (map.current!.getSource('route')) {
+          map.current!.removeSource('route');
+          console.log('✅ Fjernet route source');
+        }
+      } catch (e) { console.log('Route source finnes ikke'); }
 
-      // Cleanup eksisterende rute og markører
-      console.log('🧹 Eksplisitt cleanup før ny rute...');
-      cleanupMap();
+      // Vent litt før vi legger til ny rute
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Legg til ny rute
-      console.log('➕ Legger til ny route source...');
+      // DERETTER: Legg til ny rute
+      console.log('➕ Legger til ny route source med farge:', getRouteColor(routeType));
       if (map.current!.getSource('route')) {
         map.current!.removeSource('route');
       }
@@ -464,11 +483,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         }
       });
 
-      // Rydd opp markører først
-      console.log('🧹 KRAFTIG CLEANUP - fjerner alle markører...');
-      const allMarkers = document.querySelectorAll('.mapboxgl-marker');
-      allMarkers.forEach(marker => marker.remove());
-      console.log('🧹 Cleanup fullført - starter på nytt...');
+      // Markører er allerede fjernet i cleanup over
+      console.log('✅ Cleanup allerede utført - starter på nytt...');
 
       // Legg til start markør
       console.log('📍 Legger til start markør...');
@@ -618,6 +634,20 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       setRouteAnalysis(analysis);
       console.log('✅ Trip analysis calculated:', analysis);
       console.log('✅ Route analysis set successfully:', analysis);
+
+      // FIT BOUNDS til slutt for å vise hele ruten
+      const routeCoords = route.geometry.coordinates;
+      const routeBounds = routeCoords.reduce((bounds, coord) => {
+        return bounds.extend(coord);
+      }, new mapboxgl.LngLatBounds(routeCoords[0], routeCoords[0]));
+
+      setTimeout(() => {
+        map.current!.fitBounds(routeBounds, {
+          padding: { top: 50, bottom: 50, left: 50, right: 50 },
+          duration: 1500
+        });
+        console.log('🗺️ Kartet tilpasset til ny rute:', routeType);
+      }, 500);
 
     } catch (error) {
       console.error('Feil ved oppdatering av rute:', error);
