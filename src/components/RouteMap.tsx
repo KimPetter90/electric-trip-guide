@@ -550,19 +550,19 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         el.className = isNearRoute ? 'near-route-station-marker' : 'all-charging-station-marker';
         
         if (isNearRoute) {
-          // Helrød markør med lyn for stasjoner nær ruten
+          // Helrød markør med lyn for stasjoner nær ruten - alle samme størrelse
           el.style.cssText = `
             background-color: #ef4444;
-            width: 20px;
-            height: 20px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
-            border: 2px solid white;
+            border: 1px solid white;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            font-size: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             z-index: 5;
           `;
           el.innerHTML = '⚡';
