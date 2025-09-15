@@ -459,6 +459,11 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
             zIndex: 1,
             optimized: true // Bruk Google Maps optimisering
           });
+          
+          // LOG HVER MARKØR SOM OPPRETTES I NEON GRØNN
+          if (i < 5) { // Log første 5 for debugging
+            console.log(`✅ GRØNN MARKØR ${i + 1}: ${station.name} opprettet med farge #00ff41 (neon grønn)`);
+          }
 
           const infoWindow = new google.maps.InfoWindow({
             content: `
