@@ -356,7 +356,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     console.log('🎯 Faktisk rekkevidde med bil:', actualRange, 'km');
     
     let loopCounter = 0; // Sikkerhet mot uendelig løkke
-    while (currentPosition < routeDistance && loopCounter < 10) {
+    while (currentPosition < routeDistance && loopCounter < 20) { // Økt til 20 iterasjoner
       loopCounter++;
       console.log(`\n=== LOOP ${loopCounter} ===`);
       // Beregn hvor langt vi kan komme med nåværende batteri
@@ -409,14 +409,14 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           ...nearestFutureStation,
           distance: (nearestFutureStation as any).routeDistance,
           arrivalBattery,
-          departureBattery: Math.min(80, arrivalBattery + nearestFutureStation.chargeAmount),
+          departureBattery: Math.max(20, arrivalBattery + nearestFutureStation.chargeAmount), // Minimum 20% ved avreise
           isRequired: true, // Alltid obligatorisk i kritisk situasjon
           isCritical: true
         });
         
         // Oppdater posisjon og batteri for å fortsette fra denne stasjonen
         currentPosition = (nearestFutureStation as any).routeDistance;
-        currentBatteryLevel = Math.min(80, arrivalBattery + nearestFutureStation.chargeAmount);
+        currentBatteryLevel = Math.max(20, arrivalBattery + nearestFutureStation.chargeAmount); // Minimum 20%
         continue;
       }
       
@@ -431,8 +431,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       
       const stationDistance = (bestStation as any).routeDistance;
       const distanceToStation = stationDistance - currentPosition;
-      const arrivalBattery = currentBatteryLevel - (distanceToStation / actualRange) * 100;
-      const departureBattery = Math.min(80, arrivalBattery + bestStation.chargeAmount);
+      const arrivalBattery = Math.max(0, currentBatteryLevel - (distanceToStation / actualRange) * 100);
+      const departureBattery = Math.min(80, Math.max(20, arrivalBattery + bestStation.chargeAmount));
       
       console.log(`📍 Ladingstopp ${chargingStops.length + 1}: ${bestStation.name} på ${stationDistance.toFixed(1)}km`);
       console.log(`   Ankomst batteri: ${arrivalBattery.toFixed(1)}%`);
@@ -450,6 +450,10 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       currentPosition = stationDistance;
       currentBatteryLevel = departureBattery;
     }
+    
+    console.log(`🔚 Løkken er ferdig etter ${loopCounter} iterasjoner`);
+    console.log(`📍 Final posisjon: ${currentPosition.toFixed(1)}km av ${routeDistance.toFixed(1)}km`);
+    console.log(`🔋 Final batteri: ${currentBatteryLevel.toFixed(1)}%`);
     
     if (chargingStops.length === 0) {
       console.log('✅ Ingen lading nødvendig - batteriet holder hele veien');
