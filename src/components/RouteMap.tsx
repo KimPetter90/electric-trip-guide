@@ -466,10 +466,9 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       }
       
       optimized.forEach((station, index) => {
-        // Kun vis som røde markører hvis de faktisk er nødvendige for ruten
-        if (station.isRequired || station.arrivalBatteryPercentage! < 15) {
-          console.log('🔴 Rød markør for kritisk stasjon:', station.name, 'batterinivå ved ankomst:', station.arrivalBatteryPercentage?.toFixed(1) + '%');
-          const el = document.createElement('div');
+        // ALLE optimerte stasjoner som er valgt for ruten får røde markører
+        console.log('🔴 Rød rutemarkør for:', station.name);
+        const el = document.createElement('div');
         el.className = 'charging-station-marker';
         el.style.cssText = `
           background-color: #ff0000;
@@ -490,12 +489,12 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
         const popup = new mapboxgl.Popup().setHTML(`
           <div style="font-family: Arial, sans-serif; color: #333;">
-            <h4 style="margin: 0 0 8px 0; color: #ff6b00;"><strong>⭐ ANBEFALT: ${station.name}</strong></h4>
+            <h4 style="margin: 0 0 8px 0; color: #dc2626;"><strong>🔴 RUTE-STASJON: ${station.name}</strong></h4>
             <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
             <p style="margin: 4px 0; color: #333;">🛣️ <strong>Avstand langs ruten:</strong> ${station.distanceFromRoute?.toFixed(1)} km</p>
             <p style="margin: 4px 0; color: #333;">🔋 <strong>Batterinivå ved ankomst:</strong> ${station.arrivalBatteryPercentage?.toFixed(1)}%</p>
-            <p style="margin: 4px 0; color: #ff6b00;">
-              ⭐ <strong>Strategisk posisjonert for din rute!</strong>
+            <p style="margin: 4px 0; color: #dc2626;">
+              🔴 <strong>Optimert for din rute!</strong>
             </p>
             <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
             <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
@@ -508,10 +507,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           .setPopup(popup)
           .addTo(map.current!);
         
-        console.log('✅ Rød kritisk markør lagt til for:', station.name);
-        } else {
-          console.log('⏭️ Hopper over stasjon (ikke kritisk):', station.name, 'batterinivå:', station.arrivalBatteryPercentage?.toFixed(1) + '%');
-        }
+        console.log('✅ Rød rutemarkør lagt til for:', station.name);
       });
       
       console.log('🎯 ALLE MARKØRER LAGT TIL! Total antall:', optimized.length);
