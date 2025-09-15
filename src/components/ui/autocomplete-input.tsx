@@ -26,10 +26,22 @@ export function AutocompleteInput({
   const listRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
-    if (value.length >= 1) { // Show suggestions after just 1 character
+    if (value.length >= 1) {
+      // Don't show suggestions if the value exactly matches an existing suggestion
+      const exactMatch = suggestions.some(suggestion => 
+        suggestion.toLowerCase() === value.toLowerCase()
+      );
+      
+      if (exactMatch) {
+        setFilteredSuggestions([]);
+        setIsOpen(false);
+        return;
+      }
+      
       const filtered = suggestions
         .filter(suggestion =>
-          suggestion.toLowerCase().includes(value.toLowerCase()) // Use includes instead of startsWith for better matching
+          suggestion.toLowerCase().includes(value.toLowerCase()) && 
+          suggestion.toLowerCase() !== value.toLowerCase() // Exclude exact matches
         )
         .sort((a, b) => {
           // Prioritize exact matches and those starting with the search term
@@ -39,7 +51,7 @@ export function AutocompleteInput({
           if (!aStarts && bStarts) return 1;
           return a.localeCompare(b);
         })
-        .slice(0, 10); // Increased to 10 suggestions for better coverage
+        .slice(0, 10);
       setFilteredSuggestions(filtered);
       setIsOpen(filtered.length > 0 && value.length > 0);
       setHighlightedIndex(-1);
