@@ -311,7 +311,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar }
       console.log('🏗️ Creating new map instance...');
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/light-v11',
+        style: 'mapbox://styles/mapbox/satellite-streets-v12', // Satellitt med veier
         center: [10.7522, 59.9139], // Oslo som standard
         zoom: 6,
         pitch: 30,
