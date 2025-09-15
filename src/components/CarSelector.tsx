@@ -1162,6 +1162,7 @@ interface CarSelectorProps {
 
 export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorProps) {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [showBrands, setShowBrands] = useState<boolean>(false);
 
   // Group cars by brand
   const carsByBrand = carModels.reduce((acc, car) => {
@@ -1189,6 +1190,10 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
     setSelectedBrand(null);
   };
 
+  const handleShowBrands = () => {
+    setShowBrands(true);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
@@ -1209,7 +1214,20 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
         )}
       </div>
 
-      {!selectedBrand ? (
+      {!showBrands ? (
+        /* Initial state - show button to select brand */
+        <div className="text-center p-8">
+          <Button
+            onClick={handleShowBrands}
+            variant="outline"
+            size="lg"
+            className="hover:bg-primary/10 hover:border-primary/50"
+          >
+            <Car className="h-5 w-5 mr-2" />
+            Velg bilmerke
+          </Button>
+        </div>
+      ) : !selectedBrand ? (
         /* Brand selection - vertical list */
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {brands.map((brand) => (
