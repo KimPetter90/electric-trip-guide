@@ -118,21 +118,21 @@ const cityCoordinates: Record<string, [number, number]> = {
 // Hent ladestasjoner fra database
 async function fetchNorwegianChargingStations(): Promise<ChargingStation[]> {
   try {
-    console.log('🔌 Henter ladestasjoner fra database...');
+    console.log('🔌 RouteMap: Henter ladestasjoner fra database...');
     const { data, error } = await supabase
       .from('charging_stations')
       .select('*');
     
     if (error) {
-      console.error('❌ Feil ved henting av ladestasjoner:', error);
+      console.error('❌ RouteMap: Feil ved henting av ladestasjoner:', error);
       return []; // Returnerer tom array ved feil
     }
     
-    console.log('✅ Hentet', data?.length || 0, 'ladestasjoner fra database');
-    console.log('📊 Første 3 stasjoner:', data?.slice(0, 3).map(s => s.name));
+    console.log('✅ RouteMap: Hentet', data?.length || 0, 'ladestasjoner fra database');
+    console.log('📊 RouteMap: Første 3 stasjoner:', data?.slice(0, 3).map(s => s.name));
     
     if (!data || data.length === 0) {
-      console.log('⚠️ Ingen ladestasjoner funnet i database');
+      console.log('⚠️ RouteMap: Ingen ladestasjoner funnet i database');
       return [];
     }
     
@@ -150,11 +150,11 @@ async function fetchNorwegianChargingStations(): Promise<ChargingStation[]> {
       cost: Number(station.cost)
     }));
     
-    console.log('🔄 Konverterte', stations.length, 'stasjoner til intern format');
+    console.log('🔄 RouteMap: Konverterte', stations.length, 'stasjoner til intern format');
     return stations;
   } catch (error) {
-    console.error('❌ Uventet feil ved henting av ladestasjoner:', error);
-    console.log('🔄 Returnerer tom array på grunn av exception');
+    console.error('❌ RouteMap: Uventet feil ved henting av ladestasjoner:', error);
+    console.log('🔄 RouteMap: Returnerer tom array på grunn av exception');
     return [];
   }
 }
