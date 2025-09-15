@@ -617,10 +617,15 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       const maxRangeWithStartBattery = (selectedCar.range * routeData.batteryPercentage) / 100;
       const remainingDistanceAfterStart = routeDistance - maxRangeWithStartBattery;
       
-      // Beregn hvor langt bilen kan kjøre før batteriet når 10-15%
-      const distanceAt15Percent = (selectedCar.range * (routeData.batteryPercentage - 15)) / 100;
-      const distanceAt10Percent = (selectedCar.range * (routeData.batteryPercentage - 10)) / 100;
+      // Beregn hvor langt bilen kan kjøre før batteriet når 10-15% (inkluderer hengervekt)
+      const trailerFactor = routeData.trailerWeight > 0 ? 1 + (routeData.trailerWeight * 0.0015) : 1; // 0.15% økt forbruk per 100kg
+      const adjustedRange = selectedCar.range / trailerFactor;
       
+      const distanceAt15Percent = (adjustedRange * (routeData.batteryPercentage - 15)) / 100;
+      const distanceAt10Percent = (adjustedRange * (routeData.batteryPercentage - 10)) / 100;
+      
+      console.log('  - Hengervekt:', routeData.trailerWeight + 'kg (faktor: ' + trailerFactor.toFixed(2) + ')');
+      console.log('  - Justert rekkevidde:', adjustedRange.toFixed(1) + 'km');
       console.log('  - Distanse ved 15% batteri:', Math.max(0, distanceAt15Percent).toFixed(1) + 'km');
       console.log('  - Distanse ved 10% batteri:', Math.max(0, distanceAt10Percent).toFixed(1) + 'km');
       
@@ -651,15 +656,20 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         if (criticalStations.length === 0) {
           console.log('⚠️ INGEN KRITISKE STASJONER FUNNET VED 10-15% BATTERI');
         } else {
-          // Beregn effektivitetsscore for kritiske stasjoner
+          // Beregn effektivitetsscore for kritiske stasjoner (inkluderer vær, vind og hengervekt)
           const stationsWithScore = criticalStations.map(station => {
-          const distance = (station as any).distanceToRoute;
-          const cost = station.cost;
-          const availability = station.available / station.total;
-          const powerValue = station.fastCharger ? 2 : 1;
-          
-          // Effektivitetsscore (lavere er bedre)
-          const efficiencyScore = (distance * 0.4) + (cost * 3 * 0.3) + ((1 - availability) * 5 * 0.2) + ((2 - powerValue) * 0.1);
+            const distance = (station as any).distanceToRoute;
+            const cost = station.cost;
+            const availability = station.available / station.total;
+            const powerValue = station.fastCharger ? 2 : 1;
+            
+            // Hent værdata og beregn påvirkning på effektivitet
+            const weatherFactor = routeAnalysis?.weather?.rangeFactor || 1;
+            const trailerImpact = routeData.trailerWeight > 0 ? (routeData.trailerWeight * 0.001) : 0; // 0.1% per 100kg
+            const totalEfficiencyImpact = weatherFactor + trailerImpact;
+            
+            // Effektivitetsscore (lavere er bedre) - inkluderer vær, vind og hengervekt
+            const efficiencyScore = (distance * 0.3) + (cost * 2 * 0.4) + ((1 - availability) * 3 * 0.2) + ((2 - powerValue) * 0.1) + (totalEfficiencyImpact * 0.5);
           
           return {
             ...station,
@@ -672,7 +682,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           .sort((a, b) => a.efficiencyScore - b.efficiencyScore)
           .slice(0, 3);
         
-        console.log('🎯 FANT DE 3 MEST EFFEKTIVE STASJONENE:');
+        console.log('🎯 FANT DE 3 MEST EFFEKTIVE STASJONENE (med vær, vind og hengervekt):');
         bestStations.forEach((station, index) => {
           console.log(`  ${index + 1}. ${station.name} (Score: ${station.efficiencyScore.toFixed(2)})`);
         });
@@ -708,6 +718,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
               <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
               <p style="margin: 4px 0; color: #dc2626;"><strong>🔋 NØDVENDIG VED 10-15% BATTERI!</strong></p>
               <p style="margin: 4px 0; color: #333;">🛣️ <strong>Avstand til rute:</strong> ${(station as any).distanceToRoute.toFixed(1)} km</p>
+              <p style="margin: 4px 0; color: #888;"><strong>🚛 Inkluderer hengervekt:</strong> ${routeData.trailerWeight}kg</p>
               <p style="margin: 4px 0; color: #0066ff;"><strong>⭐ Effektivitetsscore:</strong> ${station.efficiencyScore.toFixed(2)}</p>
               <p style="margin: 4px 0; color: #0066ff;"><strong>🔵 Optimal valg for ruten!</strong></p>
               <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
@@ -1007,9 +1018,10 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     // CO2-besparelse sammenlignet med bensinbil (ca 120g CO2/km)
     const co2Saved = distance * 0.12; // kg CO2
 
-    // Effektivitet basert på værforhold og rute
+    // Effektivitet basert på værforhold, vind og hengervekt
     const weatherFactor = weatherData?.rangeFactor || 1;
-    const efficiency = weatherFactor * 0.8; // Base effektivitet 80%
+    const trailerImpact = routeData.trailerWeight > 0 ? (1 - (routeData.trailerWeight * 0.0015)) : 1; // Redusert effektivitet med henger
+    const efficiency = weatherFactor * trailerImpact * 0.8; // Base effektivitet 80%
 
     return {
       totalDistance: distance,
