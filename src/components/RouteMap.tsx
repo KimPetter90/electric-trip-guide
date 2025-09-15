@@ -308,18 +308,24 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     console.log(`   - Start: ${startBattery}%`);  
     console.log(`   - Bil rekkevidde: ${actualRange}km`);
 
-    // Først: Beregn hvor på ruten batteriet når 10%
+    // DEBUG: Beregn hvor på ruten batteriet når 10%
     const batteryForTravel = startBattery - 10; // Hvor mye batteri vi kan bruke
     const distanceUntil10Percent = (batteryForTravel / 100) * actualRange; // Hvor langt vi kommer
     
-    console.log(`📍 MED ${startBattery}% STARTER, kan kjøre ${distanceUntil10Percent.toFixed(1)}km før batteriet når 10%`);
+    console.log(`🧮 BEREGNING:`);
+    console.log(`   - Batteri tilgjengelig for kjøring: ${batteryForTravel}% (${startBattery}% - 10%)`);
+    console.log(`   - Dette gir kjøredistanse: ${distanceUntil10Percent.toFixed(1)}km`);
+    console.log(`   - Rutelengde: ${routeDistance.toFixed(1)}km`);
+    console.log(`   - Batteriet når 10% ved: ${distanceUntil10Percent.toFixed(1)}km`);
     
     if (distanceUntil10Percent >= routeDistance) {
-      console.log(`✅ Batteriet holder hele veien! (${routeDistance.toFixed(1)}km < ${distanceUntil10Percent.toFixed(1)}km)`);
+      const finalBattery = startBattery - ((routeDistance / actualRange) * 100);
+      console.log(`✅ BATTERIET HOLDER! Sluttbatteri vil være: ${finalBattery.toFixed(1)}%`);
       return [];
     }
 
-    console.log(`🚨 BATTERIET NÅR 10% VED ${distanceUntil10Percent.toFixed(1)}km - TRENGER LADING DER!`);
+    console.log(`🚨 BATTERIET NÅR 10% VED ${distanceUntil10Percent.toFixed(1)}km av ${routeDistance.toFixed(1)}km`);
+    console.log(`📍 LETER ETTER LADESTASJONER NÆR ${distanceUntil10Percent.toFixed(1)}km...`);
 
     // Finn ladestasjon nær dette punktet
     const stationsNearRoute = findStationsNearRoute(routeGeometry);
