@@ -411,6 +411,37 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     }
   };
 
+  // Kraftig cleanup av alle markører
+  const forceCleanupAllMarkers = () => {
+    console.log('🔧 KRAFT-CLEANUP: Fjerner alle markører i hele appen');
+    
+    // Fjern fra state
+    markers.forEach(marker => {
+      try {
+        marker.remove();
+      } catch (e) {
+        // ignore
+      }
+    });
+    setMarkers([]);
+    
+    // Fjern fra DOM
+    const allChargingMarkers = document.querySelectorAll('.charging-marker');
+    console.log(`🧹 Finner ${allChargingMarkers.length} gamle markører i DOM`);
+    allChargingMarkers.forEach(el => {
+      try {
+        el.remove();
+        console.log('🗑️ Fjernet gammel markør fra DOM');
+      } catch (e) {
+        console.log('Element allerede fjernet');
+      }
+    });
+    
+    // Sjekk også for mapbox markører generelt
+    const allMapboxMarkers = document.querySelectorAll('.mapboxgl-marker');
+    console.log(`🗺️ Finner ${allMapboxMarkers.length} totale mapbox markører`);
+  };
+
   // Rydd opp kart
   const cleanupMap = () => {
     markers.forEach(marker => marker.remove());
@@ -671,15 +702,32 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           }
         });
 
-        // FJERN ABSOLUTT ALLE MARKØRER FØRST
-        console.log('🧹 Fjerner alle eksisterende markører...');
+        // KRAFTIG CLEANUP - fjern ALLE markører
+        console.log('🧹 KRAFTIG CLEANUP - fjerner alle markører...');
+        
+        // Fjern alle eksisterende markører fra state
         markers.forEach(marker => {
           try {
             marker.remove();
           } catch (e) {
-            // Ignore errors
+            console.log('Markør allerede fjernet:', e);
           }
         });
+        
+        // Fjern alle DOM elementer med charging-marker klasse
+        const oldChargingMarkers = document.querySelectorAll('.charging-marker');
+        oldChargingMarkers.forEach(el => {
+          try {
+            el.remove();
+          } catch (e) {
+            console.log('DOM element allerede fjernet');
+          }
+        });
+        
+        // Tøm markers state
+        setMarkers([]);
+        
+        console.log('🧹 Cleanup fullført - starter på nytt...');
         
         // Start helt på nytt med markører
         const allNewMarkers: mapboxgl.Marker[] = [];
@@ -748,9 +796,11 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
             return;
           }
           
-          console.log(`🚨 LEGGER TIL OBLIGATORISK STASJON: ${station.name}`);
+          console.log(`🚨 LEGGER TIL NY OBLIGATORISK STASJON: ${station.name}`);
+          console.log(`📍 Koordinater: ${station.lat}, ${station.lng}`);
           
           const el = document.createElement('div');
+          el.className = 'charging-marker charging-marker-' + Date.now(); // Unik klasse
           el.style.cssText = `
             background-color: #dc2626;
             border: 4px solid #ffffff;
@@ -889,12 +939,14 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       
       // Fjern tidligere feil når vi prøver igjen
       setError(null);
-      // TVUNGEN cleanup av alt
-      console.log('🧹 TVUNGEN CLEANUP - fjerner alt');
+      
+      // BRUK KRAFT-CLEANUP
+      forceCleanupAllMarkers();
+      
+      // Også traditional cleanup
       cleanupMap();
       setOptimizedStations([]);
       setRouteAnalysis(null);
-      setMarkers([]);
       
       // Lengre delay for å sikre total cleanup
       setTimeout(() => {
