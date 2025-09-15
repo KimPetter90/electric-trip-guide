@@ -418,13 +418,51 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       console.log('✅ Optimalisering fullført. Funnet', optimized.length, 'ladestsjoner');
       setOptimizedStations(optimized);
 
-      // Legg til markører for optimerte ladestasjoner
-      console.log('⚡ STARTER MARKØR-TILLEGGING...');
-      console.log('📊 Antall optimerte stasjoner:', optimized.length);
-      console.log('📊 Liste over stasjoner som skal vises:', optimized.map(s => s.name));
+      // FØRST: Legg til ALLE ladestasjoner som små grønne markører
+      console.log('🟢 LEGGER TIL ALLE LADESTASJONER SOM GRØNNE...');
+      console.log('📊 Totalt antall ladestasjoner:', chargingStations.length);
+      
+      chargingStations.forEach((station, index) => {
+        const el = document.createElement('div');
+        el.className = 'all-charging-station-marker';
+        el.style.cssText = `
+          background-color: #00ff41;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          border: 1px solid white;
+          cursor: pointer;
+          z-index: 1;
+        `;
+
+        const popup = new mapboxgl.Popup().setHTML(`
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h4 style="margin: 0 0 8px 0; color: #00aa33;"><strong>${station.name}</strong></h4>
+            <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
+            <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
+            <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
+            <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${station.available}/${station.total} ladepunkter</p>
+          </div>
+        `);
+
+        new mapboxgl.Marker(el)
+          .setLngLat([station.longitude, station.latitude])
+          .setPopup(popup)
+          .addTo(map.current!);
+        
+        if (index < 10) {
+          console.log(`✅ GRØNN MARKØR ${index + 1}: ${station.name}`);
+        }
+      });
+      
+      console.log(`✅ ALLE ${chargingStations.length} GRØNNE MARKØRER LAGT TIL!`);
+
+      // DERETTER: Legg til markører for optimerte ladestasjoner (større og mer synlige)
+      console.log('⚡ LEGGER TIL ANBEFALTE STASJONER...');
+      console.log('📊 Antall anbefalte stasjoner:', optimized.length);
       
       if (optimized.length === 0) {
-        console.log('🚫 INGEN LADESTASJONER Å VISE - ingen markører legges til');
+        console.log('🚫 INGEN ANBEFALTE STASJONER Å VISE');
       }
       
       optimized.forEach((station, index) => {
@@ -432,9 +470,9 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         const el = document.createElement('div');
         el.className = 'charging-station-marker';
         el.style.cssText = `
-          background-color: ${station.isRequired ? '#ff0000' : '#00ff41'};
-          width: 20px;
-          height: 20px;
+          background-color: #ffd700;
+          width: 16px;
+          height: 16px;
           border-radius: 50%;
           border: 2px solid white;
           cursor: pointer;
@@ -449,12 +487,12 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
         const popup = new mapboxgl.Popup().setHTML(`
           <div style="font-family: Arial, sans-serif; color: #333;">
-            <h4 style="margin: 0 0 8px 0; color: #000;"><strong>${station.name}</strong></h4>
+            <h4 style="margin: 0 0 8px 0; color: #ff6b00;"><strong>⭐ ANBEFALT: ${station.name}</strong></h4>
             <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
             <p style="margin: 4px 0; color: #333;">🛣️ <strong>Avstand langs ruten:</strong> ${station.distanceFromRoute?.toFixed(1)} km</p>
             <p style="margin: 4px 0; color: #333;">🔋 <strong>Batterinivå ved ankomst:</strong> ${station.arrivalBatteryPercentage?.toFixed(1)}%</p>
-            <p style="margin: 4px 0; color: ${station.isRequired ? '#dc2626' : '#059669'};">
-              ${station.isRequired ? '⚠️ <strong>Obligatorisk ladestasjon</strong>' : '🔄 <strong>Valgfri ladestasjon</strong>'}
+            <p style="margin: 4px 0; color: #ff6b00;">
+              ⭐ <strong>Strategisk posisjonert for din rute!</strong>
             </p>
             <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
             <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
