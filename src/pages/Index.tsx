@@ -28,16 +28,24 @@ interface RouteData {
 }
 
 function Index() {
-  const [selectedCar, setSelectedCar] = useState<CarModel | null>(null);
+  const [selectedCar, setSelectedCar] = useState<CarModel | null>({
+    id: "tesla-model-3",
+    brand: "Tesla",
+    model: "Model 3",
+    batteryCapacity: 75,
+    range: 448,
+    consumption: 16.7,
+    image: ""
+  });
   const [routeData, setRouteData] = useState<RouteData>({
-    from: "",
-    to: "",
+    from: "Oslo",
+    to: "Bergen",
     via: "",
     trailerWeight: 0,
     batteryPercentage: 80,
     travelDate: undefined
   });
-  const [showRoute, setShowRoute] = useState(false);
+  const [showRoute, setShowRoute] = useState(true);
   const [routeTrigger, setRouteTrigger] = useState(0); // Trigger for manual route updates
 
   const handlePlanRoute = () => {
