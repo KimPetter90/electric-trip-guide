@@ -59,6 +59,41 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
+  // DIREKTE LADESTASJON-LOGIKK - ENKEL OG KLAR
+  useEffect(() => {
+    if (!map || chargingStations.length === 0) {
+      console.log('🚫 Ingen kart eller ladestasjoner ennå...');
+      return;
+    }
+
+    console.log(`🟢 STARTER DIREKTE: Legger til ${chargingStations.length} GRØNNE ladestasjoner...`);
+    
+    // Opprett ALLE som grønne markører
+    chargingStations.forEach((station, index) => {
+      const marker = new google.maps.Marker({
+        position: { lat: station.lat, lng: station.lng },
+        map: map,
+        title: station.name,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: "#00ff41", // NEON GRØNN - GARANTERT!
+          fillOpacity: 1.0,
+          strokeColor: "#ffffff",
+          strokeWeight: 2
+        },
+        zIndex: 1
+      });
+
+      // Log første 10 for debugging
+      if (index < 10) {
+        console.log(`✅ DIREKTE GRØNN ${index + 1}: ${station.name} med farge #00ff41`);
+      }
+    });
+
+    console.log(`✅ FERDIG DIREKTE: ${chargingStations.length} grønne markører lagt til`);
+  }, [map, chargingStations]);
+
   // Bruk den nye hooken for å håndtere ladestasjonsmarkører
   const { clearMarkers } = useChargingStationMarkers(
     map,
