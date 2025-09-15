@@ -29,9 +29,17 @@ export function AutocompleteInput({
     if (value.length >= 1) { // Show suggestions after just 1 character
       const filtered = suggestions
         .filter(suggestion =>
-          suggestion.toLowerCase().startsWith(value.toLowerCase()) // Use startsWith for faster matching
+          suggestion.toLowerCase().includes(value.toLowerCase()) // Use includes instead of startsWith for better matching
         )
-        .slice(0, 8); // Limit to 8 suggestions for better performance
+        .sort((a, b) => {
+          // Prioritize exact matches and those starting with the search term
+          const aStarts = a.toLowerCase().startsWith(value.toLowerCase());
+          const bStarts = b.toLowerCase().startsWith(value.toLowerCase());
+          if (aStarts && !bStarts) return -1;
+          if (!aStarts && bStarts) return 1;
+          return a.localeCompare(b);
+        })
+        .slice(0, 10); // Increased to 10 suggestions for better coverage
       setFilteredSuggestions(filtered);
       setIsOpen(filtered.length > 0 && value.length > 0);
       setHighlightedIndex(-1);
