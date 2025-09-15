@@ -292,9 +292,10 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
           }
         }
 
-        // Legg til spesielle markører for optimerte ladestasjoner (oppå de vanlige)
-        const routeMarkers: google.maps.Marker[] = [];
+        // IKKE fjern eksisterende markører her - la dem være
+        console.log('🛣️ Rute beregnet, beholder alle ladestasjonsmarkører');
         
+        // Legg bare til spesielle markører for optimerte stasjoner
         if (requiredStations.length > 0) {
           console.log('⚡ Legger til spesielle markører for optimerte stasjoner...');
           requiredStations.forEach((station, index) => {
@@ -305,12 +306,13 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
               title: `${station.requiredStop ? 'OBLIGATORISK' : 'ANBEFALT'}: ${station.name}`,
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
-                scale: station.requiredStop ? 12 : 10,
+                scale: station.requiredStop ? 14 : 12,
                 fillColor: station.requiredStop ? '#ef4444' : '#3b82f6',
                 fillOpacity: 1,
                 strokeColor: '#ffffff',
-                strokeWeight: 3
-              }
+                strokeWeight: 4
+              },
+              zIndex: 1000 // Sørg for at de vises over andre markører
             });
 
             const optimizedPopup = new google.maps.InfoWindow({
@@ -323,7 +325,6 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
                   <p style="margin: 4px 0;"><strong>🛣️ Ladetid:</strong> ${station.chargeTime} min</p>
                   <p style="margin: 4px 0;"><strong>⚡ Energi:</strong> ${station.chargeAmount} kWh</p>
                   <p style="margin: 4px 0;"><strong>💰 Kostnad:</strong> ${station.cost} kr</p>
-                  <p style="margin: 4px 0;"><strong>📊 Tilgjengelig:</strong> ${Math.floor(Math.random() * 4) + 1}/${Math.floor(Math.random() * 6) + 4} ladepunkter</p>
                   ${station.requiredStop ? '<p style="color: #dc2626; font-weight: bold; margin-top: 8px;">Du MÅ lade her!</p>' : '<p style="color: #2563eb; margin-top: 8px;">Anbefalt ladestasjon for denne ruten</p>'}
                 </div>
               `
@@ -333,10 +334,11 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
               optimizedPopup.open(map, optimizedMarker);
             });
 
-            routeMarkers.push(optimizedMarker);
+            // Legg til i markers-arrayet så de kan ryddes opp senere
+            setMarkers(prev => [...prev, optimizedMarker]);
           });
           
-          console.log(`✅ Lagt til ${routeMarkers.length} optimerte rutemarkører`);
+          console.log(`✅ Lagt til ${requiredStations.length} optimerte rutemarkører`);
         }
       }
     });
