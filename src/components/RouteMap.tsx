@@ -543,16 +543,6 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     console.log('🔍 STARTER SØKING LANGS RUTEN...');
     const stationsAlongRoute = availableStations
       .map(station => {
-        // I stedet for kompleks ruteberegning, bruk enkel luftlinjedistanse
-        const routeStartLat = routeCoordinates[0][1];
-        const routeStartLng = routeCoordinates[0][0];
-        const routeEndLat = routeCoordinates[routeCoordinates.length - 1][1];
-        const routeEndLng = routeCoordinates[routeCoordinates.length - 1][0];
-        
-        // Beregn avstand til start og slutt
-        const distanceToStart = getDistance(station.latitude, station.longitude, routeStartLat, routeStartLng);
-        const distanceToEnd = getDistance(station.latitude, station.longitude, routeEndLat, routeEndLng);
-        
         // Finn nærmeste punkt på ruten til stasjonen
         let minDistance = Infinity;
         let closestPointIndex = 0;
