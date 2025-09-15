@@ -1065,10 +1065,10 @@ const carModels: CarModel[] = [
     image: "🚗"
   },
 
-  // Škoda
+  // Skoda
   {
     id: "skoda-citigo",
-    brand: "Škoda",
+    brand: "Skoda",
     model: "CITIGOe iV",
     batteryCapacity: 36.8,
     range: 258,
@@ -1077,7 +1077,7 @@ const carModels: CarModel[] = [
   },
   {
     id: "skoda-elroq",
-    brand: "Škoda",
+    brand: "Skoda",
     model: "Elroq",
     batteryCapacity: 82,
     range: 560,
@@ -1086,7 +1086,7 @@ const carModels: CarModel[] = [
   },
   {
     id: "skoda-enyaq",
-    brand: "Škoda",
+    brand: "Skoda",
     model: "Enyaq iV",
     batteryCapacity: 82,
     range: 534,
@@ -1095,7 +1095,7 @@ const carModels: CarModel[] = [
   },
   {
     id: "skoda-enyaq-coupe",
-    brand: "Škoda",
+    brand: "Skoda",
     model: "Enyaq Coupé iV",
     batteryCapacity: 82,
     range: 545,
