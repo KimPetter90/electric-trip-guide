@@ -196,7 +196,7 @@ const norwegianCities = [
   
   // Småbygder - Finnmark
   "lakselv", "ifjord", "børselv", "stabbursdalen", "karigasniemi", "utsjoki",
-  "kvalsvik", "kvålsvik", // Lagt til begge stavemåter
+  "kvalsvik, nerlandsøy", "kvålsvik, lyngdal", "kvalsvik", "kvålsvik", // Lagt til med og uten stedsinformasjon
   "nuorgam", "polmak", "tana bru", "sirma", "deanu", "karasjok",
   "máze", "kautokeino", "guovdageaidnu", "alta", "kåfjord", "kvænangen",
   "storfjord", "lyngen", "balsfjord", "målselv", "bardu", "gratangen",
@@ -245,7 +245,14 @@ const norwegianCities = [
   "isfjorden", "åndalsnes", "lesja", "dovre", "hjerkinn", "kongsvold",
   "focus", "oppdal", "støren", "melhus", "orkanger", "fannrem", "brekstad",
   "rissa", "leksvik", "mosvik", "inderøy", "straumen", "steinkjer", "snåsa",
-  "grong", "namsos", "overhalla", "høylandet", "lierne", "røyrvik", "gartland"
+  "grong", "namsos", "overhalla", "høylandet", "lierne", "røyrvik", "gartland",
+  
+  // Steder med stedsinformasjon for å skille duplikater
+  "kvalsvik (nerlandsøy)", "kvålsvik (lyngdal)", "kvalvik (frei)", "kvalvik (utne)", "kvalvik (eikefjord)",
+  "bø (nordland)", "bø (telemark)", "bø (vesterålen)", 
+  "os (hordaland)", "os (hedmark)", "os (østfold)",
+  "vågan (lofoten)", "vågan (oppland)",
+  "berg (troms)", "berg (senja)"
 ];
 
 interface RouteData {
