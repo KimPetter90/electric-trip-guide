@@ -645,7 +645,23 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         
         console.log('Rute mottatt fra Mapbox:', { distance, duration: route.duration });
         
+        // SIKRE CLEANUP FØR NY RUTE
+        console.log('🧹 Eksplisitt cleanup før ny rute...');
+        const layers = ['route-center', 'route', 'route-outline'];
+        layers.forEach(layerId => {
+          if (map.current!.getLayer(layerId)) {
+            console.log(`🗑️ Fjerner eksisterende layer: ${layerId}`);
+            map.current!.removeLayer(layerId);
+          }
+        });
+        
+        if (map.current!.getSource('route')) {
+          console.log('🗑️ Fjerner eksisterende route source');
+          map.current!.removeSource('route');
+        }
+        
         // Legg til rute på kartet med forbedret styling
+        console.log('➕ Legger til ny route source...');
         map.current!.addSource('route', {
           type: 'geojson',
           data: {
