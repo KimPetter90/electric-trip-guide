@@ -355,10 +355,14 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       const station = nearbyStations[0];
       const stationDistance = (station as any).routeDistance || chargingPosition;
       
-      // Beregn batteriprosent ved ankomst til stasjonen
-      const batteryAtStation = startBattery - ((stationDistance / actualRange) * 100);
+      // RIKTIG BEREGNING: Batteri ved ankomst basert på kjørt avstand fra nåværende posisjon
+      const distanceFromCurrentPosition = stationDistance - currentPosition;
+      const batteryUsedToStation = (distanceFromCurrentPosition / actualRange) * 100;
+      const batteryAtStation = currentBattery - batteryUsedToStation;
 
       console.log(`🎯 VALGT: ${station.name} ved ${stationDistance.toFixed(1)}km`);
+      console.log(`   - Kjører ${distanceFromCurrentPosition.toFixed(1)}km fra posisjon ${currentPosition.toFixed(1)}km`);
+      console.log(`   - Bruker ${batteryUsedToStation.toFixed(1)}% batteri på denne strekningen`);
       console.log(`   - Batteriprosent ved ankomst: ${batteryAtStation.toFixed(1)}%`);
 
       results.push({
