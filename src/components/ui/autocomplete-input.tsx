@@ -108,6 +108,10 @@ export function AutocompleteInput({
         }}
         className={className}
         autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck="false"
+        data-ms-editor="false"
       />
       
       {isOpen && filteredSuggestions.length > 0 && (
