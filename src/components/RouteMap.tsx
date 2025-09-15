@@ -1368,7 +1368,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
                             </div>
                             
                             <Badge variant={
-                              station.available / station.total > 0.5 ? "default" : 
+                              (station.available / station.total) > 0.5 ? "default" : 
                               station.available > 0 ? "secondary" : "destructive"
                             }>
                               {station.fastCharger ? "⚡ Hurtiglader" : "Standard"}
@@ -1420,7 +1420,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
                             </div>
                             
                             <Badge variant={
-                              station.available / station.total > 0.5 ? "default" : 
+                              (station.available / station.total) > 0.5 ? "default" : 
                               station.available > 0 ? "secondary" : "destructive"
                             }>
                               {station.fastCharger ? "⚡ Hurtiglader" : "Standard"}
