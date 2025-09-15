@@ -482,6 +482,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           font-size: 10px;
           color: white;
           font-weight: bold;
+          z-index: 10;
         `;
         el.innerHTML = '⚡';
 
