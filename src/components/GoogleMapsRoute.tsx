@@ -269,9 +269,11 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
   useEffect(() => {
     if (!map || !directionsService || !directionsRenderer || !routeData.from || !routeData.to) return;
 
+    console.log('🧹 KRAFTIG CLEANUP - fjerner alle markører...');
     // Clear existing markers
     markers.forEach(marker => marker.setMap(null));
     setMarkers([]);
+    console.log('🧹 Cleanup fullført - starter på nytt...');
 
     directionsService.route({
       origin: routeData.from,
@@ -300,30 +302,66 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
           }
         }
 
-        // IKKE fjern eksisterende markører her - la dem være
-        console.log('🛣️ Rute beregnet, beholder alle ladestasjonsmarkører');
+        console.log('📍 Legger til start markør...');
+        // Add start marker
+        const startMarker = new google.maps.Marker({
+          position: result.routes[0].legs[0].start_location,
+          map: map,
+          title: 'Start',
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 12,
+            fillColor: '#00ff88',
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 3
+          },
+          zIndex: 999
+        });
+
+        console.log('📍 Legger til slutt markør...');
+        // Add end marker
+        const endMarker = new google.maps.Marker({
+          position: result.routes[0].legs[result.routes[0].legs.length - 1].end_location,
+          map: map,
+          title: 'Destinasjon',
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 12,
+            fillColor: '#ff4444',
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 3
+          },
+          zIndex: 999
+        });
+
+        // Legg til i markers-arrayet
+        setMarkers(prev => [...prev, startMarker, endMarker]);
         
-        // Legg bare til spesielle markører for optimerte stasjoner
+        // Legg til spesielle markører for optimerte stasjoner - ETTER at alle andre markører er ryddet
         if (requiredStations.length > 0) {
           console.log('⚡ Legger til spesielle markører for optimerte stasjoner...');
+          const isCriticalBattery = routeData.batteryPercentage <= 10;
+          console.log(`🔋 Batterinivå: ${routeData.batteryPercentage}% - Er kritisk: ${isCriticalBattery}`);
+          
           requiredStations.forEach((station, index) => {
-            // Bestem farge basert på batteristatus og stasjonsstatus
-            const isCriticalBattery = routeData.batteryPercentage <= 10;
-            let markerColor = '#00ff41'; // Neon grønn som standard for ALLE
+            // ALLE stasjoner er neon grønn som standard
+            let markerColor = '#00ff41'; // Neon grønn for ALLE
             let markerScale = 12;
             let strokeWeight = 2;
             
-            // BARE hvis det er en obligatorisk stasjon OG batteriet er kritisk, da blir den rød
+            // KUN obligatoriske stasjoner blir røde når batteriet er på 10% eller mindre
             if (station.requiredStop && isCriticalBattery) {
               markerColor = '#ff0000'; // Rød kun for obligatoriske ved kritisk batteri
               markerScale = 16;
               strokeWeight = 4;
-              console.log(`🚨 KRITISK: ${station.name} vises rød (obligatorisk + batteriet på ${routeData.batteryPercentage}%)`);
+              console.log(`🚨 KRITISK RUTE-STASJON: ${station.name} vises rød (obligatorisk + batteriet på ${routeData.batteryPercentage}%)`);
             } else {
-              console.log(`✅ ${station.name} vises neon grønn (${station.requiredStop ? 'obligatorisk men ikke kritisk' : 'anbefalt'})`);
+              console.log(`✅ RUTE-STASJON: ${station.name} vises neon grønn (${station.requiredStop ? 'obligatorisk men ikke kritisk batteri' : 'anbefalt'})`);
             }
             
-            // Legg til større, mer synlig markør for optimerte stasjoner
+            // Legg til markør for optimerte stasjoner
             const optimizedMarker = new google.maps.Marker({
               position: { lat: station.lat, lng: station.lng },
               map: map,
@@ -342,14 +380,14 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
             const optimizedPopup = new google.maps.InfoWindow({
               content: `
                 <div style="color: black; font-family: Arial, sans-serif; min-width: 250px;">
-                  <h3 style="margin: 0 0 8px 0; color: ${station.requiredStop ? '#dc2626' : '#2563eb'};">
+                  <h3 style="margin: 0 0 8px 0; color: ${station.requiredStop && isCriticalBattery ? '#dc2626' : station.requiredStop ? '#ef4444' : '#00aa33'};">
                     ${station.requiredStop ? '⚠️ OBLIGATORISK' : '🔄 ANBEFALT'} ${station.name}
                   </h3>
                   <p style="margin: 4px 0;"><strong>📍 Lokasjon:</strong> ${station.location}</p>
                   <p style="margin: 4px 0;"><strong>🛣️ Ladetid:</strong> ${station.chargeTime} min</p>
                   <p style="margin: 4px 0;"><strong>⚡ Energi:</strong> ${station.chargeAmount} kWh</p>
                   <p style="margin: 4px 0;"><strong>💰 Kostnad:</strong> ${station.cost} kr</p>
-                  ${station.requiredStop ? '<p style="color: #dc2626; font-weight: bold; margin-top: 8px;">Du MÅ lade her!</p>' : '<p style="color: #2563eb; margin-top: 8px;">Anbefalt ladestasjon for denne ruten</p>'}
+                  ${station.requiredStop ? '<p style="color: #dc2626; font-weight: bold; margin-top: 8px;">Du MÅ lade her!</p>' : '<p style="color: #00aa33; margin-top: 8px;">Anbefalt ladestasjon for denne ruten</p>'}
                 </div>
               `
             });
