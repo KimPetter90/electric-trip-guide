@@ -116,6 +116,20 @@ const cityCoordinates: Record<string, [number, number]> = {
   'lillehammer': [10.4662, 61.1272]
 };
 
+// Funksjon for å få rutens farge basert på type
+const getRouteColor = (routeType: string): string => {
+  switch (routeType) {
+    case 'fastest':
+      return '#3b82f6'; // Blå
+    case 'shortest':
+      return '#22c55e'; // Grønn
+    case 'eco':
+      return '#a855f7'; // Lilla
+    default:
+      return '#3b82f6'; // Standard blå
+  }
+};
+
 // Hent ladestasjoner fra database
 async function fetchNorwegianChargingStations(): Promise<ChargingStation[]> {
   try {
@@ -297,7 +311,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
   };
 
   // Oppdater kart med rute
-  const updateMapRoute = async () => {
+  const updateMapRoute = async (routeType: string = 'fastest') => {
     if (!map.current || !accessToken || !routeData.from || !routeData.to) return;
 
     setLoading(true);
@@ -320,15 +334,31 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       const weatherData = await fetchWeatherData(startCoords, endCoords);
       console.log('✅ Værdata hentet:', weatherData);
 
-      // Få rute fra Mapbox Directions API
+      // Få rute fra Mapbox Directions API med forskjellige profiler
       console.log('Henter rute fra Mapbox Directions API...');
-      
       console.log('🔍 RouteAnalysis status:', { routeAnalysis, hasData: !!routeAnalysis });
+      console.log('🎯 Valgt rutetype:', routeType);
       
       const waypoints = [startCoords, endCoords];
       const coordinates = waypoints.map(coord => coord.join(',')).join(';');
       
-      const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinates}?geometries=geojson&access_token=${accessToken}`;
+      // Velg riktig Mapbox profil basert på rutetype
+      let mapboxProfile = 'driving';
+      switch (routeType) {
+        case 'fastest':
+          mapboxProfile = 'driving-traffic'; // Raskeste med trafikk
+          break;
+        case 'shortest':
+          mapboxProfile = 'driving'; // Standard driving for korteste
+          break;
+        case 'eco':
+          mapboxProfile = 'driving'; // Kan optimaliseres senere for eco
+          break;
+        default:
+          mapboxProfile = 'driving';
+      }
+      
+      const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/${mapboxProfile}/${coordinates}?geometries=geojson&access_token=${accessToken}&alternatives=true&steps=true`;
       
       const directionsResponse = await fetch(directionsUrl);
       const directionsData = await directionsResponse.json();
@@ -337,7 +367,19 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         throw new Error('Ingen rute funnet');
       }
 
-      const route = directionsData.routes[0];
+      // Velg riktig rute basert på type
+      let selectedRoute = directionsData.routes[0];
+      if (routeType === 'shortest' && directionsData.routes.length > 1) {
+        // Finn korteste rute
+        selectedRoute = directionsData.routes.reduce((shortest, current) => 
+          current.distance < shortest.distance ? current : shortest
+        );
+      } else if (routeType === 'eco' && directionsData.routes.length > 1) {
+        // For eco, velg en balansert rute (kan forbedres senere)
+        selectedRoute = directionsData.routes[directionsData.routes.length > 2 ? 2 : 1] || directionsData.routes[0];
+      }
+
+      const route = selectedRoute;
       const routeDistance = route.distance / 1000; // Konverter til km
       const routeDuration = route.duration / 3600; // Konverter til timer
 
@@ -375,8 +417,9 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#3b82f6',
-          'line-width': 4
+          'line-color': getRouteColor(routeType),
+          'line-width': 6,
+          'line-opacity': 0.8
         }
       });
 
@@ -838,9 +881,18 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
   useEffect(() => {
     if (routeTrigger && map.current && routeData.from && routeData.to && selectedCar && accessToken) {
       console.log('🚀 Manuell route trigger aktivert, oppdaterer kart...');
-      updateMapRoute();
+      const routeType = selectedRouteId || 'fastest';
+      updateMapRoute(routeType);
     }
   }, [routeTrigger]);
+
+  // Ny useEffect for å håndtere rutevalg
+  useEffect(() => {
+    if (selectedRouteId && map.current && routeData.from && routeData.to && selectedCar && accessToken) {
+      console.log('🎯 Rutevalg endret til:', selectedRouteId);
+      updateMapRoute(selectedRouteId);
+    }
+  }, [selectedRouteId]);
 
   if (!isVisible) return null;
 
