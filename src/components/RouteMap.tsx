@@ -579,37 +579,35 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     const now = new Date();
     console.log('🕐 Tidsstempel:', now.toLocaleTimeString());
 
-    const minBatteryReserve = 10; // Minimum 10% reserve
+    const criticalBatteryLevel = 10; // Kritisk batterinivå på 10%
     const maxChargingLevel = 80; // Lad til maks 80%
     const maxDetourDistance = 10; // Maks 10km avvik fra ruten
     const maxStationsToShow = 5; // Vis maks 5 stasjoner
 
     console.log('🔋 DETALJERT BEREGNING:');
     console.log('   - Start batteri:', batteryPercentage + '%');
+    console.log('   - Kritisk nivå:', criticalBatteryLevel + '%');
     console.log('   - Bil rekkevidde:', car.range + 'km');
     console.log('   - Rutelengde:', routeDistance + 'km');
 
-    // Beregn hvor langt bilen kan kjøre med gjeldende batteri
-    const usableBatteryPercentage = batteryPercentage - minBatteryReserve;
-    const drivableDistance = (usableBatteryPercentage / 100) * car.range;
+    // Beregn hvor langt bilen kan kjøre før den når kritisk nivå (10%)
+    const usableBatteryPercentage = batteryPercentage - criticalBatteryLevel;
+    const distanceBeforeCritical = (usableBatteryPercentage / 100) * car.range;
 
-    console.log('🧮 STEG-FOR-STEG:');
-    console.log('   1. Batteri tilgjengelig:', batteryPercentage + '% - ' + minBatteryReserve + '% = ' + usableBatteryPercentage + '%');
-    console.log('   2. Kjøredistanse med ' + usableBatteryPercentage + '%: (' + usableBatteryPercentage + '/100) × ' + car.range + 'km = ' + drivableDistance.toFixed(1) + 'km');
-    console.log('   3. Sammenligning:', drivableDistance.toFixed(1) + 'km VS ' + routeDistance.toFixed(1) + 'km');
-    console.log('   4. Batteriet holder hele veien?', drivableDistance >= routeDistance ? 'JA' : 'NEI');
+    console.log('🧮 KRITISK PUNKT BEREGNING:');
+    console.log('   1. Brukbart batteri:', batteryPercentage + '% - ' + criticalBatteryLevel + '% = ' + usableBatteryPercentage + '%');
+    console.log('   2. Distanse før kritisk nivå: (' + usableBatteryPercentage + '/100) × ' + car.range + 'km = ' + distanceBeforeCritical.toFixed(1) + 'km');
+    console.log('   3. Sammenligning:', distanceBeforeCritical.toFixed(1) + 'km VS ' + routeDistance.toFixed(1) + 'km');
+    console.log('   4. Batteriet holder hele veien?', distanceBeforeCritical >= routeDistance ? 'JA' : 'NEI');
 
-    // Hvis batteriet holder hele veien, returner tom liste
-    if (drivableDistance >= routeDistance) {
-      console.log('✅ BATTERIET HOLDER HELE VEIEN!');
+    // Hvis batteriet holder hele veien til destinasjonen, returner tom liste
+    if (distanceBeforeCritical >= routeDistance) {
+      console.log('✅ BATTERIET HOLDER HELE VEIEN! (Når ' + criticalBatteryLevel + '% ved destinasjonen)');
       return [];
     }
 
-    console.log('🚨 BATTERIET NÅR ' + minBatteryReserve + '% VED ' + drivableDistance.toFixed(1) + 'km av ' + routeDistance.toFixed(1) + 'km');
-
-    // Finn point hvor batteriet når minimum reserve
-    const criticalPoint = drivableDistance;
-    console.log('📍 LETER ETTER LADESTASJONER NÆR ' + criticalPoint.toFixed(1) + 'km...');
+    console.log('🚨 BATTERIET NÅR ' + criticalBatteryLevel + '% VED ' + distanceBeforeCritical.toFixed(1) + 'km av ' + routeDistance.toFixed(1) + 'km');
+    console.log('📍 LETER ETTER LADESTASJONER FØR KRITISK PUNKT (' + distanceBeforeCritical.toFixed(1) + 'km)...');
 
     // Finn stasjoner langs ruten
     const stationsAlongRoute = availableStations
@@ -666,14 +664,15 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     // Finn stasjoner før kritisk punkt
     const stationsBeforeCritical = stationsAlongRoute.filter(station => {
       const batteryAtStation = batteryPercentage - (station.distanceAlongRoute / car.range) * 100;
-      const diffFromMinReserve = batteryAtStation - minBatteryReserve;
+      const diffFromCritical = batteryAtStation - criticalBatteryLevel;
       
-      console.log('🔍', station.name + ':', station.distanceAlongRoute.toFixed(1) + 'km, batteri:', batteryAtStation.toFixed(1) + '%, diff fra ' + minBatteryReserve + '%:', diffFromMinReserve.toFixed(1) + '%');
+      console.log('🔍', station.name + ':', station.distanceAlongRoute.toFixed(1) + 'km, batteri:', batteryAtStation.toFixed(1) + '%, diff fra ' + criticalBatteryLevel + '%:', diffFromCritical.toFixed(1) + '%');
       
-      return batteryAtStation >= minBatteryReserve && batteryAtStation <= 50; // Stasjoner hvor vi har 10-50% batteri
+      // Finn stasjoner hvor vi har mer enn kritisk nivå men ikke fullt batteri
+      return batteryAtStation >= criticalBatteryLevel && batteryAtStation <= 50 && station.distanceAlongRoute < distanceBeforeCritical; 
     });
 
-    console.log('📍 Etter filtrering:', stationsBeforeCritical.length, 'egnede stasjoner (0-50% batteri ved ankomst)');
+    console.log('📍 Etter filtrering:', stationsBeforeCritical.length, 'egnede stasjoner (før kritisk punkt på ' + distanceBeforeCritical.toFixed(1) + 'km)');
 
     if (stationsBeforeCritical.length > 0) {
       // Velg stasjonen med lavest batteri ved ankomst (nærmest kritisk punkt)
@@ -703,11 +702,11 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
       // Sjekk om vi trenger flere stasjoner
       const remainingDistance = routeDistance - currentDistance;
-      const rangeAfterCharging = (currentBatteryLevel - minBatteryReserve) / 100 * car.range;
+      const rangeAfterCharging = (currentBatteryLevel - criticalBatteryLevel) / 100 * car.range;
       
       console.log('🔄 SJEKKER OM VI TRENGER FLERE STASJONER:');
       console.log('   - Gjenstående rute etter første stasjon:', remainingDistance.toFixed(1) + 'km');
-      console.log('   - Med ' + currentBatteryLevel + '% batteri kan vi kjøre:', rangeAfterCharging.toFixed(1) + 'km til ' + minBatteryReserve + '%');
+      console.log('   - Med ' + currentBatteryLevel + '% batteri kan vi kjøre:', rangeAfterCharging.toFixed(1) + 'km til ' + criticalBatteryLevel + '%');
 
       if (remainingDistance > rangeAfterCharging) {
         console.log('🚨 TRENGER EN STASJON TIL!');
