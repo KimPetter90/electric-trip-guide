@@ -9,13 +9,13 @@ All colors MUST be HSL.
 @layer base {
   :root {
     --background: 225 15% 8%;
-    --foreground: 140 100% 95%;
+    --foreground: 210 15% 90%; /* Endret fra grønn til mer nøytral lys grå */
 
     --card: 225 25% 12%;
-    --card-foreground: 140 100% 95%;
+    --card-foreground: 210 15% 90%; /* Endret fra grønn til mer nøytral lys grå */
 
     --popover: 225 25% 12%;
-    --popover-foreground: 140 100% 95%;
+    --popover-foreground: 210 15% 90%; /* Endret fra grønn til mer nøytral lys grå */
 
     --primary: 140 100% 45%;
     --primary-foreground: 225 25% 8%;
