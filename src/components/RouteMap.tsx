@@ -90,6 +90,7 @@ interface RouteMapProps {
   isVisible: boolean;
   routeData: RouteData;
   selectedCar: CarModel;
+  routeTrigger?: number;
 }
 
 // Koordinater for norske byer
@@ -258,7 +259,7 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return R * c;
 }
 
-const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar }) => {
+const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, routeTrigger }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [loading, setLoading] = useState(false);
@@ -854,6 +855,14 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar }
     }
   }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, routeData.trailerWeight, selectedCar]);
 
+  // Effekt for manuell trigger fra "Planlegg rute" knappen
+  useEffect(() => {
+    if (routeTrigger && map.current && routeData.from && routeData.to && selectedCar && accessToken) {
+      console.log('🚀 Manuell route trigger aktivert, oppdaterer kart...');
+      updateMapRoute();
+    }
+  }, [routeTrigger]);
+
   if (!isVisible) return null;
 
   return (
@@ -889,15 +898,6 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar }
           />
         </Card>
 
-        <div className="flex items-center justify-center">
-          <Button 
-            onClick={updateMapRoute}
-            disabled={loading || !routeData.from || !routeData.to}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
-          >
-            {loading ? 'Planlegger...' : 'Planlegg rute'}
-          </Button>
-        </div>
       </div>
 
       {/* Analyse og ladestasjoner */}
