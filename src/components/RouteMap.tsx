@@ -1437,7 +1437,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
                 <Battery className="h-12 w-12 mx-auto mb-4 text-green-500" />
                 <h3 className="text-lg font-semibold mb-2">Ingen lading nødvendig!</h3>
                 <p className="text-muted-foreground">
-                  Ditt {routeData.batteryPercentage}% batteri holder hele veien til {routeData.to}.
+                  Ditt {routeData.batteryPercentage}% batteri holder hele veien til {routeData.to || 'destinasjonen'}.
                 </p>
               </Card>
             )}
