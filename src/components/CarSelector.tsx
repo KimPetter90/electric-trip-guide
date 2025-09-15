@@ -1258,7 +1258,7 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
               </div>
             </div>
 
-            <Badge variant="default" className="text-xs animate-pulse-neon">Valgt - trykk for å avvelge</Badge>
+            <Badge variant="default" className="text-xs animate-pulse-neon">Valgt</Badge>
           </div>
         </Card>
       ) : !selectedBrand ? (
