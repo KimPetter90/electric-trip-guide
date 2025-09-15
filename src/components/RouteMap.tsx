@@ -753,12 +753,16 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
   // Effekt for lasting av ladestasjoner
   useEffect(() => {
+    console.log('🔌 useEffect for ladestasjoner starter...');
     const loadChargingStations = async () => {
       try {
+        console.log('🚀 Starter lasting av ladestasjoner...');
         const stations = await fetchNorwegianChargingStations();
+        console.log('📋 Leste', stations.length, 'stasjoner fra database');
         setChargingStations(stations);
+        console.log('✅ Ladestasjoner satt i state:', stations.length);
       } catch (error) {
-        console.error('Feil ved lasting av ladestasjoner:', error);
+        console.error('❌ Feil ved lasting av ladestasjoner:', error);
       }
     };
 
