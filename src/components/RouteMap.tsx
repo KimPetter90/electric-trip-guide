@@ -540,6 +540,9 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           }
         }
         
+        // Legg til avstand som property på stasjonen for senere bruk
+        (station as any).distanceToRoute = minDistance;
+        
         // Bestem farge basert på avstand: Rød hvis innenfor 5 km, grønn ellers
         const isNearRoute = minDistance <= 5.0; // 5 km
         const markerColor = isNearRoute ? '#ff0000' : '#00ff41';
@@ -580,23 +583,85 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         }
       });
       
-      const nearRouteCount = chargingStations.filter(station => {
-        let minDistance = Infinity;
-        for (let i = 0; i < mapRouteCoords.length; i++) {
-          const distance = getDistance(
-            station.latitude,
-            station.longitude,
-            mapRouteCoords[i][1],
-            mapRouteCoords[i][0]
-          );
-          if (distance < minDistance) {
-            minDistance = distance;
-          }
-        }
-        return minDistance <= 5.0;
-      }).length;
+      // Finn de mest effektive stasjonene (blå markører)
+      const nearRouteStations = chargingStations.filter(station => 
+        (station as any).distanceToRoute <= 5.0
+      );
       
-      console.log(`✅ ALLE ${chargingStations.length} MARKØRER LAGT TIL! (${nearRouteCount} røde innenfor 5km, ${chargingStations.length - nearRouteCount} grønne)`);
+      console.log('🔵 ANALYSERER EFFEKTIVITET FOR', nearRouteStations.length, 'STASJONER NÆR RUTEN...');
+      
+      // Beregn effektivitetsscore for hver stasjon nær ruten
+      const stationsWithScore = nearRouteStations.map(station => {
+        const distance = (station as any).distanceToRoute;
+        const cost = station.cost;
+        const availability = station.available / station.total;
+        const powerValue = station.fastCharger ? 2 : 1; // Høyere score for hurtiglading
+        
+        // Effektivitetsscore (lavere er bedre)
+        // Vekt: avstand (40%), kostnad (30%), tilgjengelighet (20%), effekt (10%)
+        const efficiencyScore = (distance * 0.4) + (cost * 3 * 0.3) + ((1 - availability) * 5 * 0.2) + ((2 - powerValue) * 0.1);
+        
+        return {
+          ...station,
+          efficiencyScore
+        };
+      });
+      
+      // Sorter etter beste score og ta de 3 beste
+      const bestStations = stationsWithScore
+        .sort((a, b) => a.efficiencyScore - b.efficiencyScore)
+        .slice(0, 3); // Ta de 3 mest effektive
+      
+      console.log('🎯 FANT DE 3 MEST EFFEKTIVE STASJONENE:');
+      bestStations.forEach((station, index) => {
+        console.log(`  ${index + 1}. ${station.name} (Score: ${station.efficiencyScore.toFixed(2)})`);
+      });
+      
+      // Legg til blå markører for de mest effektive stasjonene
+      bestStations.forEach((station, index) => {
+        const el = document.createElement('div');
+        el.className = 'best-efficiency-station-marker';
+        el.style.cssText = `
+          background-color: #0066ff;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          border: 3px solid white;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 10px;
+          color: white;
+          font-weight: bold;
+          z-index: 10;
+          box-shadow: 0 0 10px rgba(0, 102, 255, 0.5);
+        `;
+        el.innerHTML = '⭐';
+
+        const popup = new mapboxgl.Popup().setHTML(`
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h4 style="margin: 0 0 8px 0; color: #0066ff;"><strong>🔵 MEST EFFEKTIV #${index + 1}: ${station.name}</strong></h4>
+            <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
+            <p style="margin: 4px 0; color: #333;">🛣️ <strong>Avstand til rute:</strong> ${(station as any).distanceToRoute.toFixed(1)} km</p>
+            <p style="margin: 4px 0; color: #0066ff;"><strong>⭐ Effektivitetsscore:</strong> ${station.efficiencyScore.toFixed(2)}</p>
+            <p style="margin: 4px 0; color: #0066ff;"><strong>🔵 Optimal valg for ruten!</strong></p>
+            <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
+            <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
+            <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${station.available}/${station.total} ladepunkter</p>
+          </div>
+        `);
+
+        new mapboxgl.Marker(el)
+          .setLngLat([station.longitude, station.latitude])
+          .setPopup(popup)
+          .addTo(map.current!);
+        
+        console.log(`🔵 BLÅ MARKØR ${index + 1}: ${station.name} - MEST EFFEKTIV!`);
+      });
+      
+      const nearRouteCount = nearRouteStations.length;
+      console.log(`✅ ALLE ${chargingStations.length} MARKØRER LAGT TIL! (${nearRouteCount} røde innenfor 5km, ${chargingStations.length - nearRouteCount} grønne, ${bestStations.length} blå mest effektive)`);
 
       // DERETTER: Legg til markører for optimerte ladestasjoner (større og mer synlige)
       console.log('⚡ LEGGER TIL ANBEFALTE STASJONER...');
@@ -651,7 +716,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         console.log('ℹ️ Optimerte stasjoner (lyn-markører) er nå erstattet med avstandsbaserte røde markører');
       });
       
-      console.log('ℹ️ Ladestasjoner er nå fargekodet basert på avstand til ruten (røde < 5km, grønne > 5km)');
+      console.log('ℹ️ Ladestasjoner er nå fargekodet: 🟢 Alle stasjoner, 🔴 Nær ruten (<5km), 🔵 Mest effektive (3 stk)');
 
       // Tilpass kart til å vise hele ruten
       console.log('🗺️ Setter kartbounds...');
