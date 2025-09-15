@@ -492,6 +492,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     console.log('📊 BATTERIPROSENT INPUT:', batteryPercentage, '%');
     console.log('📊 RouteDistance:', routeDistance, 'km');
     console.log('📊 Car range:', car.range, 'km');
+    console.log('📊 Tilgjengelige stasjoner INPUT:', availableStations.length);
+    console.log('📊 Første 3 stasjoner:', availableStations.slice(0, 3).map(s => s.name));
     
     const criticalBatteryLevel = 10; // Kritisk batterinivå på 10%
     const maxChargingLevel = 80; // Lad til maks 80%
