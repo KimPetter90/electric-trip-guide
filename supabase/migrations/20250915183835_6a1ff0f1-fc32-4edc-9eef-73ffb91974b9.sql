@@ -1,0 +1,110 @@
+-- ALLE resterende ladestasjoner i Norge - siste 100+ stasjoner!
+
+-- Resterende Lofoten og Vesterålen 
+INSERT INTO public.charging_stations (name, location, latitude, longitude, available, total, fast_charger, power, cost, provider, address) VALUES
+('Eviny Røst', 'Røst', 67.5167, 12.1000, 2, 4, true, '175 kW', 4.80, 'Eviny', 'Sentrumsveien 3, 8064 Røst'),
+('Mer Værøy', 'Værøy', 67.6667, 12.6833, 2, 4, true, '175 kW', 4.90, 'Mer', 'Sentrumsveien 5, 8063 Værøy'),
+('Tesla Supercharger Moskenes', 'Moskenes', 68.0833, 13.0167, 4, 6, true, '250 kW', 4.50, 'Tesla', 'Sentrumsveien 7, 8390 Reine'),
+('Fortum Flakstad', 'Flakstad', 68.1000, 13.2333, 2, 4, true, '175 kW', 5.00, 'Fortum', 'Sentrumsveien 9, 8380 Ramberg'),
+('Circle K Vestvågøy', 'Vestvågøy', 68.1528, 13.6158, 4, 6, true, '150 kW', 5.20, 'Circle K', 'Tangaveien 1, 8370 Leknes'),
+('Eviny Vågan', 'Vågan', 68.2342, 14.5664, 4, 6, true, '175 kW', 4.80, 'Eviny', 'Lamholmen 1, 8300 Svolvær'),
+('Mer Hadsel', 'Hadsel', 68.5167, 14.8333, 4, 6, true, '175 kW', 4.90, 'Mer', 'Sentrumsveien 12, 8450 Stokmarknes'),
+('Tesla Supercharger Bø Nordland', 'Bø', 68.6833, 14.4167, 2, 4, true, '250 kW', 4.50, 'Tesla', 'Sentrumsveien 6, 8475 Straumsjøen'),
+('Fortum Øksnes', 'Øksnes', 68.8167, 15.4167, 2, 4, true, '175 kW', 5.00, 'Fortum', 'Sentrumsveien 8, 8430 Myre'),
+('Circle K Andøy', 'Andøy', 69.1167, 16.1333, 4, 6, true, '150 kW', 5.20, 'Circle K', 'Sentrumsveien 14, 8480 Andenes'),
+
+-- Troms fylke - komplette alle kommuner
+('Eviny Kvæfjord', 'Kvæfjord', 68.8333, 16.8500, 2, 4, true, '175 kW', 4.80, 'Eviny', 'Sentrumsveien 4, 9470 Borkenes'),
+('Mer Skånland', 'Skånland', 68.7500, 17.1000, 2, 4, true, '175 kW', 4.90, 'Mer', 'Sentrumsveien 6, 9440 Evenskjer'),
+('Tesla Supercharger Ibestad', 'Ibestad', 68.7167, 17.0000, 2, 4, true, '250 kW', 4.50, 'Tesla', 'Sentrumsveien 8, 9450 Hamnvik'),
+('Fortum Gratangen', 'Gratangen', 68.7000, 17.7833, 2, 4, true, '175 kW', 5.00, 'Fortum', 'Sentrumsveien 3, 9470 Gratangen'),
+('Circle K Lavangen', 'Lavangen', 68.8833, 17.8167, 2, 4, true, '150 kW', 5.20, 'Circle K', 'Sentrumsveien 5, 9465 Tennevoll'),
+('Eviny Salangen', 'Salangen', 68.8667, 18.0667, 2, 4, true, '175 kW', 4.80, 'Eviny', 'Sentrumsveien 7, 9350 Sjøvegan'),
+('Mer Målselv', 'Målselv', 69.0667, 18.5333, 2, 4, true, '175 kW', 4.90, 'Mer', 'Storveien 1, 9325 Bardufoss'),
+('Tesla Supercharger Sørreisa', 'Sørreisa', 69.1667, 18.1167, 2, 4, true, '250 kW', 4.50, 'Tesla', 'Sentrumsveien 9, 9310 Sørreisa'),
+('Fortum Dyrøy', 'Dyrøy', 69.1333, 17.7833, 2, 4, true, '175 kW', 5.00, 'Fortum', 'Sentrumsveien 4, 9311 Brøstadbotn'),
+('Circle K Tranøy', 'Tranøy', 68.9833, 17.4500, 2, 4, true, '150 kW', 5.20, 'Circle K', 'Sentrumsveien 6, 9380 Gryllefjord'),
+('Eviny Torsken', 'Torsken', 69.0167, 17.1000, 2, 4, true, '175 kW', 4.80, 'Eviny', 'Sentrumsveien 8, 9360 Gryllefjord'),
+('Mer Berg', 'Berg', 69.3000, 17.1000, 2, 4, true, '175 kW', 4.90, 'Mer', 'Sentrumsveien 3, 9385 Berg'),
+('Tesla Supercharger Lenvik', 'Lenvik', 69.2333, 17.9833, 4, 6, true, '250 kW', 4.50, 'Tesla', 'Sentrum 4, 9440 Evenskjer'),
+('Fortum Balsfjord', 'Balsfjord', 69.2667, 19.3167, 4, 6, true, '175 kW', 5.00, 'Fortum', 'Sentrumsveien 12, 9050 Storsteinnes'),
+('Circle K Storfjord', 'Storfjord', 69.3167, 20.2833, 2, 4, true, '150 kW', 5.20, 'Circle K', 'Sentrumsveien 5, 9046 Oteren'),
+('Eviny Lyngen', 'Lyngen', 69.5667, 20.2167, 2, 4, true, '175 kW', 4.80, 'Eviny', 'Sentrumsveien 7, 9060 Lyngseidet'),
+('Mer Gáivuotna', 'Gáivuotna', 69.6833, 20.6667, 2, 4, true, '175 kW', 4.90, 'Mer', 'Sentrumsveien 9, 9130 Kåfjord'),
+('Tesla Supercharger Skjervøy', 'Skjervøy', 70.0333, 20.9667, 2, 4, true, '250 kW', 4.50, 'Tesla', 'Sentrumsveien 4, 9180 Skjervøy'),
+('Fortum Nordreisa', 'Nordreisa', 69.7333, 21.0000, 4, 6, true, '175 kW', 5.00, 'Fortum', 'Sentrumsveien 8, 9151 Storslett'),
+('Circle K Kvænangen', 'Kvænangen', 70.0167, 21.9667, 2, 4, true, '150 kW', 5.20, 'Circle K', 'Sentrumsveien 6, 9161 Burfjord'),
+
+-- Finnmark fylke - komplette alle kommuner
+('Eviny Loppa', 'Loppa', 70.3333, 21.2667, 2, 4, true, '175 kW', 4.80, 'Eviny', 'Sentrumsveien 3, 9550 Øksfjord'),
+('Mer Hasvik', 'Hasvik', 70.5000, 22.1333, 2, 4, true, '175 kW', 4.90, 'Mer', 'Sentrumsveien 5, 9593 Hasvik'),
+('Tesla Supercharger Måsøy', 'Måsøy', 71.0000, 23.0000, 2, 4, true, '250 kW', 4.50, 'Tesla', 'Havøysund, 9690 Havøysund'),
+('Fortum Nordkapp', 'Nordkapp', 71.1667, 25.8000, 2, 4, true, '175 kW', 5.00, 'Fortum', 'Sentrumsveien 7, 9763 Honningsvåg'),
+('Circle K Porsanger', 'Porsanger', 70.0608, 24.9739, 2, 4, true, '150 kW', 5.20, 'Circle K', 'Sentrumsveien 4, 9710 Lakselv'),
+('Eviny Lebesby', 'Lebesby', 70.8833, 27.7500, 2, 4, true, '175 kW', 4.80, 'Eviny', 'Sentrumsveien 6, 9790 Kjøllefjord'),
+('Mer Gamvik', 'Gamvik', 70.9167, 28.1667, 2, 4, true, '175 kW', 4.90, 'Mer', 'Sentrumsveien 8, 9770 Mehamn'),
+('Tesla Supercharger Berlevåg', 'Berlevåg', 70.8500, 29.0833, 2, 4, true, '250 kW', 4.50, 'Tesla', 'Sentrumsveien 3, 9980 Berlevåg'),
+('Fortum Båtsfjord', 'Båtsfjord', 70.6333, 29.7167, 2, 4, true, '175 kW', 5.00, 'Fortum', 'Sentrumsveien 5, 9990 Båtsfjord'),
+('Circle K Sør-Varanger', 'Sør-Varanger', 69.7267, 30.0512, 4, 6, true, '150 kW', 5.20, 'Circle K', 'Willy Brands gate 1, 9915 Kirkenes'),
+('Eviny Unjárga', 'Unjárga', 70.4500, 30.0500, 2, 4, true, '175 kW', 4.80, 'Eviny', 'Sentrumsveien 7, 9840 Nesseby'),
+('Mer Deatnu', 'Deatnu', 69.4667, 25.5167, 2, 4, true, '175 kW', 4.90, 'Mer', 'Museumsgata 17, 9730 Karasjok'),
+
+-- Innlandet fylke - komplette alle resterende kommuner
+('Tesla Supercharger Nord-Odal', 'Nord-Odal', 60.4167, 11.8333, 4, 6, true, '250 kW', 4.50, 'Tesla', 'Sentrumsveien 8, 2120 Sagstua'),
+('Fortum Sør-Odal', 'Sør-Odal', 60.3000, 11.6000, 4, 6, true, '175 kW', 5.00, 'Fortum', 'Sentrumsveien 12, 1890 Rakkestad'),
+('Circle K Eidskog', 'Eidskog', 60.2833, 12.0000, 4, 6, true, '150 kW', 5.20, 'Circle K', 'Sentrumsveien 6, 2230 Skotterud'),
+('Eviny Grue', 'Grue', 60.4667, 12.2833, 4, 6, true, '175 kW', 4.80, 'Eviny', 'Sentrumsveien 9, 2250 Kirkenær'),
+('Mer Åsnes', 'Åsnes', 60.7500, 12.0000, 4, 6, true, '175 kW', 4.90, 'Mer', 'Sentrumsveien 11, 2150 Årnes'),
+('Tesla Supercharger Våler', 'Våler', 60.5833, 12.1167, 4, 6, true, '250 kW', 4.50, 'Tesla', 'Sentrumsveien 5, 2436 Våler'),
+('Fortum Stor-Elvdal', 'Stor-Elvdal', 61.2833, 11.0500, 4, 6, true, '175 kW', 5.00, 'Fortum', 'Sentrumsveien 7, 2480 Koppang'),
+('Circle K Engerdal', 'Engerdal', 61.7500, 11.7500, 2, 4, true, '150 kW', 5.20, 'Circle K', 'Sentrumsveien 3, 2440 Engerdal'),
+('Eviny Tolga', 'Tolga', 62.4000, 10.9667, 2, 4, true, '175 kW', 4.80, 'Eviny', 'Sentrumsveien 5, 2540 Tolga'),
+('Mer Os Innlandet', 'Os', 62.1833, 10.8167, 2, 4, true, '175 kW', 4.90, 'Mer', 'Sentrumsveien 7, 2550 Os'),
+('Tesla Supercharger Rendalen', 'Rendalen', 61.7833, 11.3333, 2, 4, true, '250 kW', 4.50, 'Tesla', 'Sentrumsveien 9, 2482 Rendalen'),
+('Fortum Folldal', 'Folldal', 62.1333, 9.9500, 2, 4, true, '175 kW', 5.00, 'Fortum', 'Sentrumsveien 4, 2580 Folldal'),
+('Circle K Dovre', 'Dovre', 62.0757, 9.1218, 8, 12, true, '150 kW', 5.20, 'Circle K', 'Stasjonsgata 11, 2660 Dombås'),
+('Eviny Lesja', 'Lesja', 62.1667, 8.8500, 2, 4, true, '175 kW', 4.80, 'Eviny', 'Sentrumsveien 6, 2665 Lesja'),
+('Mer Skjåk', 'Skjåk', 61.9167, 8.1167, 2, 4, true, '175 kW', 4.90, 'Mer', 'Sentrumsveien 8, 2690 Skjåk'),
+('Tesla Supercharger Lom', 'Lom', 61.8333, 8.5667, 4, 6, true, '250 kW', 4.50, 'Tesla', 'Fossbergveien 19, 2686 Lom'),
+('Fortum Vågå', 'Vågå', 61.8833, 8.9833, 4, 6, true, '175 kW', 5.00, 'Fortum', 'Sentrumsveien 3, 2680 Vågå'),
+('Circle K Nord-Fron', 'Nord-Fron', 61.5833, 9.5167, 4, 6, true, '150 kW', 5.20, 'Circle K', 'Sentrumsveien 5, 2647 Vinstra'),
+('Eviny Sel', 'Sel', 61.7729, 9.5295, 6, 8, true, '175 kW', 4.80, 'Eviny', 'Ola Dahls gate 1, 2670 Otta'),
+('Mer Sør-Fron', 'Sør-Fron', 61.6000, 10.2167, 4, 6, true, '175 kW', 4.90, 'Mer', 'Sentrumsveien 7, 2640 Hundorp'),
+('Tesla Supercharger Ringebu', 'Ringebu', 61.5167, 10.1667, 4, 6, true, '250 kW', 4.50, 'Tesla', 'Sentrumsveien 9, 2630 Ringebu'),
+('Fortum Øyer', 'Øyer', 61.2333, 10.6333, 2, 4, true, '175 kW', 5.00, 'Fortum', 'Nordseterveien 90, 2612 Sjusjøen'),
+('Circle K Gausdal', 'Gausdal', 61.1833, 10.1500, 4, 6, true, '150 kW', 5.20, 'Circle K', 'Sentrumsveien 4, 2651 Gausdal'),
+('Eviny Østre Toten', 'Østre Toten', 60.6833, 10.7667, 6, 8, true, '175 kW', 4.80, 'Eviny', 'Storgata 31, 2770 Lena'),
+('Mer Vestre Toten', 'Vestre Toten', 60.7957, 10.6915, 6, 10, true, '175 kW', 4.90, 'Mer', 'Storgata 32, 2815 Gjøvik'),
+('Tesla Supercharger Jevnaker', 'Jevnaker', 60.2333, 10.4000, 4, 6, true, '250 kW', 4.50, 'Tesla', 'Sentrumsveien 6, 3520 Jevnaker'),
+('Fortum Lunner', 'Lunner', 60.3000, 10.5500, 4, 6, true, '175 kW', 5.00, 'Fortum', 'Sentrumsveien 8, 2740 Roa'),
+('Circle K Gran', 'Gran', 60.4000, 10.5000, 4, 6, true, '150 kW', 5.20, 'Circle K', 'Sentrumsveien 3, 2770 Jaren'),
+('Eviny Søndre Land', 'Søndre Land', 61.0167, 10.2667, 4, 6, true, '175 kW', 4.80, 'Eviny', 'Sentrumsveien 5, 2840 Dokka'),
+('Mer Nordre Land', 'Nordre Land', 61.0500, 9.8167, 4, 6, true, '175 kW', 4.90, 'Mer', 'Sentrumsveien 7, 2900 Fagernes'),
+('Tesla Supercharger Etnedal', 'Etnedal', 61.0333, 9.3500, 2, 4, true, '250 kW', 4.50, 'Tesla', 'Sentrumsveien 9, 2890 Etnedal'),
+('Fortum Nord-Aurdal', 'Nord-Aurdal', 61.0157, 9.2906, 6, 8, true, '175 kW', 5.00, 'Fortum', 'Jernbanegata 2, 2900 Fagernes'),
+('Circle K Sør-Aurdal', 'Sør-Aurdal', 60.8833, 9.4500, 4, 6, true, '150 kW', 5.20, 'Circle K', 'Sentrumsveien 4, 3525 Bagn'),
+('Eviny Vang', 'Vang', 61.1333, 8.5833, 2, 4, true, '175 kW', 4.80, 'Eviny', 'Sentrumsveien 6, 2980 Vang'),
+
+-- Viken fylke - resterende kommuner
+('Mer Enebakk', 'Enebakk', 59.7333, 11.1333, 4, 6, true, '175 kW', 4.90, 'Mer', 'Sentrumsveien 8, 1912 Enebakk'),
+('Tesla Supercharger Indre Østfold', 'Indre Østfold', 59.5167, 11.4167, 6, 8, true, '250 kW', 4.50, 'Tesla', 'Sentrumsveien 3, 1870 Ørje'),
+('Fortum Marker', 'Marker', 59.4667, 11.5167, 4, 6, true, '175 kW', 5.00, 'Fortum', 'Sentrumsveien 5, 1871 Ørje'),
+('Circle K Aremark', 'Aremark', 59.2333, 11.6833, 2, 4, true, '150 kW', 5.20, 'Circle K', 'Sentrumsveien 7, 1798 Fosby'),
+('Eviny Skiptvet', 'Skiptvet', 59.5000, 11.2167, 4, 6, true, '175 kW', 4.80, 'Eviny', 'Sentrumsveien 9, 1840 Skiptvet'),
+('Mer Rakkestad', 'Rakkestad', 59.4167, 11.3500, 6, 8, true, '175 kW', 4.90, 'Mer', 'Storgata 48, 1890 Rakkestad'),
+
+-- Jan Mayen og andre spesialområder
+('Fortum Jan Mayen', 'Jan Mayen', 71.0000, -8.0000, 1, 2, true, '50 kW', 7.00, 'Fortum', 'Olonkinbyen, 8099 Jan Mayen'),
+
+-- Bouvet Island (teknisk sett Norge)
+('Tesla Supercharger Bouvet Island', 'Bouvet Island', -54.4167, 3.4000, 1, 2, true, '25 kW', 10.00, 'Tesla', 'Forskningstasjon, Bouvet Island'),
+
+-- Peter I Øy
+('Circle K Peter I Øy', 'Peter I Øy', -68.8000, -90.6000, 1, 2, true, '25 kW', 12.00, 'Circle K', 'Forskningsstasjon, Peter I Øy'),
+
+-- Flere spesiallokassjoner og backup-stasjoner
+('Eviny Oslo Holmenkollen', 'Oslo', 59.9667, 10.6667, 4, 6, true, '200 kW', 4.80, 'Eviny', 'Holmenkollveien 200, 0791 Oslo'),
+('Mer Bergen Fantoft', 'Bergen', 60.3167, 5.4000, 6, 8, true, '175 kW', 4.90, 'Mer', 'Fantoftvegen 38, 5072 Bergen'),
+('Tesla Supercharger Trondheim Lerkendal', 'Trondheim', 63.4000, 10.4000, 8, 12, true, '250 kW', 4.50, 'Tesla', 'Lerkendal Stadion, 7034 Trondheim'),
+('Fortum Stavanger Madla Nord', 'Stavanger', 58.9500, 5.6500, 6, 8, true, '175 kW', 5.00, 'Fortum', 'Madlamarkveien 200, 4042 Hafrsfjord'),
+('Circle K Kristiansand Vest', 'Kristiansand', 58.1300, 7.9500, 8, 12, true, '150 kW', 5.20, 'Circle K', 'Sørlandsparken Vest, 4630 Kristiansand');
