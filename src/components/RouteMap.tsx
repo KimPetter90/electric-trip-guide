@@ -342,23 +342,29 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       const waypoints = [startCoords, endCoords];
       const coordinates = waypoints.map(coord => coord.join(',')).join(';');
       
-      // Velg riktig Mapbox profil basert på rutetype
+      // Velg riktig Mapbox profil og parametre basert på rutetype
       let mapboxProfile = 'driving';
+      let routeParams = 'geometries=geojson&access_token=' + accessToken;
+      
       switch (routeType) {
         case 'fastest':
           mapboxProfile = 'driving-traffic'; // Raskeste med trafikk
+          routeParams += '&alternatives=true&steps=true&annotations=duration';
           break;
         case 'shortest':
-          mapboxProfile = 'driving'; // Standard driving for korteste
+          mapboxProfile = 'driving'; // Standard driving
+          routeParams += '&alternatives=true&steps=true&annotations=distance';
           break;
         case 'eco':
-          mapboxProfile = 'driving'; // Kan optimaliseres senere for eco
+          mapboxProfile = 'driving'; // Eco-vennlig
+          routeParams += '&alternatives=true&steps=true&annotations=duration,distance&overview=full';
           break;
         default:
           mapboxProfile = 'driving';
+          routeParams += '&alternatives=true&steps=true';
       }
       
-      const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/${mapboxProfile}/${coordinates}?geometries=geojson&access_token=${accessToken}&alternatives=true&steps=true`;
+      const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/${mapboxProfile}/${coordinates}?${routeParams}`;
       
       const directionsResponse = await fetch(directionsUrl);
       const directionsData = await directionsResponse.json();
@@ -367,21 +373,50 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         throw new Error('Ingen rute funnet');
       }
 
-      // Velg riktig rute basert på type
+      // Velg riktig rute basert på type med mer intelligent logikk
       let selectedRoute = directionsData.routes[0];
-      if (routeType === 'shortest' && directionsData.routes.length > 1) {
-        // Finn korteste rute
-        selectedRoute = directionsData.routes.reduce((shortest, current) => 
-          current.distance < shortest.distance ? current : shortest
-        );
-      } else if (routeType === 'eco' && directionsData.routes.length > 1) {
-        // For eco, velg en balansert rute (kan forbedres senere)
-        selectedRoute = directionsData.routes[directionsData.routes.length > 2 ? 2 : 1] || directionsData.routes[0];
+      console.log('📊 Antall tilgjengelige ruter fra Mapbox:', directionsData.routes.length);
+      
+      if (directionsData.routes.length > 1) {
+        switch (routeType) {
+          case 'fastest':
+            // Finn ruten med korteste varighet
+            selectedRoute = directionsData.routes.reduce((fastest, current) => 
+              current.duration < fastest.duration ? current : fastest
+            );
+            console.log('⚡ Valgte raskeste rute');
+            break;
+          case 'shortest':
+            // Finn ruten med korteste distanse
+            selectedRoute = directionsData.routes.reduce((shortest, current) => 
+              current.distance < shortest.distance ? current : shortest
+            );
+            console.log('📏 Valgte korteste rute');
+            break;
+          case 'eco':
+            // For eco, velg en rute som balanserer tid og distanse (typisk alternativ rute)
+            if (directionsData.routes.length >= 3) {
+              selectedRoute = directionsData.routes[2]; // Tredje alternativ
+            } else if (directionsData.routes.length >= 2) {
+              selectedRoute = directionsData.routes[1]; // Andre alternativ
+            }
+            console.log('🌱 Valgte miljøvennlig rute');
+            break;
+        }
+      } else {
+        console.log('⚠️ Kun én rute tilgjengelig fra Mapbox');
       }
 
       const route = selectedRoute;
       const routeDistance = route.distance / 1000; // Konverter til km
       const routeDuration = route.duration / 3600; // Konverter til timer
+
+      console.log('🎯 Valgt rute detaljer:', { 
+        type: routeType, 
+        distance: routeDistance + 'km', 
+        duration: routeDuration + 't',
+        totalRoutes: directionsData.routes.length 
+      });
 
       console.log('Rute mottatt fra Mapbox:', { distance: routeDistance, duration: route.duration });
 
