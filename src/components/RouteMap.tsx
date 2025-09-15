@@ -601,95 +601,96 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         }
       });
       
+      console.log('🔵 STARTER BLÅ MARKØR ANALYSE...');
+      
       // Finn de mest effektive stasjonene (blå markører)
       const nearRouteStations = chargingStations.filter(station => 
         (station as any).distanceToRoute <= 5.0
       );
       
-       console.log('🔵 ANALYSERER EFFEKTIVITET FOR', nearRouteStations.length, 'STASJONER NÆR RUTEN...');
-       console.log('  - Startbatteri:', routeData.batteryPercentage + '%');
-       console.log('  - Bil rekkevidde:', selectedCar.range + 'km');
-       console.log('  - Rutelengde:', routeDistance.toFixed(1) + 'km');
-       
-       if (nearRouteStations.length === 0) {
-         console.log('⚠️ INGEN STASJONER FUNNET INNENFOR 5KM - KAN IKKE LAGE BLÅ MARKØRER');
-         return;
-       }
+      console.log('🔵 ANALYSERER EFFEKTIVITET FOR', nearRouteStations.length, 'STASJONER NÆR RUTEN...');
+      console.log('  - Startbatteri:', routeData.batteryPercentage + '%');
+      console.log('  - Bil rekkevidde:', selectedCar.range + 'km');
+      console.log('  - Rutelengde:', routeDistance.toFixed(1) + 'km');
       
-      // Beregn effektivitetsscore for stasjoner nær ruten
-      const stationsWithScore = nearRouteStations.map(station => {
-        const distance = (station as any).distanceToRoute;
-        const cost = station.cost;
-        const availability = station.available / station.total;
-        const powerValue = station.fastCharger ? 2 : 1;
+      if (nearRouteStations.length === 0) {
+        console.log('⚠️ INGEN STASJONER FUNNET INNENFOR 5KM - KAN IKKE LAGE BLÅ MARKØRER');
+      } else {
+        // Beregn effektivitetsscore for stasjoner nær ruten
+        const stationsWithScore = nearRouteStations.map(station => {
+          const distance = (station as any).distanceToRoute;
+          const cost = station.cost;
+          const availability = station.available / station.total;
+          const powerValue = station.fastCharger ? 2 : 1;
+          
+          // Effektivitetsscore (lavere er bedre)
+          const efficiencyScore = (distance * 0.4) + (cost * 3 * 0.3) + ((1 - availability) * 5 * 0.2) + ((2 - powerValue) * 0.1);
+          
+          return {
+            ...station,
+            efficiencyScore
+          };
+        });
         
-        // Effektivitetsscore (lavere er bedre)
-        const efficiencyScore = (distance * 0.4) + (cost * 3 * 0.3) + ((1 - availability) * 5 * 0.2) + ((2 - powerValue) * 0.1);
+        // Sorter etter beste score og ta de 3 beste
+        const bestStations = stationsWithScore
+          .sort((a, b) => a.efficiencyScore - b.efficiencyScore)
+          .slice(0, 3);
         
-        return {
-          ...station,
-          efficiencyScore
-        };
-      });
-      
-      // Sorter etter beste score og ta de 3 beste
-      const bestStations = stationsWithScore
-        .sort((a, b) => a.efficiencyScore - b.efficiencyScore)
-        .slice(0, 3);
-      
-      console.log('🎯 FANT DE 3 MEST EFFEKTIVE STASJONENE:');
-      bestStations.forEach((station, index) => {
-        console.log(`  ${index + 1}. ${station.name} (Score: ${station.efficiencyScore.toFixed(2)})`);
-      });
-      
-      console.log('🔵 LEGGER TIL BLÅ MARKØRER FOR MEST EFFEKTIVE STASJONER...');
-      console.log('🔵 Antall blå markører som skal legges til:', bestStations.length);
-      
-      // Legg til blå markører for de mest effektive stasjonene
-      bestStations.forEach((station, index) => {
-        const el = document.createElement('div');
-        el.className = 'best-efficiency-station-marker';
-        el.style.cssText = `
-          background-color: #0066ff;
-          width: 14px;
-          height: 14px;
-          border-radius: 50%;
-          border: 3px solid white;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 10px;
-          color: white;
-          font-weight: bold;
-          z-index: 10;
-          box-shadow: 0 0 10px rgba(0, 102, 255, 0.5);
-        `;
-        el.innerHTML = '⭐';
+        console.log('🎯 FANT DE 3 MEST EFFEKTIVE STASJONENE:');
+        bestStations.forEach((station, index) => {
+          console.log(`  ${index + 1}. ${station.name} (Score: ${station.efficiencyScore.toFixed(2)})`);
+        });
+        
+        console.log('🔵 LEGGER TIL BLÅ MARKØRER FOR MEST EFFEKTIVE STASJONER...');
+        console.log('🔵 Antall blå markører som skal legges til:', bestStations.length);
+        
+        // Legg til blå markører for de mest effektive stasjonene
+        bestStations.forEach((station, index) => {
+          const el = document.createElement('div');
+          el.className = 'best-efficiency-station-marker';
+          el.style.cssText = `
+            background-color: #0066ff;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            font-weight: bold;
+            z-index: 15;
+            box-shadow: 0 0 15px rgba(0, 102, 255, 0.8);
+          `;
+          el.innerHTML = '⭐';
 
-        const popup = new mapboxgl.Popup().setHTML(`
-          <div style="font-family: Arial, sans-serif; color: #333;">
-            <h4 style="margin: 0 0 8px 0; color: #0066ff;"><strong>🔵 MEST EFFEKTIV #${index + 1}: ${station.name}</strong></h4>
-            <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
-            <p style="margin: 4px 0; color: #333;">🛣️ <strong>Avstand til rute:</strong> ${(station as any).distanceToRoute.toFixed(1)} km</p>
-            <p style="margin: 4px 0; color: #0066ff;"><strong>⭐ Effektivitetsscore:</strong> ${station.efficiencyScore.toFixed(2)}</p>
-            <p style="margin: 4px 0; color: #0066ff;"><strong>🔵 Optimal valg for ruten!</strong></p>
-            <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
-            <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
-            <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${station.available}/${station.total} ladepunkter</p>
-          </div>
-        `);
+          const popup = new mapboxgl.Popup().setHTML(`
+            <div style="font-family: Arial, sans-serif; color: #333;">
+              <h4 style="margin: 0 0 8px 0; color: #0066ff;"><strong>🔵 MEST EFFEKTIV #${index + 1}: ${station.name}</strong></h4>
+              <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
+              <p style="margin: 4px 0; color: #333;">🛣️ <strong>Avstand til rute:</strong> ${(station as any).distanceToRoute.toFixed(1)} km</p>
+              <p style="margin: 4px 0; color: #0066ff;"><strong>⭐ Effektivitetsscore:</strong> ${station.efficiencyScore.toFixed(2)}</p>
+              <p style="margin: 4px 0; color: #0066ff;"><strong>🔵 Optimal valg for ruten!</strong></p>
+              <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
+              <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
+              <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${station.available}/${station.total} ladepunkter</p>
+            </div>
+          `);
 
-        new mapboxgl.Marker(el)
-          .setLngLat([station.longitude, station.latitude])
-          .setPopup(popup)
-          .addTo(map.current!);
+          new mapboxgl.Marker(el)
+            .setLngLat([station.longitude, station.latitude])
+            .setPopup(popup)
+            .addTo(map.current!);
+          
+          console.log(`🔵 BLÅ MARKØR ${index + 1}: ${station.name} - MEST EFFEKTIV! LAGT TIL!`);
+        });
         
-        console.log(`🔵 BLÅ MARKØR ${index + 1}: ${station.name} - MEST EFFEKTIV! LAGT TIL!`);
-      });
-      
-      const nearRouteCount = nearRouteStations.length;
-      console.log(`✅ ALLE ${chargingStations.length} MARKØRER LAGT TIL! (${nearRouteCount} røde innenfor 5km, ${chargingStations.length - nearRouteCount} grønne, ${bestStations.length} blå mest effektive)`);
+        const nearRouteCount = nearRouteStations.length;
+        console.log(`✅ ALLE ${chargingStations.length} MARKØRER LAGT TIL! (${nearRouteCount} røde innenfor 5km, ${chargingStations.length - nearRouteCount} grønne, ${bestStations.length} blå mest effektive)`);
+      }
 
       // DERETTER: Legg til markører for optimerte ladestasjoner (større og mer synlige)
       console.log('⚡ LEGGER TIL ANBEFALTE STASJONER...');
