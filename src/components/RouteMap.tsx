@@ -432,7 +432,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         const el = document.createElement('div');
         el.className = 'charging-station-marker';
         el.style.cssText = `
-          background-color: ${station.isRequired ? '#ef4444' : '#f59e0b'};
+          background-color: ${station.isRequired ? '#ff0000' : '#00ff41'};
           width: 20px;
           height: 20px;
           border-radius: 50%;
