@@ -553,20 +553,45 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         const distanceToStart = getDistance(station.latitude, station.longitude, routeStartLat, routeStartLng);
         const distanceToEnd = getDistance(station.latitude, station.longitude, routeEndLat, routeEndLng);
         
-        // Enkel beregning: hvis stasjonen er innenfor en "rute-korridor"
-        const totalRouteDistance = getDistance(routeStartLat, routeStartLng, routeEndLat, routeEndLng);
-        const stationIsReasonablyClose = (distanceToStart + distanceToEnd) <= (totalRouteDistance + maxDetourDistance);
+        // Finn nærmeste punkt på ruten til stasjonen
+        let minDistance = Infinity;
+        let closestPointIndex = 0;
+        let distanceAlongRoute = 0;
+
+        for (let i = 0; i < routeCoordinates.length; i++) {
+          const distance = getDistance(
+            station.latitude,
+            station.longitude,
+            routeCoordinates[i][1],
+            routeCoordinates[i][0]
+          );
+
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestPointIndex = i;
+          }
+        }
+
+        // Beregn faktisk distanse langs ruten til nærmeste punkt
+        for (let i = 0; i < closestPointIndex; i++) {
+          if (i < routeCoordinates.length - 1) {
+            distanceAlongRoute += getDistance(
+              routeCoordinates[i][1],
+              routeCoordinates[i][0],
+              routeCoordinates[i + 1][1],
+              routeCoordinates[i + 1][0]
+            );
+          }
+        }
         
-        console.log('🗺️', station.name + ': distanse til start =', distanceToStart.toFixed(1) + 'km, til slutt =', distanceToEnd.toFixed(1) + 'km, rute-total =', totalRouteDistance.toFixed(1) + 'km, akseptert =', stationIsReasonablyClose);
+        console.log('🗺️', station.name + ': avstand fra rute =', minDistance.toFixed(1) + 'km, distanse langs ruten =', distanceAlongRoute.toFixed(1) + 'km');
         
-        if (stationIsReasonablyClose) {
-          // Approximer distanse langs ruten som gjennomsnitt av start og slutt-distanse
-          const approximateRouteDistance = (distanceToStart + distanceToEnd) / 2;
+        if (minDistance <= maxDetourDistance) {
           
           return {
             ...station,
-            distanceFromRoute: Math.min(distanceToStart, distanceToEnd),
-            distanceAlongRoute: approximateRouteDistance
+            distanceFromRoute: minDistance,
+            distanceAlongRoute: distanceAlongRoute
           };
         }
         return null;
