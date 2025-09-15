@@ -559,8 +559,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     
     const criticalBatteryLevel = 10; // Kritisk batterinivå på 10%
     const maxChargingLevel = 80; // Lad til maks 80%
-    const maxDetourDistance = 100; // ØKT til 100km avvik - EKSTREMT liberalt!
-    const maxStationsToShow = 50; // ØKT til 50 stasjoner
+    const maxDetourDistance = 5; // KUN 5km avvik fra ruten!
+    const maxStationsToShow = 10; // Redusert til 10 stasjoner for kun de nærmeste
 
     console.log('🔋 DETALJERT BEREGNING:');
     console.log('   - Start batteri:', batteryPercentage + '%');
