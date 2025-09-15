@@ -1197,10 +1197,15 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
-        <Car className="h-5 w-5 text-primary animate-glow-pulse" />
-        <h3 className="text-lg font-semibold text-foreground">
-          {selectedBrand ? `${selectedBrand} modeller` : 'Velg bilmerke'}
-        </h3>
+        <div 
+          className="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity"
+          onClick={handleShowBrands}
+        >
+          <Car className="h-5 w-5 text-primary animate-glow-pulse" />
+          <h3 className="text-lg font-semibold text-foreground">
+            {selectedBrand ? `${selectedBrand} modeller` : 'Velg bilmerke'}
+          </h3>
+        </div>
         {selectedBrand && (
           <Button
             variant="outline"
@@ -1215,56 +1220,33 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
       </div>
 
       {!showBrands ? (
-        /* Initial state - show button to select brand */
-        <div className="text-center p-8">
-          <Button
-            onClick={handleShowBrands}
-            variant="outline"
-            size="lg"
-            className="hover:bg-primary/10 hover:border-primary/50"
-          >
-            <Car className="h-5 w-5 mr-2" />
-            Velg bilmerke
-          </Button>
-        </div>
+        /* When brands are hidden, don't show anything extra */
+        null
       ) : !selectedBrand ? (
         /* Brand selection - vertical list */
-        <div className="space-y-3">
-          <div className="text-center">
-            <Button
-              onClick={handleShowBrands}
-              variant="outline"
-              size="sm"
-              className="mb-4"
+        <div className="space-y-2 max-h-96 overflow-y-auto">
+          {brands.map((brand) => (
+            <Card
+              key={brand.name}
+              className="p-4 cursor-pointer transition-all duration-200 bg-card/80 backdrop-blur-sm border-border hover:bg-primary/5 hover:border-primary/30 hover:shadow-md"
+              onClick={() => handleBrandSelect(brand.name)}
             >
-              <Car className="h-4 w-4 mr-2" />
-              Skjul bilmerker
-            </Button>
-          </div>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {brands.map((brand) => (
-              <Card
-                key={brand.name}
-                className="p-4 cursor-pointer transition-all duration-200 bg-card/80 backdrop-blur-sm border-border hover:bg-primary/5 hover:border-primary/30 hover:shadow-md"
-                onClick={() => handleBrandSelect(brand.name)}
-              >
-                <div className="flex items-center space-x-4">
-                  <span className="text-2xl">{brand.image}</span>
-                  
-                  <div className="flex-1">
-                    <h5 className="font-semibold text-sm text-foreground">
-                      {brand.name}
-                    </h5>
-                    <p className="text-xs text-muted-foreground">
-                      {brand.count} modell{brand.count !== 1 ? 'er' : ''}
-                    </p>
-                  </div>
-                  
-                  <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180" />
+              <div className="flex items-center space-x-4">
+                <span className="text-2xl">{brand.image}</span>
+                
+                <div className="flex-1">
+                  <h5 className="font-semibold text-sm text-foreground">
+                    {brand.name}
+                  </h5>
+                  <p className="text-xs text-muted-foreground">
+                    {brand.count} modell{brand.count !== 1 ? 'er' : ''}
+                  </p>
                 </div>
-              </Card>
-            ))}
-          </div>
+                
+                <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180" />
+              </div>
+            </Card>
+          ))}
         </div>
       ) : (
         /* Model selection for selected brand - vertical list */
