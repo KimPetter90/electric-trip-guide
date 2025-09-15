@@ -466,8 +466,10 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       }
       
       optimized.forEach((station, index) => {
-        console.log('🔧 Legger til markør for:', station.name, 'på posisjon:', station.latitude, station.longitude);
-        const el = document.createElement('div');
+        // Kun vis som røde markører hvis de faktisk er nødvendige for ruten
+        if (station.isRequired || station.arrivalBatteryPercentage! < 15) {
+          console.log('🔴 Rød markør for kritisk stasjon:', station.name, 'batterinivå ved ankomst:', station.arrivalBatteryPercentage?.toFixed(1) + '%');
+          const el = document.createElement('div');
         el.className = 'charging-station-marker';
         el.style.cssText = `
           background-color: #ff0000;
@@ -506,7 +508,10 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           .setPopup(popup)
           .addTo(map.current!);
         
-        console.log('✅ Markør lagt til for:', station.name);
+        console.log('✅ Rød kritisk markør lagt til for:', station.name);
+        } else {
+          console.log('⏭️ Hopper over stasjon (ikke kritisk):', station.name, 'batterinivå:', station.arrivalBatteryPercentage?.toFixed(1) + '%');
+        }
       });
       
       console.log('🎯 ALLE MARKØRER LAGT TIL! Total antall:', optimized.length);
