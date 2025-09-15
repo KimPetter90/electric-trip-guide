@@ -290,7 +290,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     return sortedStations;
   };
   
-  // OPPEGRADERT LOGIKK: Vis ladestasjon basert på batteriprosent og rutelengde
+  // FORBEDRET LOGIKK: Vis alltid ladestasjoner, men merk dem som obligatoriske/valgfrie
   const optimizeChargingStations = (routeDistance: number, routeGeometry: any) => {
     console.log('🚀 OPTIMIZE CHARGING STATIONS KALT!');
     console.log('📊 RouteDistance:', routeDistance, 'km');
@@ -306,20 +306,19 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     const actualRange = selectedCar.range * 0.85;
     const maxTravelDistance = (actualRange * startBattery) / 100;
     
-    console.log(`🔋 SIMULERING MED FORBEDRET LOGIKK:`);
+    console.log(`🔋 BATTERIBEREGNING:`);
     console.log(`   - Start: ${startBattery}% batteri`);  
     console.log(`   - Bil rekkevidde: ${actualRange}km`);
     console.log(`   - Kan reise: ${maxTravelDistance.toFixed(1)}km med ${startBattery}%`);
     console.log(`🛣️ Rute: ${routeDistance.toFixed(1)}km`);
 
-    // Sjekk om vi trenger lading UANSETT batteriprosent
+    const stationsNearRoute = findStationsNearRoute(routeGeometry);
+    
     if (maxTravelDistance < routeDistance) {
-      const needChargingAt = maxTravelDistance * 0.9; // Lad når 90% av rekkevidden er brukt
-      console.log(`🚨 TRENGER LADING! Kan kun reise ${maxTravelDistance.toFixed(1)}km, men ruten er ${routeDistance.toFixed(1)}km`);
-      console.log(`📍 Foreslår lading etter ca ${needChargingAt.toFixed(1)}km`);
+      // OBLIGATORISK LADING
+      const needChargingAt = maxTravelDistance * 0.9;
+      console.log(`🚨 OBLIGATORISK LADING! Trenger lading etter ca ${needChargingAt.toFixed(1)}km`);
       
-      // Finn ladestasjon ved dette punktet
-      const stationsNearRoute = findStationsNearRoute(routeGeometry);
       const suitableStations = stationsNearRoute
         .filter(s => s.available > 0)
         .filter(s => (s as any).routeDistance <= needChargingAt + 50)
@@ -333,8 +332,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
       const criticalStation = suitableStations[0];
       const arrivalBattery = startBattery - ((criticalStation as any).routeDistance / actualRange) * 100;
-      console.log(`🎯 VALGT: ${criticalStation.name} etter ${(criticalStation as any).routeDistance.toFixed(1)}km`);
-      console.log(`🔋 Anslått batteri ved ankomst: ${arrivalBattery.toFixed(1)}%`);
+      console.log(`🎯 OBLIGATORISK: ${criticalStation.name} etter ${(criticalStation as any).routeDistance.toFixed(1)}km`);
 
       return [{
         ...criticalStation,
@@ -343,10 +341,34 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         departureBattery: 80,
         isRequired: true
       }];
+    } else {
+      // VALGFRI LADING - vis en stasjon på midten av ruten
+      console.log(`✅ Batteriet holder for hele ruten, men viser valgfri stasjon`);
+      const midwayDistance = routeDistance / 2;
+      
+      const midwayStations = stationsNearRoute
+        .filter(s => s.available > 0)
+        .filter(s => (s as any).routeDistance >= midwayDistance - 100)
+        .filter(s => (s as any).routeDistance <= midwayDistance + 100)
+        .sort((a, b) => Math.abs((a as any).routeDistance - midwayDistance) - Math.abs((b as any).routeDistance - midwayDistance));
+
+      if (midwayStations.length === 0) {
+        console.log('📍 Ingen valgfri stasjon funnet på midten av ruten');
+        return [];
+      }
+
+      const optionalStation = midwayStations[0];
+      const arrivalBattery = startBattery - ((optionalStation as any).routeDistance / actualRange) * 100;
+      console.log(`📍 VALGFRI: ${optionalStation.name} etter ${(optionalStation as any).routeDistance.toFixed(1)}km`);
+
+      return [{
+        ...optionalStation,
+        distance: (optionalStation as any).routeDistance,
+        arrivalBattery: arrivalBattery,
+        departureBattery: 80,
+        isRequired: false
+      }];
     }
-    
-    console.log(`✅ Batteriet holder for hele ruten! ${startBattery}% er nok for ${routeDistance.toFixed(1)}km`);
-    return [];
   };
   // Beregn vær-påvirkning (fallback hvis weather service ikke fungerer)
   // Beregn vær-påvirkning (fallback hvis weather service ikke fungerer)
