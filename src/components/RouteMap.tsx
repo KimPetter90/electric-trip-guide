@@ -889,16 +889,18 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       
       // Fjern tidligere feil når vi prøver igjen
       setError(null);
-      // Eksplisitt cleanup før oppdatering
+      // TVUNGEN cleanup av alt
+      console.log('🧹 TVUNGEN CLEANUP - fjerner alt');
       cleanupMap();
       setOptimizedStations([]);
       setRouteAnalysis(null);
+      setMarkers([]);
       
-      // Kort delay for å sikre cleanup er ferdig
+      // Lengre delay for å sikre total cleanup
       setTimeout(() => {
-        console.log('🚀 Starter rute-oppdatering med batteri:', routeData.batteryPercentage, '%');
+        console.log('🚀 STARTER FULL RUTE-OPPDATERING med batteri:', routeData.batteryPercentage, '%');
         updateMapRoute();
-      }, 100);
+      }, 200);  // Økt delay
     } else {
       console.log('❌ MANGLER KRITERIER for rute-oppdatering:');
       console.log('- Map:', !!map.current);
@@ -907,7 +909,12 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       console.log('- Car:', !!selectedCar);
       console.log('- Token:', !!mapboxToken);
     }
-  }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, routeData.trailerWeight, selectedCar?.id, mapboxToken]);
+  }, [routeData, selectedCar, mapboxToken]); // Bruk hele routeData objektet
+
+  // Legg til en separat useEffect som logger endringer
+  useEffect(() => {
+    console.log('🔄🔄🔄 BATTERIPROSENT ENDRET TIL:', routeData.batteryPercentage, '%');
+  }, [routeData.batteryPercentage]);
 
   if (!isVisible) return null;
 
