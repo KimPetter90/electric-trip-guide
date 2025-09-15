@@ -91,7 +91,13 @@ function Index() {
     setRouteOptions(mockRoutes);
     setSelectedRouteId('fastest'); // Velg raskeste som standard
     setLoadingRoutes(false);
-    console.log('✅ Rutevalg generert');
+    console.log('✅ Rutevalg generert, default valgt: fastest');
+  };
+
+  const handleRouteSelect = (routeId: string) => {
+    console.log('🎯 Index.tsx: Nytt rutevalg mottatt:', routeId);
+    setSelectedRouteId(routeId);
+    console.log('🔄 Index.tsx: selectedRouteId oppdatert til:', routeId);
   };
 
   const handlePlanRoute = () => {
@@ -226,7 +232,7 @@ function Index() {
                 <RouteSelector
                   routes={routeOptions}
                   selectedRoute={selectedRouteId}
-                  onRouteSelect={setSelectedRouteId}
+                  onRouteSelect={handleRouteSelect}
                   isLoading={loadingRoutes}
                 />
                 <RouteMap 

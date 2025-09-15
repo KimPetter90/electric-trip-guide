@@ -888,11 +888,12 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
   // Ny useEffect for å håndtere rutevalg
   useEffect(() => {
-    if (selectedRouteId && map.current && routeData.from && routeData.to && selectedCar && accessToken) {
-      console.log('🎯 Rutevalg endret til:', selectedRouteId);
+    console.log('🎯 selectedRouteId endret til:', selectedRouteId);
+    if (selectedRouteId && map.current && routeData.from && routeData.to && selectedCar && accessToken && !loading) {
+      console.log('🔄 Oppdaterer rute basert på rutevalg:', selectedRouteId);
       updateMapRoute(selectedRouteId);
     }
-  }, [selectedRouteId]);
+  }, [selectedRouteId, accessToken, routeData.from, routeData.to, selectedCar]);
 
   if (!isVisible) return null;
 

@@ -100,7 +100,11 @@ export default function RouteSelector({ routes, selectedRoute, onRouteSelect, is
                 : 'border-border bg-card/60 hover:border-primary/50 hover:bg-primary/5'
               }
             `}
-            onClick={() => onRouteSelect(route.id)}
+            onClick={() => {
+              console.log('🎯 Rutevalg klikket:', route.id);
+              onRouteSelect(route.id);
+              console.log('✅ onRouteSelect kalt med:', route.id);
+            }}
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-2">
