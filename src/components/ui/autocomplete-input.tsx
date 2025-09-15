@@ -26,15 +26,13 @@ export function AutocompleteInput({
   const listRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
-    console.log('Autocomplete useEffect - value:', value, 'suggestions length:', suggestions.length);
     if (value.length >= 1) {
       const filtered = suggestions
         .filter(suggestion =>
           suggestion.toLowerCase().includes(value.toLowerCase()) && 
-          suggestion.toLowerCase() !== value.toLowerCase() // Exclude exact matches
+          suggestion.toLowerCase() !== value.toLowerCase()
         )
         .sort((a, b) => {
-          // Prioritize exact matches and those starting with the search term
           const aStarts = a.toLowerCase().startsWith(value.toLowerCase());
           const bStarts = b.toLowerCase().startsWith(value.toLowerCase());
           if (aStarts && !bStarts) return -1;
@@ -42,7 +40,6 @@ export function AutocompleteInput({
           return a.localeCompare(b);
         })
         .slice(0, 10);
-      console.log('Filtered suggestions:', filtered.length, filtered.slice(0, 3));
       setFilteredSuggestions(filtered);
       setIsOpen(filtered.length > 0);
       setHighlightedIndex(-1);

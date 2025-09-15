@@ -196,6 +196,7 @@ const norwegianCities = [
   
   // Småbygder - Finnmark
   "lakselv", "ifjord", "børselv", "stabbursdalen", "karigasniemi", "utsjoki",
+  "kvalsvik", "kvålsvik", // Lagt til begge stavemåter
   "nuorgam", "polmak", "tana bru", "sirma", "deanu", "karasjok",
   "máze", "kautokeino", "guovdageaidnu", "alta", "kåfjord", "kvænangen",
   "storfjord", "lyngen", "balsfjord", "målselv", "bardu", "gratangen",
