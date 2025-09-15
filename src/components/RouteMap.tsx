@@ -660,21 +660,31 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     // Sorter stasjoner etter distanse langs ruten
     stationsAlongRoute.sort((a, b) => a.distanceAlongRoute - b.distanceAlongRoute);
 
-    // Finn stasjoner hvor vi ankommer med 10-15% batteri
+    // Finn stasjoner hvor vi ankommer med 10-20% batteri (utvidet område)
+    console.log('🔍 ANALYSERER ALLE STASJONER:');
     const stationsBeforeCritical = stationsAlongRoute.filter(station => {
       const batteryAtStation = batteryPercentage - (station.distanceAlongRoute / car.range) * 100;
       
       console.log('🔍', station.name + ':', station.distanceAlongRoute.toFixed(1) + 'km, batteri ved ankomst:', batteryAtStation.toFixed(1) + '%');
       
-      // Lade når batteriet er mellom 10-15% ved ankomst
-      const shouldCharge = batteryAtStation >= 10 && batteryAtStation <= 15 && station.distanceAlongRoute < routeDistance * 0.9;
+      // Utvid til 10-20% for å fange flere stasjoner
+      const shouldCharge = batteryAtStation >= 10 && batteryAtStation <= 20 && station.distanceAlongRoute < routeDistance * 0.95;
       
-      console.log('   - Skal lade her? (batteri 10-15%):', shouldCharge);
+      console.log('   - Skal lade her? (batteri 10-20%):', shouldCharge, '| Innenfor rute?', station.distanceAlongRoute < routeDistance * 0.95);
       
       return shouldCharge;
     });
 
-    console.log('📍 Funnet', stationsBeforeCritical.length, 'ladestasjoner hvor du ankommer med 10-15% batteri');
+    console.log('📍 RESULTAT: Funnet', stationsBeforeCritical.length, 'ladestasjoner hvor du ankommer med 10-20% batteri');
+    
+    // Hvis ingen stasjoner funnet, vis alle for debugging
+    if (stationsBeforeCritical.length === 0) {
+      console.log('🚨 INGEN STASJONER FUNNET! Viser alle stasjoner for debugging:');
+      stationsAlongRoute.forEach(station => {
+        const batteryAtStation = batteryPercentage - (station.distanceAlongRoute / car.range) * 100;
+        console.log('   📍', station.name + ':', batteryAtStation.toFixed(1) + '% batteri ved', station.distanceAlongRoute.toFixed(1) + 'km');
+      });
+    }
 
     if (stationsBeforeCritical.length > 0) {
       // Velg stasjonen med lavest batteri ved ankomst (nærmest kritisk punkt)
