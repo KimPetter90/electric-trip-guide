@@ -53,6 +53,13 @@ function Index() {
     }
   };
 
+  // Automatisk vis kartet når alle kriterier er oppfylt
+  React.useEffect(() => {
+    if (selectedCar && routeData.from && routeData.to) {
+      setShowRoute(true);
+    }
+  }, [selectedCar, routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, routeData.trailerWeight]);
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Animated Circuit Background */}
