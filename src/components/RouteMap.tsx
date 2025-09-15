@@ -606,10 +606,15 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         (station as any).distanceToRoute <= 5.0
       );
       
-      console.log('🔵 ANALYSERER EFFEKTIVITET FOR', nearRouteStations.length, 'STASJONER NÆR RUTEN...');
-      console.log('  - Startbatteri:', routeData.batteryPercentage + '%');
-      console.log('  - Bil rekkevidde:', selectedCar.range + 'km');
-      console.log('  - Rutelengde:', routeDistance.toFixed(1) + 'km');
+       console.log('🔵 ANALYSERER EFFEKTIVITET FOR', nearRouteStations.length, 'STASJONER NÆR RUTEN...');
+       console.log('  - Startbatteri:', routeData.batteryPercentage + '%');
+       console.log('  - Bil rekkevidde:', selectedCar.range + 'km');
+       console.log('  - Rutelengde:', routeDistance.toFixed(1) + 'km');
+       
+       if (nearRouteStations.length === 0) {
+         console.log('⚠️ INGEN STASJONER FUNNET INNENFOR 5KM - KAN IKKE LAGE BLÅ MARKØRER');
+         return;
+       }
       
       // Beregn effektivitetsscore for stasjoner nær ruten
       const stationsWithScore = nearRouteStations.map(station => {
@@ -638,6 +643,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       });
       
       console.log('🔵 LEGGER TIL BLÅ MARKØRER FOR MEST EFFEKTIVE STASJONER...');
+      console.log('🔵 Antall blå markører som skal legges til:', bestStations.length);
       
       // Legg til blå markører for de mest effektive stasjonene
       bestStations.forEach((station, index) => {
@@ -679,7 +685,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           .setPopup(popup)
           .addTo(map.current!);
         
-        console.log(`🔵 BLÅ MARKØR ${index + 1}: ${station.name} - MEST EFFEKTIV!`);
+        console.log(`🔵 BLÅ MARKØR ${index + 1}: ${station.name} - MEST EFFEKTIV! LAGT TIL!`);
       });
       
       const nearRouteCount = nearRouteStations.length;
