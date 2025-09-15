@@ -61,7 +61,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
             </Label>
             <AutocompleteInput
               id="from"
-              placeholder="Oslo"
+              placeholder=""
               value={routeData.from}
               onChange={(value) => handleInputChange('from', value)}
               suggestions={norwegianCities}
@@ -76,7 +76,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
             </Label>
             <AutocompleteInput
               id="to"
-              placeholder="Bergen"
+              placeholder=""
               value={routeData.to}
               onChange={(value) => handleInputChange('to', value)}
               suggestions={norwegianCities}
@@ -91,7 +91,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
             </Label>
             <AutocompleteInput
               id="via"
-              placeholder="Lillehammer"
+              placeholder=""
               value={routeData.via || ''}
               onChange={(value) => handleInputChange('via', value)}
               suggestions={norwegianCities}
