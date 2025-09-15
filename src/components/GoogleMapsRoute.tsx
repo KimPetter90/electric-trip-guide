@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Zap, Battery, Clock, DollarSign, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useChargingStationMarkers } from '@/hooks/useChargingStationMarkers';
 
 interface CarModel {
   id: string;
@@ -57,6 +58,14 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
   const [error, setError] = useState<string>('');
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
+
+  // Bruk den nye hooken for å håndtere ladestasjonsmarkører
+  const { clearMarkers } = useChargingStationMarkers(
+    map,
+    chargingStations,
+    requiredStations,
+    routeData.batteryPercentage
+  );
 
   // Load charging stations from database
   useEffect(() => {
@@ -406,111 +415,7 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
     });
   }, [map, directionsService, directionsRenderer, routeData, selectedCar, chargingStations]);
 
-  // Show ALL charging stations when map is loaded - BATCHED FOR PERFORMANCE
-  useEffect(() => {
-    console.log('🗺️ ALL STATIONS useEffect kjører...', { 
-      harKart: !!map, 
-      antallStasjoner: chargingStations.length
-    });
-    
-    if (!map || chargingStations.length === 0) {
-      console.log('🚫 Returnerer tidlig - mangler kart eller stasjoner');
-      return;
-    }
-
-    console.log(`📍 LEGGER TIL ALLE ${chargingStations.length} LADESTASJONER PÅ KARTET...`);
-    console.log('🔍 Første 3 stasjoner:', chargingStations.slice(0, 3).map(s => ({ name: s.name, lat: s.lat, lng: s.lng })));
-    
-    // Rydd bare ladestasjonsmarkører, ikke rute-markører
-    markers.forEach(marker => {
-      const title = marker.getTitle();
-      if (!title?.includes('OBLIGATORISK') && !title?.includes('ANBEFALT')) {
-        marker.setMap(null);
-      }
-    });
-    
-    const newMarkers: google.maps.Marker[] = [];
-    let markersCreated = 0;
-    const BATCH_SIZE = 50; // Legg til markører i batches for bedre performance
-    
-    // Funksjon for å legge til markører i batches
-    const addMarkersBatch = (startIndex: number) => {
-      const endIndex = Math.min(startIndex + BATCH_SIZE, chargingStations.length);
-      
-      for (let i = startIndex; i < endIndex; i++) {
-        const station = chargingStations[i];
-        try {
-          if (i < 10) { // Log første 10 for debugging
-            console.log(`📍 Batch ${Math.floor(i/BATCH_SIZE)+1}: Oppretter markør ${i + 1}: ${station.name} på lat:${station.lat}, lng:${station.lng}`);
-          }
-          
-          const marker = new google.maps.Marker({
-            position: { lat: station.lat, lng: station.lng },
-            map: map,
-            title: station.name,
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: station.fastCharger ? 8 : 6,
-              fillColor: "#00ff41", // Neon grønn for alle ladestasjoner
-              fillOpacity: 0.9,
-              strokeColor: "#ffffff",
-              strokeWeight: 1
-            },
-            zIndex: 1,
-            optimized: true // Bruk Google Maps optimisering
-          });
-          
-          // LOG HVER MARKØR SOM OPPRETTES I NEON GRØNN
-          if (i < 5) { // Log første 5 for debugging
-            console.log(`✅ GRØNN MARKØR ${i + 1}: ${station.name} opprettet med farge #00ff41 (neon grønn)`);
-          }
-
-          const infoWindow = new google.maps.InfoWindow({
-            content: `
-              <div style="color: black; font-family: Arial, sans-serif; min-width: 200px;">
-                <h3 style="margin: 0 0 8px 0;">${station.name}</h3>
-                <p style="margin: 4px 0;"><strong>📍 Lokasjon:</strong> ${station.location}</p>
-                <p style="margin: 4px 0;"><strong>⚡ Type:</strong> ${station.fastCharger ? 'Hurtiglader' : 'Standard lader'}</p>
-                <p style="margin: 4px 0;"><strong>💰 Pris:</strong> ${station.cost} kr/kWh</p>
-                <p style="margin: 4px 0;"><strong>📊 Tilgjengelig:</strong> ${Math.floor(Math.random() * 4) + 1}/${Math.floor(Math.random() * 6) + 4} ladepunkter</p>
-              </div>
-            `
-          });
-
-          marker.addListener('click', () => {
-            infoWindow.open(map, marker);
-          });
-
-          newMarkers.push(marker);
-          markersCreated++;
-          
-        } catch (error) {
-          console.error(`❌ Feil ved opprettelse av markør ${i}:`, error);
-        }
-      }
-      
-      // Legg til neste batch med en liten forsinkelse for bedre performance
-      if (endIndex < chargingStations.length) {
-        setTimeout(() => addMarkersBatch(endIndex), 10);
-      } else {
-        console.log(`✅ FERDIG! OPPRETTET ${markersCreated} AV ${chargingStations.length} MARKØRER`);
-        console.log(`✅ TOTALT ${newMarkers.length} VANLIGE LADESTASJONSMARKØRER LAGT TIL`);
-        
-        // Oppdater markers state med alle nye markører
-        setMarkers(prev => {
-          const routeMarkers = prev.filter(m => {
-            const title = m.getTitle();
-            return title?.includes('OBLIGATORISK') || title?.includes('ANBEFALT');
-          });
-          return [...routeMarkers, ...newMarkers];
-        });
-      }
-    };
-    
-    // Start med første batch
-    addMarkersBatch(0);
-    
-  }, [map, chargingStations]); // Trigger når kart eller stasjoner endres
+  // Ladestasjonsmarkører håndteres nå av useChargingStationMarkers hook
 
   if (!isVisible) return null;
 
