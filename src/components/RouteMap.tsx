@@ -1315,9 +1315,10 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
                      <li>• Værforhold: {weatherData.startWeather.weatherCondition}</li>
                    </ul>
                  </div>
-                </Card>
-             )}
-          </TabsContent>
+                 </Card>
+               )}
+           </div>
+         </TabsContent>
 
         <TabsContent value="stations" className="space-y-4 bg-transparent">
           <div className="grid gap-4">
@@ -1447,4 +1448,4 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
       </div>
     </div>
   );
-}
+};
