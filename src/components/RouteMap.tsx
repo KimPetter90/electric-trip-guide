@@ -187,6 +187,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   const { toast } = useToast();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const lastRouteDataRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
@@ -759,6 +760,13 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         allNewMarkers.push(endMarker);
         
         console.log('Optimaliserer ladestasjoner...');
+        
+        // Lagre rutedata for senere bruk
+        lastRouteDataRef.current = {
+          distance: distance,
+          geometry: route.geometry
+        };
+        
         const optimizedStations = optimizeChargingStations(distance, route.geometry);
         console.log('🔍 RESULTAT fra optimizeChargingStations:', optimizedStations.length, 'stasjoner');
         optimizedStations.forEach((station, i) => {
@@ -973,6 +981,18 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     console.log('  - Via:', routeData.via);
     console.log('  - Batteri:', routeData.batteryPercentage, '%');
     console.log('  - Trailer:', routeData.trailerWeight);
+    
+    // FORCE oppdatering av ladestasjoner når batteri endres
+    if (routeData.from && routeData.to && lastRouteDataRef.current) {
+      console.log('🔄 TVUNGEN OPPDATERING: Batteriprosent endret, oppdaterer ladestasjoner...');
+      const mockGeometry = lastRouteDataRef.current.geometry;
+      const mockDistance = lastRouteDataRef.current.distance;
+      if (mockGeometry && mockDistance) {
+        const newStations = optimizeChargingStations(mockDistance, mockGeometry);
+        console.log('🔄 Nye stasjoner beregnet:', newStations.length);
+        setOptimizedStations(newStations);
+      }
+    }
   }, [routeData.batteryPercentage]);
 
   if (!isVisible) return null;
