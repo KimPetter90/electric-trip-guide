@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import CarSelector from "@/components/CarSelector";
 import RouteInput from "@/components/RouteInput";
+import RouteSelector from "@/components/RouteSelector";
 import ChargingMap from "@/components/ChargingMap";
 import RouteMap from "@/components/RouteMap";
 import { Zap, Route, MapPin, Car } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
+import { type RouteOption } from "@/components/RouteSelector";
 
 interface CarModel {
   id: string;
@@ -39,6 +41,58 @@ function Index() {
   });
   const [showRoute, setShowRoute] = useState(true);
   const [routeTrigger, setRouteTrigger] = useState(0); // Trigger for manual route updates
+  const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
+  const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
+  const [loadingRoutes, setLoadingRoutes] = useState(false);
+
+  // Generer rutevalg når ruten planlegges
+  const generateRouteOptions = async () => {
+    if (!selectedCar || !routeData.from || !routeData.to) return;
+
+    setLoadingRoutes(true);
+    console.log('🚀 Genererer rutevalg...');
+
+    // Simuler API-kall for å hente 3 forskjellige ruter
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    const mockRoutes: RouteOption[] = [
+      {
+        id: 'fastest',
+        name: 'Raskeste rute',
+        distance: 463,
+        duration: 420, // minutter
+        chargingStops: 2,
+        estimatedCost: 280,
+        description: 'Hovedveier og motorveier. Minimale stopp, men mer kostbare ladestasjoner.',
+        routeType: 'fastest'
+      },
+      {
+        id: 'shortest',
+        name: 'Korteste rute',
+        distance: 441,
+        duration: 465, // minutter
+        chargingStops: 1,
+        estimatedCost: 240,
+        description: 'Direkteste vei mellom destinasjonene. Noen mindre veier, men kortere avstand.',
+        routeType: 'shortest'
+      },
+      {
+        id: 'eco',
+        name: 'Miljøvennlig rute',
+        distance: 478,
+        duration: 485, // minutter
+        chargingStops: 3,
+        estimatedCost: 195,
+        description: 'Optimalisert for lavest energiforbruk. Bruker rimelige ladestasjoner med fornybar energi.',
+        routeType: 'eco'
+      }
+    ];
+
+    setRouteOptions(mockRoutes);
+    setSelectedRouteId('fastest'); // Velg raskeste som standard
+    setLoadingRoutes(false);
+    console.log('✅ Rutevalg generert');
+  };
 
   const handlePlanRoute = () => {
     console.log('🚀 Planlegger rute med data:', { selectedCar, routeData });
@@ -46,6 +100,7 @@ function Index() {
       console.log('✅ Alle kriterier oppfylt, setter showRoute til true og trigger manuell oppdatering');
       setShowRoute(true);
       setRouteTrigger(prev => prev + 1); // Trigger manuell oppdatering
+      generateRouteOptions(); // Generer rutevalg
     } else {
       console.log('❌ Mangler data:', { 
         harValgtBil: !!selectedCar, 
@@ -168,11 +223,18 @@ function Index() {
               </Card>
             ) : (
               <div className="space-y-6">
+                <RouteSelector
+                  routes={routeOptions}
+                  selectedRoute={selectedRouteId}
+                  onRouteSelect={setSelectedRouteId}
+                  isLoading={loadingRoutes}
+                />
                 <RouteMap 
                   isVisible={showRoute} 
                   routeData={routeData}
                   selectedCar={selectedCar}
                   routeTrigger={routeTrigger}
+                  selectedRouteId={selectedRouteId}
                 />
                 <ChargingMap isVisible={showRoute} />
               </div>

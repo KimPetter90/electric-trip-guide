@@ -91,6 +91,7 @@ interface RouteMapProps {
   routeData: RouteData;
   selectedCar: CarModel;
   routeTrigger?: number;
+  selectedRouteId?: string | null;
 }
 
 // Koordinater for norske byer
@@ -171,7 +172,7 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return R * c;
 }
 
-const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, routeTrigger }) => {
+const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, routeTrigger, selectedRouteId }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [loading, setLoading] = useState(false);
