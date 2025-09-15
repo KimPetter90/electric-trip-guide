@@ -1048,7 +1048,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar }
                     </h4>
                     
                     {optimizedStations.filter((station: any) => station.isRequired).map((station: any, index: number) => (
-                      <Card key={station.id} className="p-4 bg-card/80 backdrop-blur-sm border-border border-l-4 border-l-red-500">
+                      <Card key={station.id} className="p-4 glass-card neon-glow border-l-4 border-l-red-500">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
@@ -1105,7 +1105,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar }
                     </h4>
                     
                     {optimizedStations.filter((station: any) => !station.isRequired).map((station: any, index: number) => (
-                      <Card key={station.id} className="p-4 bg-card/80 backdrop-blur-sm border-border border-l-4 border-l-blue-500">
+                      <Card key={station.id} className="p-4 glass-card cyber-glow border-l-4 border-l-blue-500">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
@@ -1155,7 +1155,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar }
                 )}
               </>
             ) : (
-              <Card className="p-8 text-center">
+              <Card className="p-8 text-center glass-card">
                 <Battery className="h-12 w-12 mx-auto mb-4 text-green-500" />
                 <h3 className="text-lg font-semibold mb-2">Ingen lading nødvendig!</h3>
                 <p className="text-muted-foreground">
