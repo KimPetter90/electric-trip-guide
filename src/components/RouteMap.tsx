@@ -289,10 +289,64 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     return sortedStations;
   };
   
-  // DEAKTIVERT: Ingen ladestasjoner vises
+  // SMART LOGIKK: Vis kun nødvendige ladestasjoner når batteriet når 10%
   const optimizeChargingStations = (routeDistance: number, routeGeometry: any) => {
-    console.log('🚫 ALLE LADESTASJONER DEAKTIVERT');
-    return [];
+    console.log('🔧 SMART ANALYSE: Finner kun obligatoriske stopp ved 10% batteri');
+    if (!selectedCar) return [];
+
+    const currentBattery = routeData.batteryPercentage;
+    const actualRange = selectedCar.range * 0.85; // Realistisk rekkevidde
+    const currentRange = (currentBattery / 100) * actualRange;
+
+    console.log('🔋 Start:', currentBattery + '%');
+    console.log('🚗 Rekkevidde:', actualRange, 'km'); 
+    console.log('📏 Kan kjøre nå:', currentRange, 'km');
+    console.log('🛣️ Total rute:', routeDistance, 'km');
+
+    // Hvis batteriet holder hele ruten
+    if (currentRange >= routeDistance) {
+      console.log('✅ INGEN LADING NØDVENDIG');
+      return [];
+    }
+
+    // Finn hvor batteriet når 10%
+    const batteryAt10Percent = actualRange * 0.1;
+    const distanceBeforeCritical = currentRange - batteryAt10Percent;
+    
+    console.log('⚠️ Batteriet når 10% etter:', distanceBeforeCritical.toFixed(1), 'km');
+
+    if (distanceBeforeCritical >= routeDistance) {
+      console.log('✅ Batteriet holder over 10% hele ruten');
+      return [];
+    }
+
+    // Finn nærmeste stasjon før dette punktet
+    const stationsNearRoute = findStationsNearRoute(routeGeometry);
+    const availableStations = stationsNearRoute
+      .filter(s => s.available > 0)
+      .filter(s => (s as any).routeDistance <= distanceBeforeCritical)
+      .sort((a, b) => Math.abs((a as any).routeDistance - distanceBeforeCritical) - Math.abs((b as any).routeDistance - distanceBeforeCritical));
+
+    if (availableStations.length === 0) {
+      console.log('❌ INGEN STASJON FUNNET INNEN KRITISK AVSTAND');
+      return [];
+    }
+
+    const criticalStation = availableStations[0];
+    const stationDistance = (criticalStation as any).routeDistance;
+    const arrivalBattery = Math.max(5, currentBattery - (stationDistance / actualRange) * 100);
+
+    console.log('🚨 EN KRITISK STASJON FUNNET:', criticalStation.name);
+    console.log('📍 Avstand:', stationDistance.toFixed(1), 'km');
+    console.log('🔋 Batteri ved ankomst:', arrivalBattery.toFixed(1), '%');
+
+    return [{
+      ...criticalStation,
+      distance: stationDistance,
+      arrivalBattery,
+      departureBattery: 80,
+      isRequired: true
+    }];
   };
   // Beregn vær-påvirkning (fallback hvis weather service ikke fungerer)
   const calculateWeatherImpact = (): WeatherData => {
@@ -662,8 +716,86 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         markers.forEach(marker => marker.remove());
         const chargingMarkers: mapboxgl.Marker[] = [];
         
-        // INGEN LADESTASJONER MARKØRER - bare start og slutt
-        console.log('🚫 Ingen ladestasjoner vises på kartet');
+        // VIS KUN OBLIGATORISKE ladestasjoner (hvor batteriet når 10%)
+        optimizedStations.forEach((station, index) => {
+          const isRequired = (station as any).isRequired;
+          const arrivalBattery = (station as any).arrivalBattery || 50;
+          
+          // BARE vis obligatoriske stasjoner
+          if (!isRequired) {
+            console.log(`⏭️ Hopper over ${station.name} - ikke obligatorisk`);
+            return;
+          }
+          
+          console.log(`🔍 Lager markør for OBLIGATORISK stasjon ${station.name}:`, { 
+            isRequired, 
+            arrivalBattery, 
+            lat: station.lat, 
+            lng: station.lng,
+            distance: station.distance 
+          });
+          
+          const el = document.createElement('div');
+          el.className = 'charging-marker';
+          
+          // OBLIGATORISK ladestasjon - stor rød markør med tydelig varsel
+          el.style.backgroundColor = '#dc2626';
+          el.style.border = '4px solid #ffffff';
+          el.style.boxShadow = '0 0 20px rgba(220, 38, 38, 0.8), 0 0 40px rgba(220, 38, 38, 0.4)';
+          el.style.width = '40px';
+          el.style.height = '40px';
+          el.style.zIndex = '1000';
+          el.style.borderRadius = '50%';
+          el.style.color = 'white';
+          el.style.display = 'flex';
+          el.style.alignItems = 'center';
+          el.style.justifyContent = 'center';
+          el.style.fontSize = '18px';
+          el.style.fontWeight = 'bold';
+          el.style.position = 'relative';
+          el.style.cursor = 'pointer';
+          
+          // Spesielt varselikon for kritisk batterinivå
+          if (arrivalBattery <= 15) {
+            el.innerHTML = `
+              <span style="position: absolute; top: -8px; right: -8px; background: #fbbf24; color: #000; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid white;">!</span>
+              ⚡
+            `;
+          } else {
+            el.textContent = '⚡';
+          }
+
+          // Sjekk at vi har gyldige koordinater
+          if (!station.lat || !station.lng) {
+            console.error(`❌ Ugyldig koordinater for ${station.name}:`, station);
+            return;
+          }
+
+          const marker = new mapboxgl.Marker(el)
+            .setLngLat([station.lng, station.lat])
+            .setPopup(new mapboxgl.Popup().setHTML(`
+              <div class="p-3 max-w-xs">
+                <div class="flex items-center gap-2 mb-2">
+                  <h4 class="font-semibold text-sm">${station.name}</h4>
+                  <span class="bg-red-500 text-white text-xs px-2 py-1 rounded">
+                    OBLIGATORISK
+                  </span>
+                </div>
+                <p class="text-sm text-gray-600 mb-2">${station.location}</p>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <div><strong>Avstand:</strong> ${Math.round(station.distance || 0)} km</div>
+                  <div><strong>Tilgjengelig:</strong> ${station.available}/${station.total}</div>
+                  <div><strong>Ankomst batteri:</strong> <span class="text-red-600 font-bold">${Math.round(arrivalBattery)}%</span></div>
+                  <div><strong>Ladetid:</strong> ${station.chargeTime} min</div>
+                  <div><strong>Kostnad:</strong> ${station.cost} kr</div>
+                  <div><strong>Etter lading:</strong> <span class="text-green-600 font-bold">80%</span></div>
+                </div>
+              </div>
+            `))
+            .addTo(map.current!);
+
+          chargingMarkers.push(marker);
+        });
         
         // Kombiner alle markører
         const allNewMarkers = [...newMarkers, ...chargingMarkers];
