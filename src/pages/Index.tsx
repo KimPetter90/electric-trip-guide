@@ -39,7 +39,7 @@ function Index() {
     batteryPercentage: 0,
     travelDate: undefined
   });
-  const [showRoute, setShowRoute] = useState(true);
+  const [showRoute, setShowRoute] = useState(false);
   const [routeTrigger, setRouteTrigger] = useState(0); // Trigger for manual route updates
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
@@ -116,12 +116,8 @@ function Index() {
     }
   };
 
-  // Automatisk vis kartet når alle kriterier er oppfylt
-  React.useEffect(() => {
-    if (selectedCar && routeData.from && routeData.to) {
-      setShowRoute(true);
-    }
-  }, [selectedCar, routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, routeData.trailerWeight]);
+  // Vis kartet kun når "Planlegg rute" trykkes - ikke automatisk
+  // (Fjernet automatisk visning)
 
   return (
     <div className="min-h-screen bg-gradient-hero relative overflow-hidden">
