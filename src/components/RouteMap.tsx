@@ -344,7 +344,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     console.log('🔢 Sorterte stasjoner (første 3):', sortedStations.slice(0, 3).map(s => `${s.name} (${((s as any).routeDistance || 0).toFixed(1)}km fra start, ${s.fastCharger ? 'Hurtig' : 'Vanlig'}, ${s.available}/${s.total} ledig, ${s.chargeAmount}kWh)`));
 
     // Simuler reise og finn alle nødvendige ladingstopp
-    const lowBatteryThreshold = 15; // Anbefal lading når batteriet kommer under 15%
+    const lowBatteryThreshold = 10; // Obligatorisk lading når batteriet når 10% eller mindre
     const chargingStops: any[] = [];
     let currentBatteryLevel = currentBattery;
     let currentPosition = 0;
@@ -354,6 +354,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     console.log('🔋 Startbatteri:', currentBattery, '%');
     console.log('📏 Total rutedistanse:', routeDistance, 'km');
     console.log('🎯 Faktisk rekkevidde med bil:', actualRange, 'km');
+    console.log(`⚠️ KRITISK NIVÅ: Obligatorisk lading når batteriet når ${lowBatteryThreshold}% eller mindre`);
     
     let loopCounter = 0; // Sikkerhet mot uendelig løkke
     while (currentPosition < routeDistance && loopCounter < 20) { // Økt til 20 iterasjoner
@@ -366,8 +367,12 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       console.log(`🎯 På posisjon ${currentPosition.toFixed(1)}km, batteri: ${currentBatteryLevel.toFixed(1)}%, kan kjøre: ${maxDistanceWithCurrentBattery.toFixed(1)}km, gjenstår: ${remainingDistance.toFixed(1)}km`);
       console.log(`   Hvis vi kjører hele resten nå, vil batteriet være: ${(currentBatteryLevel - (remainingDistance / actualRange) * 100).toFixed(1)}%`);
       
-      // Hvis vi kan nå målet med nåværende batteri
-      if (maxDistanceWithCurrentBattery >= remainingDistance) {
+      // Sjekk om vi vil ende opp med for lavt batteri før vi når målet
+      const finalBatteryIfWeContinue = currentBatteryLevel - (remainingDistance / actualRange) * 100;
+      const willNeedCharging = finalBatteryIfWeContinue < lowBatteryThreshold;
+      
+      // Hvis vi kan nå målet med nåværende batteri OG har nok batteri igjen
+      if (maxDistanceWithCurrentBattery >= remainingDistance && !willNeedCharging) {
         const finalBattery = currentBatteryLevel - (remainingDistance / actualRange) * 100;
         console.log(`✅ Kan nå målet! Batterinivå ved ankomst: ${finalBattery.toFixed(1)}%`);
         break;
@@ -375,6 +380,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       
       // Vi trenger lading - finn nærmeste tilgjengelige stasjon vi kan nå
       console.log(`🔍 Leter etter tilgjengelige stasjoner fra posisjon ${currentPosition.toFixed(1)}km...`);
+      console.log(`⚠️ Årsak: ${willNeedCharging ? `Batteriet vil bli ${finalBatteryIfWeContinue.toFixed(1)}% (under ${lowBatteryThreshold}%)` : 'Ikke nok rekkevidde'}`);
+      
       const reachableStations = sortedStations.filter(station => {
         const stationDistance = (station as any).routeDistance;
         const distanceToStation = stationDistance - currentPosition;
@@ -437,13 +444,14 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       console.log(`📍 Ladingstopp ${chargingStops.length + 1}: ${bestStation.name} på ${stationDistance.toFixed(1)}km`);
       console.log(`   Ankomst batteri: ${arrivalBattery.toFixed(1)}%`);
       console.log(`   Avreise batteri: ${departureBattery.toFixed(1)}%`);
+      console.log(`   ${arrivalBattery <= lowBatteryThreshold ? '🚨 OBLIGATORISK' : '💡 Valgfritt'} - batterinivå ved ankomst`);
       
       chargingStops.push({
         ...bestStation,
         distance: stationDistance,
         arrivalBattery,
         departureBattery,
-        isRequired: arrivalBattery < 10 // Obligatorisk når batteriet når 10% (værforhold er allerede inkludert i beregningen)
+        isRequired: arrivalBattery <= lowBatteryThreshold // Obligatorisk når batteriet når 10% eller mindre
       });
       
       // Oppdater posisjon og batterinivå for neste iterasjon
