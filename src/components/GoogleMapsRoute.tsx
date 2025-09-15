@@ -312,10 +312,10 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
             let markerColor = '#3b82f6'; // Blå som standard (anbefalt)
             
             if (station.requiredStop) {
-              markerColor = '#ef4444'; // Rød for obligatoriske stasjoner
-            } else if (isCriticalBattery) {
-              markerColor = '#ff0000'; // Knallrød når batteriet er kritisk
+              // Obligatoriske stasjoner er røde, og EKSTRA røde hvis batteriet er kritisk
+              markerColor = isCriticalBattery ? '#ff0000' : '#ef4444';
             }
+            // Anbefalte stasjoner forblir blå selv når batteriet er kritisk
             
             // Legg til større, mer synlig markør for optimerte stasjoner
             const optimizedMarker = new google.maps.Marker({
