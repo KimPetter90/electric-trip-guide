@@ -514,8 +514,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     
     const criticalBatteryLevel = 10; // Kritisk batterinivå på 10%
     const maxChargingLevel = 80; // Lad til maks 80%
-    const maxDetourDistance = 50; // ØKT til 50km avvik - MYE mer liberalt!
-    const maxStationsToShow = 20; // ØKT til 20 stasjoner
+    const maxDetourDistance = 100; // ØKT til 100km avvik - EKSTREMT liberalt!
+    const maxStationsToShow = 50; // ØKT til 50 stasjoner
 
     console.log('🔋 DETALJERT BEREGNING:');
     console.log('   - Start batteri:', batteryPercentage + '%');
@@ -627,47 +627,25 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       });
     }
 
-    if (stationsBeforeCritical.length > 0) {
-      // Velg stasjonen med lavest batteri ved ankomst (nærmest kritisk punkt)
-      const bestStation = stationsBeforeCritical.reduce((best, current) => {
-        const bestBattery = batteryPercentage - (best.distanceAlongRoute / car.range) * 100;
-        const currentBattery = batteryPercentage - (current.distanceAlongRoute / car.range) * 100;
-        return currentBattery < bestBattery ? current : best;
-      });
-
-      const arrivalBattery = batteryPercentage - (bestStation.distanceAlongRoute / car.range) * 100;
+    // LEGG TIL ALLE STASJONER LANGS RUTEN DIREKTE!
+    console.log('🔧 LEGGER TIL ALLE', stationsBeforeCritical.length, 'STASJONER DIREKTE TIL OPTIMIZED ARRAY!');
+    
+    stationsBeforeCritical.forEach((station, index) => {
+      const arrivalBattery = batteryPercentage - (station.distanceAlongRoute / car.range) * 100;
       
-      console.log('🏆 BESTE STASJON:', bestStation.name, 'med', arrivalBattery.toFixed(1) + '% batteri ved ankomst');
-      console.log('🎯 VALGT:', bestStation.name, 'ved', bestStation.distanceAlongRoute.toFixed(1) + 'km');
+      console.log('🎯 LEGGER TIL STASJON:', station.name, 'ved', station.distanceAlongRoute.toFixed(1) + 'km');
       console.log('   - Batteriprosent ved ankomst:', arrivalBattery.toFixed(1) + '%');
-      console.log('   - Type: OBLIGATORISK lading');
-
-      optimizedStations.push({
-        ...bestStation,
-        arrivalBatteryPercentage: arrivalBattery,
-        targetBatteryPercentage: maxChargingLevel,
-        isRequired: true,
-        chargingTime: calculateChargingTime(arrivalBattery, maxChargingLevel, bestStation.fastCharger)
-      });
-
-      currentBatteryLevel = maxChargingLevel;
-      currentDistance = bestStation.distanceAlongRoute;
-
-      // Sjekk om vi trenger flere stasjoner
-      const remainingDistance = routeDistance - currentDistance;
-      const rangeAfterCharging = (currentBatteryLevel - criticalBatteryLevel) / 100 * car.range;
       
-      console.log('🔄 SJEKKER OM VI TRENGER FLERE STASJONER:');
-      console.log('   - Gjenstående rute etter første stasjon:', remainingDistance.toFixed(1) + 'km');
-      console.log('   - Med ' + currentBatteryLevel + '% batteri kan vi kjøre:', rangeAfterCharging.toFixed(1) + 'km til ' + criticalBatteryLevel + '%');
+      optimizedStations.push({
+        ...station,
+        arrivalBatteryPercentage: arrivalBattery,
+        targetBatteryPercentage: 80,
+        isRequired: true,
+        chargingTime: calculateChargingTime(arrivalBattery, 80, station.fastCharger)
+      });
+    });
 
-      if (remainingDistance > rangeAfterCharging) {
-        console.log('🚨 TRENGER EN STASJON TIL!');
-        // Her kan vi legge til logikk for flere stasjoner hvis nødvendig
-      }
-    }
-
-    console.log('📊 RESULTAT:', optimizedStations.length, 'ladestasjoner nødvendig');
+    console.log('📊 RESULTAT: Lagt til', optimizedStations.length, 'ladestasjoner i optimized array');
     
     optimizedStations.forEach((station, index) => {
       console.log('📍 Stasjon', (index + 1) + ':', station.name, 'på', station.distanceAlongRoute?.toFixed(1) + 'km -', station.arrivalBatteryPercentage?.toFixed(1) + '% →', station.targetBatteryPercentage?.toFixed(1) + '%');
