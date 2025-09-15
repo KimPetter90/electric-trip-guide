@@ -539,45 +539,42 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     const distanceBeforeCritical = ((batteryPercentage - criticalBatteryLevel) / 100) * car.range;
     console.log('📍 Distanse før kritisk punkt (10%):', distanceBeforeCritical.toFixed(1) + 'km');
 
-    // Finn stasjoner langs ruten
+    // Finn stasjoner langs ruten - MEGET LIBERALT
+    console.log('🔍 STARTER SØKING LANGS RUTEN...');
     const stationsAlongRoute = availableStations
       .map(station => {
-        // Finn nærmeste punkt på ruten til stasjonen
-        let minDistance = Infinity;
-        let closestPointIndex = 0;
-        let distanceAlongRoute = 0;
-
-        for (let i = 0; i < routeCoordinates.length - 1; i++) {
-          const distance = getDistance(
-            station.latitude,
-            station.longitude,
-            routeCoordinates[i][1],
-            routeCoordinates[i][0]
-          );
-
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestPointIndex = i;
-          }
+        // I stedet for kompleks ruteberegning, bruk enkel luftlinjedistanse
+        const routeStartLat = routeCoordinates[0][1];
+        const routeStartLng = routeCoordinates[0][0];
+        const routeEndLat = routeCoordinates[routeCoordinates.length - 1][1];
+        const routeEndLng = routeCoordinates[routeCoordinates.length - 1][0];
+        
+        // Beregn avstand til start og slutt
+        const distanceToStart = getDistance(station.latitude, station.longitude, routeStartLat, routeStartLng);
+        const distanceToEnd = getDistance(station.latitude, station.longitude, routeEndLat, routeEndLng);
+        
+        // Enkel beregning: hvis stasjonen er innenfor en "rute-korridor"
+        const totalRouteDistance = getDistance(routeStartLat, routeStartLng, routeEndLat, routeEndLng);
+        const stationIsReasonablyClose = (distanceToStart + distanceToEnd) <= (totalRouteDistance + maxDetourDistance);
+        
+        console.log('🗺️', station.name + ': distanse til start =', distanceToStart.toFixed(1) + 'km, til slutt =', distanceToEnd.toFixed(1) + 'km, rute-total =', totalRouteDistance.toFixed(1) + 'km, akseptert =', stationIsReasonablyClose);
+        
+        if (stationIsReasonablyClose) {
+          // Approximer distanse langs ruten som gjennomsnitt av start og slutt-distanse
+          const approximateRouteDistance = (distanceToStart + distanceToEnd) / 2;
+          
+          return {
+            ...station,
+            distanceFromRoute: Math.min(distanceToStart, distanceToEnd),
+            distanceAlongRoute: approximateRouteDistance
+          };
         }
-
-        // Beregn distanse langs ruten til nærmeste punkt
-        for (let i = 0; i < closestPointIndex; i++) {
-          distanceAlongRoute += getDistance(
-            routeCoordinates[i][1],
-            routeCoordinates[i][0],
-            routeCoordinates[i + 1][1],
-            routeCoordinates[i + 1][0]
-          );
-        }
-
-        return {
-          ...station,
-          distanceFromRoute: minDistance,
-          distanceAlongRoute: distanceAlongRoute
-        };
+        return null;
       })
-      .filter(station => station.distanceFromRoute <= maxDetourDistance)
+      .filter((station): station is ChargingStation & {
+        distanceFromRoute: number;
+        distanceAlongRoute: number;
+      } => station !== null)
       .slice(0, maxStationsToShow);
 
     console.log('📍 Fant', stationsAlongRoute.length, 'stasjoner langs ruten (maks', maxStationsToShow + ', innen', maxDetourDistance + 'km)');
@@ -598,10 +595,10 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       
       console.log('🔍', station.name + ':', station.distanceAlongRoute.toFixed(1) + 'km, batteri ved ankomst:', batteryAtStation.toFixed(1) + '%');
       
-      // MYCKET liberale kriterier: lade hvis batteriet er 50% eller mindre!
-      const shouldCharge = batteryAtStation >= 1 && batteryAtStation <= 50 && station.distanceAlongRoute < routeDistance * 0.98;
+      // EXTREMELY liberale kriterier: bare sjekk at batteriet ikke er negativt!
+      const shouldCharge = batteryAtStation >= -50 && batteryAtStation <= 80;
       
-      console.log('   - Skal lade her? (batteri 1-50%):', shouldCharge, '| Distanse OK?', station.distanceAlongRoute < routeDistance * 0.98);
+      console.log('   - Skal lade her? (batteri > -50%):', shouldCharge);
       
       return shouldCharge;
     });
