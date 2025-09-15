@@ -344,27 +344,28 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       
       // Velg riktig Mapbox profil og parametre basert på rutetype
       let mapboxProfile = 'driving';
-      let routeParams = 'geometries=geojson&access_token=' + accessToken;
+      let routeParams = 'geometries=geojson&access_token=' + accessToken + '&alternatives=true&continue_straight=false';
       
       switch (routeType) {
         case 'fastest':
           mapboxProfile = 'driving-traffic'; // Raskeste med trafikk
-          routeParams += '&alternatives=true&steps=true&annotations=duration';
+          routeParams += '&steps=true&annotations=duration&exclude=ferry';
           break;
         case 'shortest':
           mapboxProfile = 'driving'; // Standard driving
-          routeParams += '&alternatives=true&steps=true&annotations=distance';
+          routeParams += '&steps=true&annotations=distance&overview=full';
           break;
         case 'eco':
           mapboxProfile = 'driving'; // Eco-vennlig
-          routeParams += '&alternatives=true&steps=true&annotations=duration,distance&overview=full';
+          routeParams += '&steps=true&annotations=duration,distance&overview=full&exclude=toll';
           break;
         default:
           mapboxProfile = 'driving';
-          routeParams += '&alternatives=true&steps=true';
+          routeParams += '&steps=true&alternatives=true';
       }
       
       const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/${mapboxProfile}/${coordinates}?${routeParams}`;
+      console.log('🌐 API URL for', routeType + ':', directionsUrl.split('?')[0] + '?[params]');
       
       const directionsResponse = await fetch(directionsUrl);
       const directionsData = await directionsResponse.json();
@@ -378,33 +379,38 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       console.log('📊 Antall tilgjengelige ruter fra Mapbox:', directionsData.routes.length);
       
       if (directionsData.routes.length > 1) {
+        console.log('🔍 Analyserer ruter:');
+        directionsData.routes.forEach((route, index) => {
+          console.log(`  Rute ${index + 1}: ${(route.distance/1000).toFixed(1)}km, ${(route.duration/3600).toFixed(1)}t`);
+        });
+        
         switch (routeType) {
           case 'fastest':
             // Finn ruten med korteste varighet
             selectedRoute = directionsData.routes.reduce((fastest, current) => 
               current.duration < fastest.duration ? current : fastest
             );
-            console.log('⚡ Valgte raskeste rute');
+            console.log('⚡ Valgte raskeste rute:', (selectedRoute.distance/1000).toFixed(1) + 'km');
             break;
           case 'shortest':
             // Finn ruten med korteste distanse
             selectedRoute = directionsData.routes.reduce((shortest, current) => 
               current.distance < shortest.distance ? current : shortest
             );
-            console.log('📏 Valgte korteste rute');
+            console.log('📏 Valgte korteste rute:', (selectedRoute.distance/1000).toFixed(1) + 'km');
             break;
           case 'eco':
-            // For eco, velg en rute som balanserer tid og distanse (typisk alternativ rute)
-            if (directionsData.routes.length >= 3) {
-              selectedRoute = directionsData.routes[2]; // Tredje alternativ
-            } else if (directionsData.routes.length >= 2) {
-              selectedRoute = directionsData.routes[1]; // Andre alternativ
-            }
-            console.log('🌱 Valgte miljøvennlig rute');
+            // For eco, velg ruten som IKKE er raskest (typisk lengre men mer effektiv)
+            const fastest = directionsData.routes.reduce((fastest, current) => 
+              current.duration < fastest.duration ? current : fastest
+            );
+            // Velg en annen rute enn den raskeste
+            selectedRoute = directionsData.routes.find(route => route !== fastest) || directionsData.routes[1] || fastest;
+            console.log('🌱 Valgte miljøvennlig rute:', (selectedRoute.distance/1000).toFixed(1) + 'km');
             break;
         }
       } else {
-        console.log('⚠️ Kun én rute tilgjengelig fra Mapbox');
+        console.log('⚠️ Kun én rute tilgjengelig fra Mapbox - bruker forskjellige profiler for variasjon');
       }
 
       const route = selectedRoute;
