@@ -321,10 +321,12 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     if (distanceUntil10Percent >= routeDistance) {
       const finalBattery = startBattery - ((routeDistance / actualRange) * 100);
       console.log(`✅ BATTERIET HOLDER! Sluttbatteri vil være: ${finalBattery.toFixed(1)}%`);
-      return [];
+      console.log(`📍 MEN VISER LIKEVEL HVOR BATTERIET VILLE NÅDD 10% (VED ${distanceUntil10Percent.toFixed(1)}km)`);
+      // IKKE returner tom array - fortsett å vise hvor 10% ville vært
+    } else {
+      console.log(`🚨 BATTERIET NÅR 10% VED ${distanceUntil10Percent.toFixed(1)}km av ${routeDistance.toFixed(1)}km`);
     }
-
-    console.log(`🚨 BATTERIET NÅR 10% VED ${distanceUntil10Percent.toFixed(1)}km av ${routeDistance.toFixed(1)}km`);
+    
     console.log(`📍 LETER ETTER LADESTASJONER NÆR ${distanceUntil10Percent.toFixed(1)}km...`);
 
     // Finn ladestasjon nær dette punktet
@@ -354,17 +356,21 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     // Beregn batteriprosent ved ankomst til stasjonen
     const batteryUsedToStation = (stationDistance / actualRange) * 100;
     const batteryAtStation = startBattery - batteryUsedToStation;
+    
+    // Sjekk om dette er obligatorisk eller valgfri lading
+    const isRequired = distanceUntil10Percent < routeDistance;
 
     console.log(`🎯 VALGT: ${station.name} ved ${stationDistance.toFixed(1)}km`);
     console.log(`   - Bruker ${batteryUsedToStation.toFixed(1)}% batteri for å komme dit`);
     console.log(`   - Batteriprosent ved ankomst: ${batteryAtStation.toFixed(1)}%`);
+    console.log(`   - Type: ${isRequired ? 'OBLIGATORISK' : 'VALGFRI'} lading`);
 
     const results = [{
       ...station,
       distance: stationDistance,
       arrivalBattery: Math.max(batteryAtStation, 0),
       departureBattery: 80,
-      isRequired: true
+      isRequired: isRequired // True hvis batteriet ikke holder, false hvis det holder
     }];
 
     // Sjekk om vi trenger flere stasjoner etter første lading
