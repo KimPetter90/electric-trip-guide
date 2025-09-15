@@ -116,38 +116,63 @@ const fetchNorwegianChargingStations = async (): Promise<ChargingStation[]> => {
   try {
     console.log('🔍 Laster utvidet ladestasjonsdatabase...');
     
-    // Redusert antall ladestasjoner - kun hovedruter og viktige stopp
+    // For nå bruker vi en utvidet statisk database med mange flere stasjoner
     const extendedStations: ChargingStation[] = [
-      // Oslo-området (hovedstasjoner)
+      // Oslo-området
       { id: "ocm_1001", name: "Circle K Ryen", location: "Oslo", lat: 59.8847, lng: 10.8061, chargeTime: 35, chargeAmount: 40, cost: 200, fastCharger: false, available: 3, total: 4 },
       { id: "ocm_1002", name: "Tesla Supercharger Vinterbro", location: "Ås", lat: 59.7465, lng: 10.8156, chargeTime: 18, chargeAmount: 58, cost: 290, fastCharger: true, available: 6, total: 8 },
       { id: "ocm_1003", name: "Ionity Rygge", location: "Moss", lat: 59.3789, lng: 10.7856, chargeTime: 22, chargeAmount: 54, cost: 270, fastCharger: true, available: 4, total: 6 },
       { id: "ocm_1004", name: "Mer Fornebu", location: "Bærum", lat: 59.8956, lng: 10.6161, chargeTime: 40, chargeAmount: 35, cost: 175, fastCharger: false, available: 2, total: 4 },
       
-      // Hovedrute E6 (kun viktigste stopp)
+      // På ruten Oslo-Ålesund (E6/E136)
+      { id: "ocm_1005", name: "Circle K Harestua", location: "Lunner", lat: 60.3167, lng: 10.5333, chargeTime: 30, chargeAmount: 42, cost: 210, fastCharger: false, available: 2, total: 3 },
       { id: "ocm_1006", name: "Tesla Supercharger Mjøsbrua", location: "Moelv", lat: 60.9344, lng: 10.6911, chargeTime: 20, chargeAmount: 52, cost: 260, fastCharger: true, available: 5, total: 8 },
       { id: "ocm_1007", name: "Eviny Dombås", location: "Dovre", lat: 62.0744, lng: 9.1200, chargeTime: 28, chargeAmount: 48, cost: 240, fastCharger: true, available: 3, total: 5 },
+      { id: "ocm_1008", name: "Circle K Otta", location: "Sel", lat: 61.7711, lng: 9.5278, chargeTime: 32, chargeAmount: 38, cost: 190, fastCharger: false, available: 1, total: 2 },
       { id: "ocm_1009", name: "Ionity Lom", location: "Lom", lat: 61.8367, lng: 8.5678, chargeTime: 25, chargeAmount: 50, cost: 250, fastCharger: true, available: 4, total: 6 },
       { id: "ocm_1010", name: "Tesla Supercharger Stryn", location: "Stryn", lat: 61.9111, lng: 6.7189, chargeTime: 21, chargeAmount: 54, cost: 270, fastCharger: true, available: 6, total: 10 },
       
-      // Sørlandet (hovedstasjoner)
+      // Nær start (Ålesund-området)
+      { id: "ocm_1011", name: "Circle K Moa", location: "Ålesund", lat: 62.4167, lng: 6.2833, chargeTime: 35, chargeAmount: 40, cost: 200, fastCharger: false, available: 2, total: 3 },
+      { id: "ocm_1012", name: "Mer Langevåg", location: "Giske", lat: 62.4500, lng: 6.0833, chargeTime: 40, chargeAmount: 35, cost: 175, fastCharger: false, available: 1, total: 2 },
+      { id: "ocm_1013", name: "Eviny Volda", location: "Volda", lat: 62.1489, lng: 6.0711, chargeTime: 30, chargeAmount: 45, cost: 225, fastCharger: true, available: 3, total: 4 },
+      { id: "ocm_1014", name: "Tesla Supercharger Fosnavåg", location: "Herøy", lat: 62.3233, lng: 5.7500, chargeTime: 19, chargeAmount: 56, cost: 280, fastCharger: true, available: 8, total: 12 },
+      
+      // Tidlige stopp langs ruten (50-150km fra Ålesund)
+      { id: "ocm_1015", name: "Circle K Sjøholt", location: "Ørsta", lat: 62.1944, lng: 6.1389, chargeTime: 33, chargeAmount: 38, cost: 190, fastCharger: false, available: 2, total: 3 },
+      { id: "ocm_1016", name: "Ionity Hellesylt", location: "Stranda", lat: 62.0833, lng: 7.1167, chargeTime: 24, chargeAmount: 52, cost: 260, fastCharger: true, available: 4, total: 6 },
+      { id: "ocm_1017", name: "Mer Hornindal", location: "Hornindal", lat: 61.9667, lng: 6.5333, chargeTime: 38, chargeAmount: 36, cost: 180, fastCharger: false, available: 1, total: 2 },
+      { id: "ocm_1018", name: "Eviny Loen", location: "Stryn", lat: 61.8667, lng: 6.8500, chargeTime: 26, chargeAmount: 46, cost: 230, fastCharger: true, available: 3, total: 5 },
+      
+      // Flere alternativer rundt Lillehammer (300-400km)
+      { id: "ocm_1019", name: "Circle K Hamar", location: "Hamar", lat: 60.7945, lng: 11.0680, chargeTime: 32, chargeAmount: 40, cost: 200, fastCharger: false, available: 2, total: 4 },
+      { id: "ocm_1020", name: "Tesla Supercharger Elverum", location: "Elverum", lat: 60.8811, lng: 11.5644, chargeTime: 20, chargeAmount: 54, cost: 270, fastCharger: true, available: 7, total: 10 },
+      { id: "ocm_1021", name: "Ionity Vinstra", location: "Nord-Fron", lat: 61.5356, lng: 9.9333, chargeTime: 23, chargeAmount: 53, cost: 265, fastCharger: true, available: 5, total: 8 },
+      
+      // Sørlandet
       { id: "ocm_2001", name: "Ionity Kristiansand", location: "Kristiansand", lat: 58.1599, lng: 8.0182, chargeTime: 24, chargeAmount: 52, cost: 260, fastCharger: true, available: 5, total: 8 },
       { id: "ocm_2002", name: "Tesla Supercharger Mandal", location: "Mandal", lat: 58.0289, lng: 7.4611, chargeTime: 20, chargeAmount: 55, cost: 275, fastCharger: true, available: 4, total: 6 },
       { id: "ocm_2003", name: "Circle K Arendal", location: "Arendal", lat: 58.4611, lng: 8.7722, chargeTime: 30, chargeAmount: 42, cost: 210, fastCharger: false, available: 2, total: 3 },
+      { id: "ocm_2004", name: "Mer Grimstad", location: "Grimstad", lat: 58.3405, lng: 8.5936, chargeTime: 35, chargeAmount: 38, cost: 190, fastCharger: false, available: 1, total: 2 },
+      { id: "ocm_2005", name: "Eviny Lillesand", location: "Lillesand", lat: 58.2544, lng: 8.3739, chargeTime: 40, chargeAmount: 35, cost: 175, fastCharger: false, available: 2, total: 3 },
       
-      // Vestlandet (hovedstasjoner)
+      // Vestlandet
       { id: "ocm_3001", name: "Ionity Bergen Flesland", location: "Bergen", lat: 60.2934, lng: 5.2181, chargeTime: 22, chargeAmount: 52, cost: 260, fastCharger: true, available: 6, total: 8 },
       { id: "ocm_3002", name: "Tesla Supercharger Stavanger", location: "Stavanger", lat: 58.9700, lng: 5.7331, chargeTime: 19, chargeAmount: 56, cost: 280, fastCharger: true, available: 7, total: 10 },
-      { id: "ocm_3003", name: "Ionity Ålesund", location: "Ålesund", lat: 62.4722, lng: 6.1549, chargeTime: 25, chargeAmount: 50, cost: 250, fastCharger: true, available: 5, total: 6 },
+      { id: "ocm_3003", name: "Circle K Haugesund", location: "Haugesund", lat: 59.4138, lng: 5.2681, chargeTime: 30, chargeAmount: 42, cost: 210, fastCharger: false, available: 3, total: 4 },
+      { id: "ocm_3004", name: "Mer Odda", location: "Odda", lat: 60.0667, lng: 6.5444, chargeTime: 35, chargeAmount: 40, cost: 200, fastCharger: false, available: 2, total: 3 },
       
-      // Midt-Norge (hovedstasjoner)
-      { id: "ocm_4001", name: "Tesla Supercharger Trondheim", location: "Trondheim", lat: 63.4305, lng: 10.3951, chargeTime: 18, chargeAmount: 58, cost: 290, fastCharger: true, available: 8, total: 12 }
+      // Midt-Norge
+      { id: "ocm_4001", name: "Tesla Supercharger Trondheim", location: "Trondheim", lat: 63.4305, lng: 10.3951, chargeTime: 18, chargeAmount: 58, cost: 290, fastCharger: true, available: 8, total: 12 },
+      { id: "ocm_4002", name: "Circle K Steinkjer", location: "Steinkjer", lat: 64.0186, lng: 11.4952, chargeTime: 32, chargeAmount: 40, cost: 200, fastCharger: false, available: 2, total: 3 },
+      { id: "ocm_4003", name: "Ionity Røros", location: "Røros", lat: 62.5744, lng: 11.3914, chargeTime: 25, chargeAmount: 50, cost: 250, fastCharger: true, available: 4, total: 6 }
     ];
     
-    console.log(`✅ Lastet ${extendedStations.length} utvidede ladestasjoner`);
+    console.log(`✅ Lastet ${extendedStations.length} ekstra ladestasjoner`);
     return extendedStations;
+    
   } catch (error) {
-    console.warn('⚠️ Feil ved lasting av utvidede ladestasjoner:', error);
+    console.error('❌ Feil ved henting av ladestasjoner:', error);
     return [];
   }
 };
@@ -808,39 +833,36 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         markers.forEach(marker => marker.remove());
         const chargingMarkers: mapboxgl.Marker[] = [];
         
-        // Legg til ladestasjonsmarkører med tydelig skille mellom obligatoriske og valgfrie
+        // Legg til markører kun for obligatoriske ladestasjoner
         optimizedStations.forEach((station, index) => {
           const isRequired = (station as any).isRequired;
+          
+          // Kun vis markører for obligatoriske stasjoner
+          if (!isRequired) {
+            return; // Hopp over valgfrie stasjoner
+          }
           const arrivalBattery = (station as any).arrivalBattery || 50;
           
           const el = document.createElement('div');
           el.className = 'charging-marker';
           
-          if (isRequired) {
-            // Obligatorisk ladestasjon - rød/orange
-            el.style.backgroundColor = arrivalBattery < 20 ? '#ef4444' : '#f59e0b';
-            el.style.border = '3px solid #dc2626';
-            el.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.6)';
-          } else {
-            // Valgfri ladestasjon - grønn/blå
-            el.style.backgroundColor = '#10b981';
-            el.style.border = '2px solid #059669';
-            el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
-          }
-          
-          el.style.width = isRequired ? '35px' : '28px';
-          el.style.height = isRequired ? '35px' : '28px';
+          // Obligatorisk ladestasjon - rød/orange basert på batterinivå
+          el.style.backgroundColor = arrivalBattery < 20 ? '#ef4444' : '#f59e0b';
+          el.style.border = '3px solid #dc2626';
+          el.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.6)';
+          el.style.width = '35px';
+          el.style.height = '35px';
           el.style.borderRadius = '50%';
           el.style.color = 'white';
           el.style.display = 'flex';
           el.style.alignItems = 'center';
           el.style.justifyContent = 'center';
-          el.style.fontSize = isRequired ? '16px' : '12px';
+          el.style.fontSize = '16px';
           el.style.fontWeight = 'bold';
           el.style.position = 'relative';
           
-          // Legg til ikon for obligatoriske stasjoner
-          if (isRequired) {
+          // Legg til varselikon for kritisk batterinivå
+          if (arrivalBattery < 20) {
             el.innerHTML = `<span style="position: absolute; top: -5px; right: -5px; background: #dc2626; border-radius: 50%; width: 15px; height: 15px; display: flex; align-items: center; justify-content: center; font-size: 10px;">!</span>${index + 1}`;
           } else {
             el.textContent = (index + 1).toString();
@@ -852,7 +874,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
               <div class="p-3 max-w-xs">
                 <div class="flex items-center gap-2 mb-2">
                   <h4 class="font-semibold text-sm">${station.name}</h4>
-                  ${isRequired ? '<span class="bg-red-500 text-white text-xs px-2 py-1 rounded">OBLIGATORISK</span>' : '<span class="bg-green-500 text-white text-xs px-2 py-1 rounded">VALGFRI</span>'}
+                  <span class="bg-red-500 text-white text-xs px-2 py-1 rounded">OBLIGATORISK</span>
                 </div>
                 <p class="text-sm text-gray-600 mb-2">${station.location}</p>
                 <div class="grid grid-cols-2 gap-2 text-xs">
@@ -863,7 +885,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
                   <div><strong>Lading:</strong> ${station.chargeAmount} kWh</div>
                   <div><strong>Kostnad:</strong> ${station.cost} kr</div>
                 </div>
-                ${isRequired ? '<p class="text-xs text-red-600 mt-2 font-medium">⚠️ Du må lade her for å nå målet</p>' : ''}
+                <p class="text-xs text-red-600 mt-2 font-medium">⚠️ Du må lade her for å nå målet</p>
               </div>
             `))
             .addTo(map.current!);
