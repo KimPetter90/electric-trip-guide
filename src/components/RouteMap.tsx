@@ -579,11 +579,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     console.log('🚀 OPTIMIZE CHARGING STATIONS KALT!');
     console.log('📊 BATTERIPROSENT INPUT:', batteryPercentage, '%');
     console.log('📊 RouteDistance:', routeDistance, 'km');
+    console.log('📊 Car range:', car.range, 'km');
     
-    // Tidsstempel for debugging
-    const now = new Date();
-    console.log('🕐 Tidsstempel:', now.toLocaleTimeString());
-
     const criticalBatteryLevel = 10; // Kritisk batterinivå på 10%
     const maxChargingLevel = 80; // Lad til maks 80%
     const maxDetourDistance = 10; // Maks 10km avvik fra ruten
@@ -595,24 +592,21 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     console.log('   - Bil rekkevidde:', car.range + 'km');
     console.log('   - Rutelengde:', routeDistance + 'km');
 
-    // Beregn hvor langt bilen kan kjøre før den når kritisk nivå (10%)
-    const usableBatteryPercentage = batteryPercentage - criticalBatteryLevel;
-    const distanceBeforeCritical = (usableBatteryPercentage / 100) * car.range;
+    // Beregn total rekkevidde med startbatteri
+    const totalRangeWithStartBattery = (batteryPercentage / 100) * car.range;
+    console.log('   - Total rekkevidde med ' + batteryPercentage + '%:', totalRangeWithStartBattery.toFixed(1) + 'km');
 
-    console.log('🧮 KRITISK PUNKT BEREGNING:');
-    console.log('   1. Brukbart batteri:', batteryPercentage + '% - ' + criticalBatteryLevel + '% = ' + usableBatteryPercentage + '%');
-    console.log('   2. Distanse før kritisk nivå: (' + usableBatteryPercentage + '/100) × ' + car.range + 'km = ' + distanceBeforeCritical.toFixed(1) + 'km');
-    console.log('   3. Sammenligning:', distanceBeforeCritical.toFixed(1) + 'km VS ' + routeDistance.toFixed(1) + 'km');
-    console.log('   4. Batteriet holder hele veien?', distanceBeforeCritical >= routeDistance ? 'JA' : 'NEI');
-
-    // Hvis batteriet holder hele veien til destinasjonen, returner tom liste
-    if (distanceBeforeCritical >= routeDistance) {
-      console.log('✅ BATTERIET HOLDER HELE VEIEN! (Når ' + criticalBatteryLevel + '% ved destinasjonen)');
+    // Hvis total rekkevidde holder hele veien, ingen lading nødvendig
+    if (totalRangeWithStartBattery >= routeDistance) {
+      console.log('✅ BATTERIET HOLDER HELE VEIEN!');
       return [];
     }
 
-    console.log('🚨 BATTERIET NÅR ' + criticalBatteryLevel + '% VED ' + distanceBeforeCritical.toFixed(1) + 'km av ' + routeDistance.toFixed(1) + 'km');
-    console.log('📍 LETER ETTER LADESTASJONER FØR KRITISK PUNKT (' + distanceBeforeCritical.toFixed(1) + 'km)...');
+    console.log('🚨 TRENGER LADING! Rekkevidde mangler:', (routeDistance - totalRangeWithStartBattery).toFixed(1) + 'km');
+    
+    // Beregn hvor langt vi kan kjøre før kritisk nivå (10%)
+    const distanceBeforeCritical = ((batteryPercentage - criticalBatteryLevel) / 100) * car.range;
+    console.log('📍 Distanse før kritisk punkt (10%):', distanceBeforeCritical.toFixed(1) + 'km');
 
     // Finn stasjoner langs ruten
     const stationsAlongRoute = availableStations
@@ -666,30 +660,21 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     // Sorter stasjoner etter distanse langs ruten
     stationsAlongRoute.sort((a, b) => a.distanceAlongRoute - b.distanceAlongRoute);
 
-    // Finn stasjoner før kritisk punkt - men vær mindre aggressiv ved høyt startnivå
+    // Finn stasjoner før kritisk punkt
     const stationsBeforeCritical = stationsAlongRoute.filter(station => {
       const batteryAtStation = batteryPercentage - (station.distanceAlongRoute / car.range) * 100;
-      const diffFromCritical = batteryAtStation - criticalBatteryLevel;
       
-      console.log('🔍', station.name + ':', station.distanceAlongRoute.toFixed(1) + 'km, batteri:', batteryAtStation.toFixed(1) + '%, diff fra ' + criticalBatteryLevel + '%:', diffFromCritical.toFixed(1) + '%');
+      console.log('🔍', station.name + ':', station.distanceAlongRoute.toFixed(1) + 'km, batteri ved ankomst:', batteryAtStation.toFixed(1) + '%');
       
-      // Smartere filtering basert på startnivå
-      const safetyMargin = Math.max(5, 20 - (batteryPercentage - 20)); // Høyere startnivå = mindre margin
-      const minimumBatteryForCharging = criticalBatteryLevel + safetyMargin;
+      // Enkel logikk: Lade hvis batteriet blir under 25% og vi er før destinasjonen
+      const shouldCharge = batteryAtStation <= 25 && batteryAtStation >= criticalBatteryLevel && station.distanceAlongRoute < routeDistance * 0.9;
       
-      console.log('   - Safety margin for ' + batteryPercentage + '% start:', safetyMargin + '%, min for lading:', minimumBatteryForCharging + '%');
-      console.log('   - Vurdering: batteri ' + batteryAtStation.toFixed(1) + '% vs min ' + minimumBatteryForCharging + '%, innen kritisk ' + distanceBeforeCritical.toFixed(1) + 'km?', station.distanceAlongRoute < distanceBeforeCritical);
+      console.log('   - Skal lade her? (batteri ≤ 25% og ≥ 10%):', shouldCharge);
       
-      // Lade kun hvis batteriet er under sikkerhetsmarginen og vi er før kritisk punkt
-      const shouldInclude = batteryAtStation >= criticalBatteryLevel && 
-                           batteryAtStation <= minimumBatteryForCharging && 
-                           station.distanceAlongRoute < distanceBeforeCritical;
-      
-      console.log('   - Inkludere stasjon?', shouldInclude);
-      return shouldInclude; 
+      return shouldCharge;
     });
 
-    console.log('📍 Etter smartere filtrering:', stationsBeforeCritical.length, 'egnede stasjoner av', stationsAlongRoute.length, 'totalt');
+    console.log('📍 Funnet', stationsBeforeCritical.length, 'ladestasjoner av', stationsAlongRoute.length, 'mulige');
 
     if (stationsBeforeCritical.length > 0) {
       // Velg stasjonen med lavest batteri ved ankomst (nærmest kritisk punkt)
