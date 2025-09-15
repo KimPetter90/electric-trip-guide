@@ -11,11 +11,11 @@ All colors MUST be HSL.
     --background: 225 15% 6%; /* Mørkere bakgrunn */
     --foreground: 210 15% 92%; /* Lysere tekst for bedre kontrast */
 
-    --card: 225 25% 10%; /* Mørkere kort */
-    --card-foreground: 210 15% 92%;
+    --card: 225 25% 6% / 0.8; /* Mørkere og semi-transparent */
+    --card-foreground: 210 15% 95%;
 
-    --popover: 225 25% 10%;
-    --popover-foreground: 210 15% 92%;
+    --popover: 225 25% 6% / 0.9;
+    --popover-foreground: 210 15% 95%;
 
     --primary: 140 100% 50%; /* Lysere primærfarge */
     --primary-foreground: 225 25% 6%;
