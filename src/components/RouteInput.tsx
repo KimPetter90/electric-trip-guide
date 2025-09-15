@@ -11,7 +11,7 @@ import { MapPin, Truck, Route, Battery, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-// Norske byer og tettsteder for autocomplete
+// Norske byer, tettsteder og bygder for autocomplete
 const norwegianCities = [
   "oslo", "bergen", "trondheim", "stavanger", "tromsø", "ålesund", 
   "kristiansand", "drammen", "fredrikstad", "lillehammer", "bodø", "molde",
@@ -87,81 +87,164 @@ const norwegianCities = [
   "etne", "sauda", "suldal", "hjelmeland", "strand", "forsand",
   "sandnes", "sola", "randaberg", "stavanger", "rennesøy", "kvitsøy",
   "bokn", "tysvær", "karmøy", "haugesund", "utsira", "vindafjord",
-  "ølen", "odda", "jondal", "ullensvang", "eidfjord", "ulvik",
-  "granvin", "voss", "kvam", "fusa", "samnanger", "os", "austevoll",
-  "sund", "fjell", "askøy", "meland", "øygarden", "radøy", "lindås",
-  "austrheim", "fedje", "masfjorden", "gulen", "solund", "hyllestad",
-  // Småsteder og tettsteder
-  "eigersund", "egersund", "sokndal", "lund", "bjerkreim", "time",
-  "klepp", "hå", "gjesdal", "bjerkreim", "sokndal", "lund", "flekkefjord",
-  "kvinesdal", "sirdal", "åseral", "audnedal", "lindesnes", "mandal",
-  "marnadal", "åmli", "iveland", "evje og hornnes", "bygland", "valle",
-  "bykle", "åseral", "audnedal", "farsund", "flekkefjord", "hægebostad",
-  "kvinesdal", "lindesnes", "lyngdal", "mandal", "marnardal", "sirdal",
-  "songdalen", "søgne", "vennesla", "åsnes", "vågan", "våler",
-  "flesberg", "rollag", "nore og uvdal", "sigdal", "krødsherad", "hole",
-  "ringerike", "jevnaker", "eid", "hornindal", "gloppen", "stryn",
-  "bremanger", "vågsøy", "selje", "eid", "hornindal", "gloppen",
-  "jølster", "førde", "naustdal", "luster", "askvoll", "fjaler",
-  "gaular", "balestrand", "leikanger", "sogndal", "aurland", "lærdal",
-  // Mer småsteder
-  "surnadal", "rindal", "halsa", "smøla", "aure", "tustna", "averøy",
-  "eide", "gjemnes", "tingvoll", "sunndal", "oppdal", "rennebu",
-  "meldal", "orkdal", "skaun", "klæbu", "malvik", "stjørdal",
-  "frosta", "leksvik", "mosvik", "inderøy", "verran", "steinkjer",
-  "snåsa", "lierne", "røyrvik", "namsskogan", "grong", "høylandet",
-  "overhalla", "fosnes", "flatanger", "leka", "vikna", "nærøy",
-  "herøy", "dønna", "nesna", "hemnes", "rana", "lurøy", "træna",
-  "rødøy", "meløy", "gildeskål", "beiarn", "saltdal", "fauske",
-  "sørfold", "steigen", "hamarøy", "tysfjord", "lødingen", "tjeldsund",
-  "evenes", "ballangen", "røst", "værøy", "flakstad", "moskenes",
-  "vestvågøy", "vågan", "hadsel", "bø", "øksnes", "sortland", "andøy",
-  // Finnmark steder
-  "alta", "loppa", "hasvik", "måsøy", "hammerfest", "kvalsund",
-  "porsanger", "karasjok", "kautokeino", "tana", "nesseby", "sør-varanger",
-  "vadsø", "vardø", "båtsfjord", "berlevåg", "gamvik", "lebesby",
-  // Troms steder  
-  "tromsø", "karlsøy", "lyngen", "storfjord", "gáivuotna", "skjervøy",
-  "nordreisa", "kvænangen", "harstad", "kvæfjord", "skånland", "ibestad",
-  "gratangen", "lavangen", "salangen", "bardu", "målselv", "sørreisa",
-  "dyrøy", "tranøy", "torsken", "berg", "lenvik", "balsfjord",
-  // Nordland småsteder
-  "bindal", "sømna", "brønnøy", "vega", "vevelstad", "herøy",
-  "alstahaug", "leirfjord", "vefsn", "grane", "hattfjelldal", "dønna",
-  "nesna", "hemnes", "rana", "lurøy", "træna", "rødøy", "meløy",
-  "gildeskål", "beiarn", "saltdal", "fauske", "sørfold", "steigen",
-  "hamarøy", "tysfjord", "lødingen", "tjeldsund", "evenes", "ballangen",
-  // Mer Sør-Norge
-  "horten", "holmestrand", "re", "sande", "hof", "borre", "tjøme",
-  "nøtterøy", "tønsberg", "larvik", "lardal", "andebu", "sandefjord",
-  "stokke", "sem", "ramnes", "andebu", "svelvik", "drammen", "lier",
-  "røyken", "hurum", "asker", "bærum", "oslo", "lørenskog", "rælingen",
-  "skedsmo", "sørum", "fet", "nes", "gjerdrum", "ullensaker", "eidsvoll",
-  "hurdal", "nannestad", "aurskog-høland", "nes", "lørenskog", "rælingen",
-  // Østfold
-  "hvaler", "fredrikstad", "sarpsborg", "tune", "borge", "varteig",
-  "kråkerøy", "onsøy", "rolvsøy", "rygge", "råde", "rømskog", "marker",
-  "spydeberg", "askim", "eidsberg", "skiptvet", "rakkestad", "våler",
-  "hobøl", "aremark", "halden", "idd", "berg", "trøgstad", "eidsberg",
-  // Akershus småsteder
-  "vestby", "ås", "frogn", "oppegård", "ski", "ås", "nesodden",
-  "oppegård", "enebakk", "rælingen", "lørenskog", "skedsmo", "nittedal",
-  "bærum", "asker", "røyken", "lier", "hurum", "flesberg", "kongsberg",
-  "øvre eiker", "nedre eiker", "modum", "krødsherad", "sigdal", "rollag",
-  // Buskerud småsteder
-  "flesberg", "rollag", "nore og uvdal", "sigdal", "krødsherad", "hole",
-  "ringerike", "jevnaker", "lunner", "gran", "søndre land", "nordre land",
-  "sør-aurdal", "etnedal", "nord-aurdal", "vestre slidre", "øystre slidre",
-  "vang", "hol", "ål", "gol", "hemsedal", "nes", "flå",
-  // Oppland småsteder
-  "lillehammer", "gjøvik", "østre toten", "vestre toten", "jevnaker",
-  "lunner", "gran", "søndre land", "nordre land", "sør-aurdal", "etnedal",
-  "nord-aurdal", "vestre slidre", "øystre slidre", "vang", "øyer",
-  "ringebu", "sør-fron", "nord-fron", "sel", "vågå", "lom", "skjåk",
-  "lesja", "dovre", "folldal", "os", "tolga", "tynset", "alvdal",
-  "stor-elvdal", "engerdal", "trysil", "åmot", "våler", "elverum",
-  "hamar", "ringsaker", "løten", "stange", "nord-odal", "sør-odal",
-  "eidskog", "grue", "åsnes", "våler", "kongsvinger"
+  
+  // Småbygder og tettsteder - Østlandet
+  "brandbu", "dokka", "fagernes", "raufoss", "vinstra", "dombås", "kvam",
+  "nord-torpa", "beitostølen", "øilo", "etnedal", "bruflat", "nordsinni",
+  "slidre", "valdres", "bagn", "bjørgo", "tyinkrysset", "filefjell",
+  "borgund", "lærdalsøyri", "kaupanger", "gaupne", "skjolden", "fortun",
+  "øvre årdal", "tyin", "eidsbugarden", "bygdin", "gjendesheim", "maurvangen",
+  "bessheim", "krossbu", "leirvassbu", "glitterheim", "spiterstulen",
+  "preikestolen", "lysebotn", "flørli", "forsand", "fister", "tau",
+  "jørpeland", "rennesøy", "sjernarøy", "nedstrand", "ombo", "vikevåg",
+  "skudeneshavn", "avaldsnes", "kopervik", "åkrehamn", "skjold", "tysvær",
+  "haugesund", "raglamyr", "torvastad", "bokn", "utsira", "vibrandsøy",
+  
+  // Småbygder - Telemark
+  "rjukan", "notodden", "kragsjø", "åmotsdal", "sauland", "akkerhaugen",
+  "bø", "sauherad", "krossobanen", "gaustablikk", "tuddal", "hjartdal",
+  "seljord", "kviteseid", "vrådal", "dalen", "åmli", "vegårshei",
+  "gjerstad", "kragerø", "portør", "stabbestad", "jomfruland", "langøy",
+  "hvaler", "skjeberg", "ørje", "magnor", "prestebakke", "tistedal",
+  "berg", "sponvika", "skulerud", "rødenes", "kornsjø", "ed",
+  
+  // Småbygder - Agder
+  "mandal", "spangereid", "vigeland", "åseral", "bygland", "valle",
+  "bykle", "hovden", "setesdal", "evje", "iveland", "vennesla",
+  "kristiansand", "søgne", "songdalen", "lillesand", "grimstad", "arendal",
+  "tvedestrand", "risør", "gjerstad", "vegårshei", "åmli", "froland",
+  "nissedal", "drangedal", "kragerø", "bamble", "porsgrunn", "skien",
+  "flekkefjord", "farsund", "lyngdal", "audnedal", "lindesnes", "mandal",
+  "marnardal", "åseral", "kvinesdal", "sirdal", "hægebostad", "lyngdal",
+  
+  // Småbygder - Rogaland
+  "egersund", "sokndal", "lund", "bjerkreim", "gjesdal", "time",
+  "klepp", "hå", "varhaug", "nærbø", "bryne", "figgjo", "ålgård",
+  "sandnes", "sola", "tananger", "stavanger", "hundvåg", "madla",
+  "hafrsfjord", "tau", "jørpeland", "strand", "hjelmeland", "sauda",
+  "suldal", "røldal", "odda", "ullensvang", "kinsarvik", "lofthus",
+  "utne", "jondal", "herand", "norheimsund", "steinsto", "trengereid",
+  
+  // Småbygder - Hordaland/Vestland
+  "bergen", "fana", "ytrebygda", "åsane", "arna", "indre arna",
+  "askøy", "kleppestø", "florvåg", "sund", "kausland", "austevoll",
+  "storebø", "bekkjarvik", "bømlo", "langevåg", "svortland", "stord",
+  "leirvik", "sagvåg", "fitjar", "skånevik", "etne", "ølen",
+  "kvinnherad", "husnes", "sunde", "rosendal", "jondal", "herand",
+  "norheimsund", "kvam", "øystese", "steinsto", "trengereid", "granvin",
+  "ulvik", "eidfjord", "øvre eidfjord", "kinsarvik", "lofthus", "utne",
+  
+  // Småbygder - Sogn og Fjordane
+  "førde", "naustdal", "jølster", "skei", "vassenden", "florø",
+  "måløy", "vågsøy", "selje", "bremanger", "kalvåg", "rugsund",
+  "stryn", "loen", "olden", "innvik", "utvik", "gloppen", "sandane",
+  "eid", "nordfjordeid", "hornindal", "grodås", "bryggja", "utfjord",
+  "sogndal", "kaupanger", "lærdalsøyri", "borgund", "aurland", "flåm",
+  "gudvangen", "voss", "stalheim", "myrdal", "finse", "haugastøl",
+  "ustaoset", "geilo", "gol", "nesbyen", "ål", "torpo", "hol",
+  
+  // Småbygder - Møre og Romsdal
+  "ålesund", "godøy", "giske", "vigra", "valderøy", "borgundgavlen",
+  "spjelkavik", "moa", "blindheim", "ulsteinvik", "hareid", "ørsta",
+  "volda", "ørskog", "sjøholt", "stordal", "norddal", "geiranger",
+  "valldal", "sylte", "stranda", "hellesylt", "øye", "linge",
+  "tafjord", "andalsnes", "åndalsnes", "isfjorden", "trollstigen",
+  "dombås", "lesja", "lesjaskog", "dovre", "hjerkinn", "kongsvold",
+  "fokstugu", "oppdal", "drivstua", "berkåk", "løkken verk", "meldal",
+  "orkanger", "fannrem", "brekstad", "rissa", "leksvik", "mosvik",
+  
+  // Småbygder - Trøndelag
+  "røros", "brekken", "glåmos", "os", "tolga", "tynset", "alvdal",
+  "folldal", "hjerkinn", "kongsvold", "oppdal", "støren", "melhus",
+  "gauldal", "skaun", "børsa", "buvik", "orkanger", "fannrem",
+  "brekstad", "rissa", "leksvik", "mosvik", "inderøy", "straumen",
+  "røra", "sakshaug", "steinkjer", "snåsa", "grong", "namsos",
+  "bangsund", "overhalla", "høylandet", "lierne", "røyrvik", "gartland",
+  
+  // Småbygder - Nordland
+  "mo i rana", "mosjøen", "sandnessjøen", "brønnøysund", "rørvik",
+  "namsos", "bangsund", "kolvereid", "nærøy", "vikna", "bindal",
+  "sømna", "brønnøy", "vega", "vevelstad", "herøy", "dønna",
+  "nesna", "hemnes", "korgen", "trofors", "grong", "namsos",
+  "overhalla", "høylandet", "foldereid", "leka", "gutvik", "rørvik",
+  "kolvereid", "nærøy", "vikna", "bindal", "terråk", "sømna",
+  "brønnøysund", "hommelstø", "velfjord", "vega", "gladstad", "ylvingen",
+  "vevelstad", "herøy", "sandnessjøen", "dønna", "solfjellsjøen", "løkta",
+  "nesna", "eiterå", "hemnes", "korgen", "rana", "mo i rana",
+  "storforshei", "utskarpen", "selfors", "hattfjelldal", "susendal", "grane",
+  "majavatn", "trofors", "leir", "vefsn", "mosjøen", "elsfjord",
+  "drevja", "leirfjord", "leland", "alstahaug", "sandnessjøen", "helgeland",
+  
+  // Småbygder - Lofoten og Vesterålen
+  "svolvær", "kabelvåg", "henningsvær", "stamsund", "ballstad", "leknes",
+  "gravdal", "ramberg", "flakstad", "nusfjord", "reine", "sakrisøy",
+  "hamnøy", "tind", "å", "moskenes", "sørvågen", "værøy", "røst",
+  "myre", "stokmarknes", "melbu", "sortland", "andenes", "bleik",
+  "nyksund", "vesterålen", "risøyhamn", "andøy", "dverberg", "bø",
+  "øksnes", "langenes", "hadsel", "stokmarknes", "melbu", "fiskebøl",
+  
+  // Småbygder - Troms
+  "tromsø", "kvaløysletta", "sommarøy", "ersfjord", "kroken", "tromvik",
+  "lyngseidet", "furuflaten", "svensby", "olderdalen", "skibotn", "kilpisjärvi",
+  "nordkjosbotn", "sørkjosen", "birtavarre", "rotsund", "nordreisa",
+  "storslett", "kvænangen", "burfjord", "nord-lenangen", "kåfjord",
+  "alteidet", "skjervøy", "arnøyhamn", "akkarvik", "uløya", "loppa",
+  "øksfjord", "bergsfjord", "hasvik", "hammerfest", "rypefjord", "kvalsund",
+  "olderfjord", "alta", "bossekop", "elvebakken", "kautokeino", "máze",
+  "karasjok", "sirma", "tana bru", "polmak", "nesseby", "varangerbotn",
+  "vadsø", "krampenes", "vardø", "hamningberg", "båtsfjord", "berlevåg",
+  
+  // Småbygder - Finnmark
+  "lakselv", "ifjord", "børselv", "stabbursdalen", "karigasniemi", "utsjoki",
+  "nuorgam", "polmak", "tana bru", "sirma", "deanu", "karasjok",
+  "máze", "kautokeino", "guovdageaidnu", "alta", "kåfjord", "kvænangen",
+  "storfjord", "lyngen", "balsfjord", "målselv", "bardu", "gratangen",
+  "ibestad", "harstad", "kvæfjord", "sortland", "andøy", "vesterålen",
+  "lofoten", "flakstad", "moskenes", "vestvågøy", "vågan", "austvågøy",
+  
+  // Mer småsteder spredt rundt
+  "horten", "åsgårdstrand", "tjøme", "verdens ende", "nøtterøy", "tønsberg",
+  "sandefjord", "larvik", "stavern", "helgeroa", "nevlunghavn", "langesund",
+  "brevik", "stathelle", "kragerø", "portør", "stabbestad", "jomfruland",
+  "lyngør", "tvedestrand", "arendal", "grimstad", "lillesand", "kristiansand",
+  "vennesla", "mandal", "lindesnes", "farsund", "lista", "flekkefjord",
+  "sokndal", "egersund", "hellvik", "ogna", "sirevåg", "hå", "varhaug",
+  "nærbø", "bryne", "klepp", "orre", "sola", "tananger", "stavanger",
+  "randaberg", "rennesøy", "tau", "jørpeland", "preikestolen", "lysefjord",
+  "forsand", "hjelmeland", "ombo", "sauda", "røldal", "odda", "trolltunga",
+  "låtefoss", "skjeggedal", "tyssedal", "eidfjord", "voringsfoss", "hardanger",
+  "ulvik", "granvin", "voss", "myrdal", "flåm", "aurland", "lærdal",
+  "borgund", "kaupanger", "balestrand", "sogndal", "luster", "skjolden",
+  "fortun", "øvre årdal", "årdal", "askvoll", "florø", "måløy", "torvik",
+  "ørsta", "volda", "ulsteinvik", "hareid", "ålesund", "giske", "godøy",
+  "skodje", "ørskog", "stordal", "stranda", "geiranger", "dalsnibba",
+  "trollstigen", "andalsnes", "åak", "valldal", "tafjord", "norangsdal",
+  
+  // Enda flere småbygder og grender
+  "feios", "sjoa", "otta", "sel", "heidal", "bjølstad", "kvam", "sjodalen",
+  "boverdalen", "galdhøpiggen", "leirvassbu", "fannaråken", "turtagrø", "fortun",
+  "øvre årdal", "veitastrond", "hol", "ustaoset", "haugastøl", "finse",
+  "myrdal", "berekvam", "voss", "skulestadmo", "stalheim", "gudvangen",
+  "flåm", "aurlandsvangen", "lærdal", "borgund", "filefjell", "tyinkrysset",
+  "bygdin", "maurvangen", "gjendesheim", "bessheim", "gjendebu", "memurubu",
+  "sikkilsdalen", "elveseter", "leirvassbu", "krossbu", "spiterstulen",
+  "glitterheim", "bessvatnet", "rondslottet", "mysusæter", "høvringen",
+  "rondablikk", "peer gynt", "lillehammer", "hafjell", "kvitfjell", "sjusjøen",
+  "nordseter", "trysil", "engerdal", "røros", "femundsmarka", "femunden",
+  "elgå", "alvdal", "tynset", "folldal", "hjerkinn", "dovre", "dombås",
+  "lesja", "lesjaskog", "vågå", "lom", "skjåk", "bismo", "stryn",
+  "loen", "olden", "briksdal", "kjenndalsbreen", "melkevoll", "oppstryn",
+  "grotli", "geiranger", "dalsnibba", "ørnesvingen", "flydalsjuvet",
+  "hellesylt", "hornindal", "grodås", "innvik", "utvik", "sandane",
+  "førde", "naustdal", "florø", "måløy", "bremanger", "kalvåg", "rugsund",
+  "selje", "vågsøy", "torvik", "ulsteinvik", "hareid", "ørsta", "volda",
+  "ålesund", "giske", "godøy", "alnes", "spjelkavik", "moa", "blindheim",
+  "sykkylven", "stranda", "hellesylt", "geiranger", "valldal", "tafjord",
+  "norddal", "øye", "linge", "andalsnes", "trollstigen", "trollveggen",
+  "isfjorden", "åndalsnes", "lesja", "dovre", "hjerkinn", "kongsvold",
+  "focus", "oppdal", "støren", "melhus", "orkanger", "fannrem", "brekstad",
+  "rissa", "leksvik", "mosvik", "inderøy", "straumen", "steinkjer", "snåsa",
+  "grong", "namsos", "overhalla", "høylandet", "lierne", "røyrvik", "gartland"
 ];
 
 interface RouteData {
