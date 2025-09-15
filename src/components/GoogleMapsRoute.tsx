@@ -115,33 +115,37 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
 
   // Calculate if charging is needed based on battery percentage and route
   const calculateChargingNeeds = (distance: number, car: CarModel, batteryPercentage: number, trailerWeight: number) => {
-    if (!car) return { needsCharging: false, stations: [] };
+    if (!car) return { needsCharging: false, stations: [], isCritical: false };
 
     // Calculate actual range with current battery and trailer
     const trailerPenalty = trailerWeight > 0 ? 1 + (trailerWeight * 0.15 / 1000) : 1;
     const actualRange = (car.range * (batteryPercentage / 100)) / trailerPenalty;
     
     const needsCharging = distance > actualRange;
+    const isCritical = batteryPercentage <= 10; // Kritisk når batteriet er 10% eller mindre
     
     if (needsCharging) {
       // Mark stations as required based on distance
       const stationsWithRequirement = chargingStations.map(station => ({
         ...station,
-        requiredStop: distance > actualRange
+        requiredStop: distance > actualRange,
+        isCritical: isCritical
       }));
       
       return { 
         needsCharging: true, 
         stations: stationsWithRequirement,
         actualRange,
-        shortfall: distance - actualRange
+        shortfall: distance - actualRange,
+        isCritical
       };
     }
     
     return { 
       needsCharging: false, 
-      stations: chargingStations.map(s => ({ ...s, requiredStop: false })),
-      actualRange
+      stations: chargingStations.map(s => ({ ...s, requiredStop: false, isCritical: isCritical })),
+      actualRange,
+      isCritical
     };
   };
 
@@ -286,7 +290,11 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
           setRequiredStations(chargingNeeds.stations);
           
           if (chargingNeeds.needsCharging) {
-            setBatteryStatus(`Trenger lading! Mangler ${Math.round(chargingNeeds.shortfall || 0)} km rekkevidde`);
+            if (chargingNeeds.isCritical) {
+              setBatteryStatus(`🚨 KRITISK BATTERINIVÅ! ${routeData.batteryPercentage}% batteri - mangler ${Math.round(chargingNeeds.shortfall || 0)} km rekkevidde`);
+            } else {
+              setBatteryStatus(`Trenger lading! Mangler ${Math.round(chargingNeeds.shortfall || 0)} km rekkevidde`);
+            }
           } else {
             setBatteryStatus(`Rekkevidde OK! ${Math.round(chargingNeeds.actualRange || 0)} km tilgjengelig`);
           }
@@ -299,6 +307,16 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
         if (requiredStations.length > 0) {
           console.log('⚡ Legger til spesielle markører for optimerte stasjoner...');
           requiredStations.forEach((station, index) => {
+            // Bestem farge basert på batteristatus og stasjonsstatus
+            const isCriticalBattery = routeData.batteryPercentage <= 10;
+            let markerColor = '#3b82f6'; // Blå som standard (anbefalt)
+            
+            if (station.requiredStop) {
+              markerColor = '#ef4444'; // Rød for obligatoriske stasjoner
+            } else if (isCriticalBattery) {
+              markerColor = '#ff0000'; // Knallrød når batteriet er kritisk
+            }
+            
             // Legg til større, mer synlig markør for optimerte stasjoner
             const optimizedMarker = new google.maps.Marker({
               position: { lat: station.lat, lng: station.lng },
@@ -306,11 +324,11 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
               title: `${station.requiredStop ? 'OBLIGATORISK' : 'ANBEFALT'}: ${station.name}`,
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
-                scale: station.requiredStop ? 14 : 12,
-                fillColor: station.requiredStop ? '#ef4444' : '#3b82f6',
+                scale: station.requiredStop || isCriticalBattery ? 16 : 12,
+                fillColor: markerColor,
                 fillOpacity: 1,
                 strokeColor: '#ffffff',
-                strokeWeight: 4
+                strokeWeight: isCriticalBattery ? 6 : 4
               },
               zIndex: 1000 // Sørg for at de vises over andre markører
             });
@@ -388,8 +406,8 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
             title: station.name,
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
-              scale: station.fastCharger ? 7 : 5,
-              fillColor: station.fastCharger ? "#00ff88" : "#ffaa00",
+              scale: station.fastCharger ? 8 : 6,
+              fillColor: "#00ff41", // Neon grønn for alle ladestasjoner
               fillOpacity: 0.9,
               strokeColor: "#ffffff",
               strokeWeight: 1
@@ -461,12 +479,16 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
         {/* Battery Status Alert */}
         {batteryStatus && selectedCar && (
           <div className={`mb-4 p-3 rounded-lg border ${
-            batteryStatus.includes('Trenger lading') 
-              ? 'bg-destructive/10 border-destructive text-destructive' 
-              : 'bg-primary/10 border-primary text-primary'
+            batteryStatus.includes('🚨 KRITISK') 
+              ? 'bg-red-900/20 border-red-500 text-red-500 animate-pulse' 
+              : batteryStatus.includes('Trenger lading') 
+                ? 'bg-destructive/10 border-destructive text-destructive' 
+                : 'bg-primary/10 border-primary text-primary'
           }`}>
             <div className="flex items-center gap-2">
-              {batteryStatus.includes('Trenger lading') ? (
+              {batteryStatus.includes('🚨 KRITISK') ? (
+                <AlertTriangle className="h-4 w-4 animate-pulse" />
+              ) : batteryStatus.includes('Trenger lading') ? (
                 <AlertTriangle className="h-4 w-4" />
               ) : (
                 <Battery className="h-4 w-4" />
