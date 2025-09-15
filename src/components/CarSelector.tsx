@@ -15,7 +15,29 @@ interface CarModel {
 }
 
 const carModels: CarModel[] = [
-  // Audi
+  // Aiways
+  {
+    id: "aiways-u5",
+    brand: "Aiways",
+    model: "U5",
+    batteryCapacity: 63,
+    range: 410,
+    consumption: 17.0,
+    image: "🚙"
+  },
+
+  // Alpine
+  {
+    id: "alpine-a290",
+    brand: "Alpine",
+    model: "A290",
+    batteryCapacity: 52,
+    range: 380,
+    consumption: 15.8,
+    image: "🚗"
+  },
+
+  // Audi (sortert alfabetisk)
   {
     id: "audi-etron",
     brand: "Audi",
@@ -26,15 +48,6 @@ const carModels: CarModel[] = [
     image: "🚙"
   },
   {
-    id: "audi-etron-sportback",
-    brand: "Audi",
-    model: "e-tron Sportback",
-    batteryCapacity: 95,
-    range: 446,
-    consumption: 23.7,
-    image: "🚙"
-  },
-  {
     id: "audi-etrongt",
     brand: "Audi",
     model: "e-tron GT",
@@ -42,6 +55,15 @@ const carModels: CarModel[] = [
     range: 487,
     consumption: 19.6,
     image: "🚗"
+  },
+  {
+    id: "audi-etron-sportback",
+    brand: "Audi",
+    model: "e-tron Sportback",
+    batteryCapacity: 95,
+    range: 446,
+    consumption: 23.7,
+    image: "🚙"
   },
   {
     id: "audi-q4etron",
@@ -59,6 +81,15 @@ const carModels: CarModel[] = [
     batteryCapacity: 82,
     range: 534,
     consumption: 16.6,
+    image: "🚙"
+  },
+  {
+    id: "audi-q6-etron",
+    brand: "Audi",
+    model: "Q6 e-tron",
+    batteryCapacity: 100,
+    range: 625,
+    consumption: 17.5,
     image: "🚙"
   },
   {
@@ -80,7 +111,7 @@ const carModels: CarModel[] = [
     image: "🚗"
   },
 
-  // BMW
+  // BMW (sortert alfabetisk)
   {
     id: "bmw-i3",
     brand: "BMW",
@@ -97,6 +128,15 @@ const carModels: CarModel[] = [
     batteryCapacity: 83.9,
     range: 590,
     consumption: 16.1,
+    image: "🚗"
+  },
+  {
+    id: "bmw-i5",
+    brand: "BMW",
+    model: "i5",
+    batteryCapacity: 84.3,
+    range: 582,
+    consumption: 16.9,
     image: "🚗"
   },
   {
@@ -127,6 +167,15 @@ const carModels: CarModel[] = [
     image: "🚙"
   },
   {
+    id: "bmw-ix2",
+    brand: "BMW",
+    model: "iX2",
+    batteryCapacity: 64.8,
+    range: 449,
+    consumption: 16.3,
+    image: "🚙"
+  },
+  {
     id: "bmw-ix3",
     brand: "BMW",
     model: "iX3",
@@ -136,7 +185,7 @@ const carModels: CarModel[] = [
     image: "🚙"
   },
 
-  // BYD
+  // BYD (sortert alfabetisk)
   {
     id: "byd-atto3",
     brand: "BYD",
@@ -172,6 +221,15 @@ const carModels: CarModel[] = [
     range: 570,
     consumption: 16.1,
     image: "🚗"
+  },
+  {
+    id: "byd-seal-u",
+    brand: "BYD",
+    model: "Seal U",
+    batteryCapacity: 87,
+    range: 500,
+    consumption: 18.2,
+    image: "🚙"
   },
   {
     id: "byd-tang",
@@ -211,6 +269,115 @@ const carModels: CarModel[] = [
     batteryCapacity: 65,
     range: 397,
     consumption: 17.8,
+    image: "🚙"
+  },
+
+  // Citroën
+  {
+    id: "citroen-berlingo-e",
+    brand: "Citroën",
+    model: "ë-Berlingo",
+    batteryCapacity: 50,
+    range: 280,
+    consumption: 20.1,
+    image: "🚐"
+  },
+  {
+    id: "citroen-c4-e",
+    brand: "Citroën",
+    model: "ë-C4",
+    batteryCapacity: 50,
+    range: 350,
+    consumption: 16.1,
+    image: "🚗"
+  },
+  {
+    id: "citroen-c5-aircross-e",
+    brand: "Citroën",
+    model: "ë-C5 Aircross",
+    batteryCapacity: 73,
+    range: 460,
+    consumption: 17.8,
+    image: "🚙"
+  },
+  {
+    id: "citroen-spacetourer-e",
+    brand: "Citroën",
+    model: "ë-SpaceTourer",
+    batteryCapacity: 75,
+    range: 330,
+    consumption: 25.4,
+    image: "🚐"
+  },
+
+  // CUPRA
+  {
+    id: "cupra-born",
+    brand: "CUPRA",
+    model: "Born",
+    batteryCapacity: 77,
+    range: 548,
+    consumption: 15.3,
+    image: "🚗"
+  },
+  {
+    id: "cupra-formentor-e",
+    brand: "CUPRA",
+    model: "Formentor e-Hybrid",
+    batteryCapacity: 12.8,
+    range: 55,
+    consumption: 16.5,
+    image: "🚙"
+  },
+  {
+    id: "cupra-tavascan",
+    brand: "CUPRA",
+    model: "Tavascan",
+    batteryCapacity: 77,
+    range: 516,
+    consumption: 16.2,
+    image: "🚙"
+  },
+
+  // Dacia
+  {
+    id: "dacia-spring",
+    brand: "Dacia",
+    model: "Spring Electric",
+    batteryCapacity: 27.4,
+    range: 230,
+    consumption: 13.9,
+    image: "🚗"
+  },
+
+  // DS
+  {
+    id: "ds-3-crossback-e",
+    brand: "DS",
+    model: "3 Crossback E-Tense",
+    batteryCapacity: 50,
+    range: 320,
+    consumption: 17.7,
+    image: "🚙"
+  },
+
+  // Fiat
+  {
+    id: "fiat-500e",
+    brand: "Fiat",
+    model: "500e",
+    batteryCapacity: 42,
+    range: 320,
+    consumption: 14.9,
+    image: "🚗"
+  },
+  {
+    id: "fiat-600e",
+    brand: "Fiat",
+    model: "600e",
+    batteryCapacity: 54.8,
+    range: 409,
+    consumption: 15.2,
     image: "🚙"
   },
 
@@ -294,6 +461,17 @@ const carModels: CarModel[] = [
     image: "🚚"
   },
 
+  // Honda
+  {
+    id: "honda-e",
+    brand: "Honda",
+    model: "e",
+    batteryCapacity: 35.5,
+    range: 220,
+    consumption: 17.2,
+    image: "🚗"
+  },
+
   // Hyundai
   {
     id: "hyundai-ioniq",
@@ -312,17 +490,6 @@ const carModels: CarModel[] = [
     range: 481,
     consumption: 18.0,
     image: "🚙"
-  },
-
-  // Honda
-  {
-    id: "honda-e",
-    brand: "Honda",
-    model: "e",
-    batteryCapacity: 35.5,
-    range: 220,
-    consumption: 17.2,
-    image: "🚗"
   },
   {
     id: "hyundai-ioniq6",
@@ -354,6 +521,17 @@ const carModels: CarModel[] = [
     image: "🚙"
   },
 
+  // Jeep
+  {
+    id: "jeep-avenger-e",
+    brand: "Jeep",
+    model: "Avenger Electric",
+    batteryCapacity: 54,
+    range: 400,
+    consumption: 15.5,
+    image: "🚙"
+  },
+
   // Kia
   {
     id: "kia-eniro",
@@ -371,6 +549,15 @@ const carModels: CarModel[] = [
     batteryCapacity: 64,
     range: 452,
     consumption: 15.7,
+    image: "🚙"
+  },
+  {
+    id: "kia-ev3",
+    brand: "Kia",
+    model: "EV3",
+    batteryCapacity: 81.4,
+    range: 605,
+    consumption: 15.2,
     image: "🚙"
   },
   {
@@ -403,6 +590,28 @@ const carModels: CarModel[] = [
     image: "🚙"
   },
 
+  // Lexus
+  {
+    id: "lexus-ux300e",
+    brand: "Lexus",
+    model: "UX 300e",
+    batteryCapacity: 72.8,
+    range: 450,
+    consumption: 17.8,
+    image: "🚙"
+  },
+
+  // Li Auto
+  {
+    id: "li-auto-one",
+    brand: "Li Auto",
+    model: "ONE",
+    batteryCapacity: 40.5,
+    range: 180,
+    consumption: 25.8,
+    image: "🚙"
+  },
+
   // Lucid
   {
     id: "lucid-air",
@@ -412,6 +621,28 @@ const carModels: CarModel[] = [
     range: 837,
     consumption: 15.7,
     image: "🚗"
+  },
+
+  // Lynk & Co
+  {
+    id: "lynk-co-01",
+    brand: "Lynk & Co",
+    model: "01",
+    batteryCapacity: 78,
+    range: 485,
+    consumption: 17.8,
+    image: "🚙"
+  },
+
+  // Mazda
+  {
+    id: "mazda-mx30",
+    brand: "Mazda",
+    model: "MX-30",
+    batteryCapacity: 35.5,
+    range: 200,
+    consumption: 19.0,
+    image: "🚙"
   },
 
   // Mercedes-Benz
@@ -508,15 +739,6 @@ const carModels: CarModel[] = [
     image: "🚙"
   },
   {
-    id: "mg-zs",
-    brand: "MG",
-    model: "ZS EV",
-    batteryCapacity: 72.6,
-    range: 440,
-    consumption: 18.2,
-    image: "🚙"
-  },
-  {
     id: "mg-marvel-r",
     brand: "MG",
     model: "Marvel R Electric",
@@ -525,232 +747,14 @@ const carModels: CarModel[] = [
     consumption: 19.4,
     image: "🚙"
   },
-
-  // SEAT
   {
-    id: "seat-mii",
-    brand: "SEAT",
-    model: "Mii Electric",
-    batteryCapacity: 36.8,
-    range: 258,
-    consumption: 16.9,
-    image: "🚗"
-  },
-  {
-    id: "seat-born",
-    brand: "SEAT",
-    model: "Born",
-    batteryCapacity: 58,
-    range: 426,
-    consumption: 15.4,
-    image: "🚗"
-  },
-
-  // CUPRA
-  {
-    id: "cupra-born",
-    brand: "CUPRA",
-    model: "Born",
-    batteryCapacity: 77,
-    range: 548,
-    consumption: 15.3,
-    image: "🚗"
-  },
-  {
-    id: "cupra-tavascan",
-    brand: "CUPRA",
-    model: "Tavascan",
-    batteryCapacity: 77,
-    range: 516,
-    consumption: 16.2,
+    id: "mg-zs",
+    brand: "MG",
+    model: "ZS EV",
+    batteryCapacity: 72.6,
+    range: 440,
+    consumption: 18.2,
     image: "🚙"
-  },
-
-  // Opel/Vauxhall
-  {
-    id: "opel-corsa-e",
-    brand: "Opel",
-    model: "Corsa-e",
-    batteryCapacity: 50,
-    range: 359,
-    consumption: 15.8,
-    image: "🚗"
-  },
-  {
-    id: "opel-mokka-e",
-    brand: "Opel",
-    model: "Mokka-e",
-    batteryCapacity: 50,
-    range: 338,
-    consumption: 16.7,
-    image: "🚙"
-  },
-  {
-    id: "opel-combo-e",
-    brand: "Opel",
-    model: "Combo-e",
-    batteryCapacity: 50,
-    range: 280,
-    consumption: 20.1,
-    image: "🚐"
-  },
-  {
-    id: "opel-vivaro-e",
-    brand: "Opel",
-    model: "Vivaro-e",
-    batteryCapacity: 75,
-    range: 330,
-    consumption: 25.4,
-    image: "🚐"
-  },
-
-  // Citroën
-  {
-    id: "citroen-c4-e",
-    brand: "Citroën",
-    model: "ë-C4",
-    batteryCapacity: 50,
-    range: 350,
-    consumption: 16.1,
-    image: "🚗"
-  },
-  {
-    id: "citroen-berlingo-e",
-    brand: "Citroën",
-    model: "ë-Berlingo",
-    batteryCapacity: 50,
-    range: 280,
-    consumption: 20.1,
-    image: "🚐"
-  },
-  {
-    id: "citroen-spacetourer-e",
-    brand: "Citroën",
-    model: "ë-SpaceTourer",
-    batteryCapacity: 75,
-    range: 330,
-    consumption: 25.4,
-    image: "🚐"
-  },
-
-  // Peugeot
-  {
-    id: "peugeot-e208",
-    brand: "Peugeot",
-    model: "e-208",
-    batteryCapacity: 50,
-    range: 362,
-    consumption: 15.6,
-    image: "🚗"
-  },
-  {
-    id: "peugeot-e2008",
-    brand: "Peugeot",
-    model: "e-2008",
-    batteryCapacity: 50,
-    range: 320,
-    consumption: 17.7,
-    image: "🚙"
-  },
-  {
-    id: "peugeot-expert-e",
-    brand: "Peugeot",
-    model: "e-Expert",
-    batteryCapacity: 75,
-    range: 330,
-    consumption: 25.4,
-    image: "🚐"
-  },
-
-  // DS
-  {
-    id: "ds-3-crossback-e",
-    brand: "DS",
-    model: "3 Crossback E-Tense",
-    batteryCapacity: 50,
-    range: 320,
-    consumption: 17.7,
-    image: "🚙"
-  },
-
-  // Renault
-  {
-    id: "renault-zoe",
-    brand: "Renault",
-    model: "ZOE",
-    batteryCapacity: 52,
-    range: 395,
-    consumption: 14.9,
-    image: "🚗"
-  },
-  {
-    id: "renault-megane-e-tech",
-    brand: "Renault",
-    model: "Mégane E-Tech",
-    batteryCapacity: 60,
-    range: 450,
-    consumption: 15.8,
-    image: "🚗"
-  },
-  {
-    id: "renault-kangoo-e-tech",
-    brand: "Renault",
-    model: "Kangoo E-Tech",
-    batteryCapacity: 45,
-    range: 285,
-    consumption: 18.9,
-    image: "🚐"
-  },
-  {
-    id: "renault-twizy",
-    brand: "Renault",
-    model: "Twizy",
-    batteryCapacity: 6.1,
-    range: 100,
-    consumption: 6.3,
-    image: "🛺"
-  },
-
-  // Dacia
-  {
-    id: "dacia-spring",
-    brand: "Dacia",
-    model: "Spring Electric",
-    batteryCapacity: 27.4,
-    range: 230,
-    consumption: 13.9,
-    image: "🚗"
-  },
-
-  // Fiat
-  {
-    id: "fiat-500e",
-    brand: "Fiat",
-    model: "500e",
-    batteryCapacity: 42,
-    range: 320,
-    consumption: 14.9,
-    image: "🚗"
-  },
-
-  // Smart
-  {
-    id: "smart-eq-fortwo",
-    brand: "Smart",
-    model: "EQfortwo",
-    batteryCapacity: 17.6,
-    range: 159,
-    consumption: 13.1,
-    image: "🚗"
-  },
-  {
-    id: "smart-eq-forfour",
-    brand: "Smart",
-    model: "EQforfour",
-    batteryCapacity: 17.6,
-    range: 153,
-    consumption: 13.7,
-    image: "🚗"
   },
 
   // MINI
@@ -763,48 +767,13 @@ const carModels: CarModel[] = [
     consumption: 15.2,
     image: "🚗"
   },
-
-  // Subaru
   {
-    id: "subaru-solterra",
-    brand: "Subaru",
-    model: "Solterra",
-    batteryCapacity: 71.4,
-    range: 466,
-    consumption: 16.9,
-    image: "🚙"
-  },
-
-  // Toyota
-  {
-    id: "toyota-bzx4",
-    brand: "Toyota",
-    model: "bZ4X",
-    batteryCapacity: 71.4,
-    range: 516,
-    consumption: 15.3,
-    image: "🚙"
-  },
-
-  // Lexus
-  {
-    id: "lexus-ux300e",
-    brand: "Lexus",
-    model: "UX 300e",
-    batteryCapacity: 72.8,
-    range: 450,
-    consumption: 17.8,
-    image: "🚙"
-  },
-
-  // Mazda
-  {
-    id: "mazda-mx30",
-    brand: "Mazda",
-    model: "MX-30",
-    batteryCapacity: 35.5,
-    range: 200,
-    consumption: 19.0,
+    id: "mini-countryman-se",
+    brand: "MINI",
+    model: "Countryman SE",
+    batteryCapacity: 66.45,
+    range: 462,
+    consumption: 16.2,
     image: "🚙"
   },
 
@@ -855,6 +824,91 @@ const carModels: CarModel[] = [
     range: 385,
     consumption: 17.0,
     image: "🚗"
+  },
+
+  // Opel
+  {
+    id: "opel-astra-e",
+    brand: "Opel",
+    model: "Astra Electric",
+    batteryCapacity: 54,
+    range: 416,
+    consumption: 14.8,
+    image: "🚗"
+  },
+  {
+    id: "opel-combo-e",
+    brand: "Opel",
+    model: "Combo-e",
+    batteryCapacity: 50,
+    range: 280,
+    consumption: 20.1,
+    image: "🚐"
+  },
+  {
+    id: "opel-corsa-e",
+    brand: "Opel",
+    model: "Corsa-e",
+    batteryCapacity: 50,
+    range: 359,
+    consumption: 15.8,
+    image: "🚗"
+  },
+  {
+    id: "opel-mokka-e",
+    brand: "Opel",
+    model: "Mokka-e",
+    batteryCapacity: 50,
+    range: 338,
+    consumption: 16.7,
+    image: "🚙"
+  },
+  {
+    id: "opel-vivaro-e",
+    brand: "Opel",
+    model: "Vivaro-e",
+    batteryCapacity: 75,
+    range: 330,
+    consumption: 25.4,
+    image: "🚐"
+  },
+
+  // Peugeot
+  {
+    id: "peugeot-e208",
+    brand: "Peugeot",
+    model: "e-208",
+    batteryCapacity: 50,
+    range: 362,
+    consumption: 15.6,
+    image: "🚗"
+  },
+  {
+    id: "peugeot-e2008",
+    brand: "Peugeot",
+    model: "e-2008",
+    batteryCapacity: 50,
+    range: 320,
+    consumption: 17.7,
+    image: "🚙"
+  },
+  {
+    id: "peugeot-e3008",
+    brand: "Peugeot",
+    model: "e-3008",
+    batteryCapacity: 73,
+    range: 525,
+    consumption: 15.8,
+    image: "🚙"
+  },
+  {
+    id: "peugeot-expert-e",
+    brand: "Peugeot",
+    model: "e-Expert",
+    batteryCapacity: 75,
+    range: 330,
+    consumption: 25.4,
+    image: "🚐"
   },
 
   // Polestar
@@ -924,6 +978,53 @@ const carModels: CarModel[] = [
     image: "🚗"
   },
 
+  // Renault
+  {
+    id: "renault-kangoo-e-tech",
+    brand: "Renault",
+    model: "Kangoo E-Tech",
+    batteryCapacity: 45,
+    range: 285,
+    consumption: 18.9,
+    image: "🚐"
+  },
+  {
+    id: "renault-megane-e-tech",
+    brand: "Renault",
+    model: "Mégane E-Tech",
+    batteryCapacity: 60,
+    range: 450,
+    consumption: 15.8,
+    image: "🚗"
+  },
+  {
+    id: "renault-scenic-e-tech",
+    brand: "Renault",
+    model: "Scenic E-Tech",
+    batteryCapacity: 87,
+    range: 625,
+    consumption: 15.8,
+    image: "🚙"
+  },
+  {
+    id: "renault-twizy",
+    brand: "Renault",
+    model: "Twizy",
+    batteryCapacity: 6.1,
+    range: 100,
+    consumption: 6.3,
+    image: "🛺"
+  },
+  {
+    id: "renault-zoe",
+    brand: "Renault",
+    model: "ZOE",
+    batteryCapacity: 52,
+    range: 395,
+    consumption: 14.9,
+    image: "🚗"
+  },
+
   // Rivian
   {
     id: "rivian-r1s",
@@ -944,6 +1045,26 @@ const carModels: CarModel[] = [
     image: "🚚"
   },
 
+  // SEAT
+  {
+    id: "seat-born",
+    brand: "SEAT",
+    model: "Born",
+    batteryCapacity: 58,
+    range: 426,
+    consumption: 15.4,
+    image: "🚗"
+  },
+  {
+    id: "seat-mii",
+    brand: "SEAT",
+    model: "Mii Electric",
+    batteryCapacity: 36.8,
+    range: 258,
+    consumption: 16.9,
+    image: "🚗"
+  },
+
   // Škoda
   {
     id: "skoda-citigo",
@@ -953,6 +1074,15 @@ const carModels: CarModel[] = [
     range: 258,
     consumption: 16.9,
     image: "🚗"
+  },
+  {
+    id: "skoda-elroq",
+    brand: "Škoda",
+    model: "Elroq",
+    batteryCapacity: 82,
+    range: 560,
+    consumption: 16.1,
+    image: "🚙"
   },
   {
     id: "skoda-enyaq",
@@ -970,6 +1100,37 @@ const carModels: CarModel[] = [
     batteryCapacity: 82,
     range: 545,
     consumption: 16.4,
+    image: "🚙"
+  },
+
+  // Smart
+  {
+    id: "smart-eq-forfour",
+    brand: "Smart",
+    model: "EQforfour",
+    batteryCapacity: 17.6,
+    range: 153,
+    consumption: 13.7,
+    image: "🚗"
+  },
+  {
+    id: "smart-eq-fortwo",
+    brand: "Smart",
+    model: "EQfortwo",
+    batteryCapacity: 17.6,
+    range: 159,
+    consumption: 13.1,
+    image: "🚗"
+  },
+
+  // Subaru
+  {
+    id: "subaru-solterra",
+    brand: "Subaru",
+    model: "Solterra",
+    batteryCapacity: 71.4,
+    range: 466,
+    consumption: 16.9,
     image: "🚙"
   },
 
@@ -1020,6 +1181,17 @@ const carModels: CarModel[] = [
     image: "🚙"
   },
 
+  // Toyota
+  {
+    id: "toyota-bzx4",
+    brand: "Toyota",
+    model: "bZ4X",
+    batteryCapacity: 71.4,
+    range: 516,
+    consumption: 15.3,
+    image: "🚙"
+  },
+
   // Volkswagen
   {
     id: "vw-egolf",
@@ -1038,6 +1210,15 @@ const carModels: CarModel[] = [
     range: 258,
     consumption: 16.9,
     image: "🚗"
+  },
+  {
+    id: "vw-id-buzz",
+    brand: "Volkswagen",
+    model: "ID.Buzz",
+    batteryCapacity: 82,
+    range: 423,
+    consumption: 21.4,
+    image: "🚐"
   },
   {
     id: "vw-id3",
@@ -1075,15 +1256,6 @@ const carModels: CarModel[] = [
     consumption: 15.5,
     image: "🚗"
   },
-  {
-    id: "vw-id-buzz",
-    brand: "Volkswagen",
-    model: "ID.Buzz",
-    batteryCapacity: 82,
-    range: 423,
-    consumption: 21.4,
-    image: "🚐"
-  },
 
   // Volvo
   {
@@ -1093,6 +1265,15 @@ const carModels: CarModel[] = [
     batteryCapacity: 78,
     range: 444,
     consumption: 19.3,
+    image: "🚙"
+  },
+  {
+    id: "volvo-ec40",
+    brand: "Volvo",
+    model: "EC40",
+    batteryCapacity: 82,
+    range: 530,
+    consumption: 17.2,
     image: "🚙"
   },
   {
@@ -1141,17 +1322,6 @@ const carModels: CarModel[] = [
     range: 706,
     consumption: 13.2,
     image: "🚗"
-  },
-
-  // Li Auto
-  {
-    id: "li-auto-one",
-    brand: "Li Auto",
-    model: "ONE",
-    batteryCapacity: 40.5,
-    range: 180,
-    consumption: 25.8,
-    image: "🚙"
   }
 ];
 
