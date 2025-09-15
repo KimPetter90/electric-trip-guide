@@ -613,9 +613,27 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       console.log('  - Bil rekkevidde:', selectedCar.range + 'km');
       console.log('  - Rutelengde:', routeDistance.toFixed(1) + 'km');
       
+      // Beregn hvor langt bilen kan kjøre med startbatteri
+      const maxRangeWithStartBattery = (selectedCar.range * routeData.batteryPercentage) / 100;
+      const remainingDistanceAfterStart = routeDistance - maxRangeWithStartBattery;
+      
+      console.log('  - Kan kjøre:', maxRangeWithStartBattery.toFixed(1) + 'km med startbatteri');
+      console.log('  - Manglende avstand:', Math.max(0, remainingDistanceAfterStart).toFixed(1) + 'km');
+      
+      // Vis kun blå markører hvis batteriet blir lavt (under 15%)
+      const batteryAtEnd = Math.max(0, routeData.batteryPercentage - (routeDistance / selectedCar.range * 100));
+      console.log('  - Estimert batteri ved slutt:', batteryAtEnd.toFixed(1) + '%');
+      
+      if (batteryAtEnd > 15) {
+        console.log('✅ BATTERIET HOLDER! Ingen blå markører nødvendig (batteri ved slutt: ' + batteryAtEnd.toFixed(1) + '%)');
+      
       if (nearRouteStations.length === 0) {
         console.log('⚠️ INGEN STASJONER FUNNET INNENFOR 5KM - KAN IKKE LAGE BLÅ MARKØRER');
+      } else if (batteryAtEnd > 15) {
+        console.log('⏭️ HOPPER OVER BLÅ MARKØRER - BATTERIET HOLDER');
       } else {
+        console.log('🔋 LAVT BATTERI! Viser blå markører for kritiske ladestasjoner');
+      }
         // Beregn effektivitetsscore for stasjoner nær ruten
         const stationsWithScore = nearRouteStations.map(station => {
           const distance = (station as any).distanceToRoute;
@@ -665,12 +683,13 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
             z-index: 15;
             box-shadow: 0 0 15px rgba(0, 102, 255, 0.8);
           `;
-          el.innerHTML = '⭐';
+          el.innerHTML = '⚡';
 
           const popup = new mapboxgl.Popup().setHTML(`
             <div style="font-family: Arial, sans-serif; color: #333;">
-              <h4 style="margin: 0 0 8px 0; color: #0066ff;"><strong>🔵 MEST EFFEKTIV #${index + 1}: ${station.name}</strong></h4>
+              <h4 style="margin: 0 0 8px 0; color: #0066ff;"><strong>⚡ KRITISK LADESTASJON #${index + 1}: ${station.name}</strong></h4>
               <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
+              <p style="margin: 4px 0; color: #dc2626;"><strong>🔋 NØDVENDIG FOR LAVT BATTERI!</strong></p>
               <p style="margin: 4px 0; color: #333;">🛣️ <strong>Avstand til rute:</strong> ${(station as any).distanceToRoute.toFixed(1)} km</p>
               <p style="margin: 4px 0; color: #0066ff;"><strong>⭐ Effektivitetsscore:</strong> ${station.efficiencyScore.toFixed(2)}</p>
               <p style="margin: 4px 0; color: #0066ff;"><strong>🔵 Optimal valg for ruten!</strong></p>
