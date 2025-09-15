@@ -197,7 +197,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         setAccessToken(data.token);
       } catch (error) {
         console.error('❌ Error fetching Mapbox token:', error);
-        setError('Kunne ikke hente Mapbox-token');
+        setError('Kunne ikke hente karttoken');
       }
     };
 
@@ -448,13 +448,18 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         el.innerHTML = '⚡';
 
         const popup = new mapboxgl.Popup().setHTML(`
-          <strong>${station.name}</strong><br/>
-          <em>${station.location}</em><br/>
-          📍 ${station.distanceFromRoute?.toFixed(1)} km langs ruten<br/>
-          🔋 Batterinivå ved ankomst: ${station.arrivalBatteryPercentage?.toFixed(1)}%<br/>
-          ${station.isRequired ? '⚠️ <strong>Obligatorisk ladestasjon</strong>' : '🔄 Valgfri ladestasjon'}<br/>
-          ⚡ ${station.power} | 💰 ${station.cost} kr/kWh<br/>
-          📊 ${station.available}/${station.total} tilgjengelige
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h4 style="margin: 0 0 8px 0; color: #000;"><strong>${station.name}</strong></h4>
+            <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
+            <p style="margin: 4px 0; color: #333;">🛣️ <strong>Avstand langs ruten:</strong> ${station.distanceFromRoute?.toFixed(1)} km</p>
+            <p style="margin: 4px 0; color: #333;">🔋 <strong>Batterinivå ved ankomst:</strong> ${station.arrivalBatteryPercentage?.toFixed(1)}%</p>
+            <p style="margin: 4px 0; color: ${station.isRequired ? '#dc2626' : '#059669'};">
+              ${station.isRequired ? '⚠️ <strong>Obligatorisk ladestasjon</strong>' : '🔄 <strong>Valgfri ladestasjon</strong>'}
+            </p>
+            <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
+            <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
+            <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${station.available}/${station.total} ladepunkter</p>
+          </div>
         `);
 
         new mapboxgl.Marker(el)
@@ -1092,6 +1097,9 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
                 <h3 className="text-lg font-semibold mb-2">Ingen lading nødvendig!</h3>
                 <p className="text-muted-foreground">
                   Ditt {routeData.batteryPercentage}% batteri holder hele veien til {routeData.to || 'destinasjonen'}.
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Du kan likevel velge å lade underveis for ekstra trygghet.
                 </p>
               </Card>
             )}

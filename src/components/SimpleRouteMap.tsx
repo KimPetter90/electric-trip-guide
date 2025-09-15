@@ -311,7 +311,10 @@ export default function SimpleRouteMap({ isVisible, routeData, selectedCar }: Si
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <Navigation className="h-5 w-5 text-primary animate-glow-pulse" />
-        <h3 className="text-lg font-semibold text-foreground">Kritisk Ladestasjon</h3>
+        <h3 className="text-lg font-semibold text-foreground">Kartvisning</h3>
+        <Badge variant="secondary" className="ml-2">
+          {basicChargingStations.length} ladestasjoner
+        </Badge>
       </div>
 
       {error && (
@@ -328,7 +331,10 @@ export default function SimpleRouteMap({ isVisible, routeData, selectedCar }: Si
         />
         {loading && (
           <div className="absolute inset-0 bg-background/80 flex items-center justify-center rounded-lg">
-            <div className="text-sm">Laster kart...</div>
+            <div className="text-center">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              <div className="text-sm">Laster kart...</div>
+            </div>
           </div>
         )}
       </div>

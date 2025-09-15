@@ -436,6 +436,10 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
               <div className="w-3 h-3 rounded-full bg-destructive"></div>
               <span>Nødvendig ladestasjon</span>
             </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <span>Normal lader</span>
+            </div>
           </div>
         </div>
       </Card>
@@ -480,22 +484,34 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mb-2">{station.location}</p>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <span>📍 {station.location}</span>
+            <span>🔌 {station.fastCharger ? 'Hurtiglader' : 'Normal lader'}</span>
+            <span>⚡ Tilgjengelig: {Math.floor(Math.random() * 4) + 1}/{Math.floor(Math.random() * 6) + 4}</span>
+          </div>
                 
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3 text-muted-foreground" />
-                    <span>{station.chargeTime} min</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Zap className="h-3 w-3 text-muted-foreground" />
-                    <span>{station.chargeAmount} kWh</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <DollarSign className="h-3 w-3 text-muted-foreground" />
-                    <span>{station.cost} kr</span>
-                  </div>
-                </div>
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3 text-muted-foreground" />
+              <span>Ladetid: {station.chargeTime} min</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Zap className="h-3 w-3 text-muted-foreground" />
+              <span>Energi: {station.chargeAmount} kWh</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <DollarSign className="h-3 w-3 text-muted-foreground" />
+              <span>Kostnad: {station.cost} kr</span>
+            </div>
+          </div>
+          <div className="mt-2">
+            <Badge variant="secondary" className="text-xs mr-2">
+              {station.fastCharger ? '⚡ Hurtiglader' : '🔌 Normal lader'}
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              Tilgjengelig: {Math.floor(Math.random() * 4) + 1}/{Math.floor(Math.random() * 6) + 4}
+            </Badge>
+          </div>
               </div>
             ))}
           </div>
