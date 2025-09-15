@@ -1345,7 +1345,7 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
 
   // Get unique brands with their representative images, sorted alphabetically
   const brands = Object.keys(carsByBrand)
-    .sort() // Sort brands alphabetically
+    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())) // Sort brands alphabetically, case-insensitive
     .map(brand => ({
       name: brand,
       count: carsByBrand[brand].length,
