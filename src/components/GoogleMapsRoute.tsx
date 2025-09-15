@@ -55,6 +55,13 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [allMarkers, setAllMarkers] = useState<google.maps.Marker[]>([]);
 
+  console.log('🔄 GoogleMapsRoute KOMPONENT RENDERER!', { 
+    isVisible, 
+    hasMap: !!map, 
+    stationCount: chargingStations.length,
+    batteryPercent: routeData.batteryPercentage 
+  });
+
   // Load charging stations from database
   useEffect(() => {
     const loadChargingStations = async () => {
