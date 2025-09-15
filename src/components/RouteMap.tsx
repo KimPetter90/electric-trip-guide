@@ -449,17 +449,24 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       const arrivalBattery = Math.max(0, currentBatteryLevel - (distanceToStation / actualRange) * 100);
       const departureBattery = Math.min(80, Math.max(20, arrivalBattery + bestStation.chargeAmount));
       
+      // En stasjon er OBLIGATORISK hvis:
+      // 1. Batteriet er under 20% ved ankomst, ELLER
+      // 2. Vi ikke kan nå målet uten å lade her
+      const remainingAfterStation = routeDistance - stationDistance;
+      const canReachDestinationAfterCharging = (departureBattery / 100) * actualRange >= remainingAfterStation;
+      const isRequired = arrivalBattery <= 20 || !canReachDestinationAfterCharging;
+      
       console.log(`📍 Ladingstopp ${chargingStops.length + 1}: ${bestStation.name} på ${stationDistance.toFixed(1)}km`);
       console.log(`   Ankomst batteri: ${arrivalBattery.toFixed(1)}%`);
       console.log(`   Avreise batteri: ${departureBattery.toFixed(1)}%`);
-      console.log(`   ${arrivalBattery <= lowBatteryThreshold ? '🚨 OBLIGATORISK' : '💡 Valgfritt'} - batterinivå ved ankomst`);
+      console.log(`   ${isRequired ? '🚨 OBLIGATORISK' : '💡 Valgfritt'} - batterinivå ved ankomst`);
       
       chargingStops.push({
         ...bestStation,
         distance: stationDistance,
         arrivalBattery,
         departureBattery,
-        isRequired: arrivalBattery <= lowBatteryThreshold // Obligatorisk når batteriet når 10% eller mindre
+        isRequired
       });
       
       // Oppdater posisjon og batterinivå for neste iterasjon
