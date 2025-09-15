@@ -14,13 +14,330 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      charging_stations: {
+        Row: {
+          address: string | null
+          available: number
+          cost: number
+          created_at: string
+          fast_charger: boolean
+          id: string
+          latitude: number
+          location: string
+          longitude: number
+          name: string
+          power: string
+          provider: string | null
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          available?: number
+          cost?: number
+          created_at?: string
+          fast_charger?: boolean
+          id?: string
+          latitude: number
+          location: string
+          longitude: number
+          name: string
+          power?: string
+          provider?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          available?: number
+          cost?: number
+          created_at?: string
+          fast_charger?: boolean
+          id?: string
+          latitude?: number
+          location?: string
+          longitude?: number
+          name?: string
+          power?: string
+          provider?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      proof_cards: {
+        Row: {
+          address: string | null
+          category: string | null
+          created_at: string
+          id: string
+          image_data: string | null
+          image_url: string
+          is_synced: boolean | null
+          latitude: number | null
+          longitude: number | null
+          notes: string | null
+          timestamp: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          image_data?: string | null
+          image_url: string
+          is_synced?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          notes?: string | null
+          timestamp?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          image_data?: string | null
+          image_url?: string
+          is_synced?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          notes?: string | null
+          timestamp?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      proof_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      provider_recommendations: {
+        Row: {
+          category: string
+          commission_rate: number | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          provider_name: string
+          referral_link: string | null
+          savings_percentage: number
+        }
+        Insert: {
+          category: string
+          commission_rate?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          provider_name: string
+          referral_link?: string | null
+          savings_percentage: number
+        }
+        Update: {
+          category?: string
+          commission_rate?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          provider_name?: string
+          referral_link?: string | null
+          savings_percentage?: number
+        }
+        Relationships: []
+      }
+      savings_progress: {
+        Row: {
+          category: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          monthly_savings: number
+          new_amount: number
+          old_amount: number
+          provider_new: string | null
+          provider_old: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          monthly_savings: number
+          new_amount: number
+          old_amount: number
+          provider_new?: string | null
+          provider_old?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          monthly_savings?: number
+          new_amount?: number
+          old_amount?: number
+          provider_new?: string | null
+          provider_old?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_expenses: {
+        Row: {
+          created_at: string
+          forsikring: number | null
+          id: string
+          lan: number | null
+          mobil: number | null
+          streaming: number | null
+          strom: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          forsikring?: number | null
+          id?: string
+          lan?: number | null
+          mobil?: number | null
+          streaming?: number | null
+          strom?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          forsikring?: number | null
+          id?: string
+          lan?: number | null
+          mobil?: number | null
+          streaming?: number | null
+          strom?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          auto_backup: boolean | null
+          created_at: string
+          id: string
+          last_reset_date: string | null
+          location_enabled: boolean | null
+          monthly_proof_count: number | null
+          notification_enabled: boolean | null
+          plan_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_backup?: boolean | null
+          created_at?: string
+          id?: string
+          last_reset_date?: string | null
+          location_enabled?: boolean | null
+          monthly_proof_count?: number | null
+          notification_enabled?: boolean | null
+          plan_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_backup?: boolean | null
+          created_at?: string
+          id?: string
+          last_reset_date?: string | null
+          location_enabled?: boolean | null
+          monthly_proof_count?: number | null
+          notification_enabled?: boolean | null
+          plan_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_monthly_limit: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
