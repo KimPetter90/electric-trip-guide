@@ -344,13 +344,11 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
     });
   }, [map, directionsService, directionsRenderer, routeData, selectedCar, chargingStations]);
 
-  // Show all charging stations when map is loaded (always show all)
+  // Show ALL charging stations when map is loaded
   useEffect(() => {
-    console.log('🗺️ Kartvisning useEffect kjører...', { 
+    console.log('🗺️ ALL STATIONS useEffect kjører...', { 
       harKart: !!map, 
-      antallStasjoner: chargingStations.length,
-      harFra: !!routeData.from,
-      harTil: !!routeData.to
+      antallStasjoner: chargingStations.length
     });
     
     if (!map || chargingStations.length === 0) {
@@ -358,31 +356,32 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
       return;
     }
 
-    // Clear existing markers first
-    console.log('🧹 Rydder eksisterende markører...');
-    markers.forEach(marker => marker.setMap(null));
+    console.log(`📍 LEGGER TIL ALLE ${chargingStations.length} LADESTASJONER PÅ KARTET...`);
+    
+    // Rydd bare ladestasjonsmarkører, ikke rute-markører
+    markers.forEach(marker => {
+      const title = marker.getTitle();
+      if (!title?.includes('OBLIGATORISK') && !title?.includes('ANBEFALT')) {
+        marker.setMap(null);
+      }
+    });
     
     const newMarkers: google.maps.Marker[] = [];
     
-    console.log(`📍 Legger til ALLE ${chargingStations.length} ladestasjoner på kartet...`);
-    
     chargingStations.forEach((station, index) => {
-      if (index < 5) { // Log første 5 for debugging
-        console.log(`📍 Markør ${index + 1}: ${station.name} på ${station.lat}, ${station.lng}`);
-      }
-      
       const marker = new google.maps.Marker({
         position: { lat: station.lat, lng: station.lng },
         map: map,
         title: station.name,
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: station.fastCharger ? 6 : 4,
+          scale: station.fastCharger ? 5 : 3,
           fillColor: station.fastCharger ? "#00ff88" : "#ffaa00",
           fillOpacity: 0.8,
           strokeColor: "#ffffff",
           strokeWeight: 1
-        }
+        },
+        zIndex: 1 // Lav zIndex så route-markører vises over
       });
 
       const infoWindow = new google.maps.InfoWindow({
@@ -404,10 +403,18 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
       newMarkers.push(marker);
     });
 
-    console.log(`✅ Lagt til ${newMarkers.length} markører på kartet (alle ladestasjoner)`);
-    setMarkers(newMarkers);
+    console.log(`✅ LAGT TIL ${newMarkers.length} VANLIGE LADESTASJONSMARKØRER`);
     
-  }, [map, chargingStations]); // Fjernet routeData dependency så alle stasjoner vises alltid
+    // Behold eksisterende route-markører og legg til nye
+    setMarkers(prev => {
+      const routeMarkers = prev.filter(m => {
+        const title = m.getTitle();
+        return title?.includes('OBLIGATORISK') || title?.includes('ANBEFALT');
+      });
+      return [...routeMarkers, ...newMarkers];
+    });
+    
+  }, [map, chargingStations]); // Trigger når kart eller stasjoner endres
 
   if (!isVisible) return null;
 
