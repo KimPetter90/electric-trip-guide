@@ -370,14 +370,24 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
             id="battery"
             type="number"
             placeholder="80"
-            value={routeData.batteryPercentage === 80 ? '' : routeData.batteryPercentage || ''}
+            value={routeData.batteryPercentage === 80 ? '' : (routeData.batteryPercentage || '')}
             onChange={(e) => {
               const value = e.target.value;
+              console.log('Battery input changed:', value);
               if (value === '') {
+                console.log('Setting to default 80%');
                 handleInputChange('batteryPercentage', 80);
               } else {
                 const numValue = parseInt(value);
-                handleInputChange('batteryPercentage', isNaN(numValue) ? 80 : Math.max(1, Math.min(100, numValue)));
+                console.log('Parsed number:', numValue);
+                if (isNaN(numValue)) {
+                  console.log('Invalid number, setting to 80%');
+                  handleInputChange('batteryPercentage', 80);
+                } else {
+                  const finalValue = Math.max(1, Math.min(100, numValue));
+                  console.log('Final battery value:', finalValue);
+                  handleInputChange('batteryPercentage', finalValue);
+                }
               }
             }}
             className="bg-background/50 border-border focus:border-primary focus:shadow-lg"
