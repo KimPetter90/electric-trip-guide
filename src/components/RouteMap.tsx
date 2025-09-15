@@ -590,6 +590,42 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     }
   };
 
+  // Hent koordinater for et stedsnavn via Mapbox Geocoding API
+  const getCoordinatesForPlace = async (placeName: string): Promise<{ lat: number; lng: number } | null> => {
+    // Sjekk først hardkodede koordinater
+    const hardcodedCoords = cityCoordinates[placeName.toLowerCase().trim()];
+    if (hardcodedCoords) {
+      console.log(`Bruker hardkodede koordinater for ${placeName}:`, hardcodedCoords);
+      return hardcodedCoords;
+    }
+
+    try {
+      // Bruk Mapbox Geocoding API for andre steder
+      const encodedPlace = encodeURIComponent(`${placeName}, Norge`);
+      const geocodingUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodedPlace}.json?country=NO&types=place,locality,district,region&access_token=${mapboxToken}`;
+      
+      console.log(`Søker koordinater via Mapbox for: ${placeName}`);
+      const response = await fetch(geocodingUrl);
+      const data = await response.json();
+      
+      if (data.features && data.features.length > 0) {
+        const feature = data.features[0];
+        const coords = {
+          lng: feature.center[0],
+          lat: feature.center[1]
+        };
+        console.log(`Fant koordinater for ${placeName}:`, coords);
+        return coords;
+      } else {
+        console.warn(`Ingen koordinater funnet for ${placeName}`);
+        return null;
+      }
+    } catch (error) {
+      console.error(`Feil ved søk etter koordinater for ${placeName}:`, error);
+      return null;
+    }
+  };
+
   // Oppdater rute på kart med Mapbox Directions API
   const updateMapRoute = async () => {
     console.log('updateMapRoute startet');
@@ -605,25 +641,29 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       return;
     }
 
-    const fromCity = routeData.from.toLowerCase().trim();
-    const toCity = routeData.to.toLowerCase().trim();
-    const viaCity = routeData.via?.toLowerCase().trim();
+    const fromCity = routeData.from.trim();
+    const toCity = routeData.to.trim();
+    const viaCity = routeData.via?.trim();
     
     console.log('Søker etter koordinater for:', { fromCity, toCity, viaCity });
     
-    const fromCoords = cityCoordinates[fromCity];
-    const toCoords = cityCoordinates[toCity];
-    const viaCoords = viaCity ? cityCoordinates[viaCity] : null;
+    // Hent koordinater via Geocoding API
+    const fromCoords = await getCoordinatesForPlace(fromCity);
+    const toCoords = await getCoordinatesForPlace(toCity);
+    const viaCoords = viaCity ? await getCoordinatesForPlace(viaCity) : null;
 
     if (!fromCoords || !toCoords) {
-      console.error('Koordinater ikke funnet for byer');
-      setError(`Kunne ikke finne koordinater for ${fromCity} eller ${toCity}`);
+      console.error('Koordinater ikke funnet for steder');
+      const missingPlaces = [];
+      if (!fromCoords) missingPlaces.push(fromCity);
+      if (!toCoords) missingPlaces.push(toCity);
+      setError(`Kunne ikke finne koordinater for: ${missingPlaces.join(', ')}`);
       return;
     }
 
     if (viaCity && !viaCoords) {
-      console.error('Koordinater ikke funnet for via-by');
-      setError(`Kunne ikke finne koordinater for via-by: ${viaCity}`);
+      console.error('Koordinater ikke funnet for via-sted');
+      setError(`Kunne ikke finne koordinater for via-sted: ${viaCity}`);
       return;
     }
 
