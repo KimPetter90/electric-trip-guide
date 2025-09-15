@@ -610,15 +610,15 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       
       console.log('🔍', station.name + ':', station.distanceAlongRoute.toFixed(1) + 'km, batteri ved ankomst:', batteryAtStation.toFixed(1) + '%');
       
-      // EXTREMELY liberale kriterier: bare sjekk at batteriet ikke er negativt!
-      const shouldCharge = batteryAtStation >= -50 && batteryAtStation <= 80;
+      // Lade når batteriet er mellom 10-15% (eller mindre enn 10% for sikkerhet)
+      const shouldCharge = batteryAtStation <= 15 && batteryAtStation >= 5;
       
-      console.log('   - Skal lade her? (batteri > -50%):', shouldCharge);
+      console.log('   - Skal lade her? (batteri 5-15%):', shouldCharge);
       
       return shouldCharge;
     });
 
-    console.log('📍 RESULTAT: Funnet', stationsBeforeCritical.length, 'ladestasjoner hvor du kan lade (1-50% batteri)');
+    console.log('📍 RESULTAT: Funnet', stationsBeforeCritical.length, 'ladestasjoner hvor du kan lade (5-15% batteri)');
     
     // Hvis ingen stasjoner funnet, vis alle for debugging
     if (stationsBeforeCritical.length === 0) {
