@@ -245,9 +245,9 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     }
 
     const routeCoords = routeGeometry.coordinates;
-    const maxDistanceFromRoute = 25; // Maksimum 25 km fra ruten
+    const maxDistanceFromRoute = 15; // Redusert til 15 km fra ruten for mindre rot
     
-    return allChargingStations.filter(station => {
+    const stationsAlongRoute = allChargingStations.filter(station => {
       // Finn nærmeste punkt på ruten til stasjonen
       let minDistance = Infinity;
       let routeDistance = 0;
@@ -278,7 +278,15 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       (station as any).routeDistance = routeDistance;
       
       return minDistance <= maxDistanceFromRoute;
-    }).sort((a, b) => (a as any).routeDistance - (b as any).routeDistance);
+    });
+
+    // Sorter etter avstand langs ruten og ta kun de mest relevante
+    const sortedStations = stationsAlongRoute
+      .sort((a, b) => (a as any).routeDistance - (b as any).routeDistance)
+      .slice(0, 15); // Maksimum 15 stasjoner for å unngå rot
+
+    console.log(`📍 Fant ${sortedStations.length} stasjoner langs ruten (innen ${maxDistanceFromRoute}km)`);
+    return sortedStations;
   };
   
   // Intelligent ladestasjonsoptimalisering med obligatoriske stopp
@@ -845,10 +853,15 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         markers.forEach(marker => marker.remove());
         const chargingMarkers: mapboxgl.Marker[] = [];
         
-        // Legg til markører for alle ladestasjoner som er funnet
+        // Legg til markører bare for obligatoriske ladestasjoner (rød) og viktige valgfrie (grønn)
         optimizedStations.forEach((station, index) => {
           const isRequired = (station as any).isRequired;
           const arrivalBattery = (station as any).arrivalBattery || 50;
+          
+          // Bare vis obligatoriske stasjoner og de viktigste valgfrie
+          if (!isRequired && index > 2) {
+            return; // Hopp over mindre viktige valgfrie stasjoner for å unngå rot
+          }
           
           console.log(`🔍 Lager markør for ${station.name}:`, { 
             isRequired, 
@@ -862,31 +875,39 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           el.className = 'charging-marker';
           
           if (isRequired) {
-            // Obligatorisk ladestasjon - rød/orange basert på batterinivå
-            el.style.backgroundColor = arrivalBattery < 10 ? '#ef4444' : '#f59e0b';
-            el.style.border = '3px solid #dc2626';
-            el.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.6)';
+            // OBLIGATORISK ladestasjon - stor rød markør med tydelig varsel
+            el.style.backgroundColor = '#dc2626';
+            el.style.border = '4px solid #ffffff';
+            el.style.boxShadow = '0 0 20px rgba(220, 38, 38, 0.8), 0 0 40px rgba(220, 38, 38, 0.4)';
+            el.style.width = '40px';
+            el.style.height = '40px';
+            el.style.zIndex = '1000';
           } else {
-            // Valgfri ladestasjon - grønn
-            el.style.backgroundColor = '#10b981';
-            el.style.border = '3px solid #059669';
-            el.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.6)';
+            // Valgfri ladestasjon - mindre grønn markør
+            el.style.backgroundColor = '#16a34a';
+            el.style.border = '2px solid #ffffff';
+            el.style.boxShadow = '0 0 10px rgba(22, 163, 74, 0.5)';
+            el.style.width = '28px';
+            el.style.height = '28px';
+            el.style.zIndex = '500';
           }
           
-          el.style.width = '35px';
-          el.style.height = '35px';
           el.style.borderRadius = '50%';
           el.style.color = 'white';
           el.style.display = 'flex';
           el.style.alignItems = 'center';
           el.style.justifyContent = 'center';
-          el.style.fontSize = '16px';
+          el.style.fontSize = isRequired ? '18px' : '14px';
           el.style.fontWeight = 'bold';
           el.style.position = 'relative';
+          el.style.cursor = 'pointer';
           
-          // Legg til varselikon for kritisk batterinivå
-          if (isRequired && arrivalBattery < 10) {
-            el.innerHTML = `<span style="position: absolute; top: -5px; right: -5px; background: #dc2626; border-radius: 50%; width: 15px; height: 15px; display: flex; align-items: center; justify-content: center; font-size: 10px;">!</span>${index + 1}`;
+          // Spesielt varselikon for kritisk batterinivå (under 10%)
+          if (isRequired && arrivalBattery <= 10) {
+            el.innerHTML = `
+              <span style="position: absolute; top: -8px; right: -8px; background: #fbbf24; color: #000; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid white;">!</span>
+              ${index + 1}
+            `;
           } else {
             el.textContent = (index + 1).toString();
           }
@@ -926,12 +947,13 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           
           chargingMarkers.push(marker);
           console.log(`✅ Markør lagt til for ${station.name} på [${station.lng}, ${station.lat}]`);
-        });
+         });
         
         // Kombiner alle markører
         const allNewMarkers = [...newMarkers, ...chargingMarkers];
         setMarkers(allNewMarkers);
-        console.log('Lagt til', chargingMarkers.length, 'ladestasjonsmarkører på kartet (obligatoriske og valgfrie)');
+        console.log(`🎯 Viser ${chargingMarkers.length} ladestasjonsmarkører: ${chargingMarkers.filter((_, i) => (optimizedStations[i] as any)?.isRequired).length} obligatoriske`);
+        console.log(`🗺️ Alle markører: Start/Mål + ${chargingMarkers.length} ladestasjoner`);
         
         // Tilpass visningen til ruten
         const bounds = new mapboxgl.LngLatBounds();
