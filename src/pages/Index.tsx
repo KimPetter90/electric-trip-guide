@@ -36,7 +36,7 @@ function Index() {
     to: "",
     via: "",
     trailerWeight: 0,
-    batteryPercentage: 80,
+    batteryPercentage: 0,
     travelDate: undefined
   });
   const [showRoute, setShowRoute] = useState(true);
