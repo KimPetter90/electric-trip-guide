@@ -295,6 +295,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     console.log('🚀 OPTIMIZE CHARGING STATIONS KALT!');
     console.log('📊 BATTERIPROSENT INPUT:', routeData.batteryPercentage, '%');
     console.log('📊 RouteDistance:', routeDistance, 'km');
+    console.log('🕐 Tidsstempel:', new Date().toLocaleTimeString());
     
     if (!selectedCar) {
       console.log('❌ Ingen bil valgt');
