@@ -1298,7 +1298,11 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
                   ? 'ring-2 ring-primary bg-primary/10 border-primary/40 shadow-lg' 
                   : 'bg-card/80 backdrop-blur-sm border-border hover:bg-primary/5 hover:border-primary/30 hover:shadow-md'
               }`}
-              onClick={() => onCarSelect(car)}
+              onClick={() => {
+                onCarSelect(car);
+                // Scroll til toppen av siden når bil er valgt
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
             >
               <div className="flex items-center space-x-4">
                 <span className="text-2xl">{car.image}</span>
