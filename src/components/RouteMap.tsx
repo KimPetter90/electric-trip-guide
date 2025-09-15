@@ -564,17 +564,17 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     // Sorter stasjoner etter distanse langs ruten
     stationsAlongRoute.sort((a, b) => a.distanceAlongRoute - b.distanceAlongRoute);
 
-    // Finn stasjoner hvor vi ankommer med 10-20% batteri (utvidet område)
-    console.log('🔍 ANALYSERER ALLE STASJONER:');
+    // Finn stasjoner hvor vi kan lade når batteriet blir lavt (utvidet kriterier)
+    console.log('🔍 ANALYSERER ALLE', stationsAlongRoute.length, 'STASJONER LANGS RUTEN:');
     const stationsBeforeCritical = stationsAlongRoute.filter(station => {
       const batteryAtStation = batteryPercentage - (station.distanceAlongRoute / car.range) * 100;
       
       console.log('🔍', station.name + ':', station.distanceAlongRoute.toFixed(1) + 'km, batteri ved ankomst:', batteryAtStation.toFixed(1) + '%');
       
-      // Utvid til 10-20% for å fange flere stasjoner
-      const shouldCharge = batteryAtStation >= 10 && batteryAtStation <= 20 && station.distanceAlongRoute < routeDistance * 0.95;
+      // MYE mer liberal kriterie: lade hvis batteriet er 30% eller mindre
+      const shouldCharge = batteryAtStation >= 5 && batteryAtStation <= 30 && station.distanceAlongRoute < routeDistance * 0.95;
       
-      console.log('   - Skal lade her? (batteri 10-20%):', shouldCharge, '| Innenfor rute?', station.distanceAlongRoute < routeDistance * 0.95);
+      console.log('   - Skal lade her? (batteri 5-30%):', shouldCharge, '| Distanse OK?', station.distanceAlongRoute < routeDistance * 0.95);
       
       return shouldCharge;
     });
