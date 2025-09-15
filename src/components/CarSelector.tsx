@@ -1191,7 +1191,7 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
   };
 
   const handleShowBrands = () => {
-    setShowBrands(true);
+    setShowBrands(!showBrands);
   };
 
   return (
@@ -1229,29 +1229,42 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
         </div>
       ) : !selectedBrand ? (
         /* Brand selection - vertical list */
-        <div className="space-y-2 max-h-96 overflow-y-auto">
-          {brands.map((brand) => (
-            <Card
-              key={brand.name}
-              className="p-4 cursor-pointer transition-all duration-200 bg-card/80 backdrop-blur-sm border-border hover:bg-primary/5 hover:border-primary/30 hover:shadow-md"
-              onClick={() => handleBrandSelect(brand.name)}
+        <div className="space-y-3">
+          <div className="text-center">
+            <Button
+              onClick={handleShowBrands}
+              variant="outline"
+              size="sm"
+              className="mb-4"
             >
-              <div className="flex items-center space-x-4">
-                <span className="text-2xl">{brand.image}</span>
-                
-                <div className="flex-1">
-                  <h5 className="font-semibold text-sm text-foreground">
-                    {brand.name}
-                  </h5>
-                  <p className="text-xs text-muted-foreground">
-                    {brand.count} modell{brand.count !== 1 ? 'er' : ''}
-                  </p>
+              <Car className="h-4 w-4 mr-2" />
+              Skjul bilmerker
+            </Button>
+          </div>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {brands.map((brand) => (
+              <Card
+                key={brand.name}
+                className="p-4 cursor-pointer transition-all duration-200 bg-card/80 backdrop-blur-sm border-border hover:bg-primary/5 hover:border-primary/30 hover:shadow-md"
+                onClick={() => handleBrandSelect(brand.name)}
+              >
+                <div className="flex items-center space-x-4">
+                  <span className="text-2xl">{brand.image}</span>
+                  
+                  <div className="flex-1">
+                    <h5 className="font-semibold text-sm text-foreground">
+                      {brand.name}
+                    </h5>
+                    <p className="text-xs text-muted-foreground">
+                      {brand.count} modell{brand.count !== 1 ? 'er' : ''}
+                    </p>
+                  </div>
+                  
+                  <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180" />
                 </div>
-                
-                <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180" />
-              </div>
-            </Card>
-          ))}
+              </Card>
+            ))}
+          </div>
         </div>
       ) : (
         /* Model selection for selected brand - vertical list */
