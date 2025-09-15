@@ -497,8 +497,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     
     const criticalBatteryLevel = 10; // Kritisk batterinivå på 10%
     const maxChargingLevel = 80; // Lad til maks 80%
-    const maxDetourDistance = 10; // Maks 10km avvik fra ruten
-    const maxStationsToShow = 5; // Vis maks 5 stasjoner
+    const maxDetourDistance = 50; // ØKT til 50km avvik - MYE mer liberalt!
+    const maxStationsToShow = 20; // ØKT til 20 stasjoner
 
     console.log('🔋 DETALJERT BEREGNING:');
     console.log('   - Start batteri:', batteryPercentage + '%');
@@ -574,22 +574,22 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     // Sorter stasjoner etter distanse langs ruten
     stationsAlongRoute.sort((a, b) => a.distanceAlongRoute - b.distanceAlongRoute);
 
-    // Finn stasjoner hvor vi kan lade når batteriet blir lavt (utvidet kriterier)
+    // Finn stasjoner hvor vi kan lade når batteriet blir lavt (MEGET liberale kriterier)
     console.log('🔍 ANALYSERER ALLE', stationsAlongRoute.length, 'STASJONER LANGS RUTEN:');
     const stationsBeforeCritical = stationsAlongRoute.filter(station => {
       const batteryAtStation = batteryPercentage - (station.distanceAlongRoute / car.range) * 100;
       
       console.log('🔍', station.name + ':', station.distanceAlongRoute.toFixed(1) + 'km, batteri ved ankomst:', batteryAtStation.toFixed(1) + '%');
       
-      // MYE mer liberal kriterie: lade hvis batteriet er 30% eller mindre
-      const shouldCharge = batteryAtStation >= 5 && batteryAtStation <= 30 && station.distanceAlongRoute < routeDistance * 0.95;
+      // MYCKET liberale kriterier: lade hvis batteriet er 50% eller mindre!
+      const shouldCharge = batteryAtStation >= 1 && batteryAtStation <= 50 && station.distanceAlongRoute < routeDistance * 0.98;
       
-      console.log('   - Skal lade her? (batteri 5-30%):', shouldCharge, '| Distanse OK?', station.distanceAlongRoute < routeDistance * 0.95);
+      console.log('   - Skal lade her? (batteri 1-50%):', shouldCharge, '| Distanse OK?', station.distanceAlongRoute < routeDistance * 0.98);
       
       return shouldCharge;
     });
 
-    console.log('📍 RESULTAT: Funnet', stationsBeforeCritical.length, 'ladestasjoner hvor du ankommer med 10-20% batteri');
+    console.log('📍 RESULTAT: Funnet', stationsBeforeCritical.length, 'ladestasjoner hvor du kan lade (1-50% batteri)');
     
     // Hvis ingen stasjoner funnet, vis alle for debugging
     if (stationsBeforeCritical.length === 0) {
