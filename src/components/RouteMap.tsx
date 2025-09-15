@@ -336,8 +336,10 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
     
     console.log(`📍 LETER ETTER LADESTASJONER NÆR ${distanceUntil10Percent.toFixed(1)}km...`);
 
-    // Finn ladestasjon nær 10%-punktet, men VELG den som gir batteriprosent nærmest 10%
+    // Finn ladestasjon som gir batteriprosent nærmest 10% ved ankomst
     const stationsNearRoute = findStationsNearRoute(routeGeometry);
+    console.log(`🔍 Fant ${stationsNearRoute.length} stasjoner langs ruten totalt`);
+    
     const suitableStations = stationsNearRoute
       .filter(s => s.available > 0)
       .map(s => {
@@ -346,7 +348,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
         const batteryAtStation = startBattery - batteryUsedToStation;
         const differenceFrom10Percent = Math.abs(batteryAtStation - 10);
         
-        console.log(`🔍 Stasjon ${s.name}: ${stationDist.toFixed(1)}km, batteri ved ankomst: ${batteryAtStation.toFixed(1)}%, forskjell fra 10%: ${differenceFrom10Percent.toFixed(1)}%`);
+        console.log(`🔍 ${s.name}: ${stationDist.toFixed(1)}km, batteri: ${batteryAtStation.toFixed(1)}%, diff fra 10%: ${differenceFrom10Percent.toFixed(1)}%`);
         
         return {
           ...s,
@@ -355,10 +357,14 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
           differenceFrom10: differenceFrom10Percent
         };
       })
-      .filter(s => s.calculatedBattery >= 5 && s.calculatedBattery <= 25) // Batteri mellom 5-25% ved ankomst
-      .sort((a, b) => a.differenceFrom10 - b.differenceFrom10); // Velg den nærmest 10%
+      .filter(s => s.calculatedBattery >= 0 && s.calculatedBattery <= 50) // Utvid filter: 0-50% ved ankomst
+      .sort((a, b) => a.differenceFrom10 - b.differenceFrom10); // Sorter etter nærmest 10%
 
-    console.log(`📍 Fant ${suitableStations.length} egnede stasjoner som gir 5-25% batteri ved ankomst`);
+    console.log(`📍 Etter filtrering: ${suitableStations.length} egnede stasjoner (0-50% batteri ved ankomst)`);
+    
+    if (suitableStations.length > 0) {
+      console.log(`🏆 BESTE STASJON: ${suitableStations[0].name} med ${suitableStations[0].calculatedBattery.toFixed(1)}% batteri ved ankomst`);
+    }
 
     if (suitableStations.length === 0) {
       console.log(`❌ Ingen egnet stasjon funnet som gir 5-25% batteri ved ankomst`);
