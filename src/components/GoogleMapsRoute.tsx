@@ -309,13 +309,19 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
           requiredStations.forEach((station, index) => {
             // Bestem farge basert på batteristatus og stasjonsstatus
             const isCriticalBattery = routeData.batteryPercentage <= 10;
-            let markerColor = '#3b82f6'; // Blå som standard (anbefalt)
+            let markerColor = '#00ff41'; // Neon grønn som standard for ALLE
+            let markerScale = 12;
+            let strokeWeight = 2;
             
-            if (station.requiredStop) {
-              // Obligatoriske stasjoner er røde, og EKSTRA røde hvis batteriet er kritisk
-              markerColor = isCriticalBattery ? '#ff0000' : '#ef4444';
+            // BARE hvis det er en obligatorisk stasjon OG batteriet er kritisk, da blir den rød
+            if (station.requiredStop && isCriticalBattery) {
+              markerColor = '#ff0000'; // Rød kun for obligatoriske ved kritisk batteri
+              markerScale = 16;
+              strokeWeight = 4;
+              console.log(`🚨 KRITISK: ${station.name} vises rød (obligatorisk + batteriet på ${routeData.batteryPercentage}%)`);
+            } else {
+              console.log(`✅ ${station.name} vises neon grønn (${station.requiredStop ? 'obligatorisk men ikke kritisk' : 'anbefalt'})`);
             }
-            // Anbefalte stasjoner forblir blå selv når batteriet er kritisk
             
             // Legg til større, mer synlig markør for optimerte stasjoner
             const optimizedMarker = new google.maps.Marker({
@@ -324,11 +330,11 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
               title: `${station.requiredStop ? 'OBLIGATORISK' : 'ANBEFALT'}: ${station.name}`,
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
-                scale: station.requiredStop || isCriticalBattery ? 16 : 12,
+                scale: markerScale,
                 fillColor: markerColor,
                 fillOpacity: 1,
                 strokeColor: '#ffffff',
-                strokeWeight: isCriticalBattery ? 6 : 4
+                strokeWeight: strokeWeight
               },
               zIndex: 1000 // Sørg for at de vises over andre markører
             });
