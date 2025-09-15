@@ -761,14 +761,15 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         markers.forEach(marker => marker.remove());
         const chargingMarkers: mapboxgl.Marker[] = [];
         
-        // Legg til markører bare for obligatoriske ladestasjoner (rød) og viktige valgfrie (grønn)
+        // BARE vis obligatoriske ladestasjoner (hvor batteriet når 10%)
         optimizedStations.forEach((station, index) => {
           const isRequired = (station as any).isRequired;
           const arrivalBattery = (station as any).arrivalBattery || 50;
           
-          // Bare vis obligatoriske stasjoner og de viktigste valgfrie
-          if (!isRequired && index > 2) {
-            return; // Hopp over mindre viktige valgfrie stasjoner for å unngå rot
+          // HOPP OVER alle som ikke er obligatoriske
+          if (!isRequired) {
+            console.log(`⏭️ Hopper over ${station.name} - ikke obligatorisk`);
+            return;
           }
           
           console.log(`🔍 Lager markør for ${station.name}:`, { 
