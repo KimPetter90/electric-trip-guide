@@ -292,6 +292,8 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   // STRENG LOGIKK: Vis kun EN obligatorisk stasjon når batteriet når 10%
   const optimizeChargingStations = (routeDistance: number, routeGeometry: any) => {
     console.log('🔧 STRENG ANALYSE: Sjekker om lading trengs');
+    console.log('📊 BATTERIPROSENT INPUT:', routeData.batteryPercentage, '%');
+    
     if (!selectedCar) {
       console.log('❌ Ingen bil valgt');
       return [];
@@ -301,9 +303,11 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     const actualRange = selectedCar.range * 0.85; // Realistisk rekkevidde
     const currentRange = (currentBattery / 100) * actualRange;
 
-    console.log(`🔋 Start: ${currentBattery}% batteri`);
-    console.log(`🚗 Bil rekkevidde: ${actualRange} km`); 
-    console.log(`📏 Kan kjøre nå: ${currentRange.toFixed(1)} km`);
+    console.log(`🔋 DETALJERT BATTERIBEREGNING:`);
+    console.log(`   - Start batteriprosent: ${currentBattery}%`);
+    console.log(`   - Bil teoretisk rekkevidde: ${selectedCar.range} km`);
+    console.log(`   - Realistisk rekkevidde (85%): ${actualRange} km`);
+    console.log(`   - Nåværende rekkevidde: ${currentRange.toFixed(1)} km`);
     console.log(`🛣️ Total rute: ${routeDistance.toFixed(1)} km`);
 
     // Hvis batteriet holder hele ruten - INGEN lading nødvendig
@@ -869,13 +873,20 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
 
   // Effekt for rute-oppdatering
   useEffect(() => {
-    console.log('RouteData endret:', routeData);
-    console.log('SelectedCar:', selectedCar?.model);
-    console.log('MapboxToken:', !!mapboxToken);
-    console.log('Map ready:', !!map.current);
+    console.log('🔄 RouteData ENDRET! Sjekker alle verdier:');
+    console.log('- From:', routeData.from);
+    console.log('- To:', routeData.to);
+    console.log('- Via:', routeData.via);
+    console.log('- 🔋 BATTERIPROSENT:', routeData.batteryPercentage, '%');
+    console.log('- TrailerWeight:', routeData.trailerWeight);
+    console.log('- SelectedCar:', selectedCar?.model);
+    console.log('- MapboxToken tilgjengelig:', !!mapboxToken);
+    console.log('- Map initialisert:', !!map.current);
     
     if (map.current && routeData.from && routeData.to && selectedCar && mapboxToken) {
-      console.log('🔄 Oppdaterer rute på grunn av endring i data...');
+      console.log('✅ ALLE KRITERIER OPPFYLT - oppdaterer rute med nye batteriprosent!');
+      console.log('🔋 Oppdaterer med batteriprosent:', routeData.batteryPercentage, '%');
+      
       // Fjern tidligere feil når vi prøver igjen
       setError(null);
       // Eksplisitt cleanup før oppdatering
@@ -885,8 +896,16 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       
       // Kort delay for å sikre cleanup er ferdig
       setTimeout(() => {
+        console.log('🚀 Starter rute-oppdatering med batteri:', routeData.batteryPercentage, '%');
         updateMapRoute();
       }, 100);
+    } else {
+      console.log('❌ MANGLER KRITERIER for rute-oppdatering:');
+      console.log('- Map:', !!map.current);
+      console.log('- From:', !!routeData.from);
+      console.log('- To:', !!routeData.to);
+      console.log('- Car:', !!selectedCar);
+      console.log('- Token:', !!mapboxToken);
     }
   }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, routeData.trailerWeight, selectedCar?.id, mapboxToken]);
 
