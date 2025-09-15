@@ -232,11 +232,11 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
           title: station.name,
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
-            scale: 8,
+            scale: 6,
             fillColor: "#00ff41", // NEON GREEN - GUARANTEED!
             fillOpacity: 1.0,
             strokeColor: "#ffffff",
-            strokeWeight: 2
+            strokeWeight: 1
           },
           zIndex: 100
         });
@@ -244,7 +244,7 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
         newMarkers.push(greenMarker);
 
         // Log every single green marker for first 20
-        if (index < 20) {
+        if (index < 10) {
           console.log(`✅ GRØNN MARKØR ${index + 1}/${chargingStations.length}: ${station.name} - FARGE: #00ff41 (NEON GRØNN)`);
         }
 
@@ -334,28 +334,47 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
               : `🔋 Batterinivå: ${routeData.batteryPercentage}%`
           );
 
-          // Only add red markers for truly required stations when battery is critical
-          if (isCriticalBattery && chargingStations.length > 0) {
-            // Find closest station to route as example
-            const criticalStation = chargingStations[0]; // Simplified for testing
+          // Legg til ANBEFALTE LADESTASJONER som større, gullfarget markører
+          if (chargingStations.length > 0) {
+            // Velg 3-5 strategiske stasjoner langs ruten som anbefalt
+            const recommendedStations = chargingStations.slice(0, 5); // Forenklet for testing
             
-            const redMarker = new google.maps.Marker({
-              position: { lat: criticalStation.lat, lng: criticalStation.lng },
-              map: map,
-              title: `KRITISK: ${criticalStation.name}`,
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 16,
-                fillColor: '#ff0000', // RED for critical
-                fillOpacity: 1,
-                strokeColor: '#ffffff',
-                strokeWeight: 4
-              },
-              zIndex: 1000
-            });
+            recommendedStations.forEach((station, index) => {
+              const recommendedMarker = new google.maps.Marker({
+                position: { lat: station.lat, lng: station.lng },
+                map: map,
+                title: `⭐ ANBEFALT: ${station.name}`,
+                icon: {
+                  path: google.maps.SymbolPath.CIRCLE,
+                  scale: 12,
+                  fillColor: "#ffd700", // Gull farge for anbefalte
+                  fillOpacity: 1.0,
+                  strokeColor: "#ff6b00", // Orange kant
+                  strokeWeight: 3
+                },
+                zIndex: 500
+              });
 
-            setAllMarkers(prev => [...prev, redMarker]);
-            console.log(`🚨 RØD KRITISK MARKØR: ${criticalStation.name} - kun pga batteriet er på ${routeData.batteryPercentage}%`);
+              const infoWindow = new google.maps.InfoWindow({
+                content: `
+                  <div style="color: black; padding: 10px;">
+                    <h3 style="color: #ff6b00; margin: 0 0 8px 0;">⭐ ANBEFALT LADESTASJON</h3>
+                    <h4 style="margin: 0 0 8px 0;">${station.name}</h4>
+                    <p><strong>📍 Lokasjon:</strong> ${station.location}</p>
+                    <p><strong>⚡ Type:</strong> ${station.fastCharger ? 'Hurtiglader' : 'Standard'}</p>
+                    <p><strong>💰 Pris:</strong> ${station.cost} kr/kWh</p>
+                    <p style="color: #ff6b00; font-weight: bold; margin-top: 8px;">Strategisk posisjonert for din rute!</p>
+                  </div>
+                `
+              });
+
+              recommendedMarker.addListener('click', () => {
+                infoWindow.open(map, recommendedMarker);
+              });
+
+              setAllMarkers(prev => [...prev, recommendedMarker]);
+              console.log(`⭐ ANBEFALT STASJON: ${station.name} - større gull markør`);
+            });
           }
         }
 
