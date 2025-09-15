@@ -304,19 +304,24 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     const startBattery = routeData.batteryPercentage;
     const actualRange = selectedCar.range * 0.85;
     
-    console.log(`🔋 BEREGNER HVOR BATTERIET NÅR 10%:`);
-    console.log(`   - Start: ${startBattery}%`);  
+    console.log(`🔋 DETALJERT BEREGNING:`);
+    console.log(`   - Start batteri: ${startBattery}%`);  
     console.log(`   - Bil rekkevidde: ${actualRange}km`);
-
-    // DEBUG: Beregn hvor på ruten batteriet når 10%
-    const batteryForTravel = startBattery - 10; // Hvor mye batteri vi kan bruke
-    const distanceUntil10Percent = (batteryForTravel / 100) * actualRange; // Hvor langt vi kommer
-    
-    console.log(`🧮 BEREGNING:`);
-    console.log(`   - Batteri tilgjengelig for kjøring: ${batteryForTravel}% (${startBattery}% - 10%)`);
-    console.log(`   - Dette gir kjøredistanse: ${distanceUntil10Percent.toFixed(1)}km`);
     console.log(`   - Rutelengde: ${routeDistance.toFixed(1)}km`);
-    console.log(`   - Batteriet når 10% ved: ${distanceUntil10Percent.toFixed(1)}km`);
+
+    // DETALJERT beregning 
+    const batteryForTravel = startBattery - 10;
+    const distanceUntil10Percent = (batteryForTravel / 100) * actualRange;
+    
+    console.log(`🧮 STEG-FOR-STEG:`);
+    console.log(`   1. Batteri tilgjengelig: ${startBattery}% - 10% = ${batteryForTravel}%`);
+    console.log(`   2. Kjøredistanse med ${batteryForTravel}%: (${batteryForTravel}/100) × ${actualRange}km = ${distanceUntil10Percent.toFixed(1)}km`);
+    console.log(`   3. Sammenligning: ${distanceUntil10Percent.toFixed(1)}km VS ${routeDistance.toFixed(1)}km`);
+    console.log(`   4. Batteriet holder hele veien? ${distanceUntil10Percent >= routeDistance ? 'JA' : 'NEI'}`);
+    
+    if (distanceUntil10Percent >= routeDistance) {
+      console.log(`🚨 FEIL! Dette kan ikke stemme - ${distanceUntil10Percent.toFixed(1)}km er ikke nok for ${routeDistance.toFixed(1)}km`);
+    }
     
     if (distanceUntil10Percent >= routeDistance) {
       const finalBattery = startBattery - ((routeDistance / actualRange) * 100);
