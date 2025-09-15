@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        'orbitron': ['Orbitron', 'monospace'],
+        'exo': ['Exo 2', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -47,10 +51,6 @@ export default {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
         },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
@@ -75,11 +75,14 @@ export default {
         'gradient-eco': 'var(--gradient-eco)',
         'gradient-hero': 'var(--gradient-hero)',
         'gradient-neon': 'var(--gradient-neon)',
+        'gradient-cyber': 'var(--gradient-cyber)',
       },
       boxShadow: {
         'electric': 'var(--shadow-electric)',
         'glow': 'var(--shadow-glow)',
         'neon': 'var(--shadow-neon)',
+        'cyber': 'var(--shadow-cyber)',
+        'glass': 'var(--glass-shadow)',
       },
       keyframes: {
         "pulse-neon": {

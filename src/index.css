@@ -8,54 +8,57 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 225 15% 8%;
-    --foreground: 210 15% 90%; /* Endret fra grønn til mer nøytral lys grå */
+    --background: 225 15% 6%; /* Mørkere bakgrunn */
+    --foreground: 210 15% 92%; /* Lysere tekst for bedre kontrast */
 
-    --card: 225 25% 12%;
-    --card-foreground: 210 15% 90%; /* Endret fra grønn til mer nøytral lys grå */
+    --card: 225 25% 10%; /* Mørkere kort */
+    --card-foreground: 210 15% 92%;
 
-    --popover: 225 25% 12%;
-    --popover-foreground: 210 15% 90%; /* Endret fra grønn til mer nøytral lys grå */
+    --popover: 225 25% 10%;
+    --popover-foreground: 210 15% 92%;
 
-    --primary: 140 100% 45%;
-    --primary-foreground: 225 25% 8%;
-    --primary-glow: 120 100% 65%;
-    --primary-neon: 140 100% 55%;
+    --primary: 140 100% 50%; /* Lysere primærfarge */
+    --primary-foreground: 225 25% 6%;
+    --primary-glow: 120 100% 70%;
+    --primary-neon: 140 100% 60%;
 
-    --secondary: 180 100% 45%;
-    --secondary-foreground: 225 25% 8%;
-    --secondary-glow: 180 100% 65%;
+    --secondary: 180 100% 50%; /* Cyan accent */
+    --secondary-foreground: 225 25% 6%;
+    --secondary-glow: 180 100% 70%;
 
-    --accent: 220 100% 45%;
-    --accent-foreground: 225 25% 8%;
-    --accent-glow: 220 100% 65%;
+    --accent: 280 100% 50%; /* Lilla accent */
+    --accent-foreground: 225 25% 6%;
+    --accent-glow: 280 100% 70%;
 
     --muted: 225 25% 15%;
-    --muted-foreground: 140 50% 70%;
+    --muted-foreground: 210 15% 75%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 225 25% 20%;
-    --input: 225 25% 18%;
-    --ring: 140 100% 45%;
+    --border: 225 25% 18%; /* Lysere border */
+    --input: 225 25% 16%;
+    --ring: 140 100% 50%;
 
-    /* Futuristic gradients */
-    --gradient-electric: linear-gradient(135deg, hsl(140 100% 45%) 0%, hsl(120 100% 65%) 30%, hsl(180 100% 45%) 100%);
-    --gradient-eco: linear-gradient(135deg, hsl(120 100% 40%) 0%, hsl(140 100% 50%) 50%, hsl(160 100% 45%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(225 25% 8%) 0%, hsl(140 100% 8%) 30%, hsl(120 100% 10%) 70%, hsl(225 25% 8%) 100%);
-    --gradient-neon: linear-gradient(45deg, hsl(140 100% 45%), hsl(180 100% 45%), hsl(220 100% 45%));
+    /* Futuristiske gradienter */
+    --gradient-electric: linear-gradient(135deg, hsl(140 100% 50%) 0%, hsl(120 100% 70%) 30%, hsl(180 100% 50%) 70%, hsl(280 100% 50%) 100%);
+    --gradient-eco: linear-gradient(135deg, hsl(120 100% 40%) 0%, hsl(140 100% 55%) 50%, hsl(160 100% 50%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(225 25% 6%) 0%, hsl(140 100% 6%) 20%, hsl(180 100% 8%) 40%, hsl(280 100% 6%) 60%, hsl(225 25% 6%) 100%);
+    --gradient-neon: linear-gradient(45deg, hsl(140 100% 50%), hsl(180 100% 50%), hsl(280 100% 50%));
+    --gradient-cyber: linear-gradient(90deg, hsl(140 100% 50%) 0%, hsl(180 100% 50%) 25%, hsl(280 100% 50%) 50%, hsl(320 100% 50%) 75%, hsl(140 100% 50%) 100%);
     
-    /* Glass effects */
-    --glass-bg: 225 25% 12% / 0.8;
-    --glass-border: 140 100% 45% / 0.2;
+    /* Glass effects med neon */
+    --glass-bg: 225 25% 10% / 0.7;
+    --glass-border: 140 100% 50% / 0.3;
+    --glass-shadow: 0 8px 32px hsl(140 100% 50% / 0.1);
     
-    /* Neon shadows */
-    --shadow-electric: 0 0 20px hsl(140 100% 45% / 0.5), 0 0 40px hsl(140 100% 45% / 0.3);
-    --shadow-glow: 0 0 30px hsl(120 100% 65% / 0.6), 0 0 60px hsl(120 100% 65% / 0.3);
-    --shadow-neon: 0 0 10px hsl(140 100% 55%), 0 0 20px hsl(140 100% 55%), 0 0 30px hsl(140 100% 55%);
+    /* Neon shadows og glødende effekter */
+    --shadow-electric: 0 0 20px hsl(140 100% 50% / 0.6), 0 0 40px hsl(140 100% 50% / 0.4), 0 0 60px hsl(140 100% 50% / 0.2);
+    --shadow-glow: 0 0 30px hsl(120 100% 70% / 0.7), 0 0 60px hsl(120 100% 70% / 0.4);
+    --shadow-neon: 0 0 10px hsl(140 100% 60%), 0 0 20px hsl(140 100% 60%), 0 0 40px hsl(140 100% 60%);
+    --shadow-cyber: 0 0 20px hsl(180 100% 50% / 0.6), 0 0 40px hsl(280 100% 50% / 0.4);
 
-    --radius: 0.5rem;
+    --radius: 0.75rem; /* Litt større radius */
 
     --sidebar-background: 0 0% 98%;
 
@@ -119,7 +122,71 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-exo;
+  }
+}
+
+/* Futuristiske utility-klasser */
+@layer components {
+  .glass-card {
+    background: hsl(var(--glass-bg));
+    border: 1px solid hsl(var(--glass-border));
+    backdrop-filter: blur(12px);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .neon-glow {
+    box-shadow: var(--shadow-electric);
+  }
+
+  .cyber-glow {
+    box-shadow: var(--shadow-cyber);
+  }
+
+  .text-gradient {
+    background: var(--gradient-electric);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(140 100% 50% / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px hsl(140 100% 50% / 0.8), 0 0 60px hsl(140 100% 50% / 0.4);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow-pulse {
+  from {
+    text-shadow: 0 0 10px hsl(140 100% 50% / 0.8);
+  }
+  to {
+    text-shadow: 0 0 20px hsl(140 100% 50% / 1), 0 0 30px hsl(140 100% 50% / 0.8);
   }
 }
 

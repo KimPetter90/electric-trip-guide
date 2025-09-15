@@ -63,18 +63,22 @@ function Index() {
   }, [selectedCar, routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, routeData.trailerWeight]);
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Animated Circuit Background */}
-      <div className="fixed inset-0 opacity-20">
+    <div className="min-h-screen bg-gradient-hero relative overflow-hidden">
+      {/* Futuristisk animert bakgrunn */}
+      <div className="fixed inset-0 opacity-30">
         <div 
-          className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 animate-circuit"
+          className="absolute inset-0 bg-gradient-cyber animate-circuit"
           style={{
-            backgroundImage: `radial-gradient(circle at 20% 50%, hsl(140 100% 45% / 0.1) 0%, transparent 50%), 
-                              radial-gradient(circle at 80% 20%, hsl(180 100% 45% / 0.1) 0%, transparent 50%),
-                              radial-gradient(circle at 40% 80%, hsl(220 100% 45% / 0.1) 0%, transparent 50%)`,
+            backgroundImage: `radial-gradient(circle at 20% 50%, hsl(140 100% 50% / 0.15) 0%, transparent 50%), 
+                              radial-gradient(circle at 80% 20%, hsl(180 100% 50% / 0.15) 0%, transparent 50%),
+                              radial-gradient(circle at 40% 80%, hsl(280 100% 50% / 0.15) 0%, transparent 50%)`,
             backgroundSize: '100% 100%'
           }}
         />
+        {/* Cyberpunk grid overlay */}
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='grid' width='20' height='20' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 20 0 L 0 0 0 20' fill='none' stroke='%2300ff88' stroke-width='0.5' opacity='0.3'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100' height='100' fill='url(%23grid)'/%3E%3C/svg%3E")`
+        }}></div>
       </div>
 
       {/* Hero Section */}
@@ -94,26 +98,26 @@ function Index() {
         
         <div className="relative container mx-auto px-4 py-20 text-center">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-center gap-2 mb-6 animate-glow-pulse">
-              <Zap className="h-8 w-8 text-primary animate-pulse-neon" />
-              <h1 className="text-4xl md:text-6xl font-bold text-foreground bg-gradient-neon bg-clip-text text-transparent">
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <Zap className="h-10 w-10 text-primary animate-glow-pulse" />
+              <h1 className="text-5xl md:text-7xl font-orbitron font-black text-gradient animate-glow-pulse">
                 ElRoute
               </h1>
-              <Zap className="h-8 w-8 text-primary animate-pulse-neon" />
+              <Zap className="h-10 w-10 text-primary animate-glow-pulse" />
             </div>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-8 animate-float">
-              Intelligent ruteplanlegging for fremtidens elbiler
+            <p className="text-xl md:text-2xl text-muted-foreground mb-8 font-exo animate-float">
+              Fremtidens intelligente ruteplanlegger for elektriske kjøretøy
             </p>
             <div className="flex flex-wrap items-center justify-center gap-6 text-muted-foreground">
-              <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full px-4 py-2 border border-border animate-pulse-neon">
-                <Car className="h-5 w-5 text-primary" />
-                <span>Alle elbilmodeller</span>
+              <div className="flex items-center gap-2 glass-card rounded-full px-6 py-3 border border-primary/30 neon-glow">
+                <Car className="h-5 w-5 text-primary animate-glow-pulse" />
+                <span className="font-exo font-medium">Alle elbilmodeller</span>
               </div>
-              <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full px-4 py-2 border border-border animate-pulse-neon animation-delay-500">
-                <Route className="h-5 w-5 text-secondary" />
-                <span>AI-optimalisering</span>
+              <div className="flex items-center gap-2 glass-card rounded-full px-6 py-3 border border-secondary/30 cyber-glow animation-delay-500">
+                <Route className="h-5 w-5 text-secondary animate-glow-pulse" />
+                <span className="font-exo font-medium">AI-optimalisering</span>
               </div>
-              <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full px-4 py-2 border border-border animate-pulse-neon animation-delay-1000">
+              <div className="flex items-center gap-2 glass-card rounded-full px-6 py-3 border border-accent/30 neon-glow animation-delay-1000">
                 <MapPin className="h-5 w-5 text-accent" />
                 <span>Sanntids data</span>
               </div>
