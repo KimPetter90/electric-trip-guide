@@ -617,25 +617,42 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       const maxRangeWithStartBattery = (selectedCar.range * routeData.batteryPercentage) / 100;
       const remainingDistanceAfterStart = routeDistance - maxRangeWithStartBattery;
       
-      console.log('  - Kan kjøre:', maxRangeWithStartBattery.toFixed(1) + 'km med startbatteri');
-      console.log('  - Manglende avstand:', Math.max(0, remainingDistanceAfterStart).toFixed(1) + 'km');
+      // Beregn hvor langt bilen kan kjøre før batteriet når 10-15%
+      const distanceAt15Percent = (selectedCar.range * (routeData.batteryPercentage - 15)) / 100;
+      const distanceAt10Percent = (selectedCar.range * (routeData.batteryPercentage - 10)) / 100;
       
-      // Vis kun blå markører hvis batteriet blir lavt (under 15%)
-      const batteryAtEnd = Math.max(0, routeData.batteryPercentage - (routeDistance / selectedCar.range * 100));
-      console.log('  - Estimert batteri ved slutt:', batteryAtEnd.toFixed(1) + '%');
+      console.log('  - Distanse ved 15% batteri:', Math.max(0, distanceAt15Percent).toFixed(1) + 'km');
+      console.log('  - Distanse ved 10% batteri:', Math.max(0, distanceAt10Percent).toFixed(1) + 'km');
       
-      if (batteryAtEnd > 15) {
-        console.log('✅ BATTERIET HOLDER! Ingen blå markører nødvendig (batteri ved slutt: ' + batteryAtEnd.toFixed(1) + '%)');
-      
-      if (nearRouteStations.length === 0) {
-        console.log('⚠️ INGEN STASJONER FUNNET INNENFOR 5KM - KAN IKKE LAGE BLÅ MARKØRER');
-      } else if (batteryAtEnd > 15) {
-        console.log('⏭️ HOPPER OVER BLÅ MARKØRER - BATTERIET HOLDER');
+      // Sjekk om vi trenger lading på ruten
+      if (distanceAt15Percent >= routeDistance) {
+        console.log('✅ BATTERIET HOLDER HELE VEIEN! Ingen blå markører nødvendig');
       } else {
-        console.log('🔋 LAVT BATTERI! Viser blå markører for kritiske ladestasjoner');
-      }
-        // Beregn effektivitetsscore for stasjoner nær ruten
-        const stationsWithScore = nearRouteStations.map(station => {
+        console.log('🔋 TRENGER LADING! Finner stasjoner ved kritisk batterinivå');
+        
+        // Finn stasjoner som er plassert der batteriet når 10-15%
+        const criticalStations = nearRouteStations.filter(station => {
+          // Anslå stasjonens posisjon langs ruten basert på koordinater
+          // Forenklet: bruk avstand fra start som approksimering
+          const stationDistance = getDistance(
+            route.geometry.coordinates[0][1], // start lat
+            route.geometry.coordinates[0][0], // start lng
+            station.latitude,
+            station.longitude
+          );
+          
+          // Sjekk om stasjonen er i det kritiske området (mellom 10% og 15% batteri)
+          return stationDistance >= Math.max(0, distanceAt15Percent - 20) && 
+                 stationDistance <= Math.max(0, distanceAt10Percent + 50);
+        });
+        
+        console.log('🎯 FANT', criticalStations.length, 'KRITISKE STASJONER VED 10-15% BATTERI');
+        
+        if (criticalStations.length === 0) {
+          console.log('⚠️ INGEN KRITISKE STASJONER FUNNET VED 10-15% BATTERI');
+        } else {
+          // Beregn effektivitetsscore for kritiske stasjoner
+          const stationsWithScore = criticalStations.map(station => {
           const distance = (station as any).distanceToRoute;
           const cost = station.cost;
           const availability = station.available / station.total;
@@ -689,7 +706,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
             <div style="font-family: Arial, sans-serif; color: #333;">
               <h4 style="margin: 0 0 8px 0; color: #0066ff;"><strong>⚡ KRITISK LADESTASJON #${index + 1}: ${station.name}</strong></h4>
               <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
-              <p style="margin: 4px 0; color: #dc2626;"><strong>🔋 NØDVENDIG FOR LAVT BATTERI!</strong></p>
+              <p style="margin: 4px 0; color: #dc2626;"><strong>🔋 NØDVENDIG VED 10-15% BATTERI!</strong></p>
               <p style="margin: 4px 0; color: #333;">🛣️ <strong>Avstand til rute:</strong> ${(station as any).distanceToRoute.toFixed(1)} km</p>
               <p style="margin: 4px 0; color: #0066ff;"><strong>⭐ Effektivitetsscore:</strong> ${station.efficiencyScore.toFixed(2)}</p>
               <p style="margin: 4px 0; color: #0066ff;"><strong>🔵 Optimal valg for ruten!</strong></p>
@@ -709,6 +726,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         
         const nearRouteCount = nearRouteStations.length;
         console.log(`✅ ALLE ${chargingStations.length} MARKØRER LAGT TIL! (${nearRouteCount} røde innenfor 5km, ${chargingStations.length - nearRouteCount} grønne, ${bestStations.length} blå mest effektive)`);
+        }
       }
 
       // DERETTER: Legg til markører for optimerte ladestasjoner (større og mer synlige)
