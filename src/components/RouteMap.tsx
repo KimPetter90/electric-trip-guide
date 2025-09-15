@@ -274,11 +274,16 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar }
   useEffect(() => {
     const fetchMapboxToken = async () => {
       try {
+        console.log('🔑 Fetching Mapbox token...');
         const { data, error } = await supabase.functions.invoke('mapbox-token');
-        if (error) throw error;
+        if (error) {
+          console.error('❌ Mapbox token error:', error);
+          throw error;
+        }
+        console.log('✅ Mapbox token fetched successfully');
         setAccessToken(data.token);
       } catch (error) {
-        console.error('Error fetching Mapbox token:', error);
+        console.error('❌ Error fetching Mapbox token:', error);
         setError('Kunne ikke hente Mapbox-token');
       }
     };
@@ -288,15 +293,22 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar }
 
   // Initialisering av kart
   const initializeMap = async () => {
-    if (!mapContainer.current || !accessToken) return;
+    console.log('🗺️ initializeMap called, mapContainer:', !!mapContainer.current, 'accessToken:', !!accessToken);
+    if (!mapContainer.current || !accessToken) {
+      console.log('🚫 Missing requirements - mapContainer:', !!mapContainer.current, 'accessToken:', !!accessToken);
+      return;
+    }
 
     try {
+      console.log('🚀 Starting map initialization...');
       mapboxgl.accessToken = accessToken;
       
       if (map.current) {
+        console.log('🧹 Removing existing map...');
         map.current.remove();
       }
 
+      console.log('🏗️ Creating new map instance...');
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/light-v11',
@@ -305,11 +317,18 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar }
         pitch: 30,
       });
 
+      console.log('🧭 Adding navigation controls...');
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
       map.current.on('load', () => {
-        console.log('Kart lastet');
+        console.log('✅ Kart lastet og klar!');
       });
+
+      map.current.on('error', (e) => {
+        console.error('❌ Map error:', e);
+      });
+
+      console.log('🎯 Map initialization completed successfully!');
 
     } catch (error) {
       console.error('Feil ved initialisering av kart:', error);
