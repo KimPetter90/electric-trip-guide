@@ -660,21 +660,21 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     // Sorter stasjoner etter distanse langs ruten
     stationsAlongRoute.sort((a, b) => a.distanceAlongRoute - b.distanceAlongRoute);
 
-    // Finn stasjoner før kritisk punkt
+    // Finn stasjoner hvor vi ankommer med 10-15% batteri
     const stationsBeforeCritical = stationsAlongRoute.filter(station => {
       const batteryAtStation = batteryPercentage - (station.distanceAlongRoute / car.range) * 100;
       
       console.log('🔍', station.name + ':', station.distanceAlongRoute.toFixed(1) + 'km, batteri ved ankomst:', batteryAtStation.toFixed(1) + '%');
       
-      // Enkel logikk: Lade hvis batteriet blir under 25% og vi er før destinasjonen
-      const shouldCharge = batteryAtStation <= 25 && batteryAtStation >= criticalBatteryLevel && station.distanceAlongRoute < routeDistance * 0.9;
+      // Lade når batteriet er mellom 10-15% ved ankomst
+      const shouldCharge = batteryAtStation >= 10 && batteryAtStation <= 15 && station.distanceAlongRoute < routeDistance * 0.9;
       
-      console.log('   - Skal lade her? (batteri ≤ 25% og ≥ 10%):', shouldCharge);
+      console.log('   - Skal lade her? (batteri 10-15%):', shouldCharge);
       
       return shouldCharge;
     });
 
-    console.log('📍 Funnet', stationsBeforeCritical.length, 'ladestasjoner av', stationsAlongRoute.length, 'mulige');
+    console.log('📍 Funnet', stationsBeforeCritical.length, 'ladestasjoner hvor du ankommer med 10-15% batteri');
 
     if (stationsBeforeCritical.length > 0) {
       // Velg stasjonen med lavest batteri ved ankomst (nærmest kritisk punkt)
