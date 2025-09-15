@@ -38,12 +38,14 @@ function Index() {
     travelDate: undefined
   });
   const [showRoute, setShowRoute] = useState(false);
+  const [routeTrigger, setRouteTrigger] = useState(0); // Trigger for manual route updates
 
   const handlePlanRoute = () => {
     console.log('🚀 Planlegger rute med data:', { selectedCar, routeData });
     if (selectedCar && routeData.from && routeData.to) {
-      console.log('✅ Alle kriterier oppfylt, setter showRoute til true');
+      console.log('✅ Alle kriterier oppfylt, setter showRoute til true og trigger manuell oppdatering');
       setShowRoute(true);
+      setRouteTrigger(prev => prev + 1); // Trigger manuell oppdatering
     } else {
       console.log('❌ Mangler data:', { 
         harValgtBil: !!selectedCar, 
@@ -166,6 +168,7 @@ function Index() {
                   isVisible={showRoute} 
                   routeData={routeData}
                   selectedCar={selectedCar}
+                  routeTrigger={routeTrigger}
                 />
                 <ChargingMap isVisible={showRoute} />
               </div>

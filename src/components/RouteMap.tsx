@@ -181,9 +181,10 @@ interface RouteMapProps {
   isVisible: boolean;
   routeData: RouteData;
   selectedCar: CarModel | null;
+  routeTrigger?: number; // Trigger for manual updates
 }
 
-export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMapProps) {
+export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigger = 0 }: RouteMapProps) {
   const { toast } = useToast();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -1060,7 +1061,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       console.log('- Car:', !!selectedCar);
       console.log('- Token:', !!mapboxToken);
     }
-  }, [routeData.from, routeData.to, routeData.via, selectedCar?.id, mapboxToken]); // FJERNET batteryPercentage og trailerWeight
+  }, [routeData.from, routeData.to, routeData.via, selectedCar?.id, mapboxToken, routeTrigger]); // Lagt til routeTrigger
 
   // Legg til en separat useEffect som bare logger endringer  
   useEffect(() => {
