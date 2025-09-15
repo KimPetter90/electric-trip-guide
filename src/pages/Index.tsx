@@ -28,15 +28,7 @@ interface RouteData {
 }
 
 function Index() {
-  const [selectedCar, setSelectedCar] = useState<CarModel | null>({
-    id: "tesla-model-3",
-    brand: "Tesla",
-    model: "Model 3",
-    batteryCapacity: 75,
-    range: 448,
-    consumption: 16.7,
-    image: ""
-  });
+  const [selectedCar, setSelectedCar] = useState<CarModel | null>(null);
   const [routeData, setRouteData] = useState<RouteData>({
     from: "Oslo",
     to: "Bergen",
