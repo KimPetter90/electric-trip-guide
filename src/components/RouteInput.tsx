@@ -370,7 +370,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
             id="battery"
             type="number"
             placeholder="80"
-            value={routeData.batteryPercentage || ''}
+            value={routeData.batteryPercentage === 80 ? '' : routeData.batteryPercentage || ''}
             onChange={(e) => {
               const value = e.target.value;
               if (value === '') {
