@@ -373,19 +373,14 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
             value={routeData.batteryPercentage === 80 ? '' : (routeData.batteryPercentage || '')}
             onChange={(e) => {
               const value = e.target.value;
-              console.log('Battery input changed:', value);
               if (value === '') {
-                console.log('Setting to default 80%');
                 handleInputChange('batteryPercentage', 80);
               } else {
                 const numValue = parseInt(value);
-                console.log('Parsed number:', numValue);
                 if (isNaN(numValue)) {
-                  console.log('Invalid number, setting to 80%');
                   handleInputChange('batteryPercentage', 80);
                 } else {
                   const finalValue = Math.max(1, Math.min(100, numValue));
-                  console.log('Final battery value:', finalValue);
                   handleInputChange('batteryPercentage', finalValue);
                 }
               }

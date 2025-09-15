@@ -443,7 +443,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
         distance: stationDistance,
         arrivalBattery,
         departureBattery,
-        isRequired: arrivalBattery < 25 // Kun obligatorisk hvis batteriet blir kritisk lavt
+        isRequired: arrivalBattery < 10 // Obligatorisk når batteriet når 10% (værforhold er allerede inkludert i beregningen)
       });
       
       // Oppdater posisjon og batterinivå for neste iterasjon
@@ -851,7 +851,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           el.className = 'charging-marker';
           
           // Obligatorisk ladestasjon - rød/orange basert på batterinivå
-          el.style.backgroundColor = arrivalBattery < 20 ? '#ef4444' : '#f59e0b';
+          el.style.backgroundColor = arrivalBattery < 10 ? '#ef4444' : '#f59e0b';
           el.style.border = '3px solid #dc2626';
           el.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.6)';
           el.style.width = '35px';
@@ -866,7 +866,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
           el.style.position = 'relative';
           
           // Legg til varselikon for kritisk batterinivå
-          if (arrivalBattery < 20) {
+          if (arrivalBattery < 10) {
             el.innerHTML = `<span style="position: absolute; top: -5px; right: -5px; background: #dc2626; border-radius: 50%; width: 15px; height: 15px; display: flex; align-items: center; justify-content: center; font-size: 10px;">!</span>${index + 1}`;
           } else {
             el.textContent = (index + 1).toString();
