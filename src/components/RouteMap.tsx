@@ -583,34 +583,70 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         }
       });
       
-      // Finn de mest effektive stasjonene (blå markører)
+      // Finn de mest effektive stasjonene basert på batterinivå og rekkevidde
       const nearRouteStations = chargingStations.filter(station => 
         (station as any).distanceToRoute <= 5.0
       );
       
-      console.log('🔵 ANALYSERER EFFEKTIVITET FOR', nearRouteStations.length, 'STASJONER NÆR RUTEN...');
+      console.log('🔵 ANALYSERER LADEBEHOV BASERT PÅ:');
+      console.log('  - Startbatteri:', routeData.batteryPercentage + '%');
+      console.log('  - Bil rekkevidde:', selectedCar.range + 'km');
+      console.log('  - Rutelengde:', routeDistance.toFixed(1) + 'km');
       
-      // Beregn effektivitetsscore for hver stasjon nær ruten
-      const stationsWithScore = nearRouteStations.map(station => {
+      // Beregn hvor langt bilen kan kjøre med startbatteri
+      const maxRangeWithStartBattery = (selectedCar.range * routeData.batteryPercentage) / 100;
+      console.log('  - Kan kjøre:', maxRangeWithStartBattery.toFixed(1) + 'km med startbatteri');
+      
+      // Sjekk om lading er nødvendig
+      if (maxRangeWithStartBattery >= routeDistance) {
+        console.log('✅ INGEN LADING NØDVENDIG! Batteriet holder hele veien.');
+        console.log('ℹ️ Ingen blå markører vises siden lading ikke er nødvendig.');
+        return; // Ikke vis blå markører hvis lading ikke trengs
+      }
+      
+      // Beregn hvor ladestasjoner trengs langs ruten
+      const criticalDistance = maxRangeWithStartBattery * 0.9; // 90% av rekkevidde som sikkerhet
+      console.log('  - Må lade før:', criticalDistance.toFixed(1) + 'km');
+      
+      // Finn stasjoner som er tilgjengelige før batteriet blir kritisk
+      const necessaryStations = nearRouteStations.filter(station => {
+        // Beregn omtrentlig posisjon langs ruten (forenklet)
+        const stationDistance = (station as any).distanceToRoute;
+        // Anta at stasjonen er på omtrent halvveis i ruten hvis den er nær (forenklet beregning)
+        const estimatedPositionAlongRoute = routeDistance * 0.5; // Forenklet - alle stasjoner antas å være midt på ruten
+        
+        return estimatedPositionAlongRoute <= criticalDistance + 50; // +50km buffer
+      });
+      
+      console.log('🔍 FANT', necessaryStations.length, 'NØDVENDIGE STASJONER FØR KRITISK PUNKT');
+      
+      if (necessaryStations.length === 0) {
+        console.log('⚠️ INGEN LADESTASJONER FUNNET FØR KRITISK PUNKT!');
+        console.log('🚨 Du må kanskje planlegge en annen rute eller finne stasjoner utenfor 5km-radius');
+        return;
+      }
+      
+      // Beregn effektivitetsscore for nødvendige stasjoner
+      const stationsWithScore = necessaryStations.map(station => {
         const distance = (station as any).distanceToRoute;
         const cost = station.cost;
         const availability = station.available / station.total;
-        const powerValue = station.fastCharger ? 2 : 1; // Høyere score for hurtiglading
+        const powerValue = station.fastCharger ? 2 : 1;
         
         // Effektivitetsscore (lavere er bedre)
-        // Vekt: avstand (40%), kostnad (30%), tilgjengelighet (20%), effekt (10%)
-        const efficiencyScore = (distance * 0.4) + (cost * 3 * 0.3) + ((1 - availability) * 5 * 0.2) + ((2 - powerValue) * 0.1);
+        const efficiencyScore = (distance * 0.3) + (cost * 2 * 0.4) + ((1 - availability) * 3 * 0.2) + ((2 - powerValue) * 0.1);
         
         return {
           ...station,
-          efficiencyScore
+          efficiencyScore,
+          isNecessary: true
         };
       });
       
-      // Sorter etter beste score og ta de 3 beste
+      // Sorter etter beste score og ta de beste (maks 3)
       const bestStations = stationsWithScore
         .sort((a, b) => a.efficiencyScore - b.efficiencyScore)
-        .slice(0, 3); // Ta de 3 mest effektive
+        .slice(0, Math.min(3, stationsWithScore.length));
       
       console.log('🎯 FANT DE 3 MEST EFFEKTIVE STASJONENE:');
       bestStations.forEach((station, index) => {
