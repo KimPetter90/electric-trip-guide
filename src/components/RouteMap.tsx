@@ -237,15 +237,15 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     return R * c;
   };
 
-  // Finn stasjoner som ligger nær den faktiske ruten
+  // Finn stasjoner som ligger nær den faktiske ruten (BEGRENSET)
   const findStationsNearRoute = (routeGeometry: any) => {
     if (!routeGeometry || !routeGeometry.coordinates) {
-      console.log('Ingen rute-geometri tilgjengelig');
+      console.log('❌ Ingen rute-geometri tilgjengelig');
       return [];
     }
 
     const routeCoords = routeGeometry.coordinates;
-    const maxDistanceFromRoute = 15; // Redusert til 15 km fra ruten for mindre rot
+    const maxDistanceFromRoute = 10; // KUN 10 km fra ruten
     
     const stationsAlongRoute = allChargingStations.filter(station => {
       // Finn nærmeste punkt på ruten til stasjonen
@@ -280,12 +280,12 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
       return minDistance <= maxDistanceFromRoute;
     });
 
-    // Sorter etter avstand langs ruten og ta kun de mest relevante
+    // Sorter etter avstand langs ruten og ta kun de 5 første
     const sortedStations = stationsAlongRoute
       .sort((a, b) => (a as any).routeDistance - (b as any).routeDistance)
-      .slice(0, 15); // Maksimum 15 stasjoner for å unngå rot
+      .slice(0, 5); // MAKS 5 stasjoner totalt
 
-    console.log(`📍 Fant ${sortedStations.length} stasjoner langs ruten (innen ${maxDistanceFromRoute}km)`);
+    console.log(`📍 Fant ${sortedStations.length} stasjoner langs ruten (maks 5, innen ${maxDistanceFromRoute}km)`);
     return sortedStations;
   };
   
