@@ -264,6 +264,7 @@ interface RouteInputProps {
 
 export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: RouteInputProps) {
   const [allCities, setAllCities] = useState<string[]>([]);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // Last inn lærte steder når komponenten starter
   useEffect(() => {
@@ -407,7 +408,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
             <CalendarIcon className="h-3 w-3" />
             Reisedato
           </Label>
-          <Popover>
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -424,7 +425,10 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
               <Calendar
                 mode="single"
                 selected={routeData.travelDate}
-                onSelect={(date) => handleInputChange('travelDate', date || new Date())}
+                onSelect={(date) => {
+                  handleInputChange('travelDate', date || new Date());
+                  setCalendarOpen(false);
+                }}
                 disabled={(date) => date < new Date()}
                 initialFocus
                 className={cn("p-3 pointer-events-auto")}
