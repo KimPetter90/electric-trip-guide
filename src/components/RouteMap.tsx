@@ -371,13 +371,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
       isRequired: true
     }];
   };
-    console.log('🚀 OPTIMIZE CHARGING STATIONS KALT!');
-    console.log('📊 BATTERIPROSENT INPUT:', routeData.batteryPercentage, '%');
-    console.log('📊 RouteDistance:', routeDistance, 'km');
-    console.log('🕐 Tidsstempel:', new Date().toLocaleTimeString());
-    
-    if (!selectedCar) {
-      console.log('❌ Ingen bil valgt');
+  // Beregn vær-påvirkning (fallback hvis weather service ikke fungerer)
       return [];
     }
 
@@ -520,10 +514,7 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
       }
     }
 
-    console.log(`📊 RESULTAT: ${results.length} ladestasjoner nødvendig`);
-    return results;
-  };
-  // Beregn vær-påvirkning (fallback hvis weather service ikke fungerer)
+  
   // Beregn vær-påvirkning (fallback hvis weather service ikke fungerer)
   const calculateWeatherImpact = (): WeatherData => {
     return {
