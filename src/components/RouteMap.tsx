@@ -291,6 +291,9 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
   
   // STRENG LOGIKK: Vis kun EN obligatorisk stasjon når batteriet når 10%
   const optimizeChargingStations = (routeDistance: number, routeGeometry: any) => {
+    console.log('🚀 OPTIMIZE CHARGING STATIONS KALT!');
+    console.log('📊 RouteDistance:', routeDistance, 'km');
+    console.log('📊 Geometry eksisterer:', !!routeGeometry);
     console.log('🔧 SIMULERING: Finner hvor batteriet blir 10% under reisen');
     console.log('📊 BATTERIPROSENT INPUT:', routeData.batteryPercentage, '%');
     
