@@ -131,14 +131,14 @@ function Index() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column - Input */}
           <div className="space-y-8">
-            <div className="animate-float">
+            <div className="">
               <CarSelector 
                 selectedCar={selectedCar}
                 onCarSelect={setSelectedCar}
               />
             </div>
             
-            <div className="animate-float animation-delay-500">
+            <div className="">
               <RouteInput
                 routeData={routeData}
                 onRouteChange={setRouteData}
@@ -147,7 +147,7 @@ function Index() {
             </div>
 
             {selectedCar && (
-              <Card className="p-4 bg-card/80 backdrop-blur-sm border-border shadow-lg animate-pulse-neon">
+              <Card className="p-4 bg-card/80 backdrop-blur-sm border-border shadow-lg">
                 <h4 className="font-semibold mb-2 text-primary">Valgt bil:</h4>
                 <p className="text-sm text-muted-foreground">
                   {selectedCar.brand} {selectedCar.model} - {selectedCar.batteryCapacity} kWh, {selectedCar.range} km rekkevidde
@@ -159,7 +159,7 @@ function Index() {
           {/* Right Column - Results */}
           <div className="space-y-8">
             {!showRoute ? (
-              <Card className="p-8 text-center bg-card/80 backdrop-blur-sm border-border shadow-lg animate-float">
+              <Card className="p-8 text-center bg-card/80 backdrop-blur-sm border-border shadow-lg">
                 <MapPin className="h-12 w-12 text-primary mx-auto mb-4 animate-glow-pulse" />
                 <h3 className="text-lg font-semibold mb-2 text-foreground">Klar for ruteplanlegging</h3>
                 <p className="text-muted-foreground">
@@ -167,7 +167,7 @@ function Index() {
                 </p>
               </Card>
             ) : (
-              <div className="space-y-6 animate-float animation-delay-300">
+              <div className="space-y-6">
                 <RouteMap 
                   isVisible={showRoute} 
                   routeData={routeData}
