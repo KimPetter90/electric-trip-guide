@@ -841,20 +841,18 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar }
     loadChargingStations();
   }, []);
 
-  // Effekt for oppdatering av rute når data endres
+  // Effekt for logge endringer (ikke oppdater automatisk)
   useEffect(() => {
-    if (map.current && routeData.from && routeData.to && selectedCar && accessToken) {
-      console.log('🔄 Route data endret, oppdaterer kart automatisk...');
+    if (routeData.from && routeData.to && selectedCar) {
+      console.log('🔄 Route data endret (venter på manuell oppdatering):');
       console.log('  - Fra:', routeData.from);
       console.log('  - Til:', routeData.to); 
       console.log('  - Via:', routeData.via);
       console.log('  - Batteri:', routeData.batteryPercentage, '%');
       console.log('  - Trailer:', routeData.trailerWeight);
-      
-      // Automatisk oppdatering av rute
-      updateMapRoute();
+      console.log('💡 Trykk "Planlegg rute" for å oppdatere kartet med nye innstillinger');
     }
-  }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, routeData.trailerWeight, selectedCar, accessToken]);
+  }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, routeData.trailerWeight, selectedCar]);
 
   if (!isVisible) return null;
 
