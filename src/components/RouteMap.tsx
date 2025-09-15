@@ -808,8 +808,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar }
 
   // Effekt for initialisering av kart
   useEffect(() => {
-    if (isVisible) {
-      console.log('Komponenten er synlig, initialiserer kart...');
+    if (isVisible && accessToken) {
+      console.log('🌟 Komponenten er synlig OG token er tilgjengelig, initialiserer kart...');
       const timer = setTimeout(() => {
         initializeMap();
       }, 200);
@@ -825,7 +825,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar }
         map.current.remove();
       }
     };
-  }, [isVisible]);
+  }, [isVisible, accessToken]); // Legg til accessToken som dependency
 
   // Effekt for lasting av ladestasjoner
   useEffect(() => {
