@@ -27,17 +27,6 @@ export function AutocompleteInput({
 
   useEffect(() => {
     if (value.length >= 1) {
-      // Don't show suggestions if the value exactly matches an existing suggestion
-      const exactMatch = suggestions.some(suggestion => 
-        suggestion.toLowerCase() === value.toLowerCase()
-      );
-      
-      if (exactMatch) {
-        setFilteredSuggestions([]);
-        setIsOpen(false);
-        return;
-      }
-      
       const filtered = suggestions
         .filter(suggestion =>
           suggestion.toLowerCase().includes(value.toLowerCase()) && 
@@ -53,7 +42,7 @@ export function AutocompleteInput({
         })
         .slice(0, 10);
       setFilteredSuggestions(filtered);
-      setIsOpen(filtered.length > 0 && value.length > 0);
+      setIsOpen(filtered.length > 0);
       setHighlightedIndex(-1);
     } else {
       setFilteredSuggestions([]);
