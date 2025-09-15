@@ -335,48 +335,62 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     
     console.log(`📍 LETER ETTER LADESTASJONER NÆR ${distanceUntil10Percent.toFixed(1)}km...`);
 
-    // Finn ladestasjon nær dette punktet
+    // Finn ladestasjon nær 10%-punktet, men VELG den som gir batteriprosent nærmest 10%
     const stationsNearRoute = findStationsNearRoute(routeGeometry);
-    const nearbyStations = stationsNearRoute
+    const suitableStations = stationsNearRoute
       .filter(s => s.available > 0)
-      .filter(s => {
+      .map(s => {
         const stationDist = (s as any).routeDistance || 0;
-        const difference = Math.abs(stationDist - distanceUntil10Percent);
-        console.log(`🔍 Stasjon ${s.name} er ved ${stationDist.toFixed(1)}km, forskjell: ${difference.toFixed(1)}km`);
-        return difference <= 75; // Innen 75km fra 10%-punktet
+        const batteryUsedToStation = (stationDist / actualRange) * 100;
+        const batteryAtStation = startBattery - batteryUsedToStation;
+        const differenceFrom10Percent = Math.abs(batteryAtStation - 10);
+        
+        console.log(`🔍 Stasjon ${s.name}: ${stationDist.toFixed(1)}km, batteri ved ankomst: ${batteryAtStation.toFixed(1)}%, forskjell fra 10%: ${differenceFrom10Percent.toFixed(1)}%`);
+        
+        return {
+          ...s,
+          calculatedDistance: stationDist,
+          calculatedBattery: batteryAtStation,
+          differenceFrom10: differenceFrom10Percent
+        };
       })
-      .sort((a, b) => {
-        const aDist = Math.abs(((a as any).routeDistance || 0) - distanceUntil10Percent);
-        const bDist = Math.abs(((b as any).routeDistance || 0) - distanceUntil10Percent);
-        return aDist - bDist;
-      });
+      .filter(s => s.calculatedBattery >= 5 && s.calculatedBattery <= 25) // Batteri mellom 5-25% ved ankomst
+      .sort((a, b) => a.differenceFrom10 - b.differenceFrom10); // Velg den nærmest 10%
 
-    if (nearbyStations.length === 0) {
-      console.log(`❌ Ingen stasjon funnet nær ${distanceUntil10Percent.toFixed(1)}km (10%-punktet)`);
+    console.log(`📍 Fant ${suitableStations.length} egnede stasjoner som gir 5-25% batteri ved ankomst`);
+
+    if (suitableStations.length === 0) {
+      console.log(`❌ Ingen egnet stasjon funnet som gir 5-25% batteri ved ankomst`);
       return [];
     }
 
-    const station = nearbyStations[0];
-    const stationDistance = (station as any).routeDistance;
-    
-    // Beregn batteriprosent ved ankomst til stasjonen
-    const batteryUsedToStation = (stationDistance / actualRange) * 100;
-    const batteryAtStation = startBattery - batteryUsedToStation;
+    const station = suitableStations[0];
+    const stationDistance = station.calculatedDistance;
+    const batteryAtStation = station.calculatedBattery;
     
     // Sjekk om dette er obligatorisk eller valgfri lading
     const isRequired = distanceUntil10Percent < routeDistance;
 
     console.log(`🎯 VALGT: ${station.name} ved ${stationDistance.toFixed(1)}km`);
-    console.log(`   - Bruker ${batteryUsedToStation.toFixed(1)}% batteri for å komme dit`);
     console.log(`   - Batteriprosent ved ankomst: ${batteryAtStation.toFixed(1)}%`);
     console.log(`   - Type: ${isRequired ? 'OBLIGATORISK' : 'VALGFRI'} lading`);
 
     const results = [{
-      ...station,
+      id: station.id,
+      name: station.name,
+      location: station.location,
+      lat: station.lat,
+      lng: station.lng,
+      chargeTime: station.chargeTime,
+      chargeAmount: station.chargeAmount,
+      cost: station.cost,
+      fastCharger: station.fastCharger,
+      available: station.available,
+      total: station.total,
       distance: stationDistance,
       arrivalBattery: Math.max(batteryAtStation, 0),
       departureBattery: 80,
-      isRequired: isRequired // True hvis batteriet ikke holder, false hvis det holder
+      isRequired: isRequired
     }];
 
     // Sjekk om vi trenger flere stasjoner etter første lading
