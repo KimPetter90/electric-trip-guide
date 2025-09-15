@@ -369,19 +369,19 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
           <Input
             id="battery"
             type="number"
-            placeholder=""
-            value={routeData.batteryPercentage === 0 ? '' : routeData.batteryPercentage || ''}
+            placeholder="80"
+            value={routeData.batteryPercentage || ''}
             onChange={(e) => {
               const value = e.target.value;
               if (value === '') {
-                handleInputChange('batteryPercentage', 0);
+                handleInputChange('batteryPercentage', 80);
               } else {
                 const numValue = parseInt(value);
-                handleInputChange('batteryPercentage', isNaN(numValue) ? 0 : numValue);
+                handleInputChange('batteryPercentage', isNaN(numValue) ? 80 : Math.max(1, Math.min(100, numValue)));
               }
             }}
             className="bg-background/50 border-border focus:border-primary focus:shadow-lg"
-            min="0"
+            min="1"
             max="100"
           />
           {routeData.batteryPercentage > 0 && (
