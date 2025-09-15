@@ -605,23 +605,18 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
     // Finn stasjoner hvor vi kan lade når batteriet blir lavt (MEGET liberale kriterier)
     console.log('🔍 ANALYSERER ALLE', stationsAlongRoute.length, 'STASJONER LANGS RUTEN:');
-    const stationsBeforeCritical = stationsAlongRoute.filter(station => {
+    // VISER ALLE STASJONER UANSETT BATTERINIVÅ!
+    console.log('🚨 VISER ALLE STASJONER - INGEN FILTRERING!');
+    const stationsBeforeCritical = stationsAlongRoute.map(station => {
       const batteryAtStation = batteryPercentage - (station.distanceAlongRoute / car.range) * 100;
       
       console.log('🔍', station.name + ':', station.distanceAlongRoute.toFixed(1) + 'km, batteri ved ankomst:', batteryAtStation.toFixed(1) + '%');
+      console.log('   - LEGGER TIL DENNE STASJONEN UANSETT BATTERINIVÅ!');
       
-      // TEMPORARY: La oss se hva vi får av batterinivåer før vi filtrerer
-      console.log('   - Batterinivå ved ankomst:', batteryAtStation.toFixed(1) + '%');
-      
-      // Lade når batteriet er mellom 10-25% (utvidet fra 5-15%)
-      const shouldCharge = batteryAtStation <= 25 && batteryAtStation >= 5;
-      
-      console.log('   - Skal lade her? (batteri 5-25%):', shouldCharge);
-      
-      return shouldCharge;
+      return station;
     });
 
-    console.log('📍 RESULTAT: Funnet', stationsBeforeCritical.length, 'ladestasjoner hvor du kan lade (5-25% batteri)');
+    console.log('📍 RESULTAT: Funnet', stationsBeforeCritical.length, 'ladestasjoner TOTALT (alle vist)');
     
     // Hvis ingen stasjoner funnet, vis alle for debugging
     if (stationsBeforeCritical.length === 0) {
