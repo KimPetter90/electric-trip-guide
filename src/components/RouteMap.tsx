@@ -699,18 +699,17 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         const el = document.createElement('div');
         el.className = 'charging-station-marker';
         el.style.cssText = `
-          background-color: #ff0000;
-          width: 16px;
-          height: 16px;
+          background-color: #ef4444;
+          width: 12px;
+          height: 12px;
           border-radius: 50%;
-          border: 2px solid white;
+          border: 1px solid white;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 10px;
-          color: white;
-          font-weight: bold;
+          font-size: 8px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
           z-index: 10;
         `;
         el.innerHTML = '⚡';
