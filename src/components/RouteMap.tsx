@@ -492,28 +492,6 @@ export default function RouteMap({ isVisible, routeData, selectedCar, routeTrigg
         })
         .sort((a, b) => {
           const aDist = Math.abs(((a as any).routeDistance || 0) - secondStationPosition);
-          const bDist = Math.abs(((b as any).routeDistance || 0) - secondStationPosition);
-          return aDist - bDist;
-        });
-
-      if (secondStations.length > 0) {
-        const secondStation = secondStations[0];
-        const secondStationDistance = (secondStation as any).routeDistance;
-        const batteryAtSecondStation = 80 - (((secondStationDistance - stationDistance) / actualRange) * 100);
-        
-        console.log(`🎯 ANDRE STASJON: ${secondStation.name} ved ${secondStationDistance.toFixed(1)}km`);
-        console.log(`   - Batteriprosent ved ankomst: ${batteryAtSecondStation.toFixed(1)}%`);
-        
-        results.push({
-          ...secondStation,
-          distance: secondStationDistance,
-          arrivalBattery: Math.max(batteryAtSecondStation, 0),
-          departureBattery: 80,
-          isRequired: true
-        });
-      }
-    }
-
   
   // Beregn vær-påvirkning (fallback hvis weather service ikke fungerer)
   const calculateWeatherImpact = (): WeatherData => {
