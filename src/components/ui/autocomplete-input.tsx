@@ -26,6 +26,7 @@ export function AutocompleteInput({
   const listRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
+    console.log('Autocomplete useEffect - value:', value, 'suggestions length:', suggestions.length);
     if (value.length >= 1) {
       const filtered = suggestions
         .filter(suggestion =>
@@ -41,6 +42,7 @@ export function AutocompleteInput({
           return a.localeCompare(b);
         })
         .slice(0, 10);
+      console.log('Filtered suggestions:', filtered.length, filtered.slice(0, 3));
       setFilteredSuggestions(filtered);
       setIsOpen(filtered.length > 0);
       setHighlightedIndex(-1);
