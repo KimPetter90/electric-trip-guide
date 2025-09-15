@@ -539,14 +539,19 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       });
 
       // Tilpass kart til å vise hele ruten
+      console.log('🗺️ Setter kartbounds...');
       const bounds = new mapboxgl.LngLatBounds();
       bounds.extend(startCoords);
       bounds.extend(endCoords);
+      console.log('📍 Bounds satt for start og slutt. Optimerte stasjoner:', optimized.length);
+      
       optimized.forEach(station => {
         bounds.extend([station.longitude, station.latitude]);
+        console.log('📍 La til stasjon i bounds:', station.name);
       });
 
       map.current!.fitBounds(bounds, { padding: 50 });
+      console.log('✅ FitBounds fullført');
 
       // Beregn analyse
       console.log('Beregner analyse...');
@@ -673,14 +678,18 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       const minimumBatteryForCharging = criticalBatteryLevel + safetyMargin;
       
       console.log('   - Safety margin for ' + batteryPercentage + '% start:', safetyMargin + '%, min for lading:', minimumBatteryForCharging + '%');
+      console.log('   - Vurdering: batteri ' + batteryAtStation.toFixed(1) + '% vs min ' + minimumBatteryForCharging + '%, innen kritisk ' + distanceBeforeCritical.toFixed(1) + 'km?', station.distanceAlongRoute < distanceBeforeCritical);
       
       // Lade kun hvis batteriet er under sikkerhetsmarginen og vi er før kritisk punkt
-      return batteryAtStation >= criticalBatteryLevel && 
-             batteryAtStation <= minimumBatteryForCharging && 
-             station.distanceAlongRoute < distanceBeforeCritical; 
+      const shouldInclude = batteryAtStation >= criticalBatteryLevel && 
+                           batteryAtStation <= minimumBatteryForCharging && 
+                           station.distanceAlongRoute < distanceBeforeCritical;
+      
+      console.log('   - Inkludere stasjon?', shouldInclude);
+      return shouldInclude; 
     });
 
-    console.log('📍 Etter smartere filtrering:', stationsBeforeCritical.length, 'egnede stasjoner (kritisk punkt: ' + distanceBeforeCritical.toFixed(1) + 'km)');
+    console.log('📍 Etter smartere filtrering:', stationsBeforeCritical.length, 'egnede stasjoner av', stationsAlongRoute.length, 'totalt');
 
     if (stationsBeforeCritical.length > 0) {
       // Velg stasjonen med lavest batteri ved ankomst (nærmest kritisk punkt)
