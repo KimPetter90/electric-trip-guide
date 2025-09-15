@@ -30,8 +30,8 @@ interface RouteData {
 function Index() {
   const [selectedCar, setSelectedCar] = useState<CarModel | null>(null);
   const [routeData, setRouteData] = useState<RouteData>({
-    from: "Oslo",
-    to: "Bergen",
+    from: "",
+    to: "",
     via: "",
     trailerWeight: 0,
     batteryPercentage: 80,
