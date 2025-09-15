@@ -1162,7 +1162,7 @@ interface CarSelectorProps {
 
 export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorProps) {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
-  const [showBrands, setShowBrands] = useState<boolean>(false);
+  const [showBrands, setShowBrands] = useState<boolean>(true);
 
   // Group cars by brand
   const carsByBrand = carModels.reduce((acc, car) => {
