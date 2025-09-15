@@ -1194,6 +1194,12 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
     setShowBrands(!showBrands);
   };
 
+  const handleDeselectCar = () => {
+    onCarSelect(null as any); // Deselect the car
+    setSelectedBrand(null); // Reset brand selection
+    setShowBrands(true); // Show brands again
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
@@ -1224,7 +1230,10 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
         null
       ) : selectedCar ? (
         /* Show only the selected car */
-        <Card className="p-4 bg-primary/10 border-primary/30 shadow-lg">
+        <Card 
+          className="p-4 bg-primary/10 border-primary/30 shadow-lg cursor-pointer hover:bg-primary/15 transition-colors"
+          onClick={handleDeselectCar}
+        >
           <div className="flex items-center space-x-4">
             <span className="text-2xl">{selectedCar.image}</span>
             
@@ -1249,7 +1258,7 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
               </div>
             </div>
 
-            <Badge variant="default" className="text-xs animate-pulse-neon">Valgt</Badge>
+            <Badge variant="default" className="text-xs animate-pulse-neon">Valgt - trykk for å avvelge</Badge>
           </div>
         </Card>
       ) : !selectedBrand ? (
