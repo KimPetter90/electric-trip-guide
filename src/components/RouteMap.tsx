@@ -289,109 +289,64 @@ export default function RouteMap({ isVisible, routeData, selectedCar }: RouteMap
     return sortedStations;
   };
   
-  // Finn stasjoner hvor batteriet faktisk når 10%
+  // ENKEL LOGIKK: Finn kun hvor batteriet når 10%
   const optimizeChargingStations = (routeDistance: number, routeGeometry: any) => {
-    console.log('🔧 Finner ladestasjoner hvor batteriet når 10%');
-    if (!selectedCar) {
-      console.log('❌ Ingen bil valgt');
-      return [];
-    }
-
-    const stationsNearRoute = findStationsNearRoute(routeGeometry);
-    if (stationsNearRoute.length === 0) {
-      console.log('❌ Ingen stasjoner funnet langs ruten');
-      return [];
-    }
+    console.log('🔧 ENKEL ANALYSE: Finner kun hvor batteriet når 10%');
+    if (!selectedCar) return [];
 
     const currentBattery = routeData.batteryPercentage;
-    const maxRange = selectedCar.range;
-    const actualRange = maxRange * 0.9; // 10% safety margin
+    const actualRange = selectedCar.range * 0.85; // Realistisk rekkevidde
     const currentRange = (currentBattery / 100) * actualRange;
 
-    console.log('🔋 Startbatteri:', currentBattery + '%');
-    console.log('🚗 Faktisk rekkevidde:', actualRange.toFixed(1), 'km');
-    console.log('📏 Nåværende rekkevidde:', currentRange.toFixed(1), 'km');
-    console.log('🛣️ Total rutedistanse:', routeDistance.toFixed(1), 'km');
+    console.log('🔋 Start:', currentBattery + '%');
+    console.log('🚗 Rekkevidde:', actualRange, 'km'); 
+    console.log('📏 Kan kjøre nå:', currentRange, 'km');
+    console.log('🛣️ Total rute:', routeDistance, 'km');
 
-    // Hvis vi kan kjøre hele ruten uten å nå 10%
+    // Hvis batteriet holder hele ruten
     if (currentRange >= routeDistance) {
-      console.log('✅ Batteriet holder hele ruten - ingen lading nødvendig');
+      console.log('✅ INGEN LADING NØDVENDIG');
       return [];
     }
 
-    // Simuler reisen og finn når batteriet når 10%
-    const criticalStations: any[] = [];
-    let currentBatteryLevel = currentBattery;
-    let currentPosition = 0;
+    // Finn hvor batteriet når 10%
+    const batteryAt10Percent = actualRange * 0.1;
+    const distanceBeforeCritical = currentRange - batteryAt10Percent;
     
-    const sortedStations = stationsNearRoute
-      .filter(station => station.available > 0)
-      .sort((a, b) => (a as any).routeDistance - (b as any).routeDistance);
+    console.log('⚠️ Batteriet når 10% etter:', distanceBeforeCritical.toFixed(1), 'km');
 
-    console.log('🔍 Simulerer reise for å finne 10% punkter...');
-
-    let loopCounter = 0;
-    while (currentPosition < routeDistance && loopCounter < 10) {
-      loopCounter++;
-      
-      const maxDistanceWithCurrentBattery = (currentBatteryLevel / 100) * actualRange;
-      const remainingDistance = routeDistance - currentPosition;
-      
-      console.log(`\n=== SIMULERING ${loopCounter} ===`);
-      console.log(`🎯 Posisjon: ${currentPosition.toFixed(1)}km, Batteri: ${currentBatteryLevel.toFixed(1)}%`);
-      console.log(`📏 Kan kjøre: ${maxDistanceWithCurrentBattery.toFixed(1)}km, Gjenstår: ${remainingDistance.toFixed(1)}km`);
-      
-      // Finn hvor langt vi kan kjøre før batteriet når 10%
-      const distanceAt10Percent = actualRange * 0.1;
-      const usableRange = maxDistanceWithCurrentBattery - distanceAt10Percent;
-      
-      console.log(`⚠️ Rekkevidde før 10%: ${usableRange.toFixed(1)}km`);
-      
-      // Hvis vi kan nå målet uten å gå under 10%
-      if (usableRange >= remainingDistance) {
-        const finalBattery = currentBatteryLevel - (remainingDistance / actualRange) * 100;
-        console.log(`✅ Kan nå målet med ${finalBattery.toFixed(1)}% batteri`);
-        break;
-      }
-      
-      // Vi når 10% før målet - finn nærmeste stasjon innen rekkevidde
-      const reachableStations = sortedStations.filter(station => {
-        const stationDistance = (station as any).routeDistance;
-        const distanceToStation = stationDistance - currentPosition;
-        return distanceToStation > 0 && distanceToStation <= usableRange && station.available > 0;
-      });
-      
-      if (reachableStations.length === 0) {
-        console.log('❌ Ingen stasjoner innen rekkevidde før batteriet når 10%');
-        break;
-      }
-      
-      // Velg nærmeste stasjon
-      const closestStation = reachableStations[0];
-      const stationDistance = (closestStation as any).routeDistance;
-      const distanceToStation = stationDistance - currentPosition;
-      const arrivalBattery = Math.max(5, currentBatteryLevel - (distanceToStation / actualRange) * 100);
-      const departureBattery = Math.min(80, Math.max(30, arrivalBattery + closestStation.chargeAmount));
-      
-      console.log(`🚨 KRITISK STASJON: ${closestStation.name}`);
-      console.log(`   Avstand: ${stationDistance.toFixed(1)}km`);
-      console.log(`   Ankomst batteri: ${arrivalBattery.toFixed(1)}%`);
-      
-      criticalStations.push({
-        ...closestStation,
-        distance: stationDistance,
-        arrivalBattery,
-        departureBattery,
-        isRequired: true
-      });
-      
-      // Oppdater for neste iterasjon
-      currentPosition = stationDistance;
-      currentBatteryLevel = departureBattery;
+    if (distanceBeforeCritical >= routeDistance) {
+      console.log('✅ Batteriet holder over 10% hele ruten');
+      return [];
     }
-    
-    console.log(`🏁 RESULTAT: ${criticalStations.length} kritiske ladestasjoner funnet`);
-    return criticalStations;
+
+    // Finn nærmeste stasjon før dette punktet
+    const stationsNearRoute = findStationsNearRoute(routeGeometry);
+    const availableStations = stationsNearRoute
+      .filter(s => s.available > 0)
+      .filter(s => (s as any).routeDistance <= distanceBeforeCritical)
+      .sort((a, b) => Math.abs((a as any).routeDistance - distanceBeforeCritical) - Math.abs((b as any).routeDistance - distanceBeforeCritical));
+
+    if (availableStations.length === 0) {
+      console.log('❌ INGEN STASJON FUNNET INNEN KRITISK AVSTAND');
+      return [];
+    }
+
+    const criticalStation = availableStations[0];
+    const stationDistance = (criticalStation as any).routeDistance;
+    const arrivalBattery = Math.max(5, currentBattery - (stationDistance / actualRange) * 100);
+
+    console.log('🚨 EN KRITISK STASJON FUNNET:', criticalStation.name);
+    console.log('📍 Avstand:', stationDistance.toFixed(1), 'km');
+    console.log('🔋 Batteri ved ankomst:', arrivalBattery.toFixed(1), '%');
+
+    return [{
+      ...criticalStation,
+      distance: stationDistance,
+      arrivalBattery,
+      departureBattery: 80,
+      isRequired: true
+    }];
   };
   // Beregn vær-påvirkning (fallback hvis weather service ikke fungerer)
   const calculateWeatherImpact = (): WeatherData => {
