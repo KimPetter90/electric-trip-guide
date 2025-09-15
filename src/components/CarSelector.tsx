@@ -1222,6 +1222,36 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
       {!showBrands ? (
         /* When brands are hidden, don't show anything extra */
         null
+      ) : selectedCar ? (
+        /* Show only the selected car */
+        <Card className="p-4 bg-primary/10 border-primary/30 shadow-lg">
+          <div className="flex items-center space-x-4">
+            <span className="text-2xl">{selectedCar.image}</span>
+            
+            <div className="flex-1">
+              <h4 className="font-semibold text-foreground">
+                {selectedCar.brand} {selectedCar.model}
+              </h4>
+              
+              <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                <div className="flex items-center gap-1">
+                  <Battery className="h-3 w-3" />
+                  <span>{selectedCar.batteryCapacity} kWh</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Zap className="h-3 w-3" />
+                  <span>{selectedCar.range} km</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Car className="h-3 w-3" />
+                  <span>{selectedCar.consumption} kWh/100km</span>
+                </div>
+              </div>
+            </div>
+
+            <Badge variant="default" className="text-xs animate-pulse-neon">Valgt</Badge>
+          </div>
+        </Card>
       ) : !selectedBrand ? (
         /* Brand selection - vertical list */
         <div className="space-y-2">
@@ -1292,23 +1322,6 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
             </Card>
           ))}
         </div>
-      )}
-
-      {/* Selected car info */}
-      {selectedCar && (
-        <Card className="p-4 bg-primary/10 border-primary/30 shadow-lg">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">{selectedCar.image}</span>
-            <div>
-              <h4 className="font-semibold text-foreground">
-                {selectedCar.brand} {selectedCar.model}
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                {selectedCar.batteryCapacity} kWh • {selectedCar.range} km rekkevidde • {selectedCar.consumption} kWh/100km
-              </p>
-            </div>
-          </div>
-        </Card>
       )}
     </div>
   );
