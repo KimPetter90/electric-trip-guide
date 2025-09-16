@@ -163,7 +163,7 @@ function Index() {
               <Zap className="h-10 w-10 text-primary animate-glow-pulse" />
             </div>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 font-exo animate-float">
-              Fremtidens intelligente ruteplanlegger for elektriske kjøretøy
+              AI-drevet ruteplanlegging som revolusjonerer elbilkjøring
             </p>
             <div className="flex flex-wrap items-center justify-center gap-6 text-muted-foreground">
               <div className="flex items-center gap-2 glass-card rounded-full px-6 py-3 border border-primary/30 neon-glow">
