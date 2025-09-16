@@ -2845,6 +2845,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       console.error('Feil ved oppdatering av rute:', error);
       setError(`Kunne ikke oppdatere ruten: ${error instanceof Error ? error.message : 'Ukjent feil'}`);
       setLoading(false); // Sett loading til false også ved feil
+      // IKKE reset andre state-verdier ved feil - la brukeren fortsette
     }
     }, 100); // Redusert til 100ms for raskere respons
   };
@@ -2983,7 +2984,18 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
     if (shouldUpdateRoute && map.current && routeData.from && routeData.to && selectedCar && accessToken && !loading) {
       console.log('🚀 STARTER RUTEPLANLEGGING:', selectedRouteId || 'fastest');
       const routeType = selectedRouteId || 'fastest';
-      updateMapRoute(routeType);
+      
+      // Ikke kall updateMapRoute hvis vi allerede har beregnet samme rute
+      const currentRouteKey = `${routeData.from}-${routeData.to}-${routeType}-${routeData.batteryPercentage}`;
+      const lastRouteKey = sessionStorage.getItem('lastRouteKey');
+      
+      if (currentRouteKey !== lastRouteKey) {
+        console.log('🆕 Ny rute, starter beregning...');
+        sessionStorage.setItem('lastRouteKey', currentRouteKey);
+        updateMapRoute(routeType);
+      } else {
+        console.log('♻️ Samme rute allerede beregnet, hopper over');
+      }
     } else {
       console.log('⏸️ Venter på requirements eller allerede laster...');
     }
