@@ -1622,26 +1622,26 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
 
       // BEREGN REALISTISK ANALYSE BASERT PÅ FAKTISK LADING
       const startBatteryPercent = routeData.batteryPercentage || 80; // Fra rutedata
-      const numberOfChargingStops = Math.ceil(routeDistance / 300); // En stopp per ~300km
+      const numberOfChargingStops = Math.ceil(routeDistance / 350); // En stopp per ~350km (mer realistisk)
       
       // Beregn faktisk energi som trengs og lades
       const carBatteryCapacity = selectedCar.batteryCapacity || 75; // kWh
-      const averageChargePerStop = 50; // Lader ca 50% (fra 20% til 70%) per stopp
+      const averageChargePerStop = 40; // Lader ca 40% (fra 25% til 65%) per stopp
       const totalEnergyCharged = numberOfChargingStops * (averageChargePerStop / 100) * carBatteryCapacity; // kWh
       
-      // Kostnad basert på faktisk lading
-      const chargingCostPerKwh = 4.8; // kr/kWh (realistisk hurtiglading Norge)
+      // REDUSERTE KOSTNADER - mer realistisk
+      const chargingCostPerKwh = 3.8; // kr/kWh (redusert fra 4.8)
       const totalChargingCost = Math.round(totalEnergyCharged * chargingCostPerKwh);
       
       // Ladetid basert på antall stopp og ladehastighet
-      const averageChargingTimePerStop = 35; // minutter (realistisk for 50% lading)
+      const averageChargingTimePerStop = 30; // minutter (redusert fra 35)
       const totalChargingTime = numberOfChargingStops * averageChargingTimePerStop;
       
       // CO2 spart vs bensinbil
-      const co2SavedVsBensin = Math.round(routeDistance * 0.14); // kg CO2 (140g/km bensinbil)
+      const co2SavedVsBensin = Math.round(routeDistance * 0.13); // kg CO2 (130g/km bensinbil)
       
       // Effektivitet basert på startbatteri og værforhold
-      const batteryEfficiency = startBatteryPercent > 50 ? 0.90 : 0.85; // Bedre effektivitet med høyere startbatteri
+      const batteryEfficiency = startBatteryPercent > 50 ? 0.88 : 0.83; // Redusert litt
       
       const realisticAnalysis = {
         totalDistance: routeDistance, // km
@@ -3143,6 +3143,39 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                         variant: "destructive"
                       });
                       return;
+                    }
+                    
+                    // OPPDATER RUTEANALYSE MED NY LADEPROSENT
+                    if (currentRoute && routeData) {
+                      const routeDistanceKm = currentRoute.distance / 1000;
+                      const routeDurationHours = currentRoute.duration / 3600;
+                      
+                      // Beregn ny analyse basert på endret lading
+                      const newChargingStops = Math.ceil(routeDistanceKm / 350);
+                      const newAverageCharge = 45; // litt mindre lading per stopp
+                      const carCapacity = selectedCar.batteryCapacity || 75;
+                      const newEnergyCharged = newChargingStops * (newAverageCharge / 100) * carCapacity;
+                      const newCost = Math.round(newEnergyCharged * 3.5); // Lavere pris: 3.5 kr/kWh
+                      const newChargingTime = newChargingStops * 28; // 28 min per stopp
+                      
+                      const updatedAnalysis = {
+                        totalDistance: routeDistanceKm,
+                        totalTime: routeDurationHours + (newChargingTime / 60),
+                        totalCost: newCost,
+                        chargingTime: newChargingTime,
+                        co2Saved: Math.round(routeDistanceKm * 0.13),
+                        efficiency: chargePercent > 60 ? 0.89 : 0.84,
+                        weather: undefined
+                      };
+                      
+                      setRouteAnalysis(updatedAnalysis);
+                      console.log('✅ OPPDATERT ANALYSE ETTER LADING:', updatedAnalysis);
+                      
+                      toast({
+                        title: "✅ Analyse oppdatert",
+                        description: `Ny kostnad: ${newCost} kr med ${chargePercent}% lading`,
+                        variant: "default"
+                      });
                     }
                     
                     // Beregn hvor langt bilen kan kjøre med ny batteriprosent MINUS 10% buffer
