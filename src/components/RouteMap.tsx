@@ -2276,12 +2276,24 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       map.current!.fitBounds(bounds, { padding: 50 });
       console.log('✅ FitBounds fullført');
 
-      // Beregn analyse
+      // Beregn analyse med riktige verdier fra currentRoute
       console.log('Beregner analyse...');
-      const analysis = calculateTripAnalysis(routeDistance, routeDuration, optimized, weatherData);
-      setRouteAnalysis(analysis);
-      console.log('✅ Trip analysis calculated:', analysis);
-      console.log('✅ Route analysis set successfully:', analysis);
+      if (currentRoute) {
+        const routeDistanceKm = currentRoute.distance / 1000; // Konverter meter til km
+        const routeDurationHours = currentRoute.duration / 3600; // Konverter sekunder til timer
+        console.log('📊 Route data for analyse:', { 
+          distanceMeters: currentRoute.distance, 
+          distanceKm: routeDistanceKm, 
+          durationSeconds: currentRoute.duration, 
+          durationHours: routeDurationHours 
+        });
+        
+        const analysis = calculateTripAnalysis(routeDistanceKm * 1000, routeDurationHours, optimized, weatherData);
+        setRouteAnalysis(analysis);
+        console.log('✅ Trip analysis calculated:', analysis);
+      } else {
+        console.warn('⚠️ Ingen currentRoute tilgjengelig for analyse');
+      }
 
       // FIT BOUNDS til slutt for å vise hele ruten
       const routeCoords = route.geometry.coordinates;
