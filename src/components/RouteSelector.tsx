@@ -137,7 +137,6 @@ export default function RouteSelector({ routes, selectedRoute, onRouteSelect, is
                 <span className="text-foreground font-medium">{route.chargingStops} stopp</span>
               </div>
               <div className="flex items-center gap-1">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
                 <span className="text-foreground font-medium">{route.estimatedCost} NOK</span>
               </div>
             </div>
