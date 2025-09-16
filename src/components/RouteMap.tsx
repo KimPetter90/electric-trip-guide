@@ -2995,6 +2995,24 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
             
             if (allRedMarkers.length > 1) {
               const secondMarker = allRedMarkers[1] as HTMLElement;
+              
+              // VIKTIG: Hent koordinatene fra den røde markøren før vi fjerner den
+              let coords: [number, number] = [10.0, 60.0]; // Fallback
+              
+              // Finn riktige koordinater fra optimizedStations basert på markørens station-id
+              const stationId = secondMarker.getAttribute('data-station-id');
+              console.log('🎯 Station ID fra markør:', stationId);
+              
+              if (stationId && optimizedStations) {
+                const station = optimizedStations.find(s => s.id === stationId);
+                if (station) {
+                  coords = [station.longitude, station.latitude];
+                  console.log('✅ Fant riktige koordinater:', coords, 'for stasjon:', station.name);
+                } else {
+                  console.log('⚠️ Fant ikke stasjon med ID:', stationId);
+                }
+              }
+              
               secondMarker.remove();
               console.log('✅ Fjernet andre røde markør');
               
@@ -3020,10 +3038,12 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
               `;
               blueEl.innerHTML = '⚡';
               
-              // Bruk koordinater fra andre stasjon hvis mulig, ellers random
-              let coords: [number, number] = [10.0, 60.0]; // Fallback
+              // Bruk de koordinatene vi fant tidligere
               if (optimizedStations && optimizedStations.length > 1) {
-                coords = [optimizedStations[1].longitude, optimizedStations[1].latitude];
+                const fallbackStation = optimizedStations[1];
+                if (!coords || (coords[0] === 10.0 && coords[1] === 60.0)) {
+                  coords = [fallbackStation.longitude, fallbackStation.latitude];
+                }
               }
               
               new mapboxgl.Marker(blueEl)
