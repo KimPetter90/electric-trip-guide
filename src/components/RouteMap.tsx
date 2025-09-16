@@ -434,22 +434,22 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     const routeDistanceKm = currentRoute.distance / 1000;
     const routeDurationHours = currentRoute.duration / 3600;
     
-    // ENKEL KOSTNAD BEREGNING
-    const forbrukPer100km = 20; // kWh/100km
-    const totalEnergi = (routeDistanceKm / 100) * forbrukPer100km; // kWh for hele turen
-    const ladepris = 3.8; // kr/kWh
-    const basiskostnad = Math.round(totalEnergi * ladepris);
+    // SAMME ENKLE BEREGNING SOM HOVEDFUNKSJONEN
+    const forbrukPer100km = 18; // kWh/100km
+    const totalEnergi = (routeDistanceKm / 100) * forbrukPer100km; // kWh
+    const ladepris = 2.8; // kr/kWh (samme som hovedberegning)
+    const basiskostnad = Math.round(totalEnergi * ladepris * 0.7); // 70% fra betalt lading
     
-    // Juster kostnad basert på ladeprosent (høyere % = litt dyrere pga hurtiglading)
-    const kostnadMultiplikator = chargePercent > 80 ? 1.1 : (chargePercent > 60 ? 1.0 : 0.9);
-    const justartKostnad = Math.round(basiskostnad * kostnadMultiplikator);
+    // Minimal justering basert på ladeprosent (ikke dramatisk)
+    const kostnadJustering = chargePercent > 85 ? 1.05 : (chargePercent < 60 ? 0.95 : 1.0);
+    const justartKostnad = Math.round(basiskostnad * kostnadJustering);
     
-    const ladetid = Math.ceil(routeDistanceKm / 300) * 30; // 30 min per 300km
+    const ladetid = Math.ceil(routeDistanceKm / 300) * 25; // 25 min per 300km
     
     const updatedAnalysis = {
       totalDistance: routeDistanceKm,
       totalTime: routeDurationHours + (ladetid / 60),
-      totalCost: justartKostnad,
+      totalCost: justartKostnad, // Samme type beregning som hovedfunksjonen
       chargingTime: ladetid,
       co2Saved: Math.round(routeDistanceKm * 0.13),
       efficiency: chargePercent > 60 ? 0.88 : 0.84,
@@ -457,7 +457,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     };
     
     setRouteAnalysis(updatedAnalysis);
-    console.log(`💰 JUSTERT KOSTNAD FOR ${chargePercent}%: ${justartKostnad} kr (basis: ${basiskostnad} kr)`);
+    console.log(`💰 RIKTIG KOSTNAD FOR ${chargePercent}%: ${justartKostnad} kr (basis: ${basiskostnad} kr, justering: ${kostnadJustering})`);
   };
 
   // Funksjon for å beregne nye kritiske punkter basert på valgt ladeprosent  
