@@ -279,7 +279,7 @@ function Index() {
                 
                 {/* Fjernet kritisk batterinivå-seksjonen */}
                 
-                <ChargingMap isVisible={showRoute} routeAnalysis={routeAnalysis} optimizedStations={optimizedStations} />
+                
               </div>
             )}
           </div>
