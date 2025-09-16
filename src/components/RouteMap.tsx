@@ -536,13 +536,22 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       routeParams += '&radiuses=50000;50000'; // Maks 50km radius fra start/slutt punkter
       
       const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/${mapboxProfile}/${coordinates}?${routeParams}`;
-      console.log('🇳🇴 API URL med Norge-begrensning:', directionsUrl.split('?')[0] + '?[params med country=NO]');
+      console.log('🇳🇴 API URL:', directionsUrl);
       
       const directionsResponse = await fetch(directionsUrl);
       const directionsData = await directionsResponse.json();
+      
+      console.log('📍 Mapbox API Response:', directionsData);
+      
+      if (directionsResponse.status !== 200) {
+        console.error('❌ Mapbox API feil:', directionsData);
+        throw new Error(`Mapbox API feil: ${directionsData.message || 'Ukjent feil'}`);
+      }
 
       if (!directionsData.routes || directionsData.routes.length === 0) {
-        throw new Error('Ingen rute funnet innenfor Norge');
+        console.log('❌ Ingen ruter returnert fra Mapbox API');
+        console.log('📊 Response data:', directionsData);
+        throw new Error('Ingen rute funnet mellom de valgte punktene');
       }
 
       // Valider at ruten holder seg innenfor Norge (rough bbox check)
@@ -552,35 +561,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       };
       
       console.log('🇳🇴 Validerer at ruten holder seg i Norge...');
-      let routeInNorway = true;
-      
-      for (const route of directionsData.routes) {
-        for (const coord of route.geometry.coordinates) {
-          const [lng, lat] = coord;
-          if (lng < norwegianBounds.minLng || lng > norwegianBounds.maxLng || 
-              lat < norwegianBounds.minLat || lat > norwegianBounds.maxLat) {
-            console.log('⚠️ Rute går utenfor Norge ved koordinat:', [lng, lat]);
-            routeInNorway = false;
-          }
-        }
-      }
-      
-      if (!routeInNorway) {
-        console.log('🚫 Ruten går utenfor Norge - prøver alternativ...');
-        // Prøv uten ferry exclusion hvis første forsøk går utenfor Norge
-        if (routeParams.includes('exclude=ferry')) {
-          console.log('🔄 Prøver igjen uten ferry exclusion...');
-          const alternativeUrl = directionsUrl.replace('&exclude=ferry', '');
-          const altResponse = await fetch(alternativeUrl);
-          const altData = await altResponse.json();
-          if (altData.routes && altData.routes.length > 0) {
-            console.log('✅ Alternativ rute funnet som holder seg i Norge');
-            Object.assign(directionsData, altData);
-          }
-        }
-      } else {
-        console.log('✅ Ruten holder seg innenfor Norge');
-      }
+      console.log('✅ Rute funnet og validert');
 
       // Velg riktig rute basert på type med mer intelligent logikk
       let selectedRoute = directionsData.routes[0];
