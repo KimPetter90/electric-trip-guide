@@ -3450,10 +3450,26 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                       return;
                     }
                     
-                    // Lag blå markør for den nærmeste ladestasjonen
-                    console.log('🔵 LAGER NY BLÅ MARKØR for:', nearestStation.name);
-                    console.log('🔵 DENNE STASJONEN ER DEN SOM VISES SOM BLÅ MARKØR:', nearestStation);
-                    const el = document.createElement('div');
+                     // Fjern eventuell eksisterende rød markør på samme posisjon
+                     const existingMarkers = document.querySelectorAll('.charging-station-marker');
+                     existingMarkers.forEach(marker => {
+                       const markerElement = marker as HTMLElement;
+                       const stationId = markerElement.getAttribute('data-station-id');
+                       if (stationId === nearestStation.id) {
+                         console.log('🔴➡️🔵 FJERNER EKSISTERENDE RØD MARKØR for:', nearestStation.name);
+                         const mapboxMarker = (markerElement as any)._mapboxMarker;
+                         if (mapboxMarker) {
+                           mapboxMarker.remove();
+                         } else {
+                           markerElement.remove();
+                         }
+                       }
+                     });
+
+                     // Lag blå markør for den nærmeste ladestasjonen
+                     console.log('🔵 LAGER NY BLÅ MARKØR for:', nearestStation.name);
+                     console.log('🔵 DENNE STASJONEN ER DEN SOM VISES SOM BLÅ MARKØR:', nearestStation);
+                     const el = document.createElement('div');
                     el.className = 'blue-critical-point-marker';
                     el.setAttribute('data-station-id', nearestStation.id);
                     el.setAttribute('data-marker-type', 'critical-point');
