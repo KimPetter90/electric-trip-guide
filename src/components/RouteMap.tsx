@@ -1158,6 +1158,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         const arrivalBatteryPercent = Math.max(chargePercent - batteryUsed, 0);
 
         console.log(`📍 Creating new blue marker for ${station.name} at ${station.distanceAlongRoute?.toFixed(1)}km (${arrivalBatteryPercent.toFixed(1)}% battery on arrival)`);
+        console.log('🔵 PROGRESSIVE BLÅ MARKØR STASJON:', station);
 
         // Lag blå markør for nytt kritisk punkt
         const el = document.createElement('div');
@@ -3299,6 +3300,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                     
                     // Lag blå markør for den nærmeste ladestasjonen
                     console.log('🔵 LAGER NY BLÅ MARKØR for:', nearestStation.name);
+                    console.log('🔵 DENNE STASJONEN ER DEN SOM VISES SOM BLÅ MARKØR:', nearestStation);
                     const el = document.createElement('div');
                     el.className = 'blue-critical-point-marker';
                     el.setAttribute('data-station-id', nearestStation.id);
