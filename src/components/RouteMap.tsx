@@ -538,11 +538,12 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       const arrivalBatteryPercent = Math.max(currentBatteryPercentage - batteryUsedPercent, 0);
 
       const popup = new mapboxgl.Popup({
-        maxWidth: '300px',
+        maxWidth: '350px',
         closeButton: true,
-        closeOnClick: false
+        closeOnClick: false,
+        focusAfterOpen: false
       }).setHTML(`
-        <div style="font-family: Inter, sans-serif; padding: 12px; line-height: 1.4; min-width: 250px;">
+        <div style="font-family: Inter, sans-serif; padding: 12px; line-height: 1.4; min-width: 280px;">
           <div style="background: linear-gradient(135deg, #0066ff, #00aaff); color: white; padding: 10px; margin: -12px -12px 12px -12px; border-radius: 8px;">
             <h4 style="margin: 0; font-size: 16px; font-weight: 600;">🔋 ${liveData.name}</h4>
             <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">📍 ${liveData.location}</p>
@@ -570,18 +571,60 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
             </div>
           </div>
           
-          <div style="background: #f1f5f9; padding: 10px; border-radius: 6px; margin-bottom: 10px;">
-            <div style="color: #64748b; font-size: 12px; font-weight: 600; margin-bottom: 6px;">⚡ Planlagt ladeprosent:</div>
-            <div style="display: flex; gap: 8px; align-items: center;">
+          <div style="background: #e0f2fe; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 2px solid #0066ff;">
+            <div style="color: #0066ff; font-size: 13px; font-weight: 700; margin-bottom: 8px;">⚡ Skriv inn ønsket ladeprosent:</div>
+            <div style="display: flex; gap: 10px; align-items: center;">
               <input 
                 type="number" 
                 id="chargePercent_${station.id}" 
-                min="${arrivalBatteryPercent.toFixed(0)}" 
+                min="${Math.max(Math.floor(arrivalBatteryPercent), 10)}" 
                 max="100" 
                 value="80" 
-                style="width: 70px; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; text-align: center;"
+                placeholder="80"
+                style="
+                  width: 80px; 
+                  padding: 10px 12px; 
+                  border: 2px solid #0066ff; 
+                  border-radius: 6px; 
+                  font-size: 16px; 
+                  font-weight: 600;
+                  text-align: center;
+                  background: white;
+                  color: #0066ff;
+                  outline: none;
+                  -webkit-appearance: none;
+                  -moz-appearance: textfield;
+                "
+                onclick="this.focus(); this.select();"
+                onfocus="this.style.borderColor='#0052cc'; this.style.boxShadow='0 0 0 3px rgba(0,102,255,0.2)';"
+                onblur="this.style.borderColor='#0066ff'; this.style.boxShadow='none';"
               />
-              <span style="font-size: 14px; color: #64748b;">%</span>
+              <span style="font-size: 16px; color: #0066ff; font-weight: 600;">%</span>
+            </div>
+            <button 
+              onclick="window.updateNextChargingPoint && window.updateNextChargingPoint('${station.id}', ${station.distanceAlongRoute || 0})" 
+              style="
+                width: 100%; 
+                margin-top: 10px;
+                background: #0066ff; 
+                color: white; 
+                border: none; 
+                padding: 12px 16px; 
+                border-radius: 6px; 
+                font-size: 14px; 
+                font-weight: 600; 
+                cursor: pointer; 
+                transition: background 0.2s;
+                text-align: center;
+              "
+              onmouseover="this.style.background='#0052cc'"
+              onmouseout="this.style.background='#0066ff'"
+            >
+              🎯 Beregn neste kritiske punkt
+            </button>
+          </div>
+              />
+              <span style="font-size: 16px; color: #0066ff; font-weight: 600;">%</span>
               <button 
                 onclick="window.updateNextChargingPoint && window.updateNextChargingPoint('${station.id}', ${station.distanceAlongRoute || 0})" 
                 style="background: #0066ff; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s;"
