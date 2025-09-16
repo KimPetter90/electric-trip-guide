@@ -398,6 +398,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
   const [nextChargingStations, setNextChargingStations] = useState<ChargingStation[]>([]); // Neste stasjoner å vise
   const [currentChargingStation, setCurrentChargingStation] = useState<ChargingStation | null>(null); // Aktiv ladestasjon
   const [showChargingButton, setShowChargingButton] = useState(false); // Vis ladeknapp
+  const [liveStationData, setLiveStationData] = useState<Record<string, ChargingStation>>({});
   
   // Ny state for interaktiv lading
   const [showChargingDialog, setShowChargingDialog] = useState(false);
@@ -525,14 +526,20 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         setShowChargingDialog(true);
       });
 
+      // Hent live data for stasjonen
+      const liveData = liveStationData[station.id] || station;
+      
       const popup = new mapboxgl.Popup({
         maxWidth: '280px',
         className: 'charging-station-popup'
       }).setHTML(`
         <div style="font-family: 'Inter', sans-serif; padding: 8px; line-height: 1.4;">
           <div style="background: linear-gradient(135deg, #0066ff, #00aaff); color: white; padding: 8px; margin: -8px -8px 8px -8px; border-radius: 6px 6px 0 0;">
-            <h4 style="margin: 0; font-size: 14px; font-weight: 600;">🔋 ${station.name}</h4>
-            <p style="margin: 2px 0 0 0; font-size: 12px; opacity: 0.9;">📍 ${station.location}</p>
+            <h4 style="margin: 0; font-size: 14px; font-weight: 600;">🔋 ${liveData.name}</h4>
+            <p style="margin: 2px 0 0 0; font-size: 12px; opacity: 0.9;">📍 ${liveData.location}</p>
+            <div style="margin-top: 4px;">
+              <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 10px; font-size: 10px;">🔴 LIVE</span>
+            </div>
           </div>
           <div style="space-y: 6px;">
             <div style="background: #f0f8ff; padding: 6px; border-radius: 4px; margin: 6px 0;">
@@ -541,15 +548,15 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px;">
               <div>
                 <span style="color: #666;">⚡ Effekt:</span><br>
-                <strong style="color: #000;">${station.power}</strong>
+                <strong style="color: #000;">${liveData.power}</strong>
               </div>
               <div>
                 <span style="color: #666;">💰 Pris:</span><br>
-                <strong style="color: #000;">${station.cost} kr/kWh</strong>
+                <strong style="color: #000;">${liveData.cost} kr/kWh</strong>
               </div>
               <div>
                 <span style="color: #666;">📊 Ledig:</span><br>
-                <strong style="color: #000;">${station.available}/${station.total}</strong>
+                <strong style="color: ${liveData.available > 0 ? '#00aa00' : '#ff0000'};">${liveData.available}/${liveData.total}</strong>
               </div>
             </div>
             <div style="text-align: center; background: #0066ff; color: white; padding: 6px; border-radius: 4px; margin-top: 8px; font-size: 12px; font-weight: 600;">
@@ -594,6 +601,65 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
     fetchMapboxToken();
   }, []);
+
+  // Realtime oppdateringer av ladestasjoner
+  useEffect(() => {
+    console.log('🔄 Setting up realtime charging station updates...');
+    const channel = supabase
+      .channel('charging-stations-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'charging_stations'
+        },
+        (payload) => {
+          console.log('🔄 LIVE UPDATE:', payload);
+          
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            const updatedStation = {
+              id: payload.new.id,
+              name: payload.new.name,
+              location: payload.new.location,
+              latitude: Number(payload.new.latitude),
+              longitude: Number(payload.new.longitude),
+              available: payload.new.available,
+              total: payload.new.total,
+              fastCharger: payload.new.fast_charger,
+              power: payload.new.power,
+              cost: Number(payload.new.cost)
+            };
+            
+            // Oppdater live data
+            setLiveStationData(prev => ({
+              ...prev,
+              [updatedStation.id]: updatedStation
+            }));
+            
+            // Oppdater hovedlisten med ladestasjoner
+            setChargingStations(prev => 
+              prev.map(station => 
+                station.id === updatedStation.id ? updatedStation : station
+              )
+            );
+            
+            console.log('✅ Updated station:', updatedStation.name, 'Available:', updatedStation.available);
+            
+            toast({
+              title: "🔄 Live oppdatering",
+              description: `${updatedStation.name}: ${updatedStation.available}/${updatedStation.total} ledige plasser`,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔄 Cleaning up realtime subscription...');
+      supabase.removeChannel(channel);
+    };
+  }, [toast]);
 
   // Initialisering av kart
   const initializeMap = async () => {
@@ -1182,14 +1248,20 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           `;
           el.innerHTML = '⚡';
 
+          // Hent live data for stasjonen
+          const liveData = liveStationData[station.id] || station;
+          
           const popup = new mapboxgl.Popup({
             maxWidth: '280px',
             className: 'charging-station-popup'
           }).setHTML(`
             <div style="font-family: 'Inter', sans-serif; padding: 8px; line-height: 1.4;">
               <div style="background: linear-gradient(135deg, #0066ff, #00aaff); color: white; padding: 8px; margin: -8px -8px 8px -8px; border-radius: 6px 6px 0 0;">
-                <h4 style="margin: 0; font-size: 14px; font-weight: 600;">⚡ ${station.name}</h4>
-                <p style="margin: 2px 0 0 0; font-size: 12px; opacity: 0.9;">📍 ${station.location}</p>
+                <h4 style="margin: 0; font-size: 14px; font-weight: 600;">⚡ ${liveData.name}</h4>
+                <p style="margin: 2px 0 0 0; font-size: 12px; opacity: 0.9;">📍 ${liveData.location}</p>
+                <div style="margin-top: 4px;">
+                  <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 10px; font-size: 10px;">🔴 LIVE</span>
+                </div>
               </div>
               <div style="space-y: 6px;">
                 <div style="background: #f0f8ff; padding: 6px; border-radius: 4px; margin: 6px 0;">
@@ -1198,15 +1270,15 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px;">
                   <div>
                     <span style="color: #666;">⚡ Effekt:</span><br>
-                    <strong style="color: #000;">${station.power}</strong>
+                    <strong style="color: #000;">${liveData.power}</strong>
                   </div>
                   <div>
                     <span style="color: #666;">💰 Pris:</span><br>
-                    <strong style="color: #000;">${station.cost} kr/kWh</strong>
+                    <strong style="color: #000;">${liveData.cost} kr/kWh</strong>
                   </div>
                   <div>
                     <span style="color: #666;">📊 Ledig:</span><br>
-                    <strong style="color: #000;">${station.available}/${station.total}</strong>
+                    <strong style="color: ${liveData.available > 0 ? '#00aa00' : '#ff0000'};">${liveData.available}/${liveData.total}</strong>
                   </div>
                 </div>
               </div>
@@ -1368,14 +1440,20 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           setShowChargingDialog(true);
         });
 
+        // Hent live data for stasjonen
+        const liveData = liveStationData[station.id] || station;
+        
         const popup = new mapboxgl.Popup({
           maxWidth: '280px',
           className: 'charging-station-popup'
         }).setHTML(`
           <div style="font-family: 'Inter', sans-serif; padding: 8px; line-height: 1.4;">
             <div style="background: linear-gradient(135deg, #0066ff, #00aaff); color: white; padding: 8px; margin: -8px -8px 8px -8px; border-radius: 6px 6px 0 0;">
-              <h4 style="margin: 0; font-size: 14px; font-weight: 600;">🔋 ${station.name}</h4>
-              <p style="margin: 2px 0 0 0; font-size: 12px; opacity: 0.9;">📍 ${station.location}</p>
+              <h4 style="margin: 0; font-size: 14px; font-weight: 600;">🔋 ${liveData.name}</h4>
+              <p style="margin: 2px 0 0 0; font-size: 12px; opacity: 0.9;">📍 ${liveData.location}</p>
+              <div style="margin-top: 4px;">
+                <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 10px; font-size: 10px;">🔴 LIVE</span>
+              </div>
             </div>
             <div style="space-y: 6px;">
               <div style="background: #f0f8ff; padding: 6px; border-radius: 4px; margin: 6px 0;">
@@ -1384,15 +1462,15 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
               <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px;">
                 <div>
                   <span style="color: #666;">⚡ Effekt:</span><br>
-                  <strong style="color: #000;">${station.power}</strong>
+                  <strong style="color: #000;">${liveData.power}</strong>
                 </div>
                 <div>
                   <span style="color: #666;">💰 Pris:</span><br>
-                  <strong style="color: #000;">${station.cost} kr/kWh</strong>
+                  <strong style="color: #000;">${liveData.cost} kr/kWh</strong>
                 </div>
                 <div>
                   <span style="color: #666;">📊 Ledig:</span><br>
-                  <strong style="color: #000;">${station.available}/${station.total}</strong>
+                  <strong style="color: ${liveData.available > 0 ? '#00aa00' : '#ff0000'};">${liveData.available}/${liveData.total}</strong>
                 </div>
               </div>
               <div style="text-align: center; background: #0066ff; color: white; padding: 6px; border-radius: 4px; margin-top: 8px; font-size: 12px; font-weight: 600; cursor: pointer;" onclick="event.stopPropagation();">
@@ -1780,9 +1858,39 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
 
       {/* Analyse og ladestasjoner */}
       <div className="w-full mt-6 bg-transparent">
-        <div className="flex items-center gap-2 mb-4">
-          <TrendingUp className="h-5 w-5 text-primary animate-glow-pulse" />
-          <h4 className="text-2xl font-orbitron font-bold text-gradient animate-glow-pulse">Ruteanalyse</h4>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary animate-glow-pulse" />
+            <h4 className="text-2xl font-orbitron font-bold text-gradient animate-glow-pulse">Ruteanalyse</h4>
+          </div>
+          
+          {/* Live oppdatering knapp */}
+          <Button
+            onClick={async () => {
+              try {
+                console.log('🔄 Triggering live station updates...');
+                const { data, error } = await supabase.functions.invoke('update-charging-stations');
+                if (error) throw error;
+                console.log('✅ Live updates triggered:', data);
+                toast({
+                  title: "🔄 Live oppdateringer",
+                  description: "Ladestasjondata oppdateres nå...",
+                });
+              } catch (error) {
+                console.error('❌ Error triggering updates:', error);
+                toast({
+                  title: "❌ Feil",
+                  description: "Kunne ikke starte live oppdateringer",
+                  variant: "destructive"
+                });
+              }
+            }}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            🔴 Simuler live data
+          </Button>
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full bg-transparent" style={{backgroundColor: 'transparent'}}>
