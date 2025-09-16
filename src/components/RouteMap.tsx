@@ -3125,7 +3125,8 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                       color: white;
                       font-weight: bold;
                       font-size: 12px;
-                      z-index: 100;
+                      z-index: 999999 !important;
+                      position: relative;
                       box-shadow: 0 0 20px rgba(0, 102, 255, 0.8);
                       animation: pulse 2s infinite;
                     `;
