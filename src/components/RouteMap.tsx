@@ -3628,6 +3628,12 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                     console.log('🔵 SENDER BLUE MARKER STATION TIL PARENT:', nearestStation.name);
                     sendStationToChargingMap(nearestStation);
                      
+                     console.log('🚨🚨🚨 STARTER NESTE BLÅ MARKØR LOGIKK 🚨🚨🚨');
+                     console.log('nearestStation:', nearestStation);
+                     console.log('chargePercent:', chargePercent);
+                     console.log('currentRoute:', currentRoute);
+                     console.log('carRange:', carRange);
+                     
                      // Beregn batteriprosent ved ankomst til kritisk punkt
                      const batteryAtCriticalPoint = ((criticalPointDistance - currentDistance) / carRange) * 100;
                      const remainingBattery = chargePercent - batteryAtCriticalPoint;
