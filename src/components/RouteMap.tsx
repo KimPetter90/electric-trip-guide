@@ -96,6 +96,7 @@ interface RouteMapProps {
   selectedRouteId?: string | null;
   onChargingStationUpdate?: (station: ChargingStation | null, showButton: boolean) => void;
   onRouteAnalysisUpdate?: (analysis: TripAnalysis | null) => void;
+  onOptimizedStationsUpdate?: (stations: ChargingStation[]) => void;
 }
 
 // Modal state
@@ -393,7 +394,7 @@ const fetchWeatherData = async (startCoords: [number, number], endCoords: [numbe
   return data;
 };
 
-const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, routeTrigger, selectedRouteId, onChargingStationUpdate, onRouteAnalysisUpdate }) => {
+const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, routeTrigger, selectedRouteId, onChargingStationUpdate, onRouteAnalysisUpdate, onOptimizedStationsUpdate }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const routeUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Throttle API-kall
@@ -1835,6 +1836,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
 
       console.log('✅ Optimalisering fullført. Funnet', optimized.length, 'ladestsjoner');
       setOptimizedStations(optimized);
+      onOptimizedStationsUpdate?.(optimized);
 
       // Oppdater chargingStations med beregnet distanceAlongRoute FØRST
       console.log('🔧 Updating charging stations with distanceAlongRoute...');

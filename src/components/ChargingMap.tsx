@@ -17,11 +17,31 @@ interface ChargingStop {
   id: string;
   name: string;
   location: string;
-  distance: number;
-  chargeTime: number;
-  chargeAmount: number;
+  distance?: number;
+  chargeTime?: number;
+  chargeAmount?: number;
   cost: number;
-  fastCharger: boolean;
+  fastCharger?: boolean;
+}
+
+interface ChargingStation {
+  id: string;
+  name: string;
+  location: string;
+  latitude: number;
+  longitude: number;
+  available: number;
+  total: number;
+  fastCharger?: boolean;
+  fast_charger?: boolean;
+  power: string;
+  cost: number;
+  distanceFromRoute?: number;
+  distanceAlongRoute?: number;
+  arrivalBatteryPercentage?: number;
+  isRequired?: boolean;
+  chargingTime?: number;
+  targetBatteryPercentage?: number;
 }
 
 const mockChargingStops: ChargingStop[] = [
@@ -60,9 +80,10 @@ const mockChargingStops: ChargingStop[] = [
 interface ChargingMapProps {
   isVisible: boolean;
   routeAnalysis?: RouteAnalysis | null;
+  optimizedStations?: ChargingStation[];
 }
 
-export default function ChargingMap({ isVisible, routeAnalysis }: ChargingMapProps) {
+export default function ChargingMap({ isVisible, routeAnalysis, optimizedStations = [] }: ChargingMapProps) {
   if (!isVisible) return null;
 
   // Bruk ekte rutedata eller fallback til standardverdier
@@ -104,7 +125,7 @@ export default function ChargingMap({ isVisible, routeAnalysis }: ChargingMapPro
 
       {/* Charging Stops */}
       <div className="space-y-3">
-        {mockChargingStops.map((stop, index) => (
+        {(optimizedStations.length > 0 ? optimizedStations : mockChargingStops).map((stop, index) => (
           <Card key={stop.id} className="p-4 bg-card/80 backdrop-blur-sm border-border hover:shadow-lg hover:border-primary/50 transition-all duration-300 animate-float" style={{ animationDelay: `${index * 200}ms` }}>
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3">
@@ -114,7 +135,7 @@ export default function ChargingMap({ isVisible, routeAnalysis }: ChargingMapPro
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h4 className="font-orbitron font-bold text-gradient">{stop.name}</h4>
-                      {stop.fastCharger && (
+                      {(stop.fastCharger || (stop as any).fast_charger) && (
                         <Badge variant="secondary" className="text-xs font-orbitron">
                           <Zap className="h-3 w-3 mr-1" />
                           Hurtiglader
@@ -126,19 +147,19 @@ export default function ChargingMap({ isVisible, routeAnalysis }: ChargingMapPro
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3 text-sm">
                       <div className="flex items-center gap-1">
                         <MapPin className="h-3 w-3 text-primary animate-glow-pulse" />
-                        <span className="font-orbitron font-medium">{stop.distance} km</span>
+                        <span className="font-orbitron font-medium">{stop.distanceAlongRoute ? Math.round(stop.distanceAlongRoute) : stop.distance || 0} km</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="h-3 w-3 text-primary animate-glow-pulse" />
-                        <span className="font-orbitron font-medium">{stop.chargeTime} min</span>
+                        <span className="font-orbitron font-medium">{stop.chargingTime || stop.chargeTime || 25} min</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Zap className="h-3 w-3 text-primary animate-glow-pulse" />
-                        <span className="font-orbitron font-medium">{stop.chargeAmount} kWh</span>
+                        <span className="font-orbitron font-medium">{stop.chargeAmount || 35} kWh</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <DollarSign className="h-3 w-3 text-primary animate-glow-pulse" />
-                        <span className="font-orbitron font-medium">{stop.cost} kr</span>
+                        <span className="font-orbitron font-medium">{Math.round(stop.cost * 50) || 175} kr</span>
                       </div>
                     </div>
                 </div>
