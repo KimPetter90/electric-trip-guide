@@ -428,12 +428,18 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
   const { toast } = useToast();
 
-  // Enkel funksjon for å sende stasjon til ladestasjonkartet
-  const sendStationToChargingMap = (station: ChargingStation) => {
-    console.log('🔌 SENDER STASJON TIL LADESTASJONKART:', station.name);
-    setCurrentChargingStation(station);
+  // Forbedret funksjon for å sende stasjoner til ladestasjonkartet
+  const sendStationsToChargingMap = (stations: ChargingStation[], mainStation?: ChargingStation) => {
+    const primaryStation = mainStation || stations[0];
+    console.log('🔌 SENDER', stations.length, 'STASJONER TIL LADESTASJONKART, hovedstasjon:', primaryStation?.name);
+    setCurrentChargingStation(primaryStation);
     setShowChargingButton(true);
-    onChargingStationUpdate?.(station, true, [station]);
+    onChargingStationUpdate?.(primaryStation, true, stations);
+  };
+
+  // Enkel funksjon for å sende enkelt stasjon til ladestasjonkartet (bakoverkompatibilitet)
+  const sendStationToChargingMap = (station: ChargingStation) => {
+    sendStationsToChargingMap([station], station);
   };
 
   // Beregn RIKTIG kostnad OG ladetid når bruker velger ladingsprosent
@@ -504,7 +510,125 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     }
   };
 
-  // Funksjon for å beregne nye kritiske punkter basert på valgt ladeprosent  
+// Fullstendig batterioptimeringsalgoritme som beregner alle kritiske punkter langs hele ruten
+  const calculateAllCriticalPoints = (
+    startBatteryPercent: number,
+    route: any,
+    car: CarModel,
+    allStations: ChargingStation[]
+  ): ChargingStation[] => {
+    console.log('🔋 STARTER FULLSTENDIG BATTERIOPTIMERING');
+    console.log('📊 Start batteri:', startBatteryPercent + '%');
+    console.log('📊 Bil rekkevidde:', car.range + 'km');
+    console.log('📊 Total rutelengde:', (route.distance / 1000).toFixed(1) + 'km');
+    
+    const routeCoords = route.geometry.coordinates;
+    const totalRouteKm = route.distance / 1000;
+    const criticalLevel = 15; // Kritisk batterinivå
+    const targetChargeLevel = 80; // Standard ladenivå
+    
+    let allOptimizedStations: ChargingStation[] = [];
+    let currentBatteryPercent = startBatteryPercent;
+    let currentPositionKm = 0;
+    let cycleNumber = 1;
+    
+    // Beregn hvor langt vi kan kjøre med startnivået
+    while (currentPositionKm < totalRouteKm && cycleNumber <= 10) {
+      const usableBatteryRange = currentBatteryPercent - criticalLevel;
+      const rangeKm = (car.range * usableBatteryRange) / 100;
+      const nextCriticalPositionKm = currentPositionKm + rangeKm;
+      
+      console.log(`🔵 SYKLUS ${cycleNumber}:`);
+      console.log(`  📍 Nåværende posisjon: ${currentPositionKm.toFixed(1)} km`);
+      console.log(`  🔋 Batteri nå: ${currentBatteryPercent}%`);
+      console.log(`  🚗 Kan kjøre: ${rangeKm.toFixed(1)} km til`);
+      console.log(`  🎯 Kritisk punkt ved: ${nextCriticalPositionKm.toFixed(1)} km`);
+      
+      // Hvis vi når destinasjonen med nåværende batteri, stopp
+      if (nextCriticalPositionKm >= totalRouteKm) {
+        console.log(`✅ SYKLUS ${cycleNumber}: Når destinasjonen uten mer lading!`);
+        break;
+      }
+      
+      // Finn beste ladestasjon nær det kritiske punktet
+      const searchRadius = 40; // Økt søkeradius
+      const stationSearchStart = Math.max(0, nextCriticalPositionKm - searchRadius);
+      const stationSearchEnd = Math.min(totalRouteKm, nextCriticalPositionKm + searchRadius);
+      
+      console.log(`  🔍 Søker stasjoner mellom ${stationSearchStart.toFixed(1)} og ${stationSearchEnd.toFixed(1)} km`);
+      
+      const candidateStations = allStations.filter(station => {
+        let stationPositionKm = 0;
+        let minDistToRoute = Infinity;
+        
+        // Finn stasjonens posisjon langs ruten
+        for (let i = 0; i < routeCoords.length; i++) {
+          const distanceToPoint = getDistance(
+            station.latitude,
+            station.longitude,
+            routeCoords[i][1],
+            routeCoords[i][0]
+          );
+          
+          if (distanceToPoint < minDistToRoute) {
+            minDistToRoute = distanceToPoint;
+            stationPositionKm = (i / routeCoords.length) * totalRouteKm;
+          }
+        }
+        
+        // Må være nær ruten og i søkeområdet
+        const isNearRoute = minDistToRoute <= 8.0; // Litt mer fleksibel
+        const isInSearchArea = stationPositionKm >= stationSearchStart && 
+                              stationPositionKm <= stationSearchEnd;
+        const isAhead = stationPositionKm > currentPositionKm + 10; // Må være fremover på ruten
+        
+        if (isNearRoute && isInSearchArea && isAhead) {
+          station.distanceAlongRoute = stationPositionKm;
+          console.log(`    ✓ Kandidat: ${station.name} ved ${stationPositionKm.toFixed(1)} km (${minDistToRoute.toFixed(1)} km fra rute)`);
+        }
+        
+        return isNearRoute && isInSearchArea && isAhead;
+      });
+      
+      if (candidateStations.length === 0) {
+        console.log(`❌ SYKLUS ${cycleNumber}: Ingen stasjoner funnet! Stopper optimering.`);
+        break;
+      }
+      
+      // Sorter og velg beste stasjon basert på kvalitet
+      const bestStations = candidateStations
+        .map(station => ({
+          ...station,
+          qualityScore: 
+            (station.available / station.total * 25) + // Tilgjengelighet
+            (station.fastCharger ? 35 : 15) +          // Hurtiglading viktig
+            (station.cost <= 4.0 ? 25 : 10) +         // Rimelig pris
+            (station.power.includes('150') || station.power.includes('250') || station.power.includes('300') ? 15 : 5) // Høy effekt
+        }))
+        .sort((a, b) => b.qualityScore - a.qualityScore);
+      
+      const bestStation = bestStations[0];
+      console.log(`  🎯 VALGT STASJON: ${bestStation.name} ved ${bestStation.distanceAlongRoute?.toFixed(1)} km (Score: ${bestStation.qualityScore})`);
+      
+      // Legg til i optimerte stasjoner
+      allOptimizedStations.push(bestStation);
+      
+      // Oppdater posisjon og batterinivå for neste iterasjon
+      currentPositionKm = bestStation.distanceAlongRoute || nextCriticalPositionKm;
+      currentBatteryPercent = targetChargeLevel; // Lader til 80%
+      cycleNumber++;
+    }
+    
+    console.log(`✅ FULLSTENDIG OPTIMERING FERDIG!`);
+    console.log(`📊 Totalt ${allOptimizedStations.length} ladestasjoner valgt:`);
+    allOptimizedStations.forEach((station, index) => {
+      console.log(`  ${index + 1}. ${station.name} ved ${station.distanceAlongRoute?.toFixed(1)} km`);
+    });
+    
+    return allOptimizedStations;
+  };
+
+  // Forbedret funksjon for å beregne neste kritiske punkter
   const calculateNextCriticalPoints = (
     currentStation: ChargingStation,
     batteryPercent: number,
@@ -514,63 +638,44 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
   ): ChargingStation[] => {
     console.log('🔋 Beregner neste kritiske punkter med', batteryPercent, '% batteri');
     
-    // Find current station position along route
+    // Finn nåværende stasjonens posisjon langs ruten
     const routeCoords = route.geometry.coordinates;
-    let currentStationPosition = 0;
-    let minDistance = Infinity;
+    let currentStationPosition = currentStation.distanceAlongRoute || 0;
     
-    for (let i = 0; i < routeCoords.length; i++) {
-      const distance = getDistance(
-        currentStation.latitude,
-        currentStation.longitude,
-        routeCoords[i][1],
-        routeCoords[i][0]
-      );
-      if (distance < minDistance) {
-        minDistance = distance;
-        currentStationPosition = (i / routeCoords.length) * (route.distance / 1000);
-      }
-    }
-    
-    // Calculate range from selected battery percent to critical level (10%)
-    const usableBatteryRange = batteryPercent - 10; // Fra valgt prosent til 10%
-    const rangeKm = (car.range * usableBatteryRange) / 100;
-    const nextCriticalPosition = currentStationPosition + rangeKm;
-    
-    console.log('📍 Current position:', currentStationPosition, 'km');
-    console.log('🔋 Range with', batteryPercent + '%:', rangeKm, 'km');
-    console.log('🎯 Next critical position:', nextCriticalPosition, 'km');
-    
-    // Find stations near the next critical point
-    const searchRadius = 30; // 30km radius
-    
-    const candidateStations = allStations.filter(station => {
-      let stationPosition = 0;
-      let minDistToRoute = Infinity;
-      
+    if (!currentStation.distanceAlongRoute) {
+      let minDistance = Infinity;
       for (let i = 0; i < routeCoords.length; i++) {
-        const distanceToPoint = getDistance(
-          station.latitude,
-          station.longitude,
+        const distance = getDistance(
+          currentStation.latitude,
+          currentStation.longitude,
           routeCoords[i][1],
           routeCoords[i][0]
         );
-        
-        if (distanceToPoint < minDistToRoute) {
-          minDistToRoute = distanceToPoint;
-          stationPosition = (i / routeCoords.length) * (route.distance / 1000);
+        if (distance < minDistance) {
+          minDistance = distance;
+          currentStationPosition = (i / routeCoords.length) * (route.distance / 1000);
         }
       }
-      
-      const isNearRoute = minDistToRoute <= 5.0;
-      const isInCriticalArea = stationPosition >= (nextCriticalPosition - searchRadius) && 
-                              stationPosition <= (nextCriticalPosition + searchRadius);
-      
-      return isNearRoute && isInCriticalArea && stationPosition > currentStationPosition;
-    });
+    }
     
-    console.log('✅ Fant', candidateStations.length, 'kandidat stasjoner for neste kritiske punkt');
-    return candidateStations.slice(0, 3); // Return top 3 stations
+    // Beregn rekkevidde fra valgt batteriprosent til kritisk nivå (15%)
+    const usableBatteryRange = batteryPercent - 15;
+    const rangeKm = (car.range * usableBatteryRange) / 100;
+    const nextCriticalPosition = currentStationPosition + rangeKm;
+    
+    console.log('📍 Nåværende posisjon:', currentStationPosition.toFixed(1), 'km');
+    console.log('🔋 Rekkevidde med', batteryPercent + '%:', rangeKm.toFixed(1), 'km');
+    console.log('🎯 Neste kritiske punkt:', nextCriticalPosition.toFixed(1), 'km');
+    
+    // Bruk samme optimeringslogikk som calculateAllCriticalPoints
+    const remainingRoute = {
+      ...route,
+      distance: (route.distance / 1000 - currentStationPosition) * 1000 // Gjenværende distanse
+    };
+    
+    return calculateAllCriticalPoints(batteryPercent, route, car, allStations)
+      .filter(station => (station.distanceAlongRoute || 0) > currentStationPosition)
+      .slice(0, 3); // Maksimalt 3 neste stasjoner
   };
 
   // Funksjon for å håndtere interaktiv lading
@@ -579,11 +684,11 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     
     console.log('🔋 STARTER INTERAKTIV LADING:', selectedChargingStation.name, 'til', selectedBatteryPercent + '%');
     
-    // Fjern gamle blå markører
+    // Fjern alle gamle blå markører
     const oldMarkers = document.querySelectorAll('.progressive-charging-marker');
     oldMarkers.forEach(marker => marker.remove());
     
-    // Beregn nye kritiske punkter
+    // Beregn alle neste kritiske punkter fra denne posisjonen
     const nextStations = calculateNextCriticalPoints(
       selectedChargingStation,
       selectedBatteryPercent,
@@ -592,27 +697,30 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       chargingStations
     );
     
-    // Legg til nye blå markører for neste kritiske punkter
-    nextStations.forEach(station => {
+    console.log(`🔵 LEGGER TIL ${nextStations.length} NYE BLÅ MARKØRER`);
+    
+    // Legg til alle nye blå markører
+    nextStations.forEach((station, index) => {
       const el = document.createElement('div');
       el.className = 'progressive-charging-marker';
       el.style.cssText = `
         background: linear-gradient(135deg, #0066ff, #00aaff);
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
-        border: 2px solid white;
+        border: 3px solid white;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
         font-weight: bold;
+        font-size: 12px;
         z-index: 100;
-        box-shadow: 0 0 20px rgba(0, 102, 255, 0.8), 0 0 40px rgba(0, 170, 255, 0.4);
+        box-shadow: 0 0 25px rgba(0, 102, 255, 0.9), 0 0 50px rgba(0, 170, 255, 0.5);
         animation: pulse 2s infinite;
       `;
-      el.innerHTML = '🔋';
+      el.innerHTML = `${index + 1}`; // Nummerer markørene
 
           // Rekursiv click handler for nye stasjoner med rutevisning
           el.addEventListener('click', (e) => {
@@ -1199,8 +1307,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
         console.log('🟢 BLÅ MARKØR LAGT TIL PÅ KARTET!', blueMarker);
         
-        // Send denne stasjonen til ladestasjonkartet
-        sendStationToChargingMap(station);
+        // Send alle optimerte stasjoner til ladestasjonkartet
+        sendStationsToChargingMap(optimizedStations, station);
 
         // Click handler for ny blå markør
         el.addEventListener('click', (e) => {
@@ -1837,11 +1945,11 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         batteryPercentage: routeData.batteryPercentage + '%',
         chargingStationsCount: chargingStations.length
       });
-      const optimized = optimizeChargingStations(
-        route.geometry.coordinates,
-        routeDistance,
-        selectedCar,
+      // Bruk ny fullstendig optimeringsalgoritme
+      const optimized = calculateAllCriticalPoints(
         routeData.batteryPercentage,
+        route,
+        selectedCar,
         chargingStations
       );
 
@@ -2151,9 +2259,9 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           
           console.log(`🔵 BLÅ MARKØR ${index + 1}: ${station.name} - MEST EFFEKTIV! LAGT TIL!`);
           
-          // Send denne blå stasjonen til ladestasjonkartet
-          if (index === 0) { // Kun den første blå markøren
-            sendStationToChargingMap(station);
+          // Send alle blå stasjoner til ladestasjonkartet ved første markør
+          if (index === 0) {
+            sendStationsToChargingMap(bestStations, station);
           }
         });
         
@@ -2292,7 +2400,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           box-shadow: 0 0 20px rgba(0, 102, 255, 0.8), 0 0 40px rgba(0, 170, 255, 0.4);
           animation: pulse 2s infinite;
         `;
-        el.innerHTML = '🔋';
+              el.innerHTML = `${index + 1}`; // Nummerer markørene i rekkefølge
 
         // Legg til click handler for interaktiv lading
         el.addEventListener('click', (e) => {
