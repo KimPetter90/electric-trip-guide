@@ -1057,6 +1057,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     }
 
     if (nearbyStations.length > 0 && map.current) {
+      console.log('🗺️ KRITISK DEBUG: map.current eksisterer:', !!map.current);
+      console.log('🗺️ KRITISK DEBUG: map.current type:', typeof map.current);
       // Sorter stasjoner etter kvalitet og avstand
       const sortedStations = nearbyStations
         .map(station => ({
