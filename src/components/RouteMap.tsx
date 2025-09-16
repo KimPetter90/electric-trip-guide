@@ -706,6 +706,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
   useEffect(() => {
     (window as any).openChargingModal = (stationId: string, stationName: string, distance: number, arrivalBattery: number) => {
       console.log('🔧 Opening charging modal for station:', stationName);
+      console.log('📊 Modal data:', { stationId, stationName, distance, arrivalBattery });
       setChargingModal({
         isOpen: true,
         stationId,
@@ -713,7 +714,9 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         distance,
         arrivalBattery
       });
-      setChargePercentInput(Math.max(arrivalBattery, 80).toString());
+      const defaultValue = Math.max(arrivalBattery, 80).toString();
+      console.log('📝 Setting default input value to:', defaultValue);
+      setChargePercentInput(defaultValue);
     };
 
     return () => {
@@ -723,8 +726,15 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
   // Funksjon for å beregne neste kritiske punkt
   const calculateNextPoint = () => {
+    console.log('🎯 calculateNextPoint function called');
+    console.log('📝 Current input value:', chargePercentInput);
+    console.log('📝 Modal data:', chargingModal);
+    
     const chargePercent = parseInt(chargePercentInput);
+    console.log('📊 Parsed charge percent:', chargePercent);
+    
     if (isNaN(chargePercent) || chargePercent < chargingModal.arrivalBattery || chargePercent > 100) {
+      console.log('❌ Invalid charge percent detected');
       toast({
         title: "❌ Ugyldig ladeprosent",
         description: `Vennligst skriv inn en prosent mellom ${chargingModal.arrivalBattery} og 100.`,
@@ -733,7 +743,10 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       return;
     }
 
-    if (!routeData || !selectedCar) return;
+    if (!routeData || !selectedCar) {
+      console.log('❌ Missing routeData or selectedCar');
+      return;
+    }
 
     // Beregn hvor langt bilen kan kjøre med ny ladeprosent
     const carRange = selectedCar.range;
@@ -2585,7 +2598,10 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                   Avbryt
                 </Button>
                 <Button 
-                  onClick={calculateNextPoint}
+                  onClick={() => {
+                    console.log('🎯 Beregn neste punkt knapp klikket');
+                    calculateNextPoint();
+                  }}
                   className="flex-1 bg-blue-600 hover:bg-blue-700"
                 >
                   🎯 Beregn neste punkt
