@@ -248,7 +248,16 @@ function Index() {
                   isLoading={loadingRoutes}
                 />
                 
-                {/* Ladeknapp som vises under ruteplanlegging teksten og over kartet */}
+                <RouteMap 
+                  isVisible={showRoute} 
+                  routeData={routeData}
+                  selectedCar={selectedCar}
+                  routeTrigger={routeTrigger}
+                  selectedRouteId={selectedRouteId}
+                  onChargingStationUpdate={handleChargingStationUpdate}
+                />
+                
+                {/* Ladeknapp som vises rett under kartet */}
                 {showChargingButton && currentChargingStation && (
                   <Card className="p-4 glass-card border-2 border-blue-500/50 bg-blue-50/10 animate-pulse">
                     <div className="space-y-3">
@@ -280,14 +289,6 @@ function Index() {
                   </Card>
                 )}
                 
-                <RouteMap 
-                  isVisible={showRoute} 
-                  routeData={routeData}
-                  selectedCar={selectedCar}
-                  routeTrigger={routeTrigger}
-                  selectedRouteId={selectedRouteId}
-                  onChargingStationUpdate={handleChargingStationUpdate}
-                />
                 <ChargingMap isVisible={showRoute} />
               </div>
             )}
