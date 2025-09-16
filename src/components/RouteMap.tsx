@@ -1620,6 +1620,20 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         durationHours: routeDuration
       });
 
+      // SETT REALISTISKE VERDIER UMIDDELBART
+      const realisticAnalysis = {
+        totalDistance: routeDistance, // km
+        totalTime: routeDuration + 0.5, // timer + 30 min lading
+        totalCost: Math.round(routeDistance * 20 * 0.05), // 20 kWh/100km * 5kr/kWh
+        chargingTime: 50, // 50 minutter
+        co2Saved: Math.round(routeDistance * 0.12), // kg CO2
+        efficiency: 0.85,
+        weather: undefined
+      };
+      
+      setRouteAnalysis(realisticAnalysis);
+      console.log('✅ SATTE REALISTISK ANALYSE:', realisticAnalysis);
+
       console.log('🎯 Valgt rute detaljer:', { 
         type: routeType, 
         distance: routeDistance + 'km', 
