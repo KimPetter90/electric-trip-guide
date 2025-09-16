@@ -241,10 +241,9 @@ interface RouteInputProps {
   routeData: RouteData;
   onRouteChange: (data: RouteData) => void;
   onPlanRoute: () => void;
-  onRouteDataChange?: () => void; // Ny callback for å varsle om endringer
 }
 
-export default function RouteInput({ routeData, onRouteChange, onPlanRoute, onRouteDataChange }: RouteInputProps) {
+export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: RouteInputProps) {
   const [allCities, setAllCities] = useState<string[]>([]);
   const [calendarOpen, setCalendarOpen] = useState(false);
 
@@ -272,11 +271,6 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, onRo
     // Hvis det er et stedsnavn og ikke finnes i listen, lær det
     if ((field === 'from' || field === 'to' || field === 'via') && typeof value === 'string') {
       learnNewPlace(value);
-    }
-    
-    // Kall callback for å nullstille rutevalg
-    if (onRouteDataChange) {
-      onRouteDataChange();
     }
     
     onRouteChange({
