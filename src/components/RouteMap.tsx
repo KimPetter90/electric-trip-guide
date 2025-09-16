@@ -2985,16 +2985,17 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       console.log('🚀 STARTER RUTEPLANLEGGING:', selectedRouteId || 'fastest');
       const routeType = selectedRouteId || 'fastest';
       
-      // Ikke kall updateMapRoute hvis vi allerede har beregnet samme rute
+      // Sjekk om ruten faktisk vises på kartet - hvis ikke, kjør beregning på nytt
       const currentRouteKey = `${routeData.from}-${routeData.to}-${routeType}-${routeData.batteryPercentage}`;
       const lastRouteKey = sessionStorage.getItem('lastRouteKey');
+      const hasVisibleRoute = currentRoute && currentRoute.distance > 0;
       
-      if (currentRouteKey !== lastRouteKey) {
-        console.log('🆕 Ny rute, starter beregning...');
+      if (currentRouteKey !== lastRouteKey || !hasVisibleRoute) {
+        console.log('🆕 Ny rute eller ingen synlig rute, starter beregning...');
         sessionStorage.setItem('lastRouteKey', currentRouteKey);
         updateMapRoute(routeType);
       } else {
-        console.log('♻️ Samme rute allerede beregnet, hopper over');
+        console.log('♻️ Samme rute allerede beregnet og synlig, hopper over');
       }
     } else {
       console.log('⏸️ Venter på requirements eller allerede laster...');
