@@ -528,9 +528,12 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       let mapboxProfile = 'driving';
       let routeParams = `geometries=geojson&access_token=${accessToken}&alternatives=true&continue_straight=false`;
       
+      // Legg til Norge-spesifikke begrensninger for å unngå Sverige
+      routeParams += '&avoid=ferry'; // Unngå ferger som kan gå til Sverige
+      
       switch (routeType) {
         case 'fastest':
-          mapboxProfile = 'driving-traffic'; // Raskeste med trafikk
+          mapboxProfile = 'driving'; // Bruk standard driving istedenfor driving-traffic
           routeParams += '&steps=true&annotations=duration';
           break;
         case 'shortest':
@@ -582,7 +585,43 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       };
       
       console.log('🇳🇴 Validerer at ruten holder seg i Norge...');
-      console.log('✅ Rute funnet og validert');
+      
+      // Sjekk om ruten går utenfor Norge ved å kontrollere koordinatene
+      const currentRoute = directionsData.routes[0];
+      const norgeGrenser = {
+        minLng: 4.65, maxLng: 31.29,
+        minLat: 57.93, maxLat: 71.18
+      };
+      
+      let routeInNorway = true;
+      for (const coord of currentRoute.geometry.coordinates) {
+        const [lng, lat] = coord;
+        if (lng < norgeGrenser.minLng || lng > norgeGrenser.maxLng || 
+            lat < norgeGrenser.minLat || lat > norgeGrenser.maxLat) {
+          console.log('⚠️ Rute går utenfor Norge ved koordinat:', [lng, lat]);
+          routeInNorway = false;
+          break;
+        }
+      }
+      
+      if (!routeInNorway) {
+        console.log('🚫 Ruten går utenfor Norge - prøver alternativ uten ferry...');
+        // Prøv igjen med strengere begrensninger
+        const alternativeUrl = directionsUrl.replace('&avoid=ferry', '&exclude=ferry');
+        console.log('🔄 Prøver alternativ URL:', alternativeUrl);
+        
+        const altResponse = await fetch(alternativeUrl);
+        const altData = await altResponse.json();
+        
+        if (altResponse.ok && altData.routes && altData.routes.length > 0) {
+          console.log('✅ Alternativ Norge-rute funnet');
+          Object.assign(directionsData, altData);
+        } else {
+          console.log('❌ Ingen alternativ Norge-rute funnet');
+        }
+      }
+      
+      console.log('✅ Rute validert');
 
       // Velg riktig rute basert på type med mer intelligent logikk
       let selectedRoute = directionsData.routes[0];
