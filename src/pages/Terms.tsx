@@ -211,7 +211,7 @@ export default function Terms() {
               <CardContent>
                 <div className="space-y-2 text-sm">
                   <p><strong>ElRoute</strong></p>
-                  <p>E-post: ElRouteSup@gmail.com</p>
+                  <p>E-post: Elroutesup@gmail.com</p>
                 </div>
                 
                 <div className="mt-6 p-4 bg-gray-50 rounded-lg">

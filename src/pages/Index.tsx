@@ -479,7 +479,7 @@ function Index() {
             <div>
               <h4 className="font-semibold mb-3">Kontakt</h4>
               <div className="space-y-1 text-sm text-muted-foreground">
-                <p>ElRouteSup@gmail.com</p>
+                <p>Elroutesup@gmail.com</p>
               </div>
             </div>
           </div>

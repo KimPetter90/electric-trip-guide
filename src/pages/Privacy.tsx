@@ -159,7 +159,7 @@ export default function Privacy() {
                   Har du spørsmål om denne personvernerklæringen eller ønsker å utøve dine rettigheter?
                 </p>
                 <div className="space-y-2 text-sm">
-                  <p><strong>E-post:</strong> ElRouteSup@gmail.com</p>
+                  <p><strong>E-post:</strong> Elroutesup@gmail.com</p>
                 </div>
                 <p className="text-sm text-muted-foreground mt-4">
                   Du kan også klage til Datatilsynet hvis du mener vi behandler dine 
