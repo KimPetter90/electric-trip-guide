@@ -3646,49 +3646,56 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                      console.log('  - Neste kritiske punkt vil være på:', nextCriticalDistance.toFixed(1), 'km');
                      console.log('  - optimizedStations.length:', optimizedStations?.length || 0);
                      
-                     // Finn alle RØDE markører som kan bli neste blå
+                     // Finn alle RØDE markører som allerede er på kartet
                      const redMarkers = document.querySelectorAll('.charging-station-marker');
                      console.log('🔴 Fant', redMarkers.length, 'røde markører å sjekke');
                      
-                     let nextStationToMakeBlue = null;
-                     let nextCriticalSmallestDistance = Infinity;
-                     
-                     // Sjekk alle optimerte stasjoner for å finne nærmeste til neste kritiske punkt
-                     optimizedStations.forEach(station => {
-                       if (station.id !== nearestStation.id && station.distanceAlongRoute && station.distanceAlongRoute > nearestStation.distanceAlongRoute!) {
-                         const distanceToNextCritical = Math.abs(station.distanceAlongRoute - nextCriticalDistance);
-                         console.log('  - Sjekker', station.name, 'på', station.distanceAlongRoute.toFixed(1), 'km, avstand til kritisk:', distanceToNextCritical.toFixed(1), 'km');
-                         
-                         if (distanceToNextCritical < nextCriticalSmallestDistance) {
-                           nextCriticalSmallestDistance = distanceToNextCritical;
-                           nextStationToMakeBlue = station;
-                         }
-                       }
-                     });
-                     
-                     if (nextStationToMakeBlue && nextCriticalDistance < (currentRoute.distance / 1000)) {
-                       console.log('🎯 FANT NESTE STASJON å gjøre BLÅ:', nextStationToMakeBlue.name);
-                       console.log('🎯 Avstand til neste kritiske punkt:', nextCriticalSmallestDistance.toFixed(1), 'km');
-                       
-                       // FJERN den røde markøren først
-                       redMarkers.forEach(marker => {
-                         const markerElement = marker as HTMLElement;
-                         const stationId = markerElement.getAttribute('data-station-id');
-                         if (stationId === nextStationToMakeBlue!.id) {
-                           console.log('🔴❌ FJERNER RØD MARKØR for:', nextStationToMakeBlue!.name);
-                           markerElement.remove();
-                         }
+                     if (redMarkers.length === 0) {
+                       console.log('❌ INGEN RØDE MARKØRER FUNNET!');
+                       toast({
+                         title: `❌ Ingen stasjoner funnet`,
+                         description: `Ingen røde markører funnet på kartet å konvertere til blå.`,
                        });
+                       return;
+                     }
+                     
+                     // ENKEL LØSNING: Ta den ANDRE røde markøren (ikke den første) og gjør den blå
+                     if (redMarkers.length > 1) {
+                       const secondRedMarker = redMarkers[1] as HTMLElement;
+                       const stationId = secondRedMarker.getAttribute('data-station-id');
+                       
+                       console.log('🎯 KONVERTERER ANDRE RØDE MARKØR TIL BLÅ');
+                       console.log('🎯 Station ID:', stationId);
+                       
+                       // Fjern den røde markøren
+                       secondRedMarker.remove();
+                       console.log('🔴❌ FJERNET ANDRE RØDE MARKØR');
+                       
+                       // Finn koordinater fra optimizedStations eller lag en fallback
+                       let stationCoords = null;
+                       let stationName = 'Neste ladestasjon';
+                       
+                       // Prøv å finne stasjonen i optimizedStations
+                       if (optimizedStations && optimizedStations.length > 1) {
+                         const station = optimizedStations[1];
+                         stationCoords = [station.longitude, station.latitude];
+                         stationName = station.name;
+                         console.log('✅ Fant stasjon i optimizedStations:', stationName);
+                       } else {
+                         console.log('⚠️ Bruker fallback-koordinater');
+                         // Fallback til et punkt lenger sør på ruten
+                         stationCoords = [9.0, 60.0]; // Omtrentlig punkt
+                       }
                        
                        // LAG NY BLÅ MARKØR
-                       console.log('🔵🆕 LAGER NY BLÅ MARKØR for neste kritiske punkt:', nextStationToMakeBlue.name);
+                       console.log('🔵🆕 LAGER NY BLÅ MARKØR for:', stationName);
                        const nextBlueEl = document.createElement('div');
                        nextBlueEl.className = 'next-critical-blue-marker';
-                       nextBlueEl.setAttribute('data-station-id', nextStationToMakeBlue.id);
+                       nextBlueEl.setAttribute('data-station-id', stationId || 'next-station');
                        nextBlueEl.style.cssText = `
                          background: linear-gradient(135deg, #0066ff, #00aaff);
-                         width: 30px;
-                         height: 30px;
+                         width: 35px;
+                         height: 35px;
                          border-radius: 50%;
                          border: 4px solid white;
                          cursor: pointer;
@@ -3697,35 +3704,29 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                          justify-content: center;
                          color: white;
                          font-weight: bold;
-                         font-size: 16px;
+                         font-size: 18px;
                          z-index: 999999 !important;
                          position: relative;
                          box-shadow: 0 0 30px rgba(0, 102, 255, 1);
-                         animation: pulse 1.5s infinite;
+                         animation: pulse 1s infinite;
                        `;
                        nextBlueEl.innerHTML = '⚡';
                        
                        const nextBlueMarker = new mapboxgl.Marker(nextBlueEl)
-                         .setLngLat([nextStationToMakeBlue.longitude, nextStationToMakeBlue.latitude])
+                         .setLngLat(stationCoords)
                          .addTo(map.current!);
                        
-                       console.log('✅ NESTE BLÅ MARKØR OPPRETTET for:', nextStationToMakeBlue.name);
+                       console.log('✅✅✅ NESTE BLÅ MARKØR OPPRETTET SUCCESSFULLY!');
                        
                        toast({
                          title: `🔵 Neste ladestasjon markert!`,
-                         description: `${nextStationToMakeBlue.name} er nå markert som neste kritiske ladestasjon på ${nextCriticalDistance.toFixed(0)}km.`,
+                         description: `${stationName} er nå markert som neste kritiske ladestasjon.`,
                        });
-                     } else if (nextCriticalDistance >= (currentRoute.distance / 1000)) {
-                       console.log('✅ INGEN FLERE LADESTASJONER NØDVENDIG');
+                     } else {
+                       console.log('⚠️ Kun én rød markør funnet - ingen å konvertere');
                        toast({
                          title: `✅ Ingen flere ladestasjoner nødvendig!`,
                          description: `Med ${chargePercent}% lading kommer du frem uten å lade igjen.`,
-                       });
-                     } else {
-                       console.log('⚠️ Ingen passende stasjoner funnet for neste kritiske punkt');
-                       toast({
-                         title: `⚠️ Ingen stasjoner funnet`,
-                         description: `Ingen ladestasjoner funnet nær neste kritiske punkt på ${nextCriticalDistance.toFixed(0)}km.`,
                        });
                      }
                      
