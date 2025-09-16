@@ -429,43 +429,47 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
   // Beregn RIKTIG kostnad OG ladetid når bruker velger ladingsprosent
   const updateAnalysisWithCharging = (chargePercent: number) => {
-    console.log('🔥 Beregner kostnad OG ladetid for', chargePercent + '% lading');
+    console.log('🔥🔥🔥 updateAnalysisWithCharging STARTET MED:', chargePercent + '%');
     
     if (!currentRoute || !routeData || isNaN(chargePercent)) {
-      console.log('❌ Mangler data for kostnadberegning');
+      console.error('❌ KRITISK: Mangler data:', { 
+        currentRoute: !!currentRoute, 
+        routeData: !!routeData, 
+        chargePercent: chargePercent 
+      });
       return;
     }
     
     const routeDistanceKm = currentRoute.distance / 1000;
     const routeDurationHours = currentRoute.duration / 3600;
     
-    // BEREGN REALISTISK KOSTNAD BASERT PÅ VALGT LADING
-    const forbrukPer100km = 18; // kWh/100km
-    const totalEnergi = (routeDistanceKm / 100) * forbrukPer100km; // kWh for hele turen
-    const ladepris = 2.5; // kr/kWh (realistisk Norge)
-    const beregnetKostnad = Math.round(totalEnergi * ladepris * 0.75); // 75% fra betalt lading
+    console.log('📊 BEREGNINGSDATA:', { 
+      distance: routeDistanceKm + 'km', 
+      chargePercent: chargePercent + '%' 
+    });
     
-    // BEREGN LADETID BASERT PÅ VALGT PROSENT
-    const antallStopp = Math.ceil(routeDistanceKm / 350); // Stopp per 350km
-    const minutterPerStopp = Math.max(15, Math.min(50, chargePercent * 0.6)); // 15-50 min basert på %
-    const totalLadetid = Math.round(antallStopp * minutterPerStopp);
-    
-    // Liten justering av kostnad basert på ladeprosent
-    const faktor = chargePercent > 85 ? 1.1 : (chargePercent < 50 ? 0.9 : 1.0);
-    const endeligKostnad = Math.round(beregnetKostnad * faktor);
+    // FORENKLEDE VERDIER FOR TESTING
+    const testKostnad = 200; // Fast 200 kr for testing
+    const testLadetid = 45; // Fast 45 min for testing
     
     const updatedAnalysis = {
       totalDistance: routeDistanceKm,
-      totalTime: routeDurationHours + (totalLadetid / 60), // Kjøretid + ladetid
-      totalCost: endeligKostnad, // Beregnet kostnad
-      chargingTime: totalLadetid, // Beregnet ladetid
+      totalTime: routeDurationHours + (testLadetid / 60),
+      totalCost: testKostnad, // FAST 200 KR
+      chargingTime: testLadetid, // FAST 45 MIN
       co2Saved: Math.round(routeDistanceKm * 0.13),
-      efficiency: chargePercent > 60 ? 0.88 : 0.84,
+      efficiency: 0.88,
       weather: undefined
     };
     
-    setRouteAnalysis(updatedAnalysis);
-    console.log(`💰⏱️ BEREGNET FOR ${chargePercent}%: ${endeligKostnad} kr, ${totalLadetid} min (${antallStopp} stopp × ${minutterPerStopp.toFixed(0)} min)`);
+    console.log('🔥 SETTER NY ANALYSE:', updatedAnalysis);
+    
+    try {
+      setRouteAnalysis(updatedAnalysis);
+      console.log('✅ setRouteAnalysis UTFØRT!');
+    } catch (error) {
+      console.error('❌ FEIL VED setRouteAnalysis:', error);
+    }
   };
 
   // Funksjon for å beregne nye kritiske punkter basert på valgt ladeprosent  
