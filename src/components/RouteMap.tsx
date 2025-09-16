@@ -2187,13 +2187,13 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           setShowChargingButton(true);
           console.log('🔵 DEBUG: Satte showChargingButton til true');
           
-          // Send data til parent komponenten med optimizedStations
-          onChargingStationUpdate?.(realisticStations.firstCycleStations[0], true, optimized);
+          // Send kun den aktive ladestasjonen til parent komponenten
+          onChargingStationUpdate?.(realisticStations.firstCycleStations[0], true, [realisticStations.firstCycleStations[0]]);
           console.log('🔵 DEBUG: Sendt ladestasjon til parent:', realisticStations.firstCycleStations[0].name);
         } else {
           console.log('🔵 DEBUG: Ingen stasjoner funnet, skjuler ladeknapp');
           setShowChargingButton(false);
-          onChargingStationUpdate?.(null, false, optimized);
+          onChargingStationUpdate?.(null, false, []);
         }
       }
 
