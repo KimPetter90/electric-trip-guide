@@ -241,14 +241,7 @@ function Index() {
               </Card>
             ) : (
               <div className="space-y-6">
-                <RouteSelector
-                  routes={routeOptions}
-                  selectedRoute={selectedRouteId}
-                  onRouteSelect={handleRouteSelect}
-                  isLoading={loadingRoutes}
-                />
-                
-                {/* Ladeknapp som vises under rutevalg */}
+                {/* Ladeknapp som vises rett under Ruteplanlegging teksten */}
                 {showChargingButton && currentChargingStation && (
                   <Card className="p-4 glass-card border-2 border-blue-500/50 bg-blue-50/10 animate-pulse">
                     <div className="space-y-3">
@@ -279,6 +272,13 @@ function Index() {
                     </div>
                   </Card>
                 )}
+                
+                <RouteSelector
+                  routes={routeOptions}
+                  selectedRoute={selectedRouteId}
+                  onRouteSelect={handleRouteSelect}
+                  isLoading={loadingRoutes}
+                />
                 <RouteMap 
                   isVisible={showRoute} 
                   routeData={routeData}
