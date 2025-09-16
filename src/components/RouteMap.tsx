@@ -3863,6 +3863,71 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         </DialogContent>
       </Dialog>
       
+      {/* TEST KNAPP FOR BLÅ MARKØR */}
+      <div className="absolute top-4 right-4 z-50">
+        <Button 
+          onClick={() => {
+            console.log('🧪🧪🧪 TEST: Konverterer andre røde markør til blå');
+            
+            const allRedMarkers = document.querySelectorAll('.charging-station-marker');
+            console.log('🔴 Fant', allRedMarkers.length, 'røde markører');
+            
+            if (allRedMarkers.length > 1) {
+              const secondMarker = allRedMarkers[1] as HTMLElement;
+              secondMarker.remove();
+              console.log('✅ Fjernet andre røde markør');
+              
+              // Lag stor blå markør
+              const blueEl = document.createElement('div');
+              blueEl.style.cssText = `
+                background: linear-gradient(135deg, #0066ff, #00aaff);
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                border: 5px solid white;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: bold;
+                font-size: 24px;
+                z-index: 999999 !important;
+                position: relative;
+                box-shadow: 0 0 50px rgba(0, 102, 255, 1);
+                animation: pulse 0.5s infinite;
+              `;
+              blueEl.innerHTML = '⚡';
+              
+              // Bruk koordinater fra andre stasjon hvis mulig, ellers random
+              let coords: [number, number] = [10.0, 60.0]; // Fallback
+              if (optimizedStations && optimizedStations.length > 1) {
+                coords = [optimizedStations[1].longitude, optimizedStations[1].latitude];
+              }
+              
+              new mapboxgl.Marker(blueEl)
+                .setLngLat(coords)
+                .addTo(map.current!);
+              console.log('✅ Lagt til blå test-markør på:', coords);
+              
+              toast({
+                title: "🔵 TEST VELLYKKET!",
+                description: "Rød markør fjernet og blå markør lagt til!",
+              });
+            } else {
+              console.log('❌ Ikke nok røde markører');
+              toast({
+                title: "❌ Test feilet",
+                description: "Ikke nok røde markører å teste med.",
+              });
+            }
+          }}
+          className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-3 text-lg shadow-lg"
+        >
+          🧪 TEST BLÅ
+        </Button>
+      </div>
+      
     </div>
   );
 };
