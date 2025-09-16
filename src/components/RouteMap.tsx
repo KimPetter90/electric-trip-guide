@@ -950,46 +950,34 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       oldMarkers.forEach(marker => marker.remove());
     }
 
-    // Finn ladestasjoner - bruk adaptiv strategi
+    // ROBUST STRATEGI: Finn alltid de 3 nærmeste stasjonene fremover på ruten
     let nearbyStations: ChargingStation[] = [];
     
-    // STRATEGI 1: Prøv først å finne stasjoner nær det ideelle punktet
-    let tolerance = 50; // Start med høyere toleranse
-    const maxTolerance = 300; // Mye høyere maksimal toleranse
+    // Start med å finne alle stasjoner fremover på ruten som har distanceAlongRoute
+    const stationsAhead = chargingStations
+      .filter(s => s.distanceAlongRoute && s.distanceAlongRoute > currentDistance)
+      .sort((a, b) => a.distanceAlongRoute! - b.distanceAlongRoute!);
     
-    console.log(`🔍 Søker etter ladestasjoner nær ${nextCriticalDistance.toFixed(1)} km`);
+    console.log(`🔍 Totalt ${stationsAhead.length} stasjoner fremover på ruten fra ${currentDistance.toFixed(1)} km`);
     
-    while (nearbyStations.length === 0 && tolerance <= maxTolerance) {
-      console.log(`🔍 Prøver toleranse: ${tolerance} km`);
-      
-      nearbyStations = chargingStations.filter(station => {
-        if (!station.distanceAlongRoute) return false;
-        
-        const distanceFromTarget = Math.abs(station.distanceAlongRoute - nextCriticalDistance);
-        const isInRange = distanceFromTarget <= tolerance;
-        const isAfterCurrent = station.distanceAlongRoute > currentDistance;
-        
-        return isInRange && isAfterCurrent;
+    if (stationsAhead.length === 0) {
+      console.log('❌ INGEN stasjoner fremover på ruten funnet!');
+      toast({
+        title: "❌ Ingen stasjoner funnet",
+        description: "Ingen ladestasjoner funnet fremover på ruten.",
+        variant: "destructive"
       });
-      
-      if (nearbyStations.length === 0) {
-        tolerance += 50; // Øk med 50 km hver gang
-      }
+      return;
     }
     
-    // STRATEGI 2: Hvis ingen funnet, ta de 3 nærmeste fremover
-    if (nearbyStations.length === 0) {
-      console.log('🔄 Ingen stasjoner nær ideelt punkt - bruker nærmeste fremover');
-      nearbyStations = chargingStations
-        .filter(s => s.distanceAlongRoute && s.distanceAlongRoute > currentDistance)
-        .sort((a, b) => a.distanceAlongRoute! - b.distanceAlongRoute!)
-        .slice(0, 3);
-        
-      console.log('📍 Nærmeste stasjoner fremover:', nearbyStations.map(s => ({
-        name: s.name,
-        distanceAlongRoute: s.distanceAlongRoute?.toFixed(1) + 'km'
-      })));
-    }
+    // Ta de 3 nærmeste stasjonene fremover
+    nearbyStations = stationsAhead.slice(0, 3);
+    
+    console.log('📍 Fant nærmeste stasjoner fremover:', nearbyStations.map(s => ({
+      name: s.name,
+      distanceAlongRoute: s.distanceAlongRoute?.toFixed(1) + 'km',
+      gapFromIdeal: (s.distanceAlongRoute! - nextCriticalDistance).toFixed(1) + 'km'
+    })));
 
     console.log('🔍 Found', nearbyStations.length, 'nearby stations for next critical point at', nextCriticalDistance.toFixed(1), 'km');
     
