@@ -528,44 +528,53 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
       // Hent live data for stasjonen, fallback til original data
       const liveData = liveStationData[station.id] || station;
-      console.log('🔄 New station popup data for', station.name, '- Live:', liveData, 'Original:', station);
+      console.log('🔄 Creating new station popup for', station.name, '- Live data:', liveData);
       
       const popup = new mapboxgl.Popup({
-        maxWidth: '280px',
-        className: 'charging-station-popup'
+        maxWidth: '300px',
+        closeButton: true,
+        closeOnClick: false
       }).setHTML(`
-        <div style="font-family: 'Inter', sans-serif; padding: 8px; line-height: 1.4;">
-          <div style="background: linear-gradient(135deg, #0066ff, #00aaff); color: white; padding: 8px; margin: -8px -8px 8px -8px; border-radius: 6px 6px 0 0;">
-            <h4 style="margin: 0; font-size: 14px; font-weight: 600;">🔋 ${liveData.name}</h4>
-            <p style="margin: 2px 0 0 0; font-size: 12px; opacity: 0.9;">📍 ${liveData.location}</p>
-            <div style="margin-top: 4px;">
-              <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 10px; font-size: 10px;">🔴 LIVE</span>
+        <div style="font-family: Inter, sans-serif; padding: 12px; line-height: 1.4; min-width: 250px;">
+          <div style="background: linear-gradient(135deg, #0066ff, #00aaff); color: white; padding: 10px; margin: -12px -12px 12px -12px; border-radius: 8px;">
+            <h4 style="margin: 0; font-size: 16px; font-weight: 600;">🔋 ${liveData.name}</h4>
+            <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">📍 ${liveData.location}</p>
+            <div style="margin-top: 6px;">
+              <span style="background: rgba(255,255,255,0.3); padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">🔴 LIVE DATA</span>
             </div>
           </div>
-          <div style="space-y: 6px;">
-            <div style="background: #f0f8ff; padding: 6px; border-radius: 4px; margin: 6px 0;">
-              <p style="margin: 0; font-size: 12px; color: #0066ff; font-weight: 600;">🔋 Neste kritiske punkt - ca. 10-15% batteri igjen</p>
+          
+          <div style="background: #f8fafc; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
+            <p style="margin: 0; font-size: 13px; color: #0066ff; font-weight: 600;">🔋 Neste kritiske punkt etter lading</p>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+            <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+              <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">⚡ EFFEKT</div>
+              <div style="color: #1e293b; font-size: 14px; font-weight: 700;">${liveData.power || 'N/A'}</div>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px;">
-              <div>
-                <span style="color: #666;">⚡ Effekt:</span><br>
-                <strong style="color: #000;">${liveData.power}</strong>
-              </div>
-              <div>
-                <span style="color: #666;">💰 Pris:</span><br>
-                <strong style="color: #000;">${liveData.cost} kr/kWh</strong>
-              </div>
-              <div>
-                <span style="color: #666;">📊 Ledig:</span><br>
-                <strong style="color: ${liveData.available > 0 ? '#00aa00' : '#ff0000'};">${liveData.available}/${liveData.total}</strong>
-              </div>
+            <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+              <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">💰 PRIS</div>
+              <div style="color: #1e293b; font-size: 14px; font-weight: 700;">${liveData.cost || 'N/A'} kr/kWh</div>
             </div>
-            <div style="text-align: center; background: #0066ff; color: white; padding: 6px; border-radius: 4px; margin-top: 8px; font-size: 12px; font-weight: 600;">
-              👆 Klikk markør for å velge ny ladeprosent
+            <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+              <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">📊 LEDIG</div>
+              <div style="color: ${(liveData.available || 0) > 0 ? '#16a34a' : '#dc2626'}; font-size: 14px; font-weight: 700;">${liveData.available || 0}/${liveData.total || 0}</div>
             </div>
+          </div>
+          
+          <div style="text-align: center; background: #0066ff; color: white; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">
+            👆 Klikk markør for å velge ladeprosent
           </div>
         </div>
       `);
+      
+      console.log('✅ New station popup created for', station.name, 'with live data:', {
+        power: liveData.power,
+        cost: liveData.cost,
+        available: liveData.available,
+        total: liveData.total
+      });
 
       new mapboxgl.Marker(el)
         .setLngLat([station.longitude, station.latitude])
@@ -1258,41 +1267,53 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
 
           // Hent live data for stasjonen, fallback til original data
           const liveData = liveStationData[station.id] || station;
-          console.log('🔄 Popup data for', station.name, '- Live:', liveData, 'Original:', station);
+          console.log('🔄 Creating popup for', station.name, '- Live data:', liveData);
           
           const popup = new mapboxgl.Popup({
-            maxWidth: '280px',
-            className: 'charging-station-popup'
+            maxWidth: '300px',
+            closeButton: true,
+            closeOnClick: false
           }).setHTML(`
-            <div style="font-family: 'Inter', sans-serif; padding: 8px; line-height: 1.4;">
-              <div style="background: linear-gradient(135deg, #0066ff, #00aaff); color: white; padding: 8px; margin: -8px -8px 8px -8px; border-radius: 6px 6px 0 0;">
-                <h4 style="margin: 0; font-size: 14px; font-weight: 600;">⚡ ${liveData.name}</h4>
-                <p style="margin: 2px 0 0 0; font-size: 12px; opacity: 0.9;">📍 ${liveData.location}</p>
-                <div style="margin-top: 4px;">
-                  <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 10px; font-size: 10px;">🔴 LIVE</span>
+            <div style="font-family: Inter, sans-serif; padding: 12px; line-height: 1.4; min-width: 250px;">
+              <div style="background: linear-gradient(135deg, #0066ff, #00aaff); color: white; padding: 10px; margin: -12px -12px 12px -12px; border-radius: 8px;">
+                <h4 style="margin: 0; font-size: 16px; font-weight: 600;">⚡ ${liveData.name}</h4>
+                <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">📍 ${liveData.location}</p>
+                <div style="margin-top: 6px;">
+                  <span style="background: rgba(255,255,255,0.3); padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">🔴 LIVE DATA</span>
                 </div>
               </div>
-              <div style="space-y: 6px;">
-                <div style="background: #f0f8ff; padding: 6px; border-radius: 4px; margin: 6px 0;">
-                  <p style="margin: 0; font-size: 12px; color: #0066ff; font-weight: 600;">⚡ Kritisk ladestasjon - ca. ${Math.max(10, routeData.batteryPercentage - Math.round((station as any).distanceToRoute || 0))}% batteri igjen</p>
+              
+              <div style="background: #f8fafc; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
+                <p style="margin: 0; font-size: 13px; color: #0066ff; font-weight: 600;">⚡ Kritisk ladestasjon - batteriet når lavt nivå her</p>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                  <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">⚡ EFFEKT</div>
+                  <div style="color: #1e293b; font-size: 14px; font-weight: 700;">${liveData.power || 'N/A'}</div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px;">
-                  <div>
-                    <span style="color: #666;">⚡ Effekt:</span><br>
-                    <strong style="color: #000;">${liveData.power}</strong>
-                  </div>
-                  <div>
-                    <span style="color: #666;">💰 Pris:</span><br>
-                    <strong style="color: #000;">${liveData.cost} kr/kWh</strong>
-                  </div>
-                  <div>
-                    <span style="color: #666;">📊 Ledig:</span><br>
-                    <strong style="color: ${liveData.available > 0 ? '#00aa00' : '#ff0000'};">${liveData.available}/${liveData.total}</strong>
-                  </div>
+                <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                  <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">💰 PRIS</div>
+                  <div style="color: #1e293b; font-size: 14px; font-weight: 700;">${liveData.cost || 'N/A'} kr/kWh</div>
                 </div>
+                <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                  <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">📊 LEDIG</div>
+                  <div style="color: ${(liveData.available || 0) > 0 ? '#16a34a' : '#dc2626'}; font-size: 14px; font-weight: 700;">${liveData.available || 0}/${liveData.total || 0}</div>
+                </div>
+              </div>
+              
+              <div style="text-align: center; background: #0066ff; color: white; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">
+                👆 Klikk markør for å velge ladeprosent
               </div>
             </div>
           `);
+          
+          console.log('✅ Popup created for', station.name, 'with live data:', {
+            power: liveData.power,
+            cost: liveData.cost,
+            available: liveData.available,
+            total: liveData.total
+          });
 
           new mapboxgl.Marker(el)
             .setLngLat([station.longitude, station.latitude])
@@ -1451,44 +1472,53 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
 
         // Hent live data for stasjonen, fallback til original data  
         const liveData = liveStationData[station.id] || station;
-        console.log('🔄 Progressive popup data for', station.name, '- Live:', liveData, 'Original:', station);
+        console.log('🔄 Creating progressive popup for', station.name, '- Live data:', liveData);
         
         const popup = new mapboxgl.Popup({
-          maxWidth: '280px',
-          className: 'charging-station-popup'
+          maxWidth: '300px',
+          closeButton: true,
+          closeOnClick: false
         }).setHTML(`
-          <div style="font-family: 'Inter', sans-serif; padding: 8px; line-height: 1.4;">
-            <div style="background: linear-gradient(135deg, #0066ff, #00aaff); color: white; padding: 8px; margin: -8px -8px 8px -8px; border-radius: 6px 6px 0 0;">
-              <h4 style="margin: 0; font-size: 14px; font-weight: 600;">🔋 ${liveData.name}</h4>
-              <p style="margin: 2px 0 0 0; font-size: 12px; opacity: 0.9;">📍 ${liveData.location}</p>
-              <div style="margin-top: 4px;">
-                <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 10px; font-size: 10px;">🔴 LIVE</span>
+          <div style="font-family: Inter, sans-serif; padding: 12px; line-height: 1.4; min-width: 250px;">
+            <div style="background: linear-gradient(135deg, #0066ff, #00aaff); color: white; padding: 10px; margin: -12px -12px 12px -12px; border-radius: 8px;">
+              <h4 style="margin: 0; font-size: 16px; font-weight: 600;">🔋 ${liveData.name}</h4>
+              <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">📍 ${liveData.location}</p>
+              <div style="margin-top: 6px;">
+                <span style="background: rgba(255,255,255,0.3); padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">🔴 LIVE DATA</span>
               </div>
             </div>
-            <div style="space-y: 6px;">
-              <div style="background: #f0f8ff; padding: 6px; border-radius: 4px; margin: 6px 0;">
-                <p style="margin: 0; font-size: 12px; color: #0066ff; font-weight: 600;">🔋 Kritisk ladepunkt - ca. 10-15% batteri igjen</p>
+            
+            <div style="background: #f8fafc; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
+              <p style="margin: 0; font-size: 13px; color: #0066ff; font-weight: 600;">🔋 Kritisk ladepunkt - batteriet når 10-15% her</p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+              <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">⚡ EFFEKT</div>
+                <div style="color: #1e293b; font-size: 14px; font-weight: 700;">${liveData.power || 'N/A'}</div>
               </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px;">
-                <div>
-                  <span style="color: #666;">⚡ Effekt:</span><br>
-                  <strong style="color: #000;">${liveData.power}</strong>
-                </div>
-                <div>
-                  <span style="color: #666;">💰 Pris:</span><br>
-                  <strong style="color: #000;">${liveData.cost} kr/kWh</strong>
-                </div>
-                <div>
-                  <span style="color: #666;">📊 Ledig:</span><br>
-                  <strong style="color: ${liveData.available > 0 ? '#00aa00' : '#ff0000'};">${liveData.available}/${liveData.total}</strong>
-                </div>
+              <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">💰 PRIS</div>
+                <div style="color: #1e293b; font-size: 14px; font-weight: 700;">${liveData.cost || 'N/A'} kr/kWh</div>
               </div>
-              <div style="text-align: center; background: #0066ff; color: white; padding: 6px; border-radius: 4px; margin-top: 8px; font-size: 12px; font-weight: 600; cursor: pointer;" onclick="event.stopPropagation();">
-                👆 Klikk markør for å velge ladeprosent
+              <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">📊 LEDIG</div>
+                <div style="color: ${(liveData.available || 0) > 0 ? '#16a34a' : '#dc2626'}; font-size: 14px; font-weight: 700;">${liveData.available || 0}/${liveData.total || 0}</div>
               </div>
+            </div>
+            
+            <div style="text-align: center; background: #0066ff; color: white; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">
+              👆 Klikk markør for å velge ladeprosent
             </div>
           </div>
         `);
+        
+        console.log('✅ Progressive popup created for', station.name, 'with live data:', {
+          power: liveData.power,
+          cost: liveData.cost,
+          available: liveData.available,
+          total: liveData.total
+        });
 
         new mapboxgl.Marker(el)
           .setLngLat([station.longitude, station.latitude])
