@@ -2,6 +2,17 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Zap, Clock, DollarSign } from "lucide-react";
 
+interface RouteAnalysis {
+  totalDistance: number;
+  totalTime: number;
+  totalCost: number;
+  chargingTime: number;
+  co2Saved: number;
+  efficiency: number;
+  weather?: any;
+}
+
+
 interface ChargingStop {
   id: string;
   name: string;
@@ -48,10 +59,19 @@ const mockChargingStops: ChargingStop[] = [
 
 interface ChargingMapProps {
   isVisible: boolean;
+  routeAnalysis?: RouteAnalysis | null;
 }
 
-export default function ChargingMap({ isVisible }: ChargingMapProps) {
+export default function ChargingMap({ isVisible, routeAnalysis }: ChargingMapProps) {
   if (!isVisible) return null;
+
+  // Bruk ekte rutedata eller fallback til standardverdier
+  const distance = routeAnalysis?.totalDistance ? Math.round(routeAnalysis.totalDistance) : 465;
+  const totalTimeHours = routeAnalysis?.totalTime || 6.75;
+  const hours = Math.floor(totalTimeHours);
+  const minutes = Math.round((totalTimeHours - hours) * 60);
+  const cost = routeAnalysis?.totalCost || 650;
+  const stops = routeAnalysis ? Math.ceil(routeAnalysis.totalDistance / 300) : 3; // Ca. 1 stopp per 300km
 
   return (
     <div className="space-y-4">
@@ -64,19 +84,19 @@ export default function ChargingMap({ isVisible }: ChargingMapProps) {
       <Card className="p-4 bg-gradient-electric text-primary-foreground shadow-neon animate-pulse-neon">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div>
-            <div className="text-3xl font-orbitron font-bold text-primary-foreground">465</div>
+            <div className="text-3xl font-orbitron font-bold text-primary-foreground">{distance}</div>
             <div className="text-sm font-orbitron opacity-90">km totalt</div>
           </div>
           <div>
-            <div className="text-3xl font-orbitron font-bold text-primary-foreground">6t 45min</div>
+            <div className="text-3xl font-orbitron font-bold text-primary-foreground">{hours}t {minutes}min</div>
             <div className="text-sm font-orbitron opacity-90">kjøretid</div>
           </div>
           <div>
-            <div className="text-3xl font-orbitron font-bold text-primary-foreground">650</div>
+            <div className="text-3xl font-orbitron font-bold text-primary-foreground">{cost}</div>
             <div className="text-sm font-orbitron opacity-90">kr lading</div>
           </div>
           <div>
-            <div className="text-3xl font-orbitron font-bold text-primary-foreground">3</div>
+            <div className="text-3xl font-orbitron font-bold text-primary-foreground">{stops}</div>
             <div className="text-sm font-orbitron opacity-90">ladestopp</div>
           </div>
         </div>

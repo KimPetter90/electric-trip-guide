@@ -95,6 +95,7 @@ interface RouteMapProps {
   routeTrigger?: number;
   selectedRouteId?: string | null;
   onChargingStationUpdate?: (station: ChargingStation | null, showButton: boolean) => void;
+  onRouteAnalysisUpdate?: (analysis: TripAnalysis | null) => void;
 }
 
 // Modal state
@@ -392,7 +393,7 @@ const fetchWeatherData = async (startCoords: [number, number], endCoords: [numbe
   return data;
 };
 
-const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, routeTrigger, selectedRouteId, onChargingStationUpdate }) => {
+const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, routeTrigger, selectedRouteId, onChargingStationUpdate, onRouteAnalysisUpdate }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const routeUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Throttle API-kall
@@ -488,6 +489,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     
     try {
       setRouteAnalysis(updatedAnalysis);
+      onRouteAnalysisUpdate?.(updatedAnalysis);
       console.log('✅ setRouteAnalysis UTFØRT!');
     } catch (error) {
       console.error('❌ FEIL VED setRouteAnalysis:', error);
@@ -1709,6 +1711,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       });
       
       setRouteAnalysis(realisticAnalysis);
+      onRouteAnalysisUpdate?.(realisticAnalysis);
       console.log('✅ SATTE REALISTISK ANALYSE:', realisticAnalysis);
 
       console.log('🎯 Valgt rute detaljer:', { 
@@ -3246,6 +3249,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                       };
                       
                       setRouteAnalysis(updatedAnalysis);
+                      onRouteAnalysisUpdate?.(updatedAnalysis);
                       console.log('✅ OPPDATERT ANALYSE ETTER LADING:', updatedAnalysis);
                       
                       toast({

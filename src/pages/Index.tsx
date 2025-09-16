@@ -29,6 +29,16 @@ interface RouteData {
   travelDate?: Date;
 }
 
+interface RouteAnalysis {
+  totalDistance: number;
+  totalTime: number;
+  totalCost: number;
+  chargingTime: number;
+  co2Saved: number;
+  efficiency: number;
+  weather?: any;
+}
+
 function Index() {
   const [selectedCar, setSelectedCar] = useState<CarModel | null>(null);
   const [routeData, setRouteData] = useState<RouteData>({
@@ -49,6 +59,7 @@ function Index() {
   const [showChargingButton, setShowChargingButton] = useState(false);
   const [currentChargingStation, setCurrentChargingStation] = useState<any>(null);
   const [chargingProgress, setChargingProgress] = useState(0);
+  const [routeAnalysis, setRouteAnalysis] = useState<RouteAnalysis | null>(null);
 
   
   // Funksjon for å motta ladestasjon data fra RouteMap
@@ -60,7 +71,12 @@ function Index() {
     setShowChargingButton(showButton);
     console.log('🔋 INDEX: State oppdatert - currentChargingStation:', station?.name, 'showChargingButton:', showButton);
   };
-
+  
+  // Funksjon for å motta routeAnalysis fra RouteMap
+  const handleRouteAnalysisUpdate = (analysis: RouteAnalysis | null) => {
+    console.log('📊 INDEX: Mottatt routeAnalysis:', analysis);
+    setRouteAnalysis(analysis);
+  };
   // Generer rutevalg når ruten planlegges
   const generateRouteOptions = async () => {
     if (!selectedCar || !routeData.from || !routeData.to) return;
@@ -255,11 +271,12 @@ function Index() {
                   routeTrigger={routeTrigger}
                   selectedRouteId={selectedRouteId}
                   onChargingStationUpdate={handleChargingStationUpdate}
+                  onRouteAnalysisUpdate={handleRouteAnalysisUpdate}
                 />
                 
                 {/* Fjernet kritisk batterinivå-seksjonen */}
                 
-                <ChargingMap isVisible={showRoute} />
+                <ChargingMap isVisible={showRoute} routeAnalysis={routeAnalysis} />
               </div>
             )}
           </div>
