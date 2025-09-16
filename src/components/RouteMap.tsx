@@ -969,10 +969,22 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
     // Finn ladestasjoner nær det beregnede punktet
     const tolerance = 35; // 35km toleranse
+    
+    console.log('🔍 Søker etter ladestasjoner nær', nextCriticalDistance.toFixed(1), 'km med toleranse', tolerance, 'km');
+    console.log('🔍 Totalt', chargingStations.length, 'ladestasjoner tilgjengelig');
+    console.log('🔍 Første 3 stasjoner og deres distanceAlongRoute:', chargingStations.slice(0, 3).map(s => ({ name: s.name, distanceAlongRoute: s.distanceAlongRoute })));
+    
     const nearbyStations = chargingStations.filter(station => {
-      if (!station.distanceAlongRoute) return false;
-      const isInRange = Math.abs(station.distanceAlongRoute - nextCriticalDistance) <= tolerance;
+      if (!station.distanceAlongRoute) {
+        console.log('⚠️ Stasjon uten distanceAlongRoute:', station.name);
+        return false;
+      }
+      const distanceFromTarget = Math.abs(station.distanceAlongRoute - nextCriticalDistance);
+      const isInRange = distanceFromTarget <= tolerance;
       const isAfterCurrent = station.distanceAlongRoute > currentDistance; // Kun stasjoner fremover
+      
+      console.log(`📍 ${station.name}: distanceAlongRoute=${station.distanceAlongRoute?.toFixed(1)}km, fromTarget=${distanceFromTarget.toFixed(1)}km, inRange=${isInRange}, afterCurrent=${isAfterCurrent}`);
+      
       return isInRange && isAfterCurrent;
     });
 
