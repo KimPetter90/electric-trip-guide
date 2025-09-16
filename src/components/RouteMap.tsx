@@ -92,6 +92,7 @@ interface RouteMapProps {
   selectedCar: CarModel;
   routeTrigger?: number;
   selectedRouteId?: string | null;
+  onChargingStationUpdate?: (station: ChargingStation | null, showButton: boolean) => void;
 }
 
 // Koordinater for norske byer
@@ -343,7 +344,7 @@ function findStationsAtDistance(
   return sortedStations;
 }
 
-const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, routeTrigger, selectedRouteId }) => {
+const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, routeTrigger, selectedRouteId, onChargingStationUpdate }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [loading, setLoading] = useState(false);
@@ -931,11 +932,25 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         console.log('  - Andre syklus:', realisticStations.secondCycleStations.length, 'stasjoner');
         console.log('  - Totalt sykluser:', realisticStations.allCycles.length);
         
-        // Vis ladeknapp hvis det finnes stasjoner for første syklus
+        // DEBUG: Vis ladeknapp hvis det finnes stasjoner for første syklus
+        console.log('🔵 DEBUG: Sjekker om ladeknapp skal vises...');
+        console.log('🔵 DEBUG: realisticStations.firstCycleStations.length =', realisticStations.firstCycleStations.length);
+        console.log('🔵 DEBUG: chargingProgress =', chargingProgress);
+        console.log('🔵 DEBUG: showChargingButton før =', showChargingButton);
+        
         if (realisticStations.firstCycleStations.length > 0) {
+          console.log('🔵 DEBUG: Setter currentChargingStation til:', realisticStations.firstCycleStations[0].name);
           setCurrentChargingStation(realisticStations.firstCycleStations[0]);
           setShowChargingButton(true);
-          console.log('🔵 Viser ladeknapp for første kritiske punkt:', realisticStations.firstCycleStations[0].name);
+          console.log('🔵 DEBUG: Satte showChargingButton til true');
+          
+          // Send data til parent komponenten
+          onChargingStationUpdate?.(realisticStations.firstCycleStations[0], true);
+          console.log('🔵 DEBUG: Sendt ladestasjon til parent:', realisticStations.firstCycleStations[0].name);
+        } else {
+          console.log('🔵 DEBUG: Ingen stasjoner funnet, skjuler ladeknapp');
+          setShowChargingButton(false);
+          onChargingStationUpdate?.(null, false);
         }
       }
 
@@ -1775,74 +1790,6 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           </div>
         </TabsContent>
         </Tabs>
-        
-        {/* Ladeknapp som vises når det er kritisk batterinivå */}
-        {showChargingButton && currentChargingStation && (
-          <Card className="mt-6 p-6 glass-card neon-glow border-2 border-blue-500 animate-glow-pulse">
-            <div className="text-center space-y-4">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <Battery className="h-8 w-8 text-red-500 animate-pulse" />
-                <h3 className="text-2xl font-orbitron font-bold text-red-600">
-                  KRITISK BATTERINIVÅ! 🔋
-                </h3>
-              </div>
-              
-              <p className="text-lg font-orbitron text-foreground">
-                Batteriet når 10-15% ved: <strong className="text-blue-600">{currentChargingStation.name}</strong>
-              </p>
-              
-              <p className="text-sm text-muted-foreground">
-                📍 {currentChargingStation.location} • ⚡ {currentChargingStation.power} • 💰 {currentChargingStation.cost} kr/kWh
-              </p>
-              
-              <Button 
-                onClick={() => {
-                  console.log('🔋 LADER TIL 80% VED:', currentChargingStation.name);
-                  
-                  const newProgress = chargingProgress + 1;
-                  setChargingProgress(newProgress);
-                  
-                  toast({
-                    title: "Lading fullført! 🔋",
-                    description: `Batteriet er nå 80%. Beregner neste kritiske punkt...`,
-                  });
-                  
-                  // Finn neste ladestasjon
-                  const nextStations = nextChargingStations.filter(s => 
-                    (s as any).chargingCycle === newProgress
-                  );
-                  
-                  if (nextStations.length > 0) {
-                    setCurrentChargingStation(nextStations[0]);
-                    console.log('🔵 Neste kritiske punkt:', nextStations[0].name);
-                    
-                    toast({
-                      title: "Neste kritiske punkt funnet! 🎯",
-                      description: `Batteriet vil være 10-15% ved ${nextStations[0].name}`,
-                    });
-                  } else {
-                    setShowChargingButton(false);
-                    setCurrentChargingStation(null);
-                    console.log('✅ Ingen flere kritiske punkter - ruten dekket!');
-                    
-                    toast({
-                      title: "Reise fullført! 🎉", 
-                      description: "80% batteri dekker resten av ruten til destinasjonen.",
-                    });
-                  }
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-orbitron font-bold text-lg px-8 py-4 rounded-lg shadow-neon"
-                size="lg"
-              >
-                🔋 LAD TIL 80% VED {currentChargingStation.name.toUpperCase()}
-              </Button>
-              
-              <p className="text-xs text-muted-foreground">
-                Klikk for å simulere lading og se neste kritiske batteripunkt
-              </p>
-            </div>
-          </Card>
-        )}
       </div>
     </div>
   );

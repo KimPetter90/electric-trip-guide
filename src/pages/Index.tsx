@@ -6,7 +6,7 @@ import RouteInput from "@/components/RouteInput";
 import RouteSelector from "@/components/RouteSelector";
 import ChargingMap from "@/components/ChargingMap";
 import RouteMap from "@/components/RouteMap";
-import { Zap, Route, MapPin, Car } from "lucide-react";
+import { Zap, Route, MapPin, Car, Battery } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 import { type RouteOption } from "@/components/RouteSelector";
 
@@ -44,6 +44,22 @@ function Index() {
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
+  
+  // Ladestasjon state for å vise ladeknapp
+  const [showChargingButton, setShowChargingButton] = useState(false);
+  const [currentChargingStation, setCurrentChargingStation] = useState<any>(null);
+  const [chargingProgress, setChargingProgress] = useState(0);
+
+  
+  // Funksjon for å motta ladestasjon data fra RouteMap
+  const handleChargingStationUpdate = (station: any, showButton: boolean) => {
+    console.log('🔋 INDEX: Mottatt ladestasjon oppdatering:', station?.name, 'show:', showButton);
+    console.log('🔋 INDEX: Station object:', station);
+    console.log('🔋 INDEX: showButton:', showButton);
+    setCurrentChargingStation(station);
+    setShowChargingButton(showButton);
+    console.log('🔋 INDEX: State oppdatert - currentChargingStation:', station?.name, 'showChargingButton:', showButton);
+  };
 
   // Generer rutevalg når ruten planlegges
   const generateRouteOptions = async () => {
@@ -202,6 +218,38 @@ function Index() {
                 onPlanRoute={handlePlanRoute}
               />
             </div>
+            
+            {/* Ladeknapp som vises rett under ruteplanlegging */}
+            {showChargingButton && currentChargingStation && (
+              <Card className="p-4 glass-card border-2 border-blue-500/50 bg-blue-50/10 animate-pulse">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Battery className="h-4 w-4 text-red-500" />
+                    <span className="text-sm font-orbitron font-medium text-red-600">
+                      Kritisk batterinivå ved: <strong>{currentChargingStation.name}</strong>
+                    </span>
+                  </div>
+                  
+                  <Button 
+                    onClick={() => {
+                      console.log('🔋 LADER TIL 80% VED:', currentChargingStation.name);
+                      
+                      const newProgress = chargingProgress + 1;
+                      setChargingProgress(newProgress);
+                      
+                      // Skjul knappen til neste kritiske punkt beregnes
+                      setShowChargingButton(false);
+                      
+                      console.log('🔋 Simulerer lading til 80% og beregner neste kritiske punkt...');
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-orbitron text-sm"
+                    size="sm"
+                  >
+                    🔋 Lad til 80% ved {currentChargingStation.name}
+                  </Button>
+                </div>
+              </Card>
+            )}
 
             {selectedCar && (
               <Card className="p-4 bg-card/80 backdrop-blur-sm border-border shadow-lg">
@@ -237,6 +285,7 @@ function Index() {
                   selectedCar={selectedCar}
                   routeTrigger={routeTrigger}
                   selectedRouteId={selectedRouteId}
+                  onChargingStationUpdate={handleChargingStationUpdate}
                 />
                 <ChargingMap isVisible={showRoute} />
               </div>
