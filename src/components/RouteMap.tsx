@@ -1040,6 +1040,12 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         .sort((a, b) => b.qualityScore - a.qualityScore)
         .slice(0, 3); // Ta de 3 beste
 
+      console.log('✅ Fant og sorterte stasjoner:', sortedStations.map(s => ({ 
+        name: s.name, 
+        score: s.qualityScore.toFixed(1),
+        distanceAlongRoute: s.distanceAlongRoute?.toFixed(1) + 'km'
+      })));
+
       sortedStations.forEach((station, index) => {
         // Beregn batteriprosent ved ankomst til denne nye stasjonen
         const distanceToNewStation = station.distanceAlongRoute! - currentDistance;
@@ -1662,12 +1668,13 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       
       const mapRouteCoords = route.geometry.coordinates;
       
-      chargingStations.forEach((station, index) => {
-        // Beregn korteste avstand fra stasjon til ruten OG distanse langs ruten
+      // Først beregn distanceAlongRoute for ALLE stasjoner
+      const enhancedStations = chargingStations.map(station => {
         let minDistance = Infinity;
         let closestPointIndex = 0;
         let distanceAlongRoute = 0;
         
+        // Finn nærmeste punkt på ruten
         for (let i = 0; i < mapRouteCoords.length; i++) {
           const distance = getDistance(
             station.latitude,
@@ -1693,9 +1700,25 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           }
         }
         
-        // Legg til egenskaper på stasjonen for senere bruk
-        (station as any).distanceToRoute = minDistance;
-        (station as any).distanceAlongRoute = distanceAlongRoute;
+        return {
+          ...station,
+          distanceToRoute: minDistance,
+          distanceAlongRoute: distanceAlongRoute
+        };
+      });
+      
+      // Oppdater chargingStations state med beregnet data
+      setChargingStations(enhancedStations);
+      console.log('✅ Updated', enhancedStations.length, 'stations with distanceAlongRoute');
+      console.log('📊 First 3 enhanced stations:', enhancedStations.slice(0, 3).map(s => ({ 
+        name: s.name, 
+        distanceAlongRoute: s.distanceAlongRoute?.toFixed(1) + 'km' 
+      })));
+      
+      // Nå legg til markører basert på enhanced data
+      enhancedStations.forEach((station, index) => {
+        const minDistance = station.distanceToRoute!;
+        const distanceAlongRoute = station.distanceAlongRoute!;
         
         // Bestem farge basert på avstand: Rød hvis innenfor 5 km, grønn ellers
         const isNearRoute = minDistance <= 5.0; // 5 km
@@ -1751,29 +1774,15 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           .addTo(map.current!);
         
         if (index < 10) {
-          console.log(`${isNearRoute ? '🔴' : '🟢'} MARKØR ${index + 1}: ${station.name} (${minDistance.toFixed(1)}km along route: ${distanceAlongRoute.toFixed(1)}km)`);
+          console.log(`${isNearRoute ? '🔴' : '🟢'} MARKØR ${index + 1}: ${station.name} (${minDistance.toFixed(1)}km, along route: ${distanceAlongRoute.toFixed(1)}km)`);
         }
       });
       
-      // KRITISK: Oppdater chargingStations state med beregnet distanceAlongRoute
-      console.log('🔧 Updating chargingStations state with calculated distanceAlongRoute...');
-      setChargingStations(prev => prev.map(station => {
-        const enhanced = chargingStations.find(s => s.id === station.id);
-        if (enhanced) {
-          return {
-            ...station,
-            distanceAlongRoute: (enhanced as any).distanceAlongRoute,
-            distanceToRoute: (enhanced as any).distanceToRoute
-          };
-        }
-        return station;
-      }));
-      
       console.log('🔵 STARTER BLÅ MARKØR ANALYSE...');
       
-      // Finn de mest effektive stasjonene (blå markører)
-      const nearRouteStations = chargingStations.filter(station => 
-        (station as any).distanceToRoute <= 5.0
+      // Finn de mest effektive stasjonene (blå markører) - bruk enhancedStations
+      const nearRouteStations = enhancedStations.filter(station => 
+        station.distanceToRoute! <= 5.0
       );
       
       console.log('🔵 ANALYSERER EFFEKTIVITET FOR', nearRouteStations.length, 'STASJONER NÆR RUTEN...');
