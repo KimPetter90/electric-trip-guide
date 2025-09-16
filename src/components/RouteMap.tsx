@@ -1107,6 +1107,15 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         `;
         el.innerHTML = '🔋';
 
+        console.log('🟢 BLÅ MARKØR ELEMENT LAGET:', el);
+
+        // Opprett Mapbox markør og legg til på kartet
+        const blueMarker = new mapboxgl.Marker(el)
+          .setLngLat([station.longitude, station.latitude])
+          .addTo(map.current!);
+
+        console.log('🟢 BLÅ MARKØR LAGT TIL PÅ KARTET!', blueMarker);
+
         // Click handler for ny blå markør
         el.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -1195,10 +1204,12 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           </div>
         `);
 
-        new mapboxgl.Marker(el)
+        const marker = new mapboxgl.Marker(el)
           .setLngLat([station.longitude, station.latitude])
           .setPopup(popup)
           .addTo(map.current!);
+          
+        console.log('🟢 BLÅ MARKØR LAGT TIL PÅ KARTET!', marker);
       });
 
       toast({
