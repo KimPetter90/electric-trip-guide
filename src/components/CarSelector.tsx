@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Zap, Car, Battery, ArrowLeft, Heart, HeartOff } from "lucide-react";
+import { Zap, Car, Battery, ArrowLeft, Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -1515,9 +1515,9 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
                   
                   {user && (
                     <Button
-                      variant="ghost"
+                      variant={favoriteCar?.car_id === car.id ? "default" : "outline"}
                       size="sm"
-                      className="h-8 w-8 p-0"
+                      className="h-8 px-3 text-xs font-orbitron"
                       onClick={(e) => {
                         e.stopPropagation();
                         if (favoriteCar?.car_id === car.id) {
@@ -1535,10 +1535,8 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
                         }
                       }}
                     >
-                      {favoriteCar?.car_id === car.id ? 
-                        <Heart className="h-4 w-4 fill-red-500 text-red-500" /> : 
-                        <HeartOff className="h-4 w-4" />
-                      }
+                      <Star className="h-3 w-3 mr-1" />
+                      {favoriteCar?.car_id === car.id ? "Favoritt" : "Lag favoritt"}
                     </Button>
                   )}
                 </div>
