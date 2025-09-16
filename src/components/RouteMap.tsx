@@ -511,7 +511,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         justify-content: center;
         color: white;
         font-weight: bold;
-        z-index: 10;
+        z-index: 100;
         box-shadow: 0 0 20px rgba(0, 102, 255, 0.8), 0 0 40px rgba(0, 170, 255, 0.4);
         animation: pulse 2s infinite;
       `;
@@ -1173,7 +1173,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
             font-size: 12px;
             color: white;
             font-weight: bold;
-            z-index: 10;
+            z-index: 100;
             box-shadow: 0 0 15px rgba(0, 102, 255, 0.8);
           `;
           el.innerHTML = '⚡';
@@ -1334,7 +1334,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           font-size: 14px;
           color: white;
           font-weight: bold;
-          z-index: 10;
+          z-index: 100;
           box-shadow: 0 0 20px rgba(0, 102, 255, 0.8), 0 0 40px rgba(0, 170, 255, 0.4);
           animation: pulse 2s infinite;
         `;
