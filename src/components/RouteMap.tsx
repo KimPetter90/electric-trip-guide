@@ -427,40 +427,37 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
   const { toast } = useToast();
 
-  // Funksjon for å oppdatere analyse basert på ladingsprosent
+  // ENKEL funksjon for å oppdatere analyse basert på ladingsprosent
   const updateAnalysisWithCharging = (chargePercent: number) => {
     if (!currentRoute || !routeData || isNaN(chargePercent)) return;
     
     const routeDistanceKm = currentRoute.distance / 1000;
     const routeDurationHours = currentRoute.duration / 3600;
     
-    // REALISTISK BEREGNING AV LADEKOSTNADER
-    const carCapacity = selectedCar.batteryCapacity || 75; // kWh
-    const startBattery = 15; // Antar 15% ved ankomst
-    const chargingPercentage = chargePercent - startBattery; // Faktisk % som lades
-    const energyCharged = (chargingPercentage / 100) * carCapacity; // kWh som faktisk lades
-    const costPerKwh = 4.2; // kr/kWh (realistisk hurtiglading Norge)
-    const singleChargeCost = Math.round(energyCharged * costPerKwh); // Kostnad for denne ene ladingen
+    // ENKEL KOSTNAD BEREGNING
+    const forbrukPer100km = 20; // kWh/100km
+    const totalEnergi = (routeDistanceKm / 100) * forbrukPer100km; // kWh for hele turen
+    const ladepris = 3.8; // kr/kWh
+    const basiskostnad = Math.round(totalEnergi * ladepris);
     
-    // Beregn hvor mange slike ladinger trengs for hele ruten
-    const estimatedStops = Math.ceil(routeDistanceKm / 350); // Stopp per 350km
-    const totalTripCost = singleChargeCost * estimatedStops; // Total kostnad for turen
+    // Juster kostnad basert på ladeprosent (høyere % = litt dyrere pga hurtiglading)
+    const kostnadMultiplikator = chargePercent > 80 ? 1.1 : (chargePercent > 60 ? 1.0 : 0.9);
+    const justartKostnad = Math.round(basiskostnad * kostnadMultiplikator);
     
-    const chargingTimeMinutes = Math.max(15, Math.min(45, chargingPercentage * 0.8)); // 15-45 min avhengig av %
-    const totalChargingTime = chargingTimeMinutes * estimatedStops;
+    const ladetid = Math.ceil(routeDistanceKm / 300) * 30; // 30 min per 300km
     
     const updatedAnalysis = {
       totalDistance: routeDistanceKm,
-      totalTime: routeDurationHours + (totalChargingTime / 60),
-      totalCost: totalTripCost, // TOTAL for hele turen
-      chargingTime: totalChargingTime,
+      totalTime: routeDurationHours + (ladetid / 60),
+      totalCost: justartKostnad,
+      chargingTime: ladetid,
       co2Saved: Math.round(routeDistanceKm * 0.13),
-      efficiency: chargePercent > 60 ? 0.89 : (chargePercent > 40 ? 0.86 : 0.82),
+      efficiency: chargePercent > 60 ? 0.88 : 0.84,
       weather: undefined
     };
     
     setRouteAnalysis(updatedAnalysis);
-    console.log(`🔄 REALISTISK BEREGNING: ${chargingPercentage}% lading = ${energyCharged.toFixed(1)} kWh = ${singleChargeCost} kr per stopp. Total: ${totalTripCost} kr for ${estimatedStops} stopp`);
+    console.log(`💰 JUSTERT KOSTNAD FOR ${chargePercent}%: ${justartKostnad} kr (basis: ${basiskostnad} kr)`);
   };
 
   // Funksjon for å beregne nye kritiske punkter basert på valgt ladeprosent  
@@ -1656,45 +1653,35 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         durationHours: routeDuration
       });
 
-      // BEREGN REALISTISK ANALYSE BASERT PÅ FAKTISK LADING
-      const startBatteryPercent = routeData.batteryPercentage || 80; // Fra rutedata
-      const numberOfChargingStops = Math.ceil(routeDistance / 350); // En stopp per ~350km
+      // ENKEL OG REALISTISK BEREGNING
+      const startBatteryPercent = routeData.batteryPercentage || 80; 
       
-      // REALISTISK LADEKOSTNAD BEREGNING
-      const carCapacity = selectedCar.batteryCapacity || 75; // kWh
-      const averageChargingPercent = 60; // Lader fra ~20% til ~80% (60% lading per stopp)
-      const energyPerStop = (averageChargingPercent / 100) * carCapacity; // kWh per stopp
-      const costPerKwh = 4.2; // kr/kWh (realistisk Norge)
-      const costPerStop = Math.round(energyPerStop * costPerKwh); // Kostnad per stopp
-      const totalChargingCost = costPerStop * numberOfChargingStops; // Total for hele turen
+      // REALISTISK KOSTNAD FOR HELE TUREN
+      // Kun ladestrøm som betales for (ikke hjemmelading)
+      const consumptionPer100km = 18; // kWh/100km
+      const totalEnergyNeeded = (routeDistance / 100) * consumptionPer100km; // kWh
+      const ladepris = 2.8; // kr/kWh (MYE mer realistisk for Norge)
+      const totalCost = Math.round(totalEnergyNeeded * ladepris * 0.7); // 70% av energi fra betalt lading
       
-      // Ladetid basert på prosent som lades
-      const averageChargingTimePerStop = 35; // minutter for 60% lading
-      const totalChargingTime = numberOfChargingStops * averageChargingTimePerStop;
-      
-      // CO2 spart vs bensinbil
-      const co2SavedVsBensin = Math.round(routeDistance * 0.13); // kg CO2 (130g/km bensinbil)
-      
-      // Effektivitet basert på startbatteri og værforhold
-      const batteryEfficiency = startBatteryPercent > 50 ? 0.88 : 0.83;
+      // Ladetid: ca 30-40 min per 300km
+      const chargingStops = Math.ceil(routeDistance / 300);
+      const totalChargingTime = chargingStops * 30; // 30 min per stopp
       
       const realisticAnalysis = {
-        totalDistance: routeDistance, // km
-        totalTime: routeDuration + (totalChargingTime / 60), // timer + ladetid
-        totalCost: totalChargingCost, // TOTAL for hele turen
-        chargingTime: totalChargingTime, // Minutter basert på antall stopp
-        co2Saved: co2SavedVsBensin, // kg CO2 spart
-        efficiency: batteryEfficiency, // Effektivitet basert på startbatteri
+        totalDistance: routeDistance,
+        totalTime: routeDuration + (totalChargingTime / 60),
+        totalCost: totalCost, // ENKEL: distanse × forbruk × pris
+        chargingTime: totalChargingTime,
+        co2Saved: Math.round(routeDistance * 0.13),
+        efficiency: startBatteryPercent > 50 ? 0.88 : 0.83,
         weather: undefined
       };
       
-      console.log('🔋 HOVEDBEREGNING BASERT PÅ REALISTISK LADING:', {
-        startBattery: startBatteryPercent + '%',
-        chargingStops: numberOfChargingStops,
-        energyPerStop: energyPerStop.toFixed(1) + ' kWh',
-        costPerStop: costPerStop + ' kr',
-        totalCost: totalChargingCost + ' kr',
-        costPerKwh: costPerKwh + ' kr/kWh'
+      console.log('💰 ENKEL KOSTNAD BEREGNING:', {
+        distanse: routeDistance + ' km',
+        energi: totalEnergyNeeded.toFixed(1) + ' kWh',
+        pris: ladepris + ' kr/kWh',
+        totalkost: totalCost + ' kr'
       });
       
       setRouteAnalysis(realisticAnalysis);
