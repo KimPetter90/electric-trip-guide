@@ -16,11 +16,6 @@ export default {
       fontFamily: {
         'orbitron': ['Orbitron', 'monospace'],
         'exo': ['Exo 2', 'sans-serif'],
-        'rajdhani': ['Rajdhani', 'sans-serif'],
-        'audiowide': ['Audiowide', 'cursive'],
-        'share-tech': ['Share Tech Mono', 'monospace'],
-        'cyber': ['Audiowide', 'Orbitron', 'monospace'],
-        'tech': ['Share Tech Mono', 'Rajdhani', 'monospace'],
       },
       colors: {
         border: "hsl(var(--border))",
