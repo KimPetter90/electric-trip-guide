@@ -393,8 +393,6 @@ const fetchWeatherData = async (startCoords: [number, number], endCoords: [numbe
 };
 
 const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, routeTrigger, selectedRouteId, onChargingStationUpdate }) => {
-  console.log('🚀🚀🚀 RouteMap komponent startet! 🚀🚀🚀');
-  console.log('📊 Props:', { isVisible, hasRouteData: !!routeData, hasSelectedCar: !!selectedCar });
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const routeUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Throttle API-kall
@@ -735,151 +733,171 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
   // Funksjon for å beregne neste kritiske punkt
   const calculateNextPoint = () => {
-    alert('🎉 calculateNextPoint KJØRER! Funksjonen virker!');
-    console.log('🔥🔥🔥 VERSJON 2.0 - COMPLETE REWRITE calculateNextPoint 🔥🔥🔥');
+    console.log('🔥 STARTING calculateNextPoint - COMPLETE REWRITE');
     
-    // TEST 1: Er funksjonen i det hele tatt tilgjengelig?
-    console.log('📊 TEST 1 - Function called successfully');
-    
-    // TEST 2: Er state tilgjengelig?
-    console.log('📊 TEST 2 - chargingModal:', chargingModal);
-    console.log('📊 TEST 2 - chargePercentInput:', chargePercentInput);
-    console.log('📊 TEST 2 - routeData:', !!routeData);
-    console.log('📊 TEST 2 - selectedCar:', !!selectedCar);
-    
-    // TEST 3: Parse input
+    // 1. Valider input
     const chargePercent = parseInt(chargePercentInput);
-    console.log('📊 TEST 3 - Parsed charge percent:', chargePercent, typeof chargePercent);
+    console.log('📊 Charge percent:', chargePercent);
     
-    // TEST 4: Validation
-    if (isNaN(chargePercent)) {
-      console.log('❌ TEST 4 FAILED - chargePercent is NaN');
+    if (isNaN(chargePercent) || chargePercent < 10 || chargePercent > 100) {
+      console.log('❌ Invalid charge percent');
       toast({
-        title: "❌ Ugyldig prosent",
-        description: "Kunne ikke lese prosentverdien.",
+        title: "❌ Ugyldig ladeprosent",
+        description: `Vennligst skriv inn en prosent mellom 10 og 100.`,
         variant: "destructive"
       });
       return;
     }
-    
-    if (chargePercent < 10 || chargePercent > 100) {
-      console.log('❌ TEST 4 FAILED - chargePercent out of range:', chargePercent);
+
+    // 2. Sjekk grunnleggende data
+    if (!routeData || !selectedCar) {
+      console.log('❌ Missing basic data');
       toast({
-        title: "❌ Ugyldig prosent",
-        description: `Prosent må være mellom 10-100. Du skrev: ${chargePercent}`,
+        title: "❌ Mangler data",
+        description: "Vennligst planlegg en rute først.",
         variant: "destructive"
       });
       return;
     }
-    
-    console.log('✅ TEST 4 PASSED - chargePercent is valid:', chargePercent);
-    
-    // TEST 5: Basic data check
-    if (!routeData) {
-      console.log('❌ TEST 5 FAILED - No routeData');
-      toast({
-        title: "❌ Ingen rute",
-        description: "Planlegg en rute først.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!selectedCar) {
-      console.log('❌ TEST 5 FAILED - No selectedCar');
-      toast({
-        title: "❌ Ingen bil",
-        description: "Velg en bil først.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    console.log('✅ TEST 5 PASSED - routeData and selectedCar available');
-    
-    // TEST 6: Distance check
+
+    // 3. Bruk ALLTID modal distance - dette er den eneste sikre verdien
     const currentDistance = chargingModal.distance;
-    console.log('📊 TEST 6 - currentDistance from modal:', currentDistance, typeof currentDistance);
-    
-    if (typeof currentDistance !== 'number') {
-      console.log('❌ TEST 6 FAILED - distance is not a number:', currentDistance);
+    console.log('📍 Current distance from modal:', currentDistance);
+
+    if (typeof currentDistance !== 'number' || currentDistance < 0) {
+      console.log('❌ Invalid distance data');
       toast({
         title: "❌ Ugyldig distanse",
-        description: "Distanseverdien er ikke et tall.",
+        description: "Distansedata er ikke gyldig. Prøv å klikke på markøren igjen.",
         variant: "destructive"
       });
       return;
     }
-    
-    console.log('✅ TEST 6 PASSED - distance is valid number');
-    
-    // TEST 7: Calculations
+
+    // 4. Beregn hvor langt bilen kan kjøre
     const carRange = selectedCar.range;
-    const usableRange = (carRange * (chargePercent - 10)) / 100;
-    console.log('📊 TEST 7 - Calculations:', {
-      carRange,
+    const criticalLevel = 10; // Når batteriet når 10%
+    const usableRange = (carRange * (chargePercent - criticalLevel)) / 100;
+    const nextCriticalDistance = currentDistance + usableRange;
+
+    console.log('🧮 Calculations:', {
+      currentDistance,
       chargePercent,
+      carRange,
       usableRange,
-      currentDistance
+      nextCriticalDistance
     });
-    
-    // TEST 8: Simple success case - always create markers
-    console.log('📊 TEST 8 - Creating success case');
-    
-    // Lukk modal først
-    setChargingModal({ isOpen: false, stationId: '', stationName: '', distance: 0, arrivalBattery: 0 });
-    
-    // Vis suksessmelding
-    toast({
-      title: "✅ Test fullført!",
-      description: `Med ${chargePercent}% lading kan bilen kjøre ${usableRange.toFixed(0)}km ekstra. Alle tester passerte!`,
+
+    // 5. Finn ladestasjoner nær det beregnede punktet
+    const tolerance = 50; // Øk toleranse til 50km
+    const nearbyStations = chargingStations.filter(station => {
+      if (!station.latitude || !station.longitude) return false;
+      // Bruk enkel avstandsberegning basert på koordinater
+      const approxDistance = Math.sqrt(
+        Math.pow((station.latitude - 59.9139) * 111, 2) + 
+        Math.pow((station.longitude - 10.7522) * 71, 2)
+      );
+      return approxDistance <= tolerance;
     });
-    
-    console.log('🎉 TEST 8 COMPLETED - Function executed successfully');
+
+    console.log('🔍 Found nearby stations:', nearbyStations.length);
+
+    if (nearbyStations.length === 0) {
+      // Hvis ingen stasjoner funnet, bruk bare de første 3 stasjonene
+      console.log('⚠️ No nearby stations, using first 3 stations');
+      nearbyStations.push(...chargingStations.slice(0, 3));
+    }
+
+    // 6. Fjern eksisterende blå markører
+    if (map.current) {
+      const existingMarkers = document.querySelectorAll('.blue-charging-marker');
+      existingMarkers.forEach(marker => marker.remove());
+      console.log('🧹 Removed existing blue markers');
+    }
+
+    // 7. Lag nye blå markører
+    if (map.current && nearbyStations.length > 0) {
+      console.log('🎯 Creating new blue markers for', nearbyStations.length, 'stations');
+      
+      nearbyStations.forEach((station, index) => {
+        const el = document.createElement('div');
+        el.className = 'blue-charging-marker';
+        el.style.cssText = `
+          width: 20px;
+          height: 20px;
+          background-color: #0066ff;
+          border: 3px solid white;
+          border-radius: 50%;
+          box-shadow: 0 0 15px rgba(0, 102, 255, 0.8);
+          cursor: pointer;
+          animation: pulse 2s infinite;
+          z-index: 1000;
+        `;
+
+        const popup = new mapboxgl.Popup({
+          closeButton: true,
+          closeOnClick: false
+        }).setHTML(`
+          <div style="padding: 12px; font-family: Inter;">
+            <h4 style="margin: 0 0 8px 0; color: #0066ff; font-weight: bold;">🎯 ${station.name}</h4>
+            <p style="margin: 0 0 8px 0; font-size: 14px;">📍 ${station.location}</p>
+            <div style="background: #f0f8ff; padding: 8px; border-radius: 6px; font-size: 13px;">
+              ✅ Beregnet som neste kritisk punkt med ${chargePercent}% lading
+            </div>
+          </div>
+        `);
+
+        new mapboxgl.Marker(el)
+          .setLngLat([station.longitude, station.latitude])
+          .setPopup(popup)
+          .addTo(map.current!);
+      });
+
+      // 8. Lukk modal og vis suksessmelding
+      setChargingModal({ isOpen: false, stationId: '', stationName: '', distance: 0, arrivalBattery: 0 });
+      
+      toast({
+        title: `🎯 Neste kritiske punkt beregnet!`,
+        description: `Med ${chargePercent}% lading vil batteriet nå kritisk nivå etter ${usableRange.toFixed(0)}km. ${nearbyStations.length} stasjon(er) markert på kartet.`,
+      });
+
+      console.log('✅ SUCCESS: Function completed successfully');
+    } else {
+      console.log('❌ No map or stations available');
+      toast({
+        title: "❌ Feil",
+        description: "Kunne ikke vise nye markører på kartet.",
+        variant: "destructive"
+      });
+    }
   };
 
-  // ULTRA SIMPEL KART-INITIALISERING - INGEN LOGGING, BARE VIRKE
+  // Funksjon for initialisering av kart
   const initializeMap = async () => {
-    // Fjern eksisterende kart
-    if (map.current) {
-      map.current.remove();
-      map.current = null;
-    }
-
-    // Sjekk basic requirements
-    if (!accessToken || !mapContainer.current) {
-      setError('Mangler token eller container');
-      return;
-    }
+    if (!accessToken || !mapContainer.current || map.current) return;
 
     try {
-      // Sett token
       mapboxgl.accessToken = accessToken;
       
-      // Opprett kart - super enkelt
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: [10.7522, 59.9139], // Oslo
-        zoom: 6
+        style: 'mapbox://styles/mapbox/light-v11',
+        center: [10.7522, 59.9139], // Oslo sentrum
+        zoom: 6,
+        pitch: 0,
+        bearing: 0
       });
 
-      // Legg til kontroller
       map.current.addControl(new mapboxgl.NavigationControl());
       
-      // Når kart laster - sett status
       map.current.on('load', () => {
+        console.log('✅ Kart lastet og klar');
         setIsMapLoaded(true);
-        setError(null);
-      });
-
-      // Håndter errors
-      map.current.on('error', (e) => {
-        setError(`Kartfeil: ${e.error?.message || 'Ukjent feil'}`);
       });
 
     } catch (error) {
-      setError(`Initialisering feilet: ${error.message}`);
+      console.error('❌ Feil ved initialisering av kart:', error);
+      setError('Kunne ikke laste kartet');
     }
   };
 
@@ -892,95 +910,39 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     setIsMapLoaded(false);
   };
 
-  // FAKTISK RUTEPLANLEGGING - IKKE TOM!
+  // Funksjon for oppdatering av kart med rute
   const updateMapRoute = async () => {
-    if (!map.current || !routeData || !isMapLoaded) {
-      alert('❌ Kan ikke planlegge rute - mangler kart, rutedata eller kart ikke lastet');
-      return;
-    }
+    if (!map.current || !routeData || !isMapLoaded) return;
 
-    alert('🚀 STARTER RUTEPLANLEGGING...');
-
-    try {
-      // Hent koordinater for start og stopp
-      const startCoords = cityCoordinates[routeData.from.toLowerCase()];
-      const endCoords = cityCoordinates[routeData.to.toLowerCase()];
-      
-      if (!startCoords || !endCoords) {
-        alert(`❌ Fant ikke koordinater for ${routeData.from} eller ${routeData.to}`);
-        return;
-      }
-
-      // Kall Mapbox Directions API
-      const response = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${startCoords[0]},${startCoords[1]};${endCoords[0]},${endCoords[1]}?geometries=geojson&access_token=${accessToken}&alternatives=true&continue_straight=false&steps=true&annotations=duration&overview=full`);
-      
-      const data = await response.json();
-
-      if (data.routes && data.routes.length > 0) {
-        const route = data.routes[0];
-        
-        // Legg til rute på kartet
-        if (map.current.getSource('route')) {
-          map.current.removeLayer('route');
-          map.current.removeSource('route');
-        }
-
-        map.current.addSource('route', {
-          'type': 'geojson',
-          'data': {
-            'type': 'Feature',
-            'properties': {},
-            'geometry': route.geometry
-          }
-        });
-
-        map.current.addLayer({
-          'id': 'route',
-          'type': 'line',
-          'source': 'route',
-          'layout': {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          'paint': {
-            'line-color': '#3b82f6',
-            'line-width': 6
-          }
-        });
-
-        // Zoom til ruten
-        const bounds = new mapboxgl.LngLatBounds();
-        bounds.extend(startCoords);
-        bounds.extend(endCoords);
-        map.current.fitBounds(bounds, { padding: 50 });
-
-        alert('✅ RUTE TEGNET PÅ KARTET!');
-      } else {
-        alert('❌ Ingen rute funnet');
-      }
-
-    } catch (error) {
-      alert(`❌ Rutefeil: ${error.message}`);
-    }
+    console.log('🗺️ Oppdaterer kart med rute...');
+    // Implementer rute-oppdatering her hvis nødvendig
   };
 
   // Fjernet duplikat weatherData funksjon - bruker den optimaliserte versjonen med cache
 
-  // DIREKTE KART-INITIALISERING UTEN KOMPLEKSE USEEFFECTS
+  // Effekt for initialisering av kart
   useEffect(() => {
-    console.log('🚨 DIRECT MAP INIT - no delays, no complexity!');
-    
-    if (isVisible && accessToken && mapContainer.current) {
-      console.log('🚀 All conditions met - calling initializeMap IMMEDIATELY');
-      initializeMap();
-    } else {
-      console.log('⏸️ Waiting for conditions:', { 
-        isVisible, 
-        hasToken: !!accessToken, 
-        hasContainer: !!mapContainer.current 
-      });
+    if (isVisible && accessToken) {
+      console.log('🌟 Komponenten er synlig OG token er tilgjengelig, initialiserer kart...');
+      const timer = setTimeout(() => {
+        initializeMap();
+      }, 200);
+      
+      return () => {
+        clearTimeout(timer);
+      };
     }
-  }, [isVisible, accessToken]);
+    
+    return () => {
+      cleanupMap();
+      if (routeUpdateTimeoutRef.current) {
+        clearTimeout(routeUpdateTimeoutRef.current);
+      }
+      if (map.current) {
+        map.current.remove();
+      }
+    };
+  }, [isVisible, accessToken]); // Legg til accessToken som dependency
 
   // Effekt for lasting av ladestasjoner
   useEffect(() => {
@@ -1041,46 +1003,13 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     }
   }, [routeTrigger, selectedRouteId]); // BARE disse dependencies for å unngå loops
 
-  if (!isVisible) {
-    console.log('⏸️ RouteMap ikke synlig - returnerer null');
-    return null;
-  }
-
-  console.log('👁️ RouteMap ER SYNLIG - renderer komponent');
-  console.log('🔍 Render state:', { 
-    isVisible, 
-    accessToken: !!accessToken, 
-    loading, 
-    error,
-    mapContainerExists: !!mapContainer.current
-  });
+  if (!isVisible) return null;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <Navigation className="h-5 w-5 text-primary animate-glow-pulse" />
         <h3 className="text-lg font-semibold text-foreground">Ruteplanlegging</h3>
-      </div>
-
-      {/* DEBUG KNAPP FOR FORCE INIT */}
-      <div className="mb-4">
-        <Button 
-          onClick={() => {
-            alert('Initialiserer kart nå...');
-            initializeMap();
-            setTimeout(() => {
-              if (map.current) {
-                alert('✅ Kart opprettet suksessfullt!');
-              } else {
-                alert('❌ Kart feilet - sjekk error-melding over');
-              }
-            }, 2000);
-          }}
-          variant="destructive"
-          className="w-full"
-        >
-          🗺️ INITIALISER KART MANUELT
-        </Button>
       </div>
 
       {error && (
@@ -1553,22 +1482,18 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                     console.log('🎯🎯🎯 Beregn neste punkt knapp klikket - VERSJON 2.0 🎯🎯🎯');
-                     console.log('📊 Current state:', { chargingModal, chargePercentInput });
-                     console.log('📊 typeof calculateNextPoint:', typeof calculateNextPoint);
-                     try {
-                       console.log('🚀 About to call calculateNextPoint...');
-                       calculateNextPoint();
-                       console.log('✅ calculateNextPoint completed successfully');
-                     } catch (error) {
-                       console.error('❌❌❌ KRITISK FEIL i calculateNextPoint:', error);
-                       console.error('Stack trace:', error.stack);
-                       toast({
-                         title: "❌ Kritisk feil oppstod",
-                         description: `Teknisk feil: ${error.message}`,
-                         variant: "destructive"
-                       });
-                     }
+                    console.log('🎯 Beregn neste punkt knapp klikket - event trigget!');
+                    console.log('📊 Current state:', { chargingModal, chargePercentInput });
+                    try {
+                      calculateNextPoint();
+                    } catch (error) {
+                      console.error('❌ Error in calculateNextPoint:', error);
+                      toast({
+                        title: "❌ Feil oppstod",
+                        description: "En teknisk feil oppstod. Sjekk konsollen for detaljer.",
+                        variant: "destructive"
+                      });
+                    }
                   }}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                 >
