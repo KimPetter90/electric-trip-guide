@@ -1626,13 +1626,25 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       
       // Fjern alle markører UNNTATT blå markører (progressive-charging-marker og blue-critical-point-marker)
       const existingMarkers = document.querySelectorAll('.mapboxgl-marker');
+      console.log('🧹 CLEANUP: Fant', existingMarkers.length, 'markører totalt');
+      
+      let removedCount = 0;
+      let preservedCount = 0;
+      
       existingMarkers.forEach(marker => {
-        // Ikke fjern blå markører som viser neste kritiske punkt
-        if (!marker.querySelector('.progressive-charging-marker') && 
-            !marker.querySelector('.blue-critical-point-marker')) {
+        const hasProgressiveMarker = marker.querySelector('.progressive-charging-marker');
+        const hasCriticalPointMarker = marker.querySelector('.blue-critical-point-marker');
+        
+        if (hasProgressiveMarker || hasCriticalPointMarker) {
+          console.log('🔵 BEVARER blå markør:', hasProgressiveMarker ? 'progressive' : 'critical-point');
+          preservedCount++;
+        } else {
           marker.remove();
+          removedCount++;
         }
       });
+      
+      console.log('🧹 CLEANUP RESULTAT: Fjernet', removedCount, 'markører, bevarte', preservedCount, 'blå markører');
       
       // Fjern rute-lag og kilder
       try {
@@ -3111,8 +3123,11 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                     }
                     
                     // Lag blå markør for den nærmeste ladestasjonen
+                    console.log('🔵 LAGER NY BLÅ MARKØR for:', nearestStation.name);
                     const el = document.createElement('div');
                     el.className = 'blue-critical-point-marker';
+                    el.setAttribute('data-station-id', nearestStation.id);
+                    el.setAttribute('data-marker-type', 'critical-point');
                     el.style.cssText = `
                       background: linear-gradient(135deg, #0066ff, #00aaff);
                       width: 25px;
@@ -3133,11 +3148,12 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                     `;
                     el.innerHTML = '⚡';
                     
+                    console.log('🔵 Legger til blå markør på koordinater:', [nearestStation.lng, nearestStation.lat]);
                     const marker = new mapboxgl.Marker(el)
-                      .setLngLat([nearestStation.longitude, nearestStation.latitude])
+                      .setLngLat([nearestStation.lng, nearestStation.lat])
                       .addTo(map.current!);
-                      
-                    console.log('🔥 KRITISK PUNKT MARKØR LAGET ved:', nearestStation.name);
+                    
+                    console.log('🔵 BLÅ MARKØR LAGT TIL SUCCESSFULLY for:', nearestStation.name);
                     
                     // Beregn batteriprosent ved ankomst til kritisk punkt
                     const batteryAtCriticalPoint = ((criticalPointDistance - currentDistance) / carRange) * 100;
