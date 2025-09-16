@@ -94,7 +94,7 @@ interface RouteMapProps {
   selectedCar: CarModel;
   routeTrigger?: number;
   selectedRouteId?: string | null;
-  onChargingStationUpdate?: (station: ChargingStation | null, showButton: boolean) => void;
+  onChargingStationUpdate?: (station: ChargingStation | null, showButton: boolean, optimizedStations?: ChargingStation[]) => void;
   onRouteAnalysisUpdate?: (analysis: TripAnalysis | null) => void;
 }
 
@@ -2187,13 +2187,13 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           setShowChargingButton(true);
           console.log('🔵 DEBUG: Satte showChargingButton til true');
           
-          // Send data til parent komponenten
-          onChargingStationUpdate?.(realisticStations.firstCycleStations[0], true);
+          // Send data til parent komponenten med optimizedStations
+          onChargingStationUpdate?.(realisticStations.firstCycleStations[0], true, optimized);
           console.log('🔵 DEBUG: Sendt ladestasjon til parent:', realisticStations.firstCycleStations[0].name);
         } else {
           console.log('🔵 DEBUG: Ingen stasjoner funnet, skjuler ladeknapp');
           setShowChargingButton(false);
-          onChargingStationUpdate?.(null, false);
+          onChargingStationUpdate?.(null, false, optimized);
         }
       }
 

@@ -60,16 +60,17 @@ function Index() {
   const [currentChargingStation, setCurrentChargingStation] = useState<any>(null);
   const [chargingProgress, setChargingProgress] = useState(0);
   const [routeAnalysis, setRouteAnalysis] = useState<RouteAnalysis | null>(null);
+  const [optimizedStations, setOptimizedStations] = useState<any[]>([]);
 
   
   // Funksjon for å motta ladestasjon data fra RouteMap
-  const handleChargingStationUpdate = (station: any, showButton: boolean) => {
+  const handleChargingStationUpdate = (station: any, showButton: boolean, optimizedStations?: any[]) => {
     console.log('🔋 INDEX: Mottatt ladestasjon oppdatering:', station?.name, 'show:', showButton);
-    console.log('🔋 INDEX: Station object:', station);
-    console.log('🔋 INDEX: showButton:', showButton);
     setCurrentChargingStation(station);
     setShowChargingButton(showButton);
-    console.log('🔋 INDEX: State oppdatert - currentChargingStation:', station?.name, 'showChargingButton:', showButton);
+    if (optimizedStations) {
+      setOptimizedStations(optimizedStations);
+    }
   };
   
   // Funksjon for å motta routeAnalysis fra RouteMap
@@ -276,7 +277,7 @@ function Index() {
                 
                 {/* Fjernet kritisk batterinivå-seksjonen */}
                 
-                <ChargingMap isVisible={showRoute} routeAnalysis={routeAnalysis} />
+                <ChargingMap isVisible={showRoute} routeAnalysis={routeAnalysis} optimizedStations={optimizedStations} />
               </div>
             )}
           </div>

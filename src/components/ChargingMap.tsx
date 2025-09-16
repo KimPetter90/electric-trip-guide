@@ -13,56 +13,33 @@ interface RouteAnalysis {
 }
 
 
-interface ChargingStop {
+
+interface ChargingStation {
   id: string;
   name: string;
   location: string;
-  distance: number;
-  chargeTime: number;
-  chargeAmount: number;
-  cost: number;
+  latitude: number;
+  longitude: number;
+  available: number;
+  total: number;
   fastCharger: boolean;
+  power: string;
+  cost: number;
+  distanceFromRoute?: number;
+  distanceAlongRoute?: number;
+  arrivalBatteryPercentage?: number;
+  isRequired?: boolean;
+  chargingTime?: number;
+  targetBatteryPercentage?: number;
 }
-
-const mockChargingStops: ChargingStop[] = [
-  {
-    id: "1",
-    name: "Circle K Gardermoen",
-    location: "Jessheim",
-    distance: 45,
-    chargeTime: 25,
-    chargeAmount: 35,
-    cost: 175,
-    fastCharger: true
-  },
-  {
-    id: "2", 
-    name: "Ionity Lillehammer",
-    location: "Lillehammer",
-    distance: 180,
-    chargeTime: 30,
-    chargeAmount: 45,
-    cost: 225,
-    fastCharger: true
-  },
-  {
-    id: "3",
-    name: "Mer Gol",
-    location: "Gol",
-    distance: 280,
-    chargeTime: 35,
-    chargeAmount: 50,
-    cost: 250,
-    fastCharger: true
-  }
-];
 
 interface ChargingMapProps {
   isVisible: boolean;
   routeAnalysis?: RouteAnalysis | null;
+  optimizedStations?: ChargingStation[];
 }
 
-export default function ChargingMap({ isVisible, routeAnalysis }: ChargingMapProps) {
+export default function ChargingMap({ isVisible, routeAnalysis, optimizedStations }: ChargingMapProps) {
   if (!isVisible) return null;
 
   // Bruk ekte rutedata eller fallback til standardverdier
@@ -71,7 +48,19 @@ export default function ChargingMap({ isVisible, routeAnalysis }: ChargingMapPro
   const hours = Math.floor(totalTimeHours);
   const minutes = Math.round((totalTimeHours - hours) * 60);
   const cost = routeAnalysis?.totalCost || 650;
-  const stops = routeAnalysis ? Math.ceil(routeAnalysis.totalDistance / 300) : 3; // Ca. 1 stopp per 300km
+  const stops = optimizedStations ? optimizedStations.length : (routeAnalysis ? Math.ceil(routeAnalysis.totalDistance / 300) : 3);
+
+  // Konverter optimizedStations til riktig format for visning
+  const chargingStops = optimizedStations ? optimizedStations.map((station, index) => ({
+    id: station.id,
+    name: station.name,
+    location: station.location,
+    distance: station.distanceAlongRoute ? Math.round(station.distanceAlongRoute) : (index + 1) * 150,
+    chargeTime: station.chargingTime || 30,
+    chargeAmount: 35 + (index * 10),
+    cost: Math.round(station.cost * 35) || 200,
+    fastCharger: station.fastCharger
+  })) : [];
 
   return (
     <div className="space-y-4">
@@ -104,7 +93,7 @@ export default function ChargingMap({ isVisible, routeAnalysis }: ChargingMapPro
 
       {/* Charging Stops */}
       <div className="space-y-3">
-        {mockChargingStops.map((stop, index) => (
+        {chargingStops.map((stop, index) => (
           <Card key={stop.id} className="p-4 bg-card/80 backdrop-blur-sm border-border hover:shadow-lg hover:border-primary/50 transition-all duration-300 animate-float" style={{ animationDelay: `${index * 200}ms` }}>
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3">
