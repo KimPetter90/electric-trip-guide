@@ -3071,88 +3071,79 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                       return;
                     }
                     
-                    // Beregn hvor langt bilen kan kjøre med ny batteriprosent
+                    // Beregn hvor langt bilen kan kjøre med ny batteriprosent MINUS 10% buffer
                     const carRange = selectedCar?.range || 487;
-                    const usableRange = (chargePercent / 100) * carRange * 0.8; // 80% av oppgitt rekkevidde
-                    const nextCriticalDistance = currentDistance + usableRange;
+                    const usableRange = ((chargePercent - 10) / 100) * carRange * 0.8; // Stopp ved 10% batteri
+                    const criticalPointDistance = currentDistance + usableRange; // Hvor batteriet når 10%
                     
-                    console.log('🎯 Beregning:', {
+                    console.log('🎯 Beregning av kritisk punkt:', {
                       currentDistance,
                       chargePercent,
                       carRange,
                       usableRange,
-                      nextCriticalDistance
+                      criticalPointDistance
                     });
                     
-                    // Finn 3 nærmeste stasjoner fremover på ruten
-                    const stationsAhead = chargingStations
-                      .filter(s => s.distanceAlongRoute && s.distanceAlongRoute > currentDistance)
-                      .sort((a, b) => a.distanceAlongRoute! - b.distanceAlongRoute!)
-                      .slice(0, 3);
+                    // Finn den nærmeste ladestasjonen til det kritiske punktet
+                    let nearestStation = null;
+                    let smallestDistance = Infinity;
                     
-                    console.log('📍 Fant stasjoner fremover:', stationsAhead.map(s => s.name));
+                    chargingStations.forEach(station => {
+                      if (station.distanceAlongRoute && station.distanceAlongRoute > currentDistance) {
+                        const distanceFromCriticalPoint = Math.abs(station.distanceAlongRoute - criticalPointDistance);
+                        if (distanceFromCriticalPoint < smallestDistance) {
+                          smallestDistance = distanceFromCriticalPoint;
+                          nearestStation = station;
+                        }
+                      }
+                    });
                     
-                    if (stationsAhead.length === 0) {
+                    console.log('📍 Nærmeste stasjon til kritisk punkt:', nearestStation?.name, 'avstand fra kritisk punkt:', smallestDistance.toFixed(1), 'km');
+                    
+                    if (!nearestStation) {
                       toast({
                         title: "❌ Ingen stasjoner funnet",
-                        description: "Ingen ladestasjoner funnet fremover på ruten.",
+                        description: "Ingen ladestasjoner funnet nær det kritiske punktet.",
                         variant: "destructive"
                       });
                       return;
                     }
                     
-                    // Lag blå markører for disse stasjonene LANGS RUTEN
-                    stationsAhead.forEach((station, index) => {
-                      // Beregn posisjon langs ruten basert på distanceAlongRoute
-                      let routePosition = null;
+                    // Lag blå markør for den nærmeste ladestasjonen
+                    const el = document.createElement('div');
+                    el.className = 'blue-critical-point-marker';
+                    el.style.cssText = `
+                      background: linear-gradient(135deg, #ff6b00, #ff8533);
+                      width: 30px;
+                      height: 30px;
+                      border-radius: 50%;
+                      border: 4px solid white;
+                      cursor: pointer;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      color: white;
+                      font-weight: bold;
+                      font-size: 14px;
+                      z-index: 100;
+                      box-shadow: 0 0 25px rgba(255, 107, 0, 0.8);
+                      animation: pulse 2s infinite;
+                    `;
+                    el.innerHTML = '⚡';
+                    
+                    const marker = new mapboxgl.Marker(el)
+                      .setLngLat([nearestStation.longitude, nearestStation.latitude])
+                      .addTo(map.current!);
                       
-                      if (currentRoute && currentRoute.geometry && station.distanceAlongRoute) {
-                        // Finn koordinat langs ruten basert på distanse
-                        const totalRouteDistance = currentRoute.distance / 1000; // Convert to km
-                        const progressAlongRoute = station.distanceAlongRoute / totalRouteDistance;
-                        const routeCoords = currentRoute.geometry.coordinates;
-                        
-                        // Finn tilnærmet posisjon langs ruten
-                        const coordIndex = Math.floor(progressAlongRoute * (routeCoords.length - 1));
-                        const coord = routeCoords[Math.min(coordIndex, routeCoords.length - 1)];
-                        routePosition = coord;
-                        
-                        console.log(`📍 Plasserer blå markør for ${station.name} på ruten ved:`, coord);
-                      }
-                      
-                      // Fall back til stasjonens posisjon hvis rute-posisjon ikke finnes
-                      const position = routePosition || [station.longitude, station.latitude];
-                      
-                      const el = document.createElement('div');
-                      el.className = 'blue-next-point-marker';
-                      el.style.cssText = `
-                        background: linear-gradient(135deg, #0066ff, #00aaff);
-                        width: 25px;
-                        height: 25px;
-                        border-radius: 50%;
-                        border: 3px solid white;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: white;
-                        font-weight: bold;
-                        font-size: 12px;
-                        z-index: 100;
-                        box-shadow: 0 0 20px rgba(0, 102, 255, 0.8);
-                      `;
-                      el.innerHTML = '🔋';
-                      
-                      const marker = new mapboxgl.Marker(el)
-                        .setLngLat(position)
-                        .addTo(map.current!);
-                        
-                      console.log('🔵 BLÅ MARKØR LAGET LANGS RUTEN for:', station.name, 'ved posisjon:', position);
-                    });
+                    console.log('🔥 KRITISK PUNKT MARKØR LAGET ved:', nearestStation.name);
+                    
+                    // Beregn batteriprosent ved ankomst til kritisk punkt
+                    const batteryAtCriticalPoint = ((criticalPointDistance - currentDistance) / carRange) * 100;
+                    const remainingBattery = chargePercent - batteryAtCriticalPoint;
                     
                     toast({
-                      title: `🎯 Neste punkt beregnet!`,
-                      description: `Med ${chargePercent}% lading kan du kjøre ${usableRange.toFixed(0)}km. ${stationsAhead.length} stasjoner vist.`,
+                      title: `⚡ Kritisk punkt funnet!`,
+                      description: `Med ${chargePercent}% lading vil batteriet nå ${remainingBattery.toFixed(0)}% ved ${nearestStation.name} (${criticalPointDistance.toFixed(0)}km fra start).`,
                     });
                   }}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
