@@ -530,6 +530,13 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       const liveData = liveStationData[station.id] || station;
       console.log('🔄 Creating new station popup for', station.name, '- Live data:', liveData);
       
+      // Beregn batteriprosent ved ankomst basert på distanse langs ruten
+      const distanceToStation = station.distanceAlongRoute || 0;
+      const currentBatteryPercentage = routeData?.batteryPercentage || 80;
+      const carRange = selectedCar?.range || 450;
+      const batteryUsedPercent = (distanceToStation / carRange) * 100;
+      const arrivalBatteryPercent = Math.max(currentBatteryPercentage - batteryUsedPercent, 0);
+
       const popup = new mapboxgl.Popup({
         maxWidth: '300px',
         closeButton: true,
@@ -545,7 +552,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           </div>
           
           <div style="background: #f8fafc; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
-            <p style="margin: 0; font-size: 13px; color: #0066ff; font-weight: 600;">🔋 Neste kritiske punkt etter lading</p>
+            <p style="margin: 0; font-size: 13px; color: #0066ff; font-weight: 600;">🔋 Batteri ved ankomst: ~${arrivalBatteryPercent.toFixed(0)}%</p>
           </div>
           
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
@@ -1489,7 +1496,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
             </div>
             
             <div style="background: #f8fafc; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
-              <p style="margin: 0; font-size: 13px; color: #0066ff; font-weight: 600;">🔋 Kritisk ladepunkt - batteriet når 10-15% her</p>
+              <p style="margin: 0; font-size: 13px; color: #0066ff; font-weight: 600;">🔋 Batteri ved ankomst: ~10-15%</p>
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
