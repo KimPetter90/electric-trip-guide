@@ -2692,7 +2692,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
 
         <TabsContent value="analysis" className="space-y-4 bg-transparent">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300 animate-float">
+              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300">
                 <div className="flex items-center space-x-2">
                   <Route className="h-5 w-5 text-primary animate-glow-pulse" />
                   <div>
@@ -2704,7 +2704,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                 </div>
               </Card>
 
-              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300 animate-float" style={{ animationDelay: '200ms' }}>
+              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300">
                 <div className="flex items-center space-x-2">
                   <Clock className="h-5 w-5 text-primary animate-glow-pulse" />
                   <div>
@@ -2716,7 +2716,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                 </div>
               </Card>
 
-              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300 animate-float" style={{ animationDelay: '400ms' }}>
+              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300">
                 <div className="flex items-center space-x-2">
                   <DollarSign className="h-5 w-5 text-primary animate-glow-pulse" />
                   <div>
@@ -2726,7 +2726,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                 </div>
               </Card>
 
-              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300 animate-float" style={{ animationDelay: '600ms' }}>
+              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300">
                 <div className="flex items-center space-x-2">
                   <Zap className="h-5 w-5 text-primary animate-glow-pulse" />
                   <div>
@@ -2736,7 +2736,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                 </div>
               </Card>
 
-              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300 animate-float" style={{ animationDelay: '800ms' }}>
+              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300">
                 <div className="flex items-center space-x-2">
                   <Car className="h-5 w-5 text-green-500 animate-glow-pulse" />
                   <div>
@@ -2746,7 +2746,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                 </div>
               </Card>
 
-              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300 animate-float" style={{ animationDelay: '1000ms' }}>
+              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300">
                 <div className="flex items-center space-x-2">
                   <TrendingUp className="h-5 w-5 text-primary animate-glow-pulse" />
                   <div>
