@@ -3587,38 +3587,25 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                      console.log('🔴 Fant', allRedMarkers.length, 'røde markører');
                      
                      if (allRedMarkers.length > 1) {
-                       // Ta den andre røde markøren (ikke den første)
-                       const targetMarker = allRedMarkers[1] as HTMLElement;
-                       
-                       // VIKTIG: Hent Mapbox markør-objektet fra DOM-elementet
-                       const mapboxMarker = (targetMarker as any)._mapboxgl__marker;
-                       let stationCoords: [number, number] = [10.0, 60.0]; // Fallback
-                       
-                       if (mapboxMarker && mapboxMarker.getLngLat) {
-                         const lngLat = mapboxMarker.getLngLat();
-                         stationCoords = [lngLat.lng, lngLat.lat];
-                         console.log('✅ Hentet koordinater fra Mapbox markør:', stationCoords);
-                       } else {
-                         console.log('⚠️ Kunne ikke hente koordinater fra Mapbox markør, bruker optimizedStations');
-                         
-                         // Fallback: Bruk andre stasjon fra optimizedStations
-                         if (optimizedStations && optimizedStations.length > 1) {
-                           const station = optimizedStations[1];
-                           stationCoords = [station.longitude, station.latitude];
-                           console.log('✅ Bruker koordinater fra optimizedStations:', stationCoords, 'for', station.name);
-                         }
-                       }
-                       
-                       const stationId = targetMarker.getAttribute('data-station-id');
+                       // ENKEL LØSNING: Bruk andre stasjon fra optimizedStations direkte
+                       let stationCoords: [number, number] = [10.0, 60.0];
                        let stationName = 'Neste ladestasjon';
                        
-                       // Prøv å finne stasjonsnavn
-                       if (stationId && optimizedStations) {
-                         const station = optimizedStations.find(s => s.id === stationId);
-                         if (station) {
-                           stationName = station.name;
-                         }
+                       if (optimizedStations && optimizedStations.length > 1) {
+                         // Bruk andre stasjon fra listen
+                         const secondStation = optimizedStations[1];
+                         stationCoords = [secondStation.longitude, secondStation.latitude];
+                         stationName = secondStation.name;
+                         console.log('🔵 BRUKER ANDRE STASJON:', stationName, 'på koordinater:', stationCoords);
+                       } else if (optimizedStations && optimizedStations.length > 0) {
+                         // Fallback til første stasjon hvis det bare er en
+                         const firstStation = optimizedStations[0];
+                         stationCoords = [firstStation.longitude + 0.1, firstStation.latitude + 0.1]; // Litt offset
+                         stationName = firstStation.name + ' (backup)';
+                         console.log('🔵 BRUKER FØRSTE STASJON MED OFFSET:', stationName, 'på koordinater:', stationCoords);
                        }
+                       
+                       const targetMarker = allRedMarkers[1] as HTMLElement;
                        
                        // Fjern den røde markøren
                        targetMarker.remove();
