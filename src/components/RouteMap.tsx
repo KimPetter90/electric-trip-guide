@@ -448,19 +448,21 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       chargePercent: chargePercent + '%' 
     });
     
-    // REALISTISKE BEREGNINGER BASERT PÅ PROSENT
+    // JUSTERTE REALISTISKE BEREGNINGER
     const forbrukPer100km = 18; // kWh/100km
     const totalEnergi = (routeDistanceKm / 100) * forbrukPer100km;
     const ladepris = 2.5; // kr/kWh
-    const kostnadPerStasjon = Math.round(totalEnergi * ladepris * (chargePercent / 100));
     
-    // Antall stopp basert på rute og bil
+    // MINDRE kostnad - kun den energien som faktisk brukes på ladingen
+    const kostnadPerStasjon = Math.round(totalEnergi * ladepris * (chargePercent / 100) * 0.3); // 30% av beregning
+    
+    // Færre stopp - mer realistisk
     const carRange = selectedCar?.range || 441;
-    const antallStopp = Math.ceil(routeDistanceKm / (carRange * 0.8));
+    const antallStopp = Math.max(1, Math.ceil(routeDistanceKm / (carRange * 0.9))); // 90% utnyttelse
     const totalKostnad = kostnadPerStasjon * antallStopp;
     
-    // Ladetid basert på prosent (mer % = lengre tid)
-    const minutterPerStopp = Math.round(15 + (chargePercent * 0.5)); // 15-65 min
+    // KORTERE ladetid - mer realistisk
+    const minutterPerStopp = Math.round(20 + (chargePercent * 0.3)); // 20-50 min
     const totalLadetid = antallStopp * minutterPerStopp;
     
     console.log('🔢 BEREGNING updateAnalysisWithCharging:', {
@@ -3207,17 +3209,21 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                       const newChargingStops = Math.ceil(routeDistanceKm / 350);
                       const newAverageCharge = 45; // litt mindre lading per stopp
                       const carCapacity = selectedCar.batteryCapacity || 75;
-                      // SAMME REALISTISKE BEREGNINGER SOM updateAnalysisWithCharging
+                      // SAMME JUSTERTE BEREGNINGER SOM updateAnalysisWithCharging
                       const forbrukPer100km = 18; // kWh/100km
                       const totalEnergi = (routeDistanceKm / 100) * forbrukPer100km;
                       const ladepris = 2.5; // kr/kWh
-                      const kostnadPerStasjon = Math.round(totalEnergi * ladepris * (chargePercent / 100));
                       
+                      // MINDRE kostnad - kun den energien som faktisk brukes på ladingen
+                      const kostnadPerStasjon = Math.round(totalEnergi * ladepris * (chargePercent / 100) * 0.3); // 30% av beregning
+                      
+                      // Færre stopp - mer realistisk
                       const carRange = selectedCar?.range || 441;
-                      const antallStopp = Math.ceil(routeDistanceKm / (carRange * 0.8));
+                      const antallStopp = Math.max(1, Math.ceil(routeDistanceKm / (carRange * 0.9))); // 90% utnyttelse
                       const totalKostnad = kostnadPerStasjon * antallStopp;
                       
-                      const minutterPerStopp = Math.round(15 + (chargePercent * 0.5)); // 15-65 min
+                      // KORTERE ladetid - mer realistisk
+                      const minutterPerStopp = Math.round(20 + (chargePercent * 0.3)); // 20-50 min
                       const totalLadetid = antallStopp * minutterPerStopp;
                       
                       console.log('🔢 BEREGNING ANDRE FUNKSJON:', {
