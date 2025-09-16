@@ -1466,12 +1466,11 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
           {carsByBrand[selectedBrand].map((car, index) => (
             <Card
               key={car.id}
-              className={`p-4 cursor-pointer transition-all duration-300 animate-float ${
+              className={`p-4 cursor-pointer transition-all duration-300 ${
                 selectedCar?.id === car.id 
                   ? 'ring-2 ring-primary glass-card neon-glow border-primary/40 shadow-lg' 
                   : 'glass-card border-border hover:cyber-glow hover:border-primary/30 hover:shadow-md'
               }`}
-              style={{ animationDelay: `${index * 100}ms` }}
               onClick={() => {
                 onCarSelect(car);
                 // Scroll til toppen av siden når bil er valgt
