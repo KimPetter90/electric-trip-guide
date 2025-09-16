@@ -350,6 +350,37 @@ function findStationsAtDistance(
   return sortedStations;
 }
 
+// Cache for værdata for å unngå dupliserte API-kall
+const weatherCache = new Map<string, { data: any, timestamp: number }>();
+const WEATHER_CACHE_DURATION = 10 * 60 * 1000; // 10 minutter
+
+// Optimalisert værdata-henting med cache
+const fetchWeatherData = async (startCoords: [number, number], endCoords: [number, number]) => {
+  const cacheKey = `${startCoords[0]}-${startCoords[1]}-${endCoords[0]}-${endCoords[1]}`;
+  const cached = weatherCache.get(cacheKey);
+  
+  if (cached && (Date.now() - cached.timestamp) < WEATHER_CACHE_DURATION) {
+    console.log('☁️ Bruker cached værdata');
+    return cached.data;
+  }
+  
+  console.log('🌤️ Henter ny værdata...');
+  const { data, error } = await supabase.functions.invoke('weather-service', {
+    body: { 
+      startLat: startCoords[1], 
+      startLng: startCoords[0], 
+      endLat: endCoords[1], 
+      endLng: endCoords[0] 
+    }
+  });
+  
+  if (error) throw error;
+  
+  // Lagre i cache
+  weatherCache.set(cacheKey, { data, timestamp: Date.now() });
+  return data;
+};
+
 const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, routeTrigger, selectedRouteId, onChargingStationUpdate }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -521,6 +552,56 @@ const checkIfShouldGoViaTrondheim = (startCoords: [number, number], endCoords: [
   return shouldUseVia;
 };
 
+// Rask Mapbox Directions API funksjon for parallellisering
+const fetchDirectionsData = async (startCoords: [number, number], endCoords: [number, number], routeType: string) => {
+  // Sjekk om vi trenger å gå via Trondheim for lange ruter nord-sør
+  const waypoints = [startCoords];
+  
+  // Bestem om vi skal gå via Trondheim
+  const shouldGoViaTrondheim = checkIfShouldGoViaTrondheim(startCoords, endCoords);
+  if (shouldGoViaTrondheim) {
+    console.log('🛣️ Legger til Trondheim som via-punkt for optimal rute gjennom Norge');
+    waypoints.push(cityCoordinates['trondheim']);
+  }
+  
+  waypoints.push(endCoords);
+  const coordinates = waypoints.map(coord => coord.join(',')).join(';');
+  
+  // Velg riktig Mapbox profil og parametre basert på rutetype
+  let mapboxProfile = 'driving';
+  let routeParams = `geometries=geojson&access_token=${accessToken}&alternatives=true&continue_straight=false`;
+  
+  switch (routeType) {
+    case 'fastest':
+      mapboxProfile = 'driving-traffic'; // Raskeste med trafikk
+      routeParams += '&steps=true&annotations=duration&overview=full';
+      break;
+    case 'shortest':
+      mapboxProfile = 'driving'; // Standard driving
+      routeParams += '&steps=true&annotations=distance&overview=full&exclude=ferry'; // Unngå ferge for kortere rute
+      break;
+    case 'eco':
+      mapboxProfile = 'driving'; // Eco-vennlig
+      routeParams += '&steps=true&annotations=duration,distance&overview=full&avoid_speed_limits=true'; // Unngå høye hastigheter
+      break;
+    default:
+      mapboxProfile = 'driving';
+      routeParams += '&steps=true&alternatives=true';
+  }
+  
+  const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/${mapboxProfile}/${coordinates}?${routeParams}`;
+  console.log('🚀 Rask Mapbox API-kall for', routeType);
+  
+  const directionsResponse = await fetch(directionsUrl);
+  const directionsData = await directionsResponse.json();
+  
+  if (directionsResponse.status !== 200) {
+    throw new Error(`Mapbox API feil: ${directionsData.message || directionsData.error || 'Ukjent feil'}`);
+  }
+  
+  return { ...directionsData, profile: mapboxProfile };
+};
+
 // Oppdater kart med rute
   const updateMapRoute = async (routeType: string = 'fastest') => {
     if (!map.current || !accessToken || !routeData.from || !routeData.to) {
@@ -535,6 +616,7 @@ const checkIfShouldGoViaTrondheim = (startCoords: [number, number], endCoords: [
 
     setLoading(true);
     setError(null);
+    console.log('⚡ RASK PARALLELL RUTEPLANLEGGING STARTET!');
 
     try {
       console.log('Henter koordinater for start og slutt...');
@@ -548,15 +630,16 @@ const checkIfShouldGoViaTrondheim = (startCoords: [number, number], endCoords: [
       console.log(`Start: ${routeData.from} -> ${startCoords}`);
       console.log(`Slutt: ${routeData.to} -> ${endCoords}`);
 
-      // Hent værdata før ruteberegning
-      console.log('🌤️ Henter værdata...');
-      const weatherData = await fetchWeatherData(startCoords, endCoords);
-      console.log('✅ Værdata hentet:', weatherData);
-
-      // Få rute fra Mapbox Directions API med forskjellige profiler
-      console.log('Henter rute fra Mapbox Directions API...');
-      console.log('🔍 RouteAnalysis status:', { routeAnalysis, hasData: !!routeAnalysis });
-      console.log('🎯 Valgt rutetype:', routeType);
+      // PARALLELLISERE API-KALL for å spare tid
+      console.log('🚀 Starter parallelle API-kall...');
+      const [weatherData, directionsData] = await Promise.all([
+        // Hent værdata parallelt
+        fetchWeatherData(startCoords, endCoords),
+        // Hent rute parallelt
+        fetchDirectionsData(startCoords, endCoords, routeType)
+      ]);
+      
+      console.log('✅ Alle API-kall fullført parallelt!');
       
       // Sjekk om vi trenger å gå via Trondheim for lange ruter nord-sør
       const waypoints = [startCoords];
@@ -595,32 +678,21 @@ const checkIfShouldGoViaTrondheim = (startCoords: [number, number], endCoords: [
       
       console.log('🎯 Rutetype:', routeType, '| Profil:', mapboxProfile);
       
-      const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/${mapboxProfile}/${coordinates}?${routeParams}`;
-      console.log('🇳🇴 API URL for', routeType + ':', directionsUrl);
+      console.log('🎯 Rutetype:', routeType, '| Profil:', directionsData.profile);
       
-      const directionsResponse = await fetch(directionsUrl);
-      
-      console.log('📞 Mapbox Response Status:', directionsResponse.status);
-      console.log('📞 Mapbox Response OK:', directionsResponse.ok);
-      
-      const directionsData = await directionsResponse.json();
+      console.log('📞 Mapbox Response Status:', 200);
+      console.log('📞 Mapbox Response OK:', true);
       
       console.log('📍 Mapbox API Response:', {
-        status: directionsResponse.status,
-        ok: directionsResponse.ok,
+        status: 200,
+        ok: true,
         routes: directionsData.routes?.length || 0,
-        error: directionsData.error || 'ingen feil',
-        message: directionsData.message || 'ingen melding'
+        error: 'ingen feil',
+        message: 'parallell API-kall'
       });
-      
-      if (directionsResponse.status !== 200) {
-        console.error('❌ Mapbox API feil:', directionsData);
-        throw new Error(`Mapbox API feil: ${directionsData.message || directionsData.error || 'Ukjent feil'}`);
-      }
 
       if (!directionsData.routes || directionsData.routes.length === 0) {
-        console.log('❌ Ingen ruter returnert fra Mapbox API');
-        console.log('📊 Full Response data:', directionsData);
+        console.log('❌ Ingen ruter returnert fra parallell Mapbox API');
         throw new Error('Ingen rute funnet mellom de valgte punktene');
       }
 
@@ -1481,49 +1553,7 @@ const checkIfShouldGoViaTrondheim = (startCoords: [number, number], endCoords: [
     };
   };
 
-  // Hent værdata
-  const fetchWeatherData = async (startCoords: [number, number], endCoords: [number, number]): Promise<WeatherData> => {
-    try {
-      const { data, error } = await supabase.functions.invoke('weather-service', {
-        body: {
-          startLat: startCoords[1],
-          startLng: startCoords[0],
-          endLat: endCoords[1],
-          endLng: endCoords[0]
-        }
-      });
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Feil ved henting av værdata:', error);
-      // Returner dummy værdata
-      return {
-        startWeather: {
-          temperature: 15,
-          windSpeed: 10,
-          windDirection: 180,
-          humidity: 70,
-          weatherCondition: "Clear",
-          visibility: 10
-        },
-        endWeather: {
-          temperature: 15,
-          windSpeed: 10,
-          windDirection: 180,
-          humidity: 70,
-          weatherCondition: "Clear",
-          visibility: 10
-        },
-        averageConditions: {
-          temperature: 15,
-          windSpeed: 10,
-          humidity: 70
-        },
-        rangeFactor: 1.0
-      };
-    }
-  };
+  // Fjernet duplikat weatherData funksjon - bruker den optimaliserte versjonen med cache
 
   // Effekt for initialisering av kart
   useEffect(() => {
