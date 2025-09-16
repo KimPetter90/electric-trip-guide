@@ -1178,18 +1178,30 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           `;
           el.innerHTML = '⚡';
 
-          const popup = new mapboxgl.Popup().setHTML(`
-            <div style="font-family: Arial, sans-serif; color: #333;">
-              <h4 style="margin: 0 0 8px 0; color: #0066ff;"><strong>⚡ KRITISK LADESTASJON #${index + 1}: ${station.name}</strong></h4>
-              <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
-              <p style="margin: 4px 0; color: #dc2626;"><strong>🔋 NØDVENDIG VED 10-15% BATTERI!</strong></p>
-              <p style="margin: 4px 0; color: #333;">🛣️ <strong>Avstand til rute:</strong> ${(station as any).distanceToRoute.toFixed(1)} km</p>
-              <p style="margin: 4px 0; color: #888;"><strong>🚛 Inkluderer hengervekt:</strong> ${routeData.trailerWeight}kg</p>
-              <p style="margin: 4px 0; color: #0066ff;"><strong>⭐ Effektivitetsscore:</strong> ${station.efficiencyScore.toFixed(2)}</p>
-              <p style="margin: 4px 0; color: #0066ff;"><strong>🔵 Optimal valg for ruten!</strong></p>
-              <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
-              <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
-              <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${station.available}/${station.total} ladepunkter</p>
+          const popup = new mapboxgl.Popup({
+            maxWidth: '280px',
+            className: 'charging-station-popup'
+          }).setHTML(`
+            <div style="font-family: 'Inter', sans-serif; padding: 8px; line-height: 1.4;">
+              <div style="background: linear-gradient(135deg, #0066ff, #00aaff); color: white; padding: 8px; margin: -8px -8px 8px -8px; border-radius: 6px 6px 0 0;">
+                <h4 style="margin: 0; font-size: 14px; font-weight: 600;">⚡ ${station.name}</h4>
+                <p style="margin: 2px 0 0 0; font-size: 12px; opacity: 0.9;">📍 ${station.location}</p>
+              </div>
+              <div style="space-y: 6px;">
+                <div style="background: #f0f8ff; padding: 6px; border-radius: 4px; margin: 6px 0;">
+                  <p style="margin: 0; font-size: 12px; color: #0066ff; font-weight: 600;">⚡ Kritisk ladestasjon</p>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+                  <div>
+                    <span style="color: #666;">⚡ Effekt:</span><br>
+                    <strong style="color: #333;">${station.power}</strong>
+                  </div>
+                  <div>
+                    <span style="color: #666;">💰 Pris:</span><br>
+                    <strong style="color: #333;">${station.cost} kr/kWh</strong>
+                  </div>
+                </div>
+              </div>
             </div>
           `);
 
