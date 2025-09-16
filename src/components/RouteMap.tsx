@@ -2608,11 +2608,14 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                     min={chargingModal.arrivalBattery}
                     max="100"
                     value={chargePercentInput}
-                    onChange={(e) => setChargePercentInput(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-center text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    onChange={(e) => {
+                      console.log('📝 Input changed to:', e.target.value);
+                      setChargePercentInput(e.target.value);
+                    }}
+                    className="flex-1 px-3 py-2 border-2 border-blue-300 rounded-md text-center text-xl font-bold text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="80"
                   />
-                  <span className="text-lg font-semibold text-gray-600">%</span>
+                  <span className="text-xl font-bold text-gray-900">%</span>
                 </div>
               </div>
 
@@ -2625,11 +2628,24 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                   Avbryt
                 </Button>
                 <Button 
-                  onClick={() => {
-                    console.log('🎯 Beregn neste punkt knapp klikket');
-                    calculateNextPoint();
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🎯 Beregn neste punkt knapp klikket - event trigget!');
+                    console.log('📊 Current state:', { chargingModal, chargePercentInput });
+                    try {
+                      calculateNextPoint();
+                    } catch (error) {
+                      console.error('❌ Error in calculateNextPoint:', error);
+                      toast({
+                        title: "❌ Feil oppstod",
+                        description: "En teknisk feil oppstod. Sjekk konsollen for detaljer.",
+                        variant: "destructive"
+                      });
+                    }
                   }}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                 >
                   🎯 Beregn neste punkt
                 </Button>
