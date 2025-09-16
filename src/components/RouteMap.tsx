@@ -3187,17 +3187,17 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                       const newChargingStops = Math.ceil(routeDistanceKm / 350);
                       const newAverageCharge = 45; // litt mindre lading per stopp
                       const carCapacity = selectedCar.batteryCapacity || 75;
-                      const newEnergyCharged = newChargingStops * (newAverageCharge / 100) * carCapacity;
-                      const newCost = Math.round(newEnergyCharged * 3.5); // Lavere pris: 3.5 kr/kWh
-                      const newChargingTime = newChargingStops * 28; // 28 min per stopp
+                      // BRUKER SAMME FASTE VERDIER SOM updateAnalysisWithCharging
+                      const testKostnad = 200; // Fast 200 kr for testing
+                      const testLadetid = 45; // Fast 45 min for testing
                       
                       const updatedAnalysis = {
                         totalDistance: routeDistanceKm,
-                        totalTime: routeDurationHours + (newChargingTime / 60),
-                        totalCost: newCost,
-                        chargingTime: newChargingTime,
+                        totalTime: routeDurationHours + (testLadetid / 60),
+                        totalCost: testKostnad, // FAST 200 KR
+                        chargingTime: testLadetid, // FAST 45 MIN
                         co2Saved: Math.round(routeDistanceKm * 0.13),
-                        efficiency: chargePercent > 60 ? 0.89 : 0.84,
+                        efficiency: 0.88,
                         weather: undefined
                       };
                       
@@ -3206,7 +3206,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                       
                       toast({
                         title: "✅ Analyse oppdatert",
-                        description: `Ny kostnad: ${newCost} kr med ${chargePercent}% lading`,
+                        description: `Ny kostnad: ${testKostnad} kr med ${chargePercent}% lading`,
                         variant: "default"
                       });
                     }
