@@ -3462,16 +3462,76 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                 </Button>
                 <Button 
                   type="button"
-                  onClick={() => {
-                    console.log('🎯 Beregn neste punkt knapp klikket!');
-                    
-                    const chargePercent = parseInt(chargePercentInput);
-                    const currentDistance = chargingModal.distance;
-                    
-                    // Lukk modalen
-                    setChargingModal({ isOpen: false, stationId: '', stationName: '', distance: 0, arrivalBattery: 0 });
-                    
-                    if (isNaN(chargePercent) || chargePercent < 10 || chargePercent > 100) {
+                   onClick={() => {
+                     console.log('🎯 Beregn neste punkt knapp klikket!');
+                     
+                     // ENKEL TEST: Finn den andre røde markøren og gjør den blå med en gang
+                     const allRedMarkers = document.querySelectorAll('.charging-station-marker');
+                     console.log('🔴 FUNNET', allRedMarkers.length, 'RØDE MARKØRER');
+                     
+                     if (allRedMarkers.length > 1) {
+                       console.log('🎯 KONVERTERER ANDRE RØDE MARKØR TIL BLÅ NÅ!');
+                       
+                       const secondRedMarker = allRedMarkers[1] as HTMLElement;
+                       const markerPosition = secondRedMarker.getBoundingClientRect();
+                       console.log('🔴 Andre røde markør posisjon:', markerPosition);
+                       
+                       // Fjern den røde markøren
+                       secondRedMarker.remove();
+                       console.log('🔴❌ FJERNET ANDRE RØDE MARKØR');
+                       
+                       // Lag blå markør på samme koordinater som den andre røde
+                       if (optimizedStations && optimizedStations.length > 1) {
+                         const station = optimizedStations[1];
+                         console.log('🔵 LAGER BLÅ MARKØR FOR:', station.name);
+                         
+                         const blueEl = document.createElement('div');
+                         blueEl.style.cssText = `
+                           background: linear-gradient(135deg, #0066ff, #00aaff);
+                           width: 40px;
+                           height: 40px;
+                           border-radius: 50%;
+                           border: 4px solid white;
+                           cursor: pointer;
+                           display: flex;
+                           align-items: center;
+                           justify-content: center;
+                           color: white;
+                           font-weight: bold;
+                           font-size: 20px;
+                           z-index: 999999 !important;
+                           position: relative;
+                           box-shadow: 0 0 40px rgba(0, 102, 255, 1);
+                           animation: pulse 1s infinite;
+                         `;
+                         blueEl.innerHTML = '⚡';
+                         
+                         new mapboxgl.Marker(blueEl)
+                           .setLngLat([station.longitude, station.latitude])
+                           .addTo(map.current!);
+                         
+                         console.log('✅✅✅ BLÅ MARKØR LAGT TIL SUCCESSFULLY!');
+                         
+                         toast({
+                           title: `🔵 Neste ladestasjon markert!`,
+                           description: `${station.name} er nå markert som neste kritiske ladestasjon!`,
+                         });
+                       }
+                     } else {
+                       console.log('❌ Ikke nok røde markører funnet');
+                       toast({
+                         title: `❌ Ingen flere stasjoner`,
+                         description: `Ikke nok røde markører å konvertere.`,
+                       });
+                     }
+                     
+                     const chargePercent = parseInt(chargePercentInput);
+                     const currentDistance = chargingModal.distance;
+                     
+                     // Lukk modalen
+                     setChargingModal({ isOpen: false, stationId: '', stationName: '', distance: 0, arrivalBattery: 0 });
+                     
+                     if (isNaN(chargePercent) || chargePercent < 10 || chargePercent > 100) {
                       toast({
                         title: "❌ Ugyldig batteriprosent",
                         description: "Vennligst angi et tall mellom 10 og 100.",
