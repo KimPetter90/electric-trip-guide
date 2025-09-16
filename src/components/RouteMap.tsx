@@ -526,8 +526,9 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         setShowChargingDialog(true);
       });
 
-      // Hent live data for stasjonen
+      // Hent live data for stasjonen, fallback til original data
       const liveData = liveStationData[station.id] || station;
+      console.log('🔄 New station popup data for', station.name, '- Live:', liveData, 'Original:', station);
       
       const popup = new mapboxgl.Popup({
         maxWidth: '280px',
@@ -631,24 +632,31 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
               cost: Number(payload.new.cost)
             };
             
+            console.log('🔄 Live update received:', updatedStation);
+            console.log('🔄 Current live data before update:', liveStationData);
+            
             // Oppdater live data
-            setLiveStationData(prev => ({
-              ...prev,
-              [updatedStation.id]: updatedStation
-            }));
+            setLiveStationData(prev => {
+              const newData = {
+                ...prev,
+                [updatedStation.id]: updatedStation
+              };
+              console.log('🔄 New live data after update:', newData);
+              return newData;
+            });
             
             // Oppdater hovedlisten med ladestasjoner
             setChargingStations(prev => 
               prev.map(station => 
-                station.id === updatedStation.id ? updatedStation : station
+                station.id === updatedStation.id ? { ...station, ...updatedStation } : station
               )
             );
             
-            console.log('✅ Updated station:', updatedStation.name, 'Available:', updatedStation.available);
+            console.log('✅ Updated station live data:', updatedStation.name, 'Available:', updatedStation.available, 'Cost:', updatedStation.cost, 'Power:', updatedStation.power);
             
             toast({
               title: "🔄 Live oppdatering",
-              description: `${updatedStation.name}: ${updatedStation.available}/${updatedStation.total} ledige plasser`,
+              description: `${updatedStation.name}: ${updatedStation.available}/${updatedStation.total} ledige, ${updatedStation.cost} kr/kWh`,
             });
           }
         }
@@ -1248,8 +1256,9 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           `;
           el.innerHTML = '⚡';
 
-          // Hent live data for stasjonen
+          // Hent live data for stasjonen, fallback til original data
           const liveData = liveStationData[station.id] || station;
+          console.log('🔄 Popup data for', station.name, '- Live:', liveData, 'Original:', station);
           
           const popup = new mapboxgl.Popup({
             maxWidth: '280px',
@@ -1440,8 +1449,9 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           setShowChargingDialog(true);
         });
 
-        // Hent live data for stasjonen
+        // Hent live data for stasjonen, fallback til original data  
         const liveData = liveStationData[station.id] || station;
+        console.log('🔄 Progressive popup data for', station.name, '- Live:', liveData, 'Original:', station);
         
         const popup = new mapboxgl.Popup({
           maxWidth: '280px',
@@ -1869,18 +1879,26 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
             onClick={async () => {
               try {
                 console.log('🔄 Triggering live station updates...');
+                console.log('🔄 Current liveStationData before update:', liveStationData);
+                
                 const { data, error } = await supabase.functions.invoke('update-charging-stations');
-                if (error) throw error;
-                console.log('✅ Live updates triggered:', data);
+                
+                if (error) {
+                  console.error('❌ Edge function error:', error);
+                  throw error;
+                }
+                
+                console.log('✅ Live updates triggered successfully:', data);
+                
                 toast({
-                  title: "🔄 Live oppdateringer",
-                  description: "Ladestasjondata oppdateres nå...",
+                  title: "🔄 Live oppdateringer startet",
+                  description: "Ladestasjondata oppdateres nå. Se popup-ene for endringer!",
                 });
               } catch (error) {
                 console.error('❌ Error triggering updates:', error);
                 toast({
                   title: "❌ Feil",
-                  description: "Kunne ikke starte live oppdateringer",
+                  description: `Kunne ikke starte live oppdateringer: ${error.message}`,
                   variant: "destructive"
                 });
               }
