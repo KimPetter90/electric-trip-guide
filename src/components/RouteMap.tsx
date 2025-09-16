@@ -745,14 +745,41 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
     if (!routeData || !selectedCar) {
       console.log('❌ Missing routeData or selectedCar');
+      toast({
+        title: "❌ Mangler rutedata",
+        description: "Vennligst planlegg en rute først.",
+        variant: "destructive"
+      });
       return;
     }
+
+    // Finn stasjonen i listen for å få korrekt distanse
+    const station = chargingStations.find(s => s.id === chargingModal.stationId);
+    if (!station || !station.distanceAlongRoute) {
+      console.log('❌ Station not found or missing distance data');
+      toast({
+        title: "❌ Feil med stasjon",
+        description: "Kunne ikke finne stasjonsdata. Prøv å planlegge ruten på nytt.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const currentDistance = station.distanceAlongRoute;
 
     // Beregn hvor langt bilen kan kjøre med ny ladeprosent
     const carRange = selectedCar.range;
     const criticalLevel = 10; // Når batteriet når 10%
     const usableRange = (carRange * (chargePercent - criticalLevel)) / 100;
-    const nextCriticalDistance = chargingModal.distance + usableRange;
+    const nextCriticalDistance = currentDistance + usableRange;
+
+    console.log('🎯 Beregning details:', {
+      currentDistance,
+      chargePercent,
+      carRange,
+      usableRange,
+      nextCriticalDistance
+    });
 
     console.log('🎯 Beregner neste kritiske punkt:', {
       stationId: chargingModal.stationId,
