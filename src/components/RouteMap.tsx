@@ -2497,6 +2497,78 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           setShowChargingButton(true);
           console.log('🔵 DEBUG: Satte showChargingButton til true');
           
+          // AUTOMATISK: Sjekk batteriprosent og lag blå markør for kritisk stasjon
+          const currentBatteryPercent = routeData.batteryPercentage;
+          console.log('🔋 Nåværende batteriprosent:', currentBatteryPercent + '%');
+          
+          if (currentBatteryPercent <= 15) {
+            console.log('⚠️ KRITISK BATTERINIVÅ DETEKTERT! Lager blå markør...');
+            
+            // Finn nærmeste stasjon til kritisk punkt
+            const carRange = selectedCar?.range || 441;
+            const usableRange = (carRange * currentBatteryPercent) / 100;
+            const criticalDistance = usableRange * 0.85; // 85% av tilgjengelig rekkevidde
+            
+            console.log('🎯 Kritisk avstand beregnet:', criticalDistance.toFixed(1), 'km');
+            
+            // Finn nærmeste stasjon langs ruten til dette punktet
+            let nearestStation = null;
+            let smallestDistance = Infinity;
+            
+            optimized.forEach(station => {
+              if (station.distanceAlongRoute && Math.abs(station.distanceAlongRoute - criticalDistance) < smallestDistance) {
+                smallestDistance = Math.abs(station.distanceAlongRoute - criticalDistance);
+                nearestStation = station;
+              }
+            });
+            
+            if (nearestStation) {
+              console.log('🔵 AUTOMATISK: Lager blå markør for kritisk stasjon:', nearestStation.name);
+              
+              // Fjern eksisterende rød markør på samme posisjon
+              const existingMarkers = document.querySelectorAll('.charging-station-marker');
+              existingMarkers.forEach(marker => {
+                const markerElement = marker as HTMLElement;
+                const stationId = markerElement.getAttribute('data-station-id');
+                if (stationId === nearestStation!.id) {
+                  console.log('🔴➡️🔵 FJERNER RØD MARKØR for å erstatte med blå:', nearestStation!.name);
+                  markerElement.remove();
+                }
+              });
+              
+              // Lag ny blå markør
+              const blueEl = document.createElement('div');
+              blueEl.className = 'blue-critical-marker';
+              blueEl.setAttribute('data-station-id', nearestStation.id);
+              blueEl.style.cssText = `
+                background: linear-gradient(135deg, #0066ff, #00aaff);
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                border: 3px solid white;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: bold;
+                font-size: 10px;
+                z-index: 999999 !important;
+                position: relative;
+                box-shadow: 0 0 15px rgba(0, 102, 255, 0.8);
+                animation: pulse 2s infinite;
+              `;
+              blueEl.innerHTML = '⚡';
+              
+              const blueMarker = new mapboxgl.Marker(blueEl)
+                .setLngLat([nearestStation.longitude, nearestStation.latitude])
+                .addTo(map.current!);
+              
+              console.log('🔵 BLÅ MARKØR AUTOMATISK LAGT TIL for:', nearestStation.name);
+              sendStationToChargingMap(nearestStation);
+            }
+          }
+          
           // FJERNET: Sender ikke automatisk til parent - kun når blå markør klikkes
           console.log('🔵 DEBUG: Venter på blå markør klikk for å sende til parent');
         } else {
