@@ -1004,13 +1004,16 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       <div className="mb-4">
         <Button 
           onClick={() => {
+            alert('🚨 KNAPP FUNGERER! Debug button clicked!');
             console.log('🚨 FORCE INIT BUTTON CLICKED');
+            console.log('🚨 accessToken:', !!accessToken);
+            console.log('🚨 mapContainer:', !!mapContainer.current);
             initializeMap();
           }}
           variant="destructive"
           className="w-full"
         >
-          🚨 FORCE INIT KART (DEBUG)
+          🚨 TEST KNAPP (Trykk meg!)
         </Button>
       </div>
 
