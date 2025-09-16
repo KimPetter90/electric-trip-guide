@@ -52,12 +52,12 @@ const norwegianCities = [
   "berlevåg", "tana", "nesseby", "porsanger", "karasjok", "kautokeino",
   "åmli", "åseral", "audnedal", "farsund", "flekkefjord", "hægebostad",
   "kvinesdal", "lindesnes", "lyngdal", "mandal", "marnardal", "sirdal",
-  "songdalen", "søgne", "vennesla", "åsnes", "vågan", "våler",
+  "songdalen", "søgne", "vennesla", "åsnes", "våler", // Fjernet duplikat: vågan finnes i linje 45 og som vågan (lofoten) senere
   "eidsvoll", "gjerdrum", "hurdal", "nannestad", "nes", "oppegård",
   "ski", "sørum", "skedsmo", "rælingen", "lørenskog", "ås",
   "frogn", "vestby", "enebakk", "aurskog-høland", "rømskog", "marker",
   "spydeberg", "askim", "eidsberg", "skiptvet", "rakkestad", "råde",
-  "rygge", "våler", "hobøl", "aremark", "halden", "berg", "tynset",
+  "rygge", "våler", "hobøl", "aremark", "halden", "tynset", // Fjernet duplikat: berg finnes i linje 49 og som berg (troms) senere
   "alvdal", "folldal", "os", "dovre", "lesja", "skjåk", "lom",
   "vågå", "sel", "nord-fron", "sør-fron", "ringebu", "øyer",
   "gausdal", "lillehammer", "gjøvik", "østre toten", "vestre toten",
@@ -106,7 +106,7 @@ const norwegianCities = [
   "seljord", "kviteseid", "vrådal", "dalen", "åmli", "vegårshei",
   "gjerstad", "kragerø", "portør", "stabbestad", "jomfruland", "langøy",
   "hvaler", "skjeberg", "ørje", "magnor", "prestebakke", "tistedal",
-  "berg", "sponvika", "skulerud", "rødenes", "kornsjø", "ed",
+  "sponvika", "skulerud", "rødenes", "kornsjø", "ed", // Fjernet duplikat: berg finnes allerede
   
   // Småbygder - Agder
   "mandal", "spangereid", "vigeland", "åseral", "bygland", "valle",
@@ -180,8 +180,8 @@ const norwegianCities = [
   "gravdal", "ramberg", "flakstad", "nusfjord", "reine", "sakrisøy",
   "hamnøy", "tind", "å", "moskenes", "sørvågen", "værøy", "røst",
   "myre", "stokmarknes", "melbu", "sortland", "andenes", "bleik",
-  "nyksund", "vesterålen", "risøyhamn", "andøy", "dverberg", "bø",
-  "øksnes", "langenes", "hadsel", "stokmarknes", "melbu", "fiskebøl",
+  "nyksund", "vesterålen", "risøyhamn", "andøy", "dverberg", "øksnes", // Fjernet duplikat: bø finnes allerede flere steder
+  "langenes", "hadsel", "fiskebøl", // Fjernet duplikater: stokmarknes og melbu finnes allerede
   
   // Småbygder - Troms
   "tromsø", "kvaløysletta", "sommarøy", "ersfjord", "kroken", "tromvik",
@@ -196,9 +196,9 @@ const norwegianCities = [
   
   // Småbygder - Finnmark
   "lakselv", "ifjord", "børselv", "stabbursdalen", "karigasniemi", "utsjoki",
-  "kvalsvik, nerlandsøy", "kvålsvik, lyngdal", "kvalsvik", "kvålsvik", // Lagt til med og uten stedsinformasjon
-  "nuorgam", "polmak", "tana bru", "sirma", "deanu", "karasjok",
-  "máze", "kautokeino", "guovdageaidnu", "alta", "kåfjord", "kvænangen",
+  // Fjernet duplikater: "kvalsvik, nerlandsøy" finnes allerede som "kvalsvik (nerlandsøy)" under
+  "nuorgam", "sirma", "deanu", // Fjernet duplikater: polmak, tana bru, karasjok, máze, kautokeino finnes allerede
+  "guovdageaidnu", "kåfjord", "kvænangen", // Fjernet duplikater: alta finnes allerede
   "storfjord", "lyngen", "balsfjord", "målselv", "bardu", "gratangen",
   "ibestad", "harstad", "kvæfjord", "sortland", "andøy", "vesterålen",
   "lofoten", "flakstad", "moskenes", "vestvågøy", "vågan", "austvågøy",
