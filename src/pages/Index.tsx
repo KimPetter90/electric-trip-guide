@@ -237,6 +237,17 @@ function Index() {
         'mandal': 43,
         'flekkefjord': 97,
         'grimstad': 44
+      },
+      'ålesund': {
+        'oslo': 651,
+        'bergen': 381,
+        'trondheim': 300,
+        'kristiansand': 832,
+        'stavanger': 613,
+        'molde': 70,
+        'kristiansund': 147,
+        'florø': 231,
+        'tromsø': 823
       }
     };
 
