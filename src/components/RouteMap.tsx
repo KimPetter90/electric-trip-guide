@@ -3148,9 +3148,9 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                     `;
                     el.innerHTML = '⚡';
                     
-                    console.log('🔵 Legger til blå markør på koordinater:', [nearestStation.lng, nearestStation.lat]);
+                    console.log('🔵 Legger til blå markør på koordinater:', [nearestStation.longitude, nearestStation.latitude]);
                     const marker = new mapboxgl.Marker(el)
-                      .setLngLat([nearestStation.lng, nearestStation.lat])
+                      .setLngLat([nearestStation.longitude, nearestStation.latitude])
                       .addTo(map.current!);
                     
                     console.log('🔵 BLÅ MARKØR LAGT TIL SUCCESSFULLY for:', nearestStation.name);
