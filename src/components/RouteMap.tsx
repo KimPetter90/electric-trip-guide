@@ -610,24 +610,16 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       clearTimeout(routeUpdateTimeoutRef.current);
     }
 
-    // Debounce API-kall med 500ms delay
+    // Redusert debounce fra 500ms til 100ms for raskere respons
     routeUpdateTimeoutRef.current = setTimeout(async () => {
-      if (!map.current || !accessToken || !routeData.from || !routeData.to) {
-        console.log('🚫 Mangler requirements for rute update');
-        return;
-      }
-
-      if (loading) {
-        console.log('🔄 Allerede laster rute, hopper over...');
+      if (!map.current || !accessToken || !routeData.from || !routeData.to || loading) {
         return;
       }
 
     setLoading(true);
     setError(null);
-    console.log('⚡ RASK PARALLELL RUTEPLANLEGGING STARTET!');
 
     try {
-      console.log('Henter koordinater for start og slutt...');
       const startCoords = await getCoordinatesForPlace(routeData.from);
       const endCoords = await getCoordinatesForPlace(routeData.to);
 
@@ -635,11 +627,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         throw new Error('Kunne ikke finne koordinater for start eller slutt');
       }
 
-      console.log(`Start: ${routeData.from} -> ${startCoords}`);
-      console.log(`Slutt: ${routeData.to} -> ${endCoords}`);
-
-      // PARALLELLISERE API-KALL for å spare tid
-      console.log('🚀 Starter parallelle API-kall...');
+      // RASK PARALLELL API-kall
       const [weatherData, directionsData] = await Promise.all([
         // Hent værdata parallelt
         fetchWeatherData(startCoords, endCoords),
@@ -647,7 +635,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         fetchDirectionsData(startCoords, endCoords, routeType)
       ]);
       
-      console.log('✅ Alle API-kall fullført parallelt!');
+      // Rask prosessering av rute-data
       
       // Sjekk om vi trenger å gå via Trondheim for lange ruter nord-sør
       const waypoints = [startCoords];
@@ -686,81 +674,33 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       
       console.log('🎯 Rutetype:', routeType, '| Profil:', mapboxProfile);
       
-      console.log('🎯 Rutetype:', routeType, '| Profil:', directionsData.profile);
+      console.log('🎯 Rutetype:', routeType);
       
-      console.log('📞 Mapbox Response Status:', 200);
-      console.log('📞 Mapbox Response OK:', true);
-      
-      console.log('📍 Mapbox API Response:', {
-        status: 200,
-        ok: true,
-        routes: directionsData.routes?.length || 0,
-        error: 'ingen feil',
-        message: 'parallell API-kall'
-      });
-
       if (!directionsData.routes || directionsData.routes.length === 0) {
-        console.log('❌ Ingen ruter returnert fra parallell Mapbox API');
         throw new Error('Ingen rute funnet mellom de valgte punktene');
       }
 
-      // Valider at ruten holder seg innenfor Norge (rough bbox check)
-      const norwegianBounds = {
-        minLng: 4.65, maxLng: 31.29,
-        minLat: 57.93, maxLat: 71.18
-      };
-      
-      console.log('🇳🇴 Validerer at ruten holder seg i Norge...');
-      console.log('✅ Rute funnet og validert');
-
-      // Velg riktig rute basert på type med mer intelligent logikk
+      // Velg riktig rute basert på type
       let selectedRoute = directionsData.routes[0];
-      console.log('📊 Antall tilgjengelige ruter fra Mapbox:', directionsData.routes.length);
       
       if (directionsData.routes.length > 1) {
-        console.log('🔍 Analyserer ruter:');
-        directionsData.routes.forEach((route, index) => {
-          console.log(`  Rute ${index + 1}: ${(route.distance/1000).toFixed(1)}km, ${(route.duration/3600).toFixed(1)}t`);
-        });
-        
         switch (routeType) {
           case 'fastest':
-            // Finn ruten med korteste varighet
             selectedRoute = directionsData.routes.reduce((fastest, current) => 
               current.duration < fastest.duration ? current : fastest
             );
-            console.log('⚡ Valgte raskeste rute:', (selectedRoute.distance/1000).toFixed(1) + 'km');
             break;
           case 'shortest':
-            // Finn ruten med korteste distanse
             selectedRoute = directionsData.routes.reduce((shortest, current) => 
               current.distance < shortest.distance ? current : shortest
             );
-            console.log('📏 Valgte korteste rute:', (selectedRoute.distance/1000).toFixed(1) + 'km');
             break;
           case 'eco':
-            // For eco, velg ruten som IKKE er raskest (typisk lengre men mer effektiv)
             const fastest = directionsData.routes.reduce((fastest, current) => 
               current.duration < fastest.duration ? current : fastest
             );
-            // Velg en annen rute enn den raskeste
             selectedRoute = directionsData.routes.find(route => route !== fastest) || directionsData.routes[1] || fastest;
-            console.log('🌱 Valgte miljøvennlig rute:', (selectedRoute.distance/1000).toFixed(1) + 'km');
             break;
-        }
-      } else {
-        console.log('⚠️ Kun én rute tilgjengelig fra Mapbox for', routeType);
-        console.log('💡 Prøver å generere variasjon basert på rutetype...');
-        
-        // Hvis bare én rute, juster basert på rutetype
-        if (routeType === 'eco') {
-          // For eco-rute, reduser hastighet og øk distanse litt artificielt  
-          selectedRoute = {
-            ...selectedRoute,
-            duration: selectedRoute.duration * 1.1, // 10% lengre tid
-            distance: selectedRoute.distance * 1.05 // 5% lengre distanse
-          };
-          console.log('🌱 Justerte eco-rute for mer realistisk kjøremønster');
         }
       }
 
@@ -1366,7 +1306,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       setError(`Kunne ikke oppdatere ruten: ${error instanceof Error ? error.message : 'Ukjent feil'}`);
       setLoading(false); // Sett loading til false også ved feil
     }
-    }, 500); // 500ms debounce
+    }, 100); // Redusert til 100ms for raskere respons
   };
 
   // Optimaliser ladestasjoner
