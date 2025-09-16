@@ -3145,57 +3145,6 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         </DialogContent>
       </Dialog>
       
-      {/* TEST KNAPP - SYNLIG UTENFOR DIALOG */}
-      {isVisible && (
-        <div className="fixed top-20 right-4 z-50">
-          <Button 
-            onClick={() => {
-              console.log('🔵 TEST KNAPP KLIKKET!');
-              alert('TEST KNAPP KLIKKET! Lager blå markør nå...');
-              
-              if (map.current && chargingStations.length > 0) {
-                const testStation = chargingStations[0];
-                
-                console.log('🔵 LAGER TEST BLÅ MARKØR:', testStation.name);
-                
-                const el = document.createElement('div');
-                el.className = 'test-blue-marker-visible';
-                el.style.cssText = `
-                  background: #ff0000;
-                  width: 40px;
-                  height: 40px;
-                  border-radius: 50%;
-                  border: 4px solid yellow;
-                  cursor: pointer;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  color: white;
-                  font-weight: bold;
-                  font-size: 20px;
-                  z-index: 999999;
-                  box-shadow: 0 0 30px rgba(255, 0, 0, 1);
-                `;
-                el.innerHTML = '🔥';
-                
-                const marker = new mapboxgl.Marker(el)
-                  .setLngLat([testStation.longitude, testStation.latitude])
-                  .addTo(map.current!);
-                  
-                console.log('🔵 RØDMARKØR LAGET!', marker);
-                
-                toast({
-                  title: "🔥 RØD MARKØR LAGET!",
-                  description: `En rød markør er laget ved ${testStation.name}`,
-                });
-              }
-            }}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold"
-          >
-            🔥 TEST LAG BLÅ MARKØR
-          </Button>
-        </div>
-      )}
     </div>
   );
 };
