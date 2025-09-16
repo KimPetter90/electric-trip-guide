@@ -323,10 +323,16 @@ export type Database = {
           created_at: string
           id: string
           last_reset_date: string | null
+          last_route_reset_date: string | null
           location_enabled: boolean | null
           monthly_proof_count: number | null
+          monthly_route_count: number | null
           notification_enabled: boolean | null
           plan_type: string | null
+          stripe_customer_id: string | null
+          subscription_end_date: string | null
+          subscription_product_id: string | null
+          subscription_status: string | null
           updated_at: string
           user_id: string
         }
@@ -335,10 +341,16 @@ export type Database = {
           created_at?: string
           id?: string
           last_reset_date?: string | null
+          last_route_reset_date?: string | null
           location_enabled?: boolean | null
           monthly_proof_count?: number | null
+          monthly_route_count?: number | null
           notification_enabled?: boolean | null
           plan_type?: string | null
+          stripe_customer_id?: string | null
+          subscription_end_date?: string | null
+          subscription_product_id?: string | null
+          subscription_status?: string | null
           updated_at?: string
           user_id: string
         }
@@ -347,10 +359,16 @@ export type Database = {
           created_at?: string
           id?: string
           last_reset_date?: string | null
+          last_route_reset_date?: string | null
           location_enabled?: boolean | null
           monthly_proof_count?: number | null
+          monthly_route_count?: number | null
           notification_enabled?: boolean | null
           plan_type?: string | null
+          stripe_customer_id?: string | null
+          subscription_end_date?: string | null
+          subscription_product_id?: string | null
+          subscription_status?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -364,6 +382,14 @@ export type Database = {
       check_monthly_limit: {
         Args: { user_uuid: string }
         Returns: boolean
+      }
+      check_route_limit: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
+      increment_route_count: {
+        Args: { user_uuid: string }
+        Returns: undefined
       }
     }
     Enums: {
