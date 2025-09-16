@@ -1613,6 +1613,12 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
 
       // Lagre current route for re-kalkulering
       setCurrentRoute(route);
+      console.log('💾 SATTE CURRENT ROUTE:', {
+        distance: route.distance,
+        duration: route.duration,
+        distanceKm: routeDistance,
+        durationHours: routeDuration
+      });
 
       console.log('🎯 Valgt rute detaljer:', { 
         type: routeType, 
@@ -2288,7 +2294,8 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           durationHours: routeDurationHours 
         });
         
-        const analysis = calculateTripAnalysis(routeDistanceKm * 1000, routeDurationHours, optimized, weatherData);
+        // VIKTIG: currentRoute.distance er i METER, ikke km!
+        const analysis = calculateTripAnalysis(currentRoute.distance, routeDurationHours, optimized, weatherData);
         setRouteAnalysis(analysis);
         console.log('✅ Trip analysis calculated:', analysis);
       } else {
