@@ -38,6 +38,7 @@ const plans = [
     buttonText: 'Oppgrader til Premium',
     popular: true,
     priceId: 'price_1S80tCDgjF2NREPhFod9JnwM',
+    paymentLink: 'https://buy.stripe.com/test_bJeaEX7u14J9ay1fOjgbm00',
     status: 'premium'
   },
   {
@@ -95,7 +96,7 @@ export default function Pricing() {
     }
   };
 
-  const handleSubscribe = async (priceId: string | null, planName: string) => {
+  const handleSubscribe = async (priceId: string | null, planName: string, paymentLink?: string) => {
     if (!user) {
       navigate('/auth');
       return;
@@ -106,6 +107,12 @@ export default function Pricing() {
         title: "Du er allerede på gratis-planen",
         description: "Denne planen krever ingen betaling.",
       });
+      return;
+    }
+
+    // Use payment link if available (fallback for Stripe test issues)
+    if (paymentLink) {
+      window.open(paymentLink, '_blank');
       return;
     }
 
@@ -232,7 +239,7 @@ export default function Pricing() {
                   <Button 
                     className="w-full" 
                     variant={plan.popular ? "default" : "outline"}
-                    onClick={() => handleSubscribe(plan.priceId, plan.name)}
+                    onClick={() => handleSubscribe(plan.priceId, plan.name, (plan as any).paymentLink)}
                     disabled={loading === plan.priceId || isCurrentPlan(plan.status)}
                   >
                     {loading === plan.priceId ? (
