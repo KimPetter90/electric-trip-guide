@@ -124,7 +124,23 @@ export default function Pricing() {
       }
 
       if (data?.url) {
-        window.location.href = data.url;
+        console.log('Redirecting to checkout URL:', data.url);
+        toast({
+          title: "Checkout URL",
+          description: `URL: ${data.url.substring(0, 100)}...`,
+          duration: 10000,
+        });
+        // Delay redirect to let user see the URL
+        setTimeout(() => {
+          window.location.href = data.url;
+        }, 2000);
+      } else {
+        console.error('No checkout URL received:', data);
+        toast({
+          title: "Feil",
+          description: "Ingen checkout URL mottatt fra serveren.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Error creating checkout:', error);
