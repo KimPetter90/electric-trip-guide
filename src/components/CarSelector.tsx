@@ -1358,8 +1358,12 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
 
   const handleBrandSelect = (brandName: string) => {
     setSelectedBrand(brandName);
-    // Scroll til toppen av siden når merke er valgt
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Scroll til toppen av siden når merke er valgt - prøv flere metoder
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 50);
   };
 
   const handleBackToBrands = () => {
