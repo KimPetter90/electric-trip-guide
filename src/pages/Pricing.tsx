@@ -65,6 +65,36 @@ export default function Pricing() {
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
 
+  const handleManageSubscription = async () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error opening customer portal:', error);
+      toast({
+        title: "Feil ved åpning av kundeportal",
+        description: "Noe gikk galt. Prøv igjen senere.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSubscribe = async (priceId: string | null, planName: string) => {
     if (!user) {
       navigate('/auth');
@@ -215,13 +245,23 @@ export default function Pricing() {
           </div>
 
           <div className="text-center mt-12">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mb-4">
               Alle planer inkluderer 14 dagers gratis prøveperiode. Kanseller når som helst.
             </p>
+            
+            {user && subscription?.subscribed && (
+              <Button 
+                variant="outline" 
+                onClick={handleManageSubscription}
+                className="mr-4"
+              >
+                Administrer abonnement
+              </Button>
+            )}
+            
             <Button 
               variant="link" 
               onClick={() => refreshSubscription()}
-              className="mt-2"
             >
               Oppdater abonnementsstatus
             </Button>

@@ -45,7 +45,7 @@ interface RouteAnalysis {
 }
 
 function Index() {
-  const { user, subscription, signOut, loading } = useAuth();
+  const { user, subscription, signOut, loading, refreshSubscription } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -172,18 +172,18 @@ function Index() {
     if (selectedCar && routeData.from && routeData.to) {
       console.log('✅ Alle kriterier oppfylt, setter showRoute til true og trigger manuell oppdatering');
       
-      // Increment route count if user is authenticated
-      if (user && subscription) {
-        try {
-          await supabase.rpc('increment_route_count', { user_uuid: user.id });
-          // Refresh subscription to update count
-          setTimeout(() => {
-            // We'll update this once refreshSubscription is available
-          }, 100);
-        } catch (error) {
-          console.error('Error incrementing route count:', error);
+        // Increment route count if user is authenticated
+        if (user && subscription) {
+          try {
+            await supabase.rpc('increment_route_count', { user_uuid: user.id });
+            // Refresh subscription to update count
+            setTimeout(() => {
+              refreshSubscription();
+            }, 100);
+          } catch (error) {
+            console.error('Error incrementing route count:', error);
+          }
         }
-      }
       
       setShowRoute(true);
       setRouteTrigger(prev => prev + 1); // Trigger manuell oppdatering

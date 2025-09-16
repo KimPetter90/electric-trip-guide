@@ -68,7 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshSubscription = async () => {
-    await checkSubscription(session);
+    if (session) {
+      await checkSubscription(session);
+    }
   };
 
   const signOut = async () => {
