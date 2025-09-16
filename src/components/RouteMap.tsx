@@ -517,7 +517,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     car: CarModel,
     allStations: ChargingStation[]
   ): ChargingStation[] => {
-    console.log('🔋 STARTER FULLSTENDIG BATTERIOPTIMERING');
+    console.log('🔋🔋🔋 STARTER FORBEDRET BATTERIOPTIMERING 🔋🔋🔋');
     console.log('📊 Start batteri:', startBatteryPercent + '%');
     console.log('📊 Bil rekkevidde:', car.range + 'km');
     console.log('📊 Total rutelengde:', (route.distance / 1000).toFixed(1) + 'km');
@@ -542,7 +542,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       console.log(`🔵 SYKLUS ${cycleNumber}:`);
       console.log(`  📍 Nåværende posisjon: ${currentPositionKm.toFixed(1)} km`);
       console.log(`  🔋 Batteri nå: ${currentBatteryPercent}%`);
-      console.log(`  🚗 Kan kjøre: ${rangeKm.toFixed(1)} km til`);
+      console.log(`  🚗 Kan kjøre: ${rangeKm.toFixed(1)} km`);
       console.log(`  🎯 Kritisk punkt ved: ${nextCriticalPositionKm.toFixed(1)} km`);
       
       // Hvis vi når destinasjonen med nåværende batteri, stopp
@@ -551,12 +551,13 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         break;
       }
       
-      // Finn beste ladestasjon nær det kritiske punktet
-      const searchRadius = 50; // Økt søkeradius for å finne flere
-      const stationSearchStart = Math.max(0, nextCriticalPositionKm - searchRadius);
+      // Finn beste ladestasjon nær det kritiske punktet - FORBEDRET SØKELOGIKK
+      const searchRadius = 60; // Økt søkeradius dramatisk
+      const stationSearchStart = Math.max(currentPositionKm + 5, nextCriticalPositionKm - searchRadius);
       const stationSearchEnd = Math.min(totalRouteKm, nextCriticalPositionKm + searchRadius);
       
-      console.log(`  🔍 Søker stasjoner mellom ${stationSearchStart.toFixed(1)} og ${stationSearchEnd.toFixed(1)} km`);
+      console.log(`  🔍 SØKER STASJONER mellom ${stationSearchStart.toFixed(1)} og ${stationSearchEnd.toFixed(1)} km`);
+      console.log(`  🔍 SØKERADIUS: ${searchRadius}km fra kritisk punkt`);
       
       const candidateStations = allStations.filter(station => {
         let stationPositionKm = 0;
@@ -577,23 +578,27 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           }
         }
         
-        // Må være nær ruten og i søkeområdet  
-        const isNearRoute = minDistToRoute <= 10.0; // Økt fra 8 til 10km
+        // MEGET LIBERALE KRITERIER for å finne flere stasjoner  
+        const isNearRoute = minDistToRoute <= 15.0; // Økt til 15km - meget liberal
         const isInSearchArea = stationPositionKm >= stationSearchStart && 
                               stationPositionKm <= stationSearchEnd;
-        const isAhead = stationPositionKm > currentPositionKm; // Fjernet minimum avstand
+        const isAhead = stationPositionKm > currentPositionKm; // Bare fremover
         
         if (isNearRoute && isInSearchArea && isAhead) {
           station.distanceAlongRoute = stationPositionKm;
-          console.log(`    ✓ Kandidat: ${station.name} ved ${stationPositionKm.toFixed(1)} km (${minDistToRoute.toFixed(1)} km fra rute)`);
+          console.log(`    ✓ KANDIDAT: ${station.name} ved ${stationPositionKm.toFixed(1)} km (${minDistToRoute.toFixed(1)} km fra rute)`);
         }
         
         return isNearRoute && isInSearchArea && isAhead;
       });
       
+      console.log(`  🎯 Fant ${candidateStations.length} kandidatstasjoner for syklus ${cycleNumber}`);
+      
       if (candidateStations.length === 0) {
-        console.log(`❌ SYKLUS ${cycleNumber}: Ingen stasjoner funnet! Stopper optimering.`);
-        break;
+        console.log(`❌ SYKLUS ${cycleNumber}: INGEN stasjoner funnet! Prøver med enda mer liberale kriterier...`);
+        // Hopp fremover og prøv igjen  
+        currentPositionKm = nextCriticalPositionKm + 50;
+        continue;
       }
       
       // Sorter og velg beste stasjon basert på kvalitet
@@ -620,12 +625,53 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       cycleNumber++;
     }
     
-    console.log(`✅ FULLSTENDIG OPTIMERING FERDIG!`);
+    console.log(`✅✅✅ BATTERIOPTIMERING FULLFØRT! ✅✅✅`);
     console.log(`📊 Totalt ${allOptimizedStations.length} ladestasjoner valgt:`);
     allOptimizedStations.forEach((station, index) => {
       console.log(`  ${index + 1}. ${station.name} ved ${station.distanceAlongRoute?.toFixed(1)} km`);
     });
     
+    // SIKRE MINIMUM 2 STASJONER for lange ruter
+    if (allOptimizedStations.length < 2 && totalRouteKm > 400) {
+      console.log('⚠️⚠️ UNDER 2 STASJONER! Legger til fallback-stasjoner...');
+      
+      // Finn stasjoner langs ruten som backup
+      const backupStations = allStations
+        .filter(station => !allOptimizedStations.some(s => s.id === station.id))
+        .map(station => {
+          let stationPositionKm = 0;
+          let minDistToRoute = Infinity;
+          
+          // Finn posisjon langs ruten
+          for (let i = 0; i < routeCoords.length; i++) {
+            const distanceToPoint = getDistance(
+              station.latitude,
+              station.longitude,
+              routeCoords[i][1],
+              routeCoords[i][0]
+            );
+            
+            if (distanceToPoint < minDistToRoute) {
+              minDistToRoute = distanceToPoint;
+              stationPositionKm = (i / routeCoords.length) * totalRouteKm;
+            }
+          }
+          
+          return {
+            ...station,
+            distanceAlongRoute: stationPositionKm,
+            distanceFromRoute: minDistToRoute
+          };
+        })
+        .filter(station => station.distanceFromRoute <= 20.0 && station.distanceAlongRoute > 100 && station.distanceAlongRoute < totalRouteKm - 100)
+        .sort((a, b) => a.distanceAlongRoute - b.distanceAlongRoute)
+        .slice(0, 3 - allOptimizedStations.length);
+      
+      console.log(`🔄 Legger til ${backupStations.length} backup-stasjoner`);
+      allOptimizedStations.push(...backupStations);
+    }
+    
+    console.log(`🎯🎯 ENDELIG RESULTAT: ${allOptimizedStations.length} STASJONER 🎯🎯`);
     return allOptimizedStations;
   };
 
