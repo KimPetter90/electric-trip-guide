@@ -738,9 +738,17 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     
     const chargePercent = parseInt(chargePercentInput);
     console.log('📊 Parsed charge percent:', chargePercent);
+    console.log('🔍 Validation check:', {
+      isNaN: isNaN(chargePercent),
+      chargePercent,
+      arrivalBattery: chargingModal.arrivalBattery,
+      lessThanArrival: chargePercent < chargingModal.arrivalBattery,
+      moreThan100: chargePercent > 100
+    });
     
     if (isNaN(chargePercent) || chargePercent < chargingModal.arrivalBattery || chargePercent > 100) {
       console.log('❌ Invalid charge percent detected');
+      console.log('🔧 Validation details:', { chargePercent, arrivalBattery: chargingModal.arrivalBattery });
       toast({
         title: "❌ Ugyldig ladeprosent",
         description: `Vennligst skriv inn en prosent mellom ${chargingModal.arrivalBattery} og 100.`,
@@ -761,13 +769,17 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
     // Finn stasjonen i listen for å få korrekt distanse
     let station = chargingStations.find(s => s.id === chargingModal.stationId);
+    console.log('🔍 Station search result:', { 
+      found: !!station, 
+      stationId: chargingModal.stationId,
+      stationName: station?.name || 'Not found',
+      distanceAlongRoute: station?.distanceAlongRoute,
+      modalDistance: chargingModal.distance
+    });
     
     if (!station) {
       console.log('❌ Station not found in chargingStations list');
-      console.log('🔍 Available stations:', { 
-        chargingStationsCount: chargingStations.length, 
-        searchingFor: chargingModal.stationId 
-      });
+      console.log('🔍 Available stations:', chargingStations.map(s => ({ id: s.id, name: s.name, distance: s.distanceAlongRoute })));
       toast({
         title: "❌ Feil med stasjon",
         description: "Kunne ikke finne stasjonsdata. Prøv å planlegge ruten på nytt.",
@@ -776,10 +788,15 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       return;
     }
 
-    // Bruk distanse fra modal hvis stasjonen ikke har distanceAlongRoute
-    const currentDistance = station.distanceAlongRoute || chargingModal.distance;
+    // Bruk distanse fra modal eller stasjonen (0 er en gyldig verdi!)
+    const currentDistance = station.distanceAlongRoute !== undefined ? station.distanceAlongRoute : chargingModal.distance;
+    console.log('📍 Distance calculation:', { 
+      stationDistance: station.distanceAlongRoute, 
+      modalDistance: chargingModal.distance, 
+      finalDistance: currentDistance 
+    });
     
-    if (!currentDistance && currentDistance !== 0) {
+    if (currentDistance === undefined || currentDistance === null) {
       console.log('❌ No distance data available');
       console.log('🔍 Station data:', station);
       console.log('🔍 Modal data:', chargingModal);
