@@ -3053,85 +3053,87 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                 </Button>
                 <Button 
                   type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('🎯 Beregn neste punkt knapp klikket - event trigget!');
-                    console.log('📊 Current state:', { chargingModal, chargePercentInput });
+                  onClick={() => {
+                    console.log('🎯 Beregn neste punkt knapp klikket!');
                     
-                    alert('🎯 Knappen ble klikket! Nå beregner jeg neste punkt...');
+                    const chargePercent = parseInt(chargePercentInput);
+                    const currentDistance = chargingModal.distance;
                     
-                    try {
-                      // Kjør calculateNextPoint funksjonen direkte her
-                      console.log('🎯🎯🎯 calculateNextPoint STARTET! 🎯🎯🎯');
-                      console.log('🎯 calculateNextPoint function called');
-                      console.log('📝 Current input value:', chargePercentInput);
-                      console.log('📝 Modal data:', chargingModal);
-                      
-                      alert('🎯 calculateNextPoint ble kalt! Sjekk konsollen for debugging...');
-                      
-                      // Lukk modalen med en gang
-                      setChargingModal({ isOpen: false, stationId: '', stationName: '', distance: 0, arrivalBattery: 0 });
-                      
-                      const chargePercent = parseInt(chargePercentInput);
-                      console.log('📊 Parsed charge percent:', chargePercent);
-                      
-                      if (isNaN(chargePercent) || chargePercent < 0 || chargePercent > 100) {
-                        console.log('❌ Ugyldig batteriprosent:', chargePercent);
-                        toast({
-                          title: "❌ Ugyldig batteriprosent",
-                          description: "Vennligst angi et tall mellom 0 og 100.",
-                          variant: "destructive"
-                        });
-                        return;
-                      }
-                      
-                      // TEST: Lag en enkel blå markør for å teste
-                      if (map.current && chargingStations.length > 0) {
-                        const testStation = chargingStations[0]; // Bruk første stasjon som test
-                        
-                        console.log('🔵 LAGER TEST BLÅ MARKØR:', testStation.name);
-                        
-                        const el = document.createElement('div');
-                        el.className = 'test-blue-marker';
-                        el.style.cssText = `
-                          background: #0066ff;
-                          width: 30px;
-                          height: 30px;
-                          border-radius: 50%;
-                          border: 3px solid white;
-                          cursor: pointer;
-                          display: flex;
-                          align-items: center;
-                          justify-content: center;
-                          color: white;
-                          font-weight: bold;
-                          font-size: 16px;
-                          z-index: 1000;
-                          box-shadow: 0 0 20px rgba(0, 102, 255, 0.8);
-                        `;
-                        el.innerHTML = '🔋';
-                        
-                        const marker = new mapboxgl.Marker(el)
-                          .setLngLat([testStation.longitude, testStation.latitude])
-                          .addTo(map.current!);
-                          
-                        console.log('🔵 TEST BLÅ MARKØR LAGET!', marker);
-                        
-                        toast({
-                          title: "🔵 Test blå markør laget!",
-                          description: `En test blå markør er laget ved ${testStation.name}`,
-                        });
-                      }
-                      
-                    } catch (error) {
-                      console.error('❌ Error in calculateNextPoint:', error);
+                    // Lukk modalen
+                    setChargingModal({ isOpen: false, stationId: '', stationName: '', distance: 0, arrivalBattery: 0 });
+                    
+                    if (isNaN(chargePercent) || chargePercent < 10 || chargePercent > 100) {
                       toast({
-                        title: "❌ Feil oppstod",
-                        description: "En teknisk feil oppstod. Sjekk konsollen for detaljer.",
+                        title: "❌ Ugyldig batteriprosent",
+                        description: "Vennligst angi et tall mellom 10 og 100.",
                         variant: "destructive"
                       });
+                      return;
                     }
+                    
+                    // Beregn hvor langt bilen kan kjøre med ny batteriprosent
+                    const carRange = selectedCar?.range || 487;
+                    const usableRange = (chargePercent / 100) * carRange * 0.8; // 80% av oppgitt rekkevidde
+                    const nextCriticalDistance = currentDistance + usableRange;
+                    
+                    console.log('🎯 Beregning:', {
+                      currentDistance,
+                      chargePercent,
+                      carRange,
+                      usableRange,
+                      nextCriticalDistance
+                    });
+                    
+                    // Finn 3 nærmeste stasjoner fremover på ruten
+                    const stationsAhead = chargingStations
+                      .filter(s => s.distanceAlongRoute && s.distanceAlongRoute > currentDistance)
+                      .sort((a, b) => a.distanceAlongRoute! - b.distanceAlongRoute!)
+                      .slice(0, 3);
+                    
+                    console.log('📍 Fant stasjoner fremover:', stationsAhead.map(s => s.name));
+                    
+                    if (stationsAhead.length === 0) {
+                      toast({
+                        title: "❌ Ingen stasjoner funnet",
+                        description: "Ingen ladestasjoner funnet fremover på ruten.",
+                        variant: "destructive"
+                      });
+                      return;
+                    }
+                    
+                    // Lag blå markører for disse stasjonene
+                    stationsAhead.forEach((station, index) => {
+                      const el = document.createElement('div');
+                      el.className = 'blue-next-point-marker';
+                      el.style.cssText = `
+                        background: linear-gradient(135deg, #0066ff, #00aaff);
+                        width: 25px;
+                        height: 25px;
+                        border-radius: 50%;
+                        border: 3px solid white;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: white;
+                        font-weight: bold;
+                        font-size: 12px;
+                        z-index: 100;
+                        box-shadow: 0 0 20px rgba(0, 102, 255, 0.8);
+                      `;
+                      el.innerHTML = '🔋';
+                      
+                      const marker = new mapboxgl.Marker(el)
+                        .setLngLat([station.longitude, station.latitude])
+                        .addTo(map.current!);
+                        
+                      console.log('🔵 BLÅ MARKØR LAGET for:', station.name);
+                    });
+                    
+                    toast({
+                      title: `🎯 Neste punkt beregnet!`,
+                      description: `Med ${chargePercent}% lading kan du kjøre ${usableRange.toFixed(0)}km. ${stationsAhead.length} stasjoner vist.`,
+                    });
                   }}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                 >
