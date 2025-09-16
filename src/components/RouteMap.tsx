@@ -2586,47 +2586,103 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       }
       
       optimized.forEach((station, index) => {
-        // ALLE optimerte stasjoner som er valgt for ruten får røde markører
-        console.log('🔴 Rød rutemarkør for:', station.name);
-        const el = document.createElement('div');
-        el.className = 'charging-station-marker';
-        el.style.cssText = `
-          background-color: #ef4444;
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          border: 1px solid white;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 10px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          z-index: 10;
-        `;
-        el.innerHTML = '⚡';
-
-        const popup = new mapboxgl.Popup().setHTML(`
-          <div style="font-family: Arial, sans-serif; color: #333;">
-            <h4 style="margin: 0 0 8px 0; color: #dc2626;"><strong>🔴 RUTE-STASJON: ${station.name}</strong></h4>
-            <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
-            <p style="margin: 4px 0; color: #333;">🛣️ <strong>Avstand langs ruten:</strong> ${station.distanceFromRoute?.toFixed(1)} km</p>
-            <p style="margin: 4px 0; color: #333;">🔋 <strong>Batterinivå ved ankomst:</strong> ${station.arrivalBatteryPercentage?.toFixed(1)}%</p>
-            <p style="margin: 4px 0; color: #dc2626;">
-              🔴 <strong>Optimert for din rute!</strong>
-            </p>
-            <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
-            <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
-            <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${station.available}/${station.total} ladepunkter</p>
-          </div>
-        `);
-
-        new mapboxgl.Marker(el)
-          .setLngLat([station.longitude, station.latitude])
-          .setPopup(popup)
-          .addTo(map.current!);
+        // Sjekk om dette skal være en blå markør i stedet for rød
+        const currentBatteryPercent = routeData.batteryPercentage;
+        const isFirstCriticalStation = index === 0 && currentBatteryPercent <= 15;
         
-        console.log('ℹ️ Optimerte stasjoner (lyn-markører) er nå erstattet med avstandsbaserte røde markører');
+        if (isFirstCriticalStation) {
+          console.log('🔵🔵🔵 ERSTATTER RØD MED BLÅ MARKØR for:', station.name, '(batterinivå:', currentBatteryPercent + '%)');
+          
+          // LAG BLÅ MARKØR i stedet for rød
+          const el = document.createElement('div');
+          el.className = 'blue-critical-station-marker';
+          el.setAttribute('data-station-id', station.id);
+          el.style.cssText = `
+            background: linear-gradient(135deg, #0066ff, #00aaff);
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 3px solid white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 999999 !important;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 102, 255, 0.8);
+            animation: pulse 2s infinite;
+          `;
+          el.innerHTML = '⚡';
+
+          const popup = new mapboxgl.Popup().setHTML(`
+            <div style="font-family: Arial, sans-serif; color: #333;">
+              <h4 style="margin: 0 0 8px 0; color: #0066ff;"><strong>🔵 KRITISK LADESTASJON: ${station.name}</strong></h4>
+              <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
+              <p style="margin: 4px 0; color: #dc2626;"><strong>⚠️ BATTERIET ER KRITISK LAVT (${currentBatteryPercent}%)</strong></p>
+              <p style="margin: 4px 0; color: #333;">🛣️ <strong>Avstand langs ruten:</strong> ${station.distanceFromRoute?.toFixed(1)} km</p>
+              <p style="margin: 4px 0; color: #333;">🔋 <strong>Batterinivå ved ankomst:</strong> ${station.arrivalBatteryPercentage?.toFixed(1)}%</p>
+              <p style="margin: 4px 0; color: #0066ff;">
+                🔵 <strong>NØDVENDIG LADESTASJON!</strong>
+              </p>
+              <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
+              <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
+              <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${station.available}/${station.total} ladepunkter</p>
+            </div>
+          `);
+
+          new mapboxgl.Marker(el)
+            .setLngLat([station.longitude, station.latitude])
+            .setPopup(popup)
+            .addTo(map.current!);
+            
+          console.log('🔵 BLÅ KRITISK MARKØR LAGT TIL for:', station.name);
+          sendStationToChargingMap(station);
+          
+        } else {
+          // Vanlig rød markør
+          console.log('🔴 Rød rutemarkør for:', station.name);
+          const el = document.createElement('div');
+          el.className = 'charging-station-marker';
+          el.setAttribute('data-station-id', station.id);
+          el.style.cssText = `
+            background-color: #ef4444;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1px solid white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 10;
+          `;
+          el.innerHTML = '⚡';
+
+          const popup = new mapboxgl.Popup().setHTML(`
+            <div style="font-family: Arial, sans-serif; color: #333;">
+              <h4 style="margin: 0 0 8px 0; color: #dc2626;"><strong>🔴 RUTE-STASJON: ${station.name}</strong></h4>
+              <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
+              <p style="margin: 4px 0; color: #333;">🛣️ <strong>Avstand langs ruten:</strong> ${station.distanceFromRoute?.toFixed(1)} km</p>
+              <p style="margin: 4px 0; color: #333;">🔋 <strong>Batterinivå ved ankomst:</strong> ${station.arrivalBatteryPercentage?.toFixed(1)}%</p>
+              <p style="margin: 4px 0; color: #dc2626;">
+                🔴 <strong>Optimert for din rute!</strong>
+              </p>
+              <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
+              <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
+              <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${station.available}/${station.total} ladepunkter</p>
+            </div>
+          `);
+
+          new mapboxgl.Marker(el)
+            .setLngLat([station.longitude, station.latitude])
+            .setPopup(popup)
+            .addTo(map.current!);
+        }
       });
       
       // Legg til progressive blå markører for neste ladesyklus
