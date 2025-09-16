@@ -1624,11 +1624,12 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       // FØRST: Cleanup eksisterende rute og markører GRUNDIG
       console.log('🧹 GRUNDIG CLEANUP - fjerner alt eksisterende innhold...');
       
-      // Fjern alle markører UNNTATT blå markører (progressive-charging-marker)
+      // Fjern alle markører UNNTATT blå markører (progressive-charging-marker og blue-critical-point-marker)
       const existingMarkers = document.querySelectorAll('.mapboxgl-marker');
       existingMarkers.forEach(marker => {
         // Ikke fjern blå markører som viser neste kritiske punkt
-        if (!marker.querySelector('.progressive-charging-marker')) {
+        if (!marker.querySelector('.progressive-charging-marker') && 
+            !marker.querySelector('.blue-critical-point-marker')) {
           marker.remove();
         }
       });
