@@ -2994,27 +2994,13 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
             console.log('🔴 Fant', allRedMarkers.length, 'røde markører');
             
             if (allRedMarkers.length > 1) {
-              const secondMarker = allRedMarkers[1] as HTMLElement;
+              console.log('🎯 Tester å konvertere andre røde markør...');
               
-              // VIKTIG: Hent koordinatene fra den røde markøren før vi fjerner den
-              let coords: [number, number] = [10.0, 60.0]; // Fallback
+              // NYTT: I stedet for å fjerne, bare lag blå markør på en kjent lokasjon først
+              // Bruk koordinater fra midt på Norge for test
+              const testCoords: [number, number] = [9.5, 61.0]; // Midt på Norge
               
-              // Finn riktige koordinater fra optimizedStations basert på markørens station-id
-              const stationId = secondMarker.getAttribute('data-station-id');
-              console.log('🎯 Station ID fra markør:', stationId);
-              
-              if (stationId && optimizedStations) {
-                const station = optimizedStations.find(s => s.id === stationId);
-                if (station) {
-                  coords = [station.longitude, station.latitude];
-                  console.log('✅ Fant riktige koordinater:', coords, 'for stasjon:', station.name);
-                } else {
-                  console.log('⚠️ Fant ikke stasjon med ID:', stationId);
-                }
-              }
-              
-              secondMarker.remove();
-              console.log('✅ Fjernet andre røde markør');
+              console.log('🔵 Lager blå markør på test-koordinater:', testCoords);
               
               // Lag stor blå markør
               const blueEl = document.createElement('div');
@@ -3038,13 +3024,8 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
               `;
               blueEl.innerHTML = '⚡';
               
-              // Bruk de koordinatene vi fant tidligere
-              if (optimizedStations && optimizedStations.length > 1) {
-                const fallbackStation = optimizedStations[1];
-                if (!coords || (coords[0] === 10.0 && coords[1] === 60.0)) {
-                  coords = [fallbackStation.longitude, fallbackStation.latitude];
-                }
-              }
+              // Bruk test-koordinatene vi definerte
+              const coords = testCoords;
               
               new mapboxgl.Marker(blueEl)
                 .setLngLat(coords)
