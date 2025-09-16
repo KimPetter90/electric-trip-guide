@@ -428,6 +428,14 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
   const { toast } = useToast();
 
+  // Enkel funksjon for å sende stasjon til ladestasjonkartet
+  const sendStationToChargingMap = (station: ChargingStation) => {
+    console.log('🔌 SENDER STASJON TIL LADESTASJONKART:', station.name);
+    setCurrentChargingStation(station);
+    setShowChargingButton(true);
+    onChargingStationUpdate?.(station, true, [station]);
+  };
+
   // Beregn RIKTIG kostnad OG ladetid når bruker velger ladingsprosent
   const updateAnalysisWithCharging = (chargePercent: number) => {
     console.log('🔥🔥🔥 updateAnalysisWithCharging STARTET MED:', chargePercent + '%');
@@ -1190,6 +1198,9 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           .addTo(map.current!);
 
         console.log('🟢 BLÅ MARKØR LAGT TIL PÅ KARTET!', blueMarker);
+        
+        // Send denne stasjonen til ladestasjonkartet
+        sendStationToChargingMap(station);
 
         // Click handler for ny blå markør
         el.addEventListener('click', (e) => {
@@ -2139,6 +2150,11 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
             .addTo(map.current!);
           
           console.log(`🔵 BLÅ MARKØR ${index + 1}: ${station.name} - MEST EFFEKTIV! LAGT TIL!`);
+          
+          // Send denne blå stasjonen til ladestasjonkartet
+          if (index === 0) { // Kun den første blå markøren
+            sendStationToChargingMap(station);
+          }
         });
         
         const nearRouteCount = nearRouteStations.length;
@@ -3332,9 +3348,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                     
                     // Send DENNE stasjonen (den som faktisk vises som blå) til ladestasjonkartet
                     console.log('🔵 SENDER BLUE MARKER STATION TIL PARENT:', nearestStation.name);
-                    setCurrentChargingStation(nearestStation);
-                    setShowChargingButton(true);
-                    onChargingStationUpdate?.(nearestStation, true, [nearestStation]);
+                    sendStationToChargingMap(nearestStation);
                     
                     // Beregn batteriprosent ved ankomst til kritisk punkt
                     const batteryAtCriticalPoint = ((criticalPointDistance - currentDistance) / carRange) * 100;
