@@ -3113,20 +3113,20 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                     const el = document.createElement('div');
                     el.className = 'blue-critical-point-marker';
                     el.style.cssText = `
-                      background: linear-gradient(135deg, #ff6b00, #ff8533);
-                      width: 30px;
-                      height: 30px;
+                      background: linear-gradient(135deg, #0066ff, #00aaff);
+                      width: 25px;
+                      height: 25px;
                       border-radius: 50%;
-                      border: 4px solid white;
+                      border: 3px solid white;
                       cursor: pointer;
                       display: flex;
                       align-items: center;
                       justify-content: center;
                       color: white;
                       font-weight: bold;
-                      font-size: 14px;
+                      font-size: 12px;
                       z-index: 100;
-                      box-shadow: 0 0 25px rgba(255, 107, 0, 0.8);
+                      box-shadow: 0 0 20px rgba(0, 102, 255, 0.8);
                       animation: pulse 2s infinite;
                     `;
                     el.innerHTML = '⚡';
