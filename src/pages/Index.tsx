@@ -82,7 +82,17 @@ function Index() {
         range: favoriteCar.range_km,
         consumption: favoriteCar.consumption,
         image: favoriteCar.car_image || '/placeholder.svg'
-      };
+  };
+  
+  // Nullstill rutevalg når rutedata endres
+  useEffect(() => {
+    if (routeOptions.length > 0) {
+      console.log('🔄 Rutedata endret, nullstiller rutevalg');
+      setRouteOptions([]);
+      setSelectedRouteId(null);
+      setShowRoute(false);
+    }
+  }, [routeData.from, routeData.to, routeData.via, selectedCar?.id]);
       setSelectedCar(favoriteCarModel);
       toast({
         title: "Favorittbil lastet",
