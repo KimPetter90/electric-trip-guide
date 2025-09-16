@@ -2480,27 +2480,32 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
     stations: ChargingStation[],
     weatherData?: WeatherData
   ): TripAnalysis => {
-    const totalChargingTime = stations.reduce((sum, station) => sum + (station.chargingTime || 0), 0);
-    const totalCost = stations.reduce((sum, station) => {
-      const chargingAmount = ((station.targetBatteryPercentage || 80) - (station.arrivalBatteryPercentage || 20)) / 100 * selectedCar.batteryCapacity;
-      return sum + (chargingAmount * station.cost);
-    }, 0);
+    // Realistisk ladetid beregning (15-30 min per stopp)
+    const averageChargingTimePerStop = 25; // minutter
+    const totalChargingTime = stations.length * averageChargingTimePerStop;
+    
+    // Realistisk kostnad basert på distanse og strømforbruk
+    // Typisk elbil: 20 kWh/100km, strømpris: 4-6 kr/kWh ved hurtiglading
+    const consumptionPer100km = 20; // kWh
+    const averageChargingCostPerKwh = 5.0; // kr/kWh
+    const totalEnergyNeeded = (distance / 1000) * (consumptionPer100km / 100); // kWh for hele turen
+    const totalCost = totalEnergyNeeded * averageChargingCostPerKwh;
 
     // CO2-besparelse sammenlignet med bensinbil (ca 120g CO2/km)
-    const co2Saved = distance * 0.12; // kg CO2
+    const co2Saved = (distance / 1000) * 0.12; // kg CO2
 
     // Effektivitet basert på værforhold, vind og hengervekt
     const weatherFactor = weatherData?.rangeFactor || 1;
     const trailerImpact = routeData.trailerWeight > 0 ? (1 - (routeData.trailerWeight * 0.0015)) : 1; // Redusert effektivitet med henger
-    const efficiency = weatherFactor * trailerImpact * 0.8; // Base effektivitet 80%
+    const efficiency = weatherFactor * trailerImpact * 0.85; // Base effektivitet 85%
 
     return {
-      totalDistance: distance,
+      totalDistance: distance / 1000, // Konverter til km
       totalTime: timeHours + (totalChargingTime / 60), // Legg til ladetid
       totalCost: Math.round(totalCost),
       chargingTime: totalChargingTime,
-      co2Saved: co2Saved,
-      efficiency: efficiency,
+      co2Saved: Math.round(co2Saved),
+      efficiency: Math.round(efficiency * 100) / 100, // Avrund til 2 desimaler
       weather: weatherData
     };
   };
