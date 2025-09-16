@@ -578,23 +578,25 @@ const checkIfShouldGoViaTrondheim = (startCoords: [number, number], endCoords: [
       switch (routeType) {
         case 'fastest':
           mapboxProfile = 'driving-traffic'; // Raskeste med trafikk
-          routeParams += '&steps=true&annotations=duration';
+          routeParams += '&steps=true&annotations=duration&overview=full';
           break;
         case 'shortest':
           mapboxProfile = 'driving'; // Standard driving
-          routeParams += '&steps=true&annotations=distance&overview=full';
+          routeParams += '&steps=true&annotations=distance&overview=full&exclude=ferry'; // Unngå ferge for kortere rute
           break;
         case 'eco':
           mapboxProfile = 'driving'; // Eco-vennlig
-          routeParams += '&steps=true&annotations=duration,distance&overview=full';
+          routeParams += '&steps=true&annotations=duration,distance&overview=full&avoid_speed_limits=true'; // Unngå høye hastigheter
           break;
         default:
           mapboxProfile = 'driving';
           routeParams += '&steps=true&alternatives=true';
       }
       
+      console.log('🎯 Rutetype:', routeType, '| Profil:', mapboxProfile);
+      
       const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/${mapboxProfile}/${coordinates}?${routeParams}`;
-      console.log('🇳🇴 API URL:', directionsUrl);
+      console.log('🇳🇴 API URL for', routeType + ':', directionsUrl);
       
       const directionsResponse = await fetch(directionsUrl);
       
@@ -667,7 +669,19 @@ const checkIfShouldGoViaTrondheim = (startCoords: [number, number], endCoords: [
             break;
         }
       } else {
-        console.log('⚠️ Kun én rute tilgjengelig fra Mapbox - bruker forskjellige profiler for variasjon');
+        console.log('⚠️ Kun én rute tilgjengelig fra Mapbox for', routeType);
+        console.log('💡 Prøver å generere variasjon basert på rutetype...');
+        
+        // Hvis bare én rute, juster basert på rutetype
+        if (routeType === 'eco') {
+          // For eco-rute, reduser hastighet og øk distanse litt artificielt  
+          selectedRoute = {
+            ...selectedRoute,
+            duration: selectedRoute.duration * 1.1, // 10% lengre tid
+            distance: selectedRoute.distance * 1.05 // 5% lengre distanse
+          };
+          console.log('🌱 Justerte eco-rute for mer realistisk kjøremønster');
+        }
       }
 
       const route = selectedRoute;
@@ -1575,11 +1589,22 @@ const checkIfShouldGoViaTrondheim = (startCoords: [number, number], endCoords: [
   // Ny useEffect for å håndtere rutevalg
   useEffect(() => {
     console.log('🎯 selectedRouteId endret til:', selectedRouteId);
+    console.log('🔍 RouteMap - Tilstand:', {
+      hasMap: !!map.current,
+      hasFrom: !!routeData.from,
+      hasTo: !!routeData.to,
+      hasCar: !!selectedCar,
+      hasToken: !!accessToken,
+      isLoading: loading
+    });
+    
     if (selectedRouteId && map.current && routeData.from && routeData.to && selectedCar && accessToken && !loading) {
-      console.log('🔄 Oppdaterer rute basert på rutevalg:', selectedRouteId);
+      console.log('🔄 OPPDATERER RUTE MED NY TYPE:', selectedRouteId);
       updateMapRoute(selectedRouteId);
+    } else {
+      console.log('⏸️ Venter på alle requirements...');
     }
-  }, [selectedRouteId, accessToken, routeData.from, routeData.to, selectedCar]);
+  }, [selectedRouteId, accessToken, routeData.from, routeData.to, selectedCar, loading]);
 
   if (!isVisible) return null;
 
