@@ -451,15 +451,13 @@ function Index() {
             <div>
               <h4 className="font-semibold mb-3">Kontakt</h4>
               <div className="space-y-1 text-sm text-muted-foreground">
-                <p>support@elroute.no</p>
-                <p>ElRoute AS</p>
-                <p>Org.nr: [Ditt org.nr]</p>
+                <p>ElRouteSup@gmail.com</p>
               </div>
             </div>
           </div>
           
           <div className="border-t border-border mt-8 pt-6 text-center text-sm text-muted-foreground">
-            <p>&copy; {new Date().getFullYear()} ElRoute AS. Alle rettigheter forbeholdt.</p>
+            <p>&copy; {new Date().getFullYear()} ElRoute. Alle rettigheter forbeholdt.</p>
           </div>
         </div>
       </footer>
