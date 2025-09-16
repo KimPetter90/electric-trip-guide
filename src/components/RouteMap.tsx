@@ -3332,6 +3332,12 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                     
                     console.log('🔵 BLÅ MARKØR LAGT TIL SUCCESSFULLY for:', nearestStation.name);
                     
+                    // Send DENNE stasjonen (den som faktisk vises som blå) til ladestasjonkartet
+                    console.log('🔵 SENDER BLUE MARKER STATION TIL PARENT:', nearestStation.name);
+                    setCurrentChargingStation(nearestStation);
+                    setShowChargingButton(true);
+                    onChargingStationUpdate?.(nearestStation, true, [nearestStation]);
+                    
                     // Beregn batteriprosent ved ankomst til kritisk punkt
                     const batteryAtCriticalPoint = ((criticalPointDistance - currentDistance) / carRange) * 100;
                     const remainingBattery = chargePercent - batteryAtCriticalPoint;
