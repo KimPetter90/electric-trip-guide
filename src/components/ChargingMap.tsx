@@ -100,45 +100,66 @@ export default function ChargingMap({ isVisible, routeAnalysis, optimizedStation
       {/* Charging Stops */}
       <div className="space-y-3">
         {chargingStops.map((stop, index) => (
-          <Card key={stop.id} className="p-4 bg-card/80 backdrop-blur-sm border-border hover:shadow-lg hover:border-primary/50 transition-all duration-300 animate-float" style={{ animationDelay: `${index * 200}ms` }}>
+          <Card key={stop.id} className="p-6 bg-card/80 backdrop-blur-sm border-border hover:shadow-lg hover:border-primary/50 transition-all duration-300">
             <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-electric text-primary-foreground flex items-center justify-center text-sm font-semibold shadow-neon animate-pulse-neon">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-full bg-gradient-electric text-primary-foreground flex items-center justify-center text-lg font-bold shadow-neon">
                   {index + 1}
                 </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-orbitron font-bold text-gradient">{stop.name}</h4>
-                      {stop.fastCharger && (
-                        <Badge variant="secondary" className="text-xs font-orbitron">
-                          <Zap className="h-3 w-3 mr-1" />
-                          Hurtiglader
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm font-orbitron text-muted-foreground">{stop.location}</p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h4 className="text-xl font-orbitron font-bold text-gradient">{stop.name}</h4>
+                    {stop.fastCharger && (
+                      <Badge variant="secondary" className="text-xs font-orbitron">
+                        <Zap className="h-3 w-3 mr-1" />
+                        Hurtiglader
+                      </Badge>
+                    )}
+                  </div>
                   
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3 text-sm">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3 text-primary animate-glow-pulse" />
-                        <span className="font-orbitron font-medium">{stop.distance} km</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3 text-primary animate-glow-pulse" />
-                        <span className="font-orbitron font-medium">{stop.chargeTime} min</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Zap className="h-3 w-3 text-primary animate-glow-pulse" />
-                        <span className="font-orbitron font-medium">{stop.chargeAmount} kWh</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="h-3 w-3 text-primary animate-glow-pulse" />
-                        <span className="font-orbitron font-medium">{stop.cost} kr</span>
+                  <div className="space-y-2">
+                    <p className="text-lg font-orbitron text-muted-foreground flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      {stop.location}, Norge
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Ladestasjon langs ruten din - anbefalt stopp for optimal rekkevidde
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-sm">
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-background/50">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      <div>
+                        <span className="font-orbitron font-medium text-lg">{stop.distance} km</span>
+                        <p className="text-xs text-muted-foreground">fra start</p>
                       </div>
                     </div>
-                </div>
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-background/50">
+                      <Clock className="h-4 w-4 text-primary" />
+                      <div>
+                        <span className="font-orbitron font-medium text-lg">{stop.chargeTime} min</span>
+                        <p className="text-xs text-muted-foreground">ladetid</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-background/50">
+                      <Zap className="h-4 w-4 text-primary" />
+                      <div>
+                        <span className="font-orbitron font-medium text-lg">{stop.chargeAmount} kWh</span>
+                        <p className="text-xs text-muted-foreground">energi</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-background/50">
+                      <DollarSign className="h-4 w-4 text-primary" />
+                      <div>
+                        <span className="font-orbitron font-medium text-lg">{stop.cost} kr</span>
+                        <p className="text-xs text-muted-foreground">kostnad</p>
+                      </div>
+                    </div>
+                  </div>
               </div>
             </div>
+          </div>
           </Card>
         ))}
       </div>
