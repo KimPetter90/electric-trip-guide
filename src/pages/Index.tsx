@@ -257,7 +257,7 @@ function Index() {
                   onChargingStationUpdate={handleChargingStationUpdate}
                 />
                 
-                {/* Ladeknapp som vises mellom kart og ruteanalyse */}
+                {/* Ladeknapp som vises rett under kartet men over ruteanalyse */}
                 {showChargingButton && currentChargingStation && (
                   <Card className="p-4 glass-card border-2 border-blue-500/50 bg-blue-50/10 animate-pulse">
                     <div className="space-y-3">
