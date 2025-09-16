@@ -537,13 +537,18 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       `;
       el.innerHTML = '🔋';
 
-      // Rekursiv click handler for nye stasjoner
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        console.log('🔋 KLIKKET PÅ NY BLÅMARKØR:', station.name);
-        setSelectedChargingStation(station);
-        setShowChargingDialog(true);
-      });
+          // Rekursiv click handler for nye stasjoner med rutevisning
+          el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            console.log('🔋 KLIKKET PÅ NY BLÅMARKØR:', station.name);
+            
+            // Vis rute til denne ladestasjonen først
+            showRouteToChargingStation(station);
+            
+            // Deretter åpne dialog for ladeprosent
+            setSelectedChargingStation(station);
+            setShowChargingDialog(true);
+          });
 
       // Hent live data for stasjonen, fallback til original data
       const liveData = liveStationData[station.id] || station;
@@ -589,25 +594,44 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
             </div>
           </div>
           
-          <button 
-            onclick="window.openChargingModal && window.openChargingModal('${station.id}', '${station.name}', ${station.distanceAlongRoute || 0}, ${arrivalBatteryPercent.toFixed(0)})"
-            style="
-              width: 100%; 
-              background: #0066ff; 
-              color: white; 
-              border: none; 
-              padding: 12px 16px; 
-              border-radius: 6px; 
-              font-size: 14px; 
-              font-weight: 600; 
-              cursor: pointer; 
-              transition: background 0.2s;
-            "
-            onmouseover="this.style.background='#0052cc'"
-            onmouseout="this.style.background='#0066ff'"
-          >
-            ⚡ Velg ladeprosent
-          </button>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <button 
+              onclick="window.showRouteToStation && window.showRouteToStation('${station.id}')"
+              style="
+                background: #22c55e; 
+                color: white; 
+                border: none; 
+                padding: 10px 12px; 
+                border-radius: 6px; 
+                font-size: 13px; 
+                font-weight: 600; 
+                cursor: pointer; 
+                transition: background 0.2s;
+              "
+              onmouseover="this.style.background='#16a34a'"
+              onmouseout="this.style.background='#22c55e'"
+            >
+              🗺️ Vis rute
+            </button>
+            <button 
+              onclick="window.openChargingModal && window.openChargingModal('${station.id}', '${station.name}', ${station.distanceAlongRoute || 0}, ${arrivalBatteryPercent.toFixed(0)})"
+              style="
+                background: #0066ff; 
+                color: white; 
+                border: none; 
+                padding: 10px 12px; 
+                border-radius: 6px; 
+                font-size: 13px; 
+                font-weight: 600; 
+                cursor: pointer; 
+                transition: background 0.2s;
+              "
+              onmouseover="this.style.background='#0052cc'"
+              onmouseout="this.style.background='#0066ff'"
+            >
+              ⚡ Lading
+            </button>
+          </div>
         </div>
       `);
       
@@ -681,6 +705,95 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     });
   };
 
+  // Funksjon for å vise rute til ladestasjon
+  const showRouteToChargingStation = async (station: ChargingStation) => {
+    if (!map.current || !accessToken) return;
+    
+    console.log('🗺️ Viser rute til ladestasjon:', station.name);
+    
+    try {
+      // Hent koordinater for start (Oslo som standard hvis routeData ikke har koordinater)
+      const startCoords = cityCoordinates[routeData.from.toLowerCase()] || [10.7522, 59.9139];
+      const endCoords = [station.longitude, station.latitude];
+      
+      console.log('📍 Start koordinater:', startCoords);
+      console.log('📍 Slutt koordinater (ladestasjon):', endCoords);
+      
+      // Beregn rute til ladestasjonen
+      const directionsURL = `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${startCoords[0]},${startCoords[1]};${endCoords[0]},${endCoords[1]}?geometries=geojson&access_token=${accessToken}&alternatives=false&continue_straight=false&steps=true&annotations=duration&overview=full`;
+      
+      const response = await fetch(directionsURL);
+      const data = await response.json();
+      
+      if (data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        
+        // Fjern eksisterende rute til ladestasjon hvis den finnes
+        if (map.current.getSource('route-to-station')) {
+          map.current.removeLayer('route-to-station');
+          map.current.removeSource('route-to-station');
+        }
+        
+        // Legg til ny rute til ladestasjonen (grønn farge for å skille fra hovedruten)
+        map.current.addSource('route-to-station', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: route.geometry
+          }
+        });
+        
+        map.current.addLayer({
+          id: 'route-to-station',
+          type: 'line',
+          source: 'route-to-station',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#22c55e', // Grønn farge for rute til ladestasjon
+            'line-width': 6,
+            'line-opacity': 0.8
+          }
+        });
+        
+        // Fokuser kartet på ruten til ladestasjonen
+        const coordinates = route.geometry.coordinates;
+        const bounds = coordinates.reduce((bounds: any, coord: any) => {
+          return bounds.extend(coord);
+        }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
+        
+        map.current.fitBounds(bounds, {
+          padding: 50,
+          duration: 1000
+        });
+        
+        // Vis toast med informasjon om ruten
+        const distance = (route.distance / 1000).toFixed(1);
+        const duration = Math.round(route.duration / 60);
+        
+        toast({
+          title: `🗺️ Rute til ${station.name}`,
+          description: `Distanse: ${distance} km • Kjøretid: ${duration} min`,
+        });
+        
+        console.log('✅ Rute til ladestasjon vist på kartet');
+      } else {
+        throw new Error('Ingen rute funnet');
+      }
+      
+    } catch (error) {
+      console.error('❌ Feil ved beregning av rute til ladestasjon:', error);
+      toast({
+        title: "❌ Kunne ikke vise rute",
+        description: "Klarte ikke å beregne rute til ladestasjonen.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Mapbox token henting
   useEffect(() => {
     const fetchMapboxToken = async () => {
@@ -725,10 +838,22 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       setChargePercentInput(defaultValue);
     };
 
+    // Global funksjon for å vise rute til stasjon
+    (window as any).showRouteToStation = (stationId: string) => {
+      console.log('🗺️ Global function called to show route to station:', stationId);
+      const station = chargingStations.find(s => s.id === stationId);
+      if (station) {
+        showRouteToChargingStation(station);
+      } else {
+        console.warn('❌ Station not found:', stationId);
+      }
+    };
+
     return () => {
       delete (window as any).openChargingModal;
+      delete (window as any).showRouteToStation;
     };
-  }, []);
+  }, [chargingStations]);
 
   // Funksjon for å beregne neste kritiske punkt
   const calculateNextPoint = () => {
