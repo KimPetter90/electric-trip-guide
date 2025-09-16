@@ -580,7 +580,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         const isNearRoute = minDistToRoute <= 8.0; // Litt mer fleksibel
         const isInSearchArea = stationPositionKm >= stationSearchStart && 
                               stationPositionKm <= stationSearchEnd;
-        const isAhead = stationPositionKm > currentPositionKm + 10; // Må være fremover på ruten
+        const isAhead = stationPositionKm > currentPositionKm + 5; // Redusert fra 10 til 5km
         
         if (isNearRoute && isInSearchArea && isAhead) {
           station.distanceAlongRoute = stationPositionKm;
@@ -1946,6 +1946,13 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         chargingStationsCount: chargingStations.length
       });
       // Bruk ny fullstendig optimeringsalgoritme
+      console.log('🔧 KALLER calculateAllCriticalPoints med:', {
+        batteryPercent: routeData.batteryPercentage,
+        routeDistanceKm: route.distance / 1000,
+        carRange: selectedCar.range,
+        stationsCount: chargingStations.length
+      });
+      
       const optimized = calculateAllCriticalPoints(
         routeData.batteryPercentage,
         route,
