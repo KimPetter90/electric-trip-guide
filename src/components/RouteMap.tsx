@@ -461,8 +461,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     const antallStopp = Math.max(1, Math.ceil(routeDistanceKm / (carRange * 0.9))); // 90% utnyttelse
     const totalKostnad = kostnadPerStasjon * antallStopp;
     
-    // KORTERE ladetid - mer realistisk
-    const minutterPerStopp = Math.round(20 + (chargePercent * 0.3)); // 20-50 min
+    // KORTERE ladetid - mer realistisk for hurtiglading
+    const minutterPerStopp = Math.round(15 + (chargePercent * 0.25)); // 15-40 min
     const totalLadetid = antallStopp * minutterPerStopp;
     
     console.log('🔢 BEREGNING updateAnalysisWithCharging:', {
@@ -3222,8 +3222,8 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                       const antallStopp = Math.max(1, Math.ceil(routeDistanceKm / (carRange * 0.9))); // 90% utnyttelse
                       const totalKostnad = kostnadPerStasjon * antallStopp;
                       
-                      // KORTERE ladetid - mer realistisk
-                      const minutterPerStopp = Math.round(20 + (chargePercent * 0.3)); // 20-50 min
+                      // KORTERE ladetid - mer realistisk for hurtiglading
+                      const minutterPerStopp = Math.round(15 + (chargePercent * 0.25)); // 15-40 min
                       const totalLadetid = antallStopp * minutterPerStopp;
                       
                       console.log('🔢 BEREGNING ANDRE FUNKSJON:', {
