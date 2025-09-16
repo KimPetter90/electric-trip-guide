@@ -536,7 +536,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           </div>
           <div style="space-y: 6px;">
             <div style="background: #f0f8ff; padding: 6px; border-radius: 4px; margin: 6px 0;">
-              <p style="margin: 0; font-size: 12px; color: #0066ff; font-weight: 600;">🔋 Neste kritiske punkt etter ${selectedBatteryPercent}% lading</p>
+              <p style="margin: 0; font-size: 12px; color: #0066ff; font-weight: 600;">🔋 Neste kritiske punkt</p>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
               <div>
@@ -1359,7 +1359,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
             </div>
             <div style="space-y: 6px;">
               <div style="background: #f0f8ff; padding: 6px; border-radius: 4px; margin: 6px 0;">
-                <p style="margin: 0; font-size: 12px; color: #0066ff; font-weight: 600;">🔋 Kritisk ladepunkt når batteriet når 10-15%</p>
+                <p style="margin: 0; font-size: 12px; color: #0066ff; font-weight: 600;">🔋 Kritisk ladepunkt</p>
               </div>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
                 <div>
