@@ -953,10 +953,14 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     // ROBUST STRATEGI: Finn alltid de 3 nærmeste stasjonene fremover på ruten
     let nearbyStations: ChargingStation[] = [];
     
-    // Start med å finne alle stasjoner fremover fra hvor bilen kan nå med ny batteriprosent
+    // Finn stasjoner i området rundt hvor batteriet blir kritisk
+    const searchRange = 100; // km før og etter kritisk punkt
     const stationsAhead = chargingStations
-      .filter(s => s.distanceAlongRoute && s.distanceAlongRoute > nextCriticalDistance)
-      .sort((a, b) => a.distanceAlongRoute! - b.distanceAlongRoute!);
+      .filter(s => s.distanceAlongRoute && 
+               s.distanceAlongRoute > currentDistance && 
+               s.distanceAlongRoute >= (nextCriticalDistance - searchRange) &&
+               s.distanceAlongRoute <= (nextCriticalDistance + searchRange))
+      .sort((a, b) => Math.abs(a.distanceAlongRoute! - nextCriticalDistance) - Math.abs(b.distanceAlongRoute! - nextCriticalDistance));
     
     console.log(`🔍 Totalt ${stationsAhead.length} stasjoner fremover fra kritisk punkt ${nextCriticalDistance.toFixed(1)} km`);
     
