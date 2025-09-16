@@ -3589,20 +3589,34 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                      if (allRedMarkers.length > 1) {
                        // Ta den andre røde markøren (ikke den første)
                        const targetMarker = allRedMarkers[1] as HTMLElement;
+                       
+                       // VIKTIG: Hent Mapbox markør-objektet fra DOM-elementet
+                       const mapboxMarker = (targetMarker as any)._mapboxgl__marker;
+                       let stationCoords: [number, number] = [10.0, 60.0]; // Fallback
+                       
+                       if (mapboxMarker && mapboxMarker.getLngLat) {
+                         const lngLat = mapboxMarker.getLngLat();
+                         stationCoords = [lngLat.lng, lngLat.lat];
+                         console.log('✅ Hentet koordinater fra Mapbox markør:', stationCoords);
+                       } else {
+                         console.log('⚠️ Kunne ikke hente koordinater fra Mapbox markør, bruker optimizedStations');
+                         
+                         // Fallback: Bruk andre stasjon fra optimizedStations
+                         if (optimizedStations && optimizedStations.length > 1) {
+                           const station = optimizedStations[1];
+                           stationCoords = [station.longitude, station.latitude];
+                           console.log('✅ Bruker koordinater fra optimizedStations:', stationCoords, 'for', station.name);
+                         }
+                       }
+                       
                        const stationId = targetMarker.getAttribute('data-station-id');
+                       let stationName = 'Neste ladestasjon';
                        
-                       console.log('🎯 Konverterer markør med station ID:', stationId);
-                       
-                       // Finn stasjonen i optimizedStations
-                       let stationName = 'Ukjent stasjon';
-                       let stationCoords: [number, number] = [10.0, 60.0];
-                       
+                       // Prøv å finne stasjonsnavn
                        if (stationId && optimizedStations) {
                          const station = optimizedStations.find(s => s.id === stationId);
                          if (station) {
                            stationName = station.name;
-                           stationCoords = [station.longitude, station.latitude];
-                           console.log('✅ Fant stasjon:', stationName, 'på koordinater:', stationCoords);
                          }
                        }
                        
