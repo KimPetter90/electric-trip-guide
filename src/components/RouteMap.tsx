@@ -1620,23 +1620,46 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         durationHours: routeDuration
       });
 
-      // SETT REALISTISKE VERDIER UMIDDELBART
-      const energyConsumptionPer100km = 18; // kWh/100km (realistisk for moderne elbil)
-      const chargingCostPerKwh = 4.5; // kr/kWh (gjennomsnitt hurtiglading Norge)
-      const totalEnergyNeeded = (routeDistance / 100) * energyConsumptionPer100km; // kWh
-      const realisticCost = Math.round(totalEnergyNeeded * chargingCostPerKwh); // kr
-      const co2SavedVsBensin = Math.round(routeDistance * 0.15); // kg CO2 (150g/km bensinbil)
-      const weatherEfficiency = 0.88; // 88% effektivitet med vær og forhold
+      // BEREGN REALISTISK ANALYSE BASERT PÅ FAKTISK LADING
+      const startBatteryPercent = routeData.batteryPercentage || 80; // Fra rutedata
+      const numberOfChargingStops = Math.ceil(routeDistance / 300); // En stopp per ~300km
+      
+      // Beregn faktisk energi som trengs og lades
+      const carBatteryCapacity = selectedCar.batteryCapacity || 75; // kWh
+      const averageChargePerStop = 50; // Lader ca 50% (fra 20% til 70%) per stopp
+      const totalEnergyCharged = numberOfChargingStops * (averageChargePerStop / 100) * carBatteryCapacity; // kWh
+      
+      // Kostnad basert på faktisk lading
+      const chargingCostPerKwh = 4.8; // kr/kWh (realistisk hurtiglading Norge)
+      const totalChargingCost = Math.round(totalEnergyCharged * chargingCostPerKwh);
+      
+      // Ladetid basert på antall stopp og ladehastighet
+      const averageChargingTimePerStop = 35; // minutter (realistisk for 50% lading)
+      const totalChargingTime = numberOfChargingStops * averageChargingTimePerStop;
+      
+      // CO2 spart vs bensinbil
+      const co2SavedVsBensin = Math.round(routeDistance * 0.14); // kg CO2 (140g/km bensinbil)
+      
+      // Effektivitet basert på startbatteri og værforhold
+      const batteryEfficiency = startBatteryPercent > 50 ? 0.90 : 0.85; // Bedre effektivitet med høyere startbatteri
       
       const realisticAnalysis = {
         totalDistance: routeDistance, // km
-        totalTime: routeDuration + (Math.ceil(routeDistance / 250) * 0.4), // timer + ~25 min per 250km
-        totalCost: realisticCost, // Realistisk basert på 18 kWh/100km × 4.5 kr/kWh
-        chargingTime: Math.ceil(routeDistance / 250) * 25, // 25 min per 250km
-        co2Saved: co2SavedVsBensin, // kg CO2 spart vs bensinbil
-        efficiency: weatherEfficiency, // 88% med værforhold
+        totalTime: routeDuration + (totalChargingTime / 60), // timer + ladetid
+        totalCost: totalChargingCost, // Basert på faktisk kWh ladet × pris
+        chargingTime: totalChargingTime, // Minutter basert på antall stopp
+        co2Saved: co2SavedVsBensin, // kg CO2 spart
+        efficiency: batteryEfficiency, // Effektivitet basert på startbatteri
         weather: undefined
       };
+      
+      console.log('🔋 BEREGNING BASERT PÅ FAKTISK LADING:', {
+        startBattery: startBatteryPercent + '%',
+        chargingStops: numberOfChargingStops,
+        energyCharged: totalEnergyCharged.toFixed(1) + ' kWh',
+        costPerKwh: chargingCostPerKwh + ' kr/kWh',
+        totalCost: totalChargingCost + ' kr'
+      });
       
       setRouteAnalysis(realisticAnalysis);
       console.log('✅ SATTE REALISTISK ANALYSE:', realisticAnalysis);
