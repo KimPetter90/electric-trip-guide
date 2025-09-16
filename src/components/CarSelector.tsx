@@ -1441,7 +1441,7 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
           {brands.map((brand) => (
             <Card
               key={brand.name}
-              className="p-4 cursor-pointer transition-all duration-300 glass-card border-border hover:cyber-glow hover:border-primary/30 hover:shadow-md animate-float"
+              className="p-4 cursor-pointer transition-all duration-300 glass-card border-border hover:cyber-glow hover:border-primary/30 hover:shadow-md"
             >
               <div className="flex items-center space-x-4" onClick={() => handleBrandSelect(brand.name)}>
                 <span className="text-2xl">{brand.image}</span>
