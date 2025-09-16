@@ -5,6 +5,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
 import { Zap, Clock, DollarSign, MapPin, AlertCircle, Route, Thermometer, Wind, Car, Battery, TrendingUp, Navigation } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -396,7 +398,156 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
   const [nextChargingStations, setNextChargingStations] = useState<ChargingStation[]>([]); // Neste stasjoner å vise
   const [currentChargingStation, setCurrentChargingStation] = useState<ChargingStation | null>(null); // Aktiv ladestasjon
   const [showChargingButton, setShowChargingButton] = useState(false); // Vis ladeknapp
+  
+  // Ny state for interaktiv lading
+  const [showChargingDialog, setShowChargingDialog] = useState(false);
+  const [selectedChargingStation, setSelectedChargingStation] = useState<ChargingStation | null>(null);
+  const [selectedBatteryPercent, setSelectedBatteryPercent] = useState(80);
+  const [currentRoute, setCurrentRoute] = useState<any>(null); // Lagrer current route for re-kalkulering
+
   const { toast } = useToast();
+
+  // Funksjon for å beregne nye kritiske punkter basert på valgt ladeprosent  
+  const calculateNextCriticalPoints = (
+    currentStation: ChargingStation,
+    batteryPercent: number,
+    route: any,
+    car: CarModel,
+    allStations: ChargingStation[]
+  ): ChargingStation[] => {
+    console.log('🔋 Beregner neste kritiske punkter med', batteryPercent, '% batteri');
+    
+    // Find current station position along route
+    const routeCoords = route.geometry.coordinates;
+    let currentStationPosition = 0;
+    let minDistance = Infinity;
+    
+    for (let i = 0; i < routeCoords.length; i++) {
+      const distance = getDistance(
+        currentStation.latitude,
+        currentStation.longitude,
+        routeCoords[i][1],
+        routeCoords[i][0]
+      );
+      if (distance < minDistance) {
+        minDistance = distance;
+        currentStationPosition = (i / routeCoords.length) * (route.distance / 1000);
+      }
+    }
+    
+    // Calculate range from selected battery percent to critical level (10%)
+    const usableBatteryRange = batteryPercent - 10; // Fra valgt prosent til 10%
+    const rangeKm = (car.range * usableBatteryRange) / 100;
+    const nextCriticalPosition = currentStationPosition + rangeKm;
+    
+    console.log('📍 Current position:', currentStationPosition, 'km');
+    console.log('🔋 Range with', batteryPercent + '%:', rangeKm, 'km');
+    console.log('🎯 Next critical position:', nextCriticalPosition, 'km');
+    
+    // Find stations near the next critical point
+    const searchRadius = 30; // 30km radius
+    
+    const candidateStations = allStations.filter(station => {
+      let stationPosition = 0;
+      let minDistToRoute = Infinity;
+      
+      for (let i = 0; i < routeCoords.length; i++) {
+        const distanceToPoint = getDistance(
+          station.latitude,
+          station.longitude,
+          routeCoords[i][1],
+          routeCoords[i][0]
+        );
+        
+        if (distanceToPoint < minDistToRoute) {
+          minDistToRoute = distanceToPoint;
+          stationPosition = (i / routeCoords.length) * (route.distance / 1000);
+        }
+      }
+      
+      const isNearRoute = minDistToRoute <= 5.0;
+      const isInCriticalArea = stationPosition >= (nextCriticalPosition - searchRadius) && 
+                              stationPosition <= (nextCriticalPosition + searchRadius);
+      
+      return isNearRoute && isInCriticalArea && stationPosition > currentStationPosition;
+    });
+    
+    console.log('✅ Fant', candidateStations.length, 'kandidat stasjoner for neste kritiske punkt');
+    return candidateStations.slice(0, 3); // Return top 3 stations
+  };
+
+  // Funksjon for å håndtere interaktiv lading
+  const handleInteractiveCharging = () => {
+    if (!selectedChargingStation || !currentRoute) return;
+    
+    console.log('🔋 STARTER INTERAKTIV LADING:', selectedChargingStation.name, 'til', selectedBatteryPercent + '%');
+    
+    // Fjern gamle blå markører
+    const oldMarkers = document.querySelectorAll('.progressive-charging-marker');
+    oldMarkers.forEach(marker => marker.remove());
+    
+    // Beregn nye kritiske punkter
+    const nextStations = calculateNextCriticalPoints(
+      selectedChargingStation,
+      selectedBatteryPercent,
+      currentRoute,
+      selectedCar!,
+      chargingStations
+    );
+    
+    // Legg til nye blå markører for neste kritiske punkter
+    nextStations.forEach(station => {
+      const el = document.createElement('div');
+      el.className = 'progressive-charging-marker';
+      el.style.cssText = `
+        background: linear-gradient(135deg, #0066ff, #00aaff);
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        z-index: 20;
+        box-shadow: 0 0 20px rgba(0, 102, 255, 0.8), 0 0 40px rgba(0, 170, 255, 0.4);
+        animation: pulse 2s infinite;
+      `;
+      el.innerHTML = '🔋';
+
+      // Rekursiv click handler for nye stasjoner
+      el.addEventListener('click', () => {
+        setSelectedChargingStation(station);
+        setShowChargingDialog(true);
+      });
+
+      const popup = new mapboxgl.Popup().setHTML(`
+        <div style="font-family: Arial, sans-serif; color: #333;">
+          <h4 style="margin: 0 0 8px 0; color: #0066ff;"><strong>🔋 ${station.name}</strong></h4>
+          <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
+          <p style="margin: 4px 0; color: #0066ff;"><strong>🔋 Batteriet når 10% her etter ${selectedBatteryPercent}% lading</strong></p>
+          <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
+          <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
+          <p style="margin: 4px 0; color: #0066ff;"><strong>👆 Klikk for å velge ladeprosent</strong></p>
+        </div>
+      `);
+
+      new mapboxgl.Marker(el)
+        .setLngLat([station.longitude, station.latitude])
+        .setPopup(popup)
+        .addTo(map.current!);
+    });
+    
+    setChargingProgress(prev => prev + 1);
+    setShowChargingDialog(false);
+    
+    toast({
+      title: `Ladet til ${selectedBatteryPercent}%! 🔋`,
+      description: `${nextStations.length} nye kritiske punkter vist på kartet.`,
+    });
+  };
 
   // Mapbox token henting
   useEffect(() => {
@@ -707,6 +858,9 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       const route = selectedRoute;
       const routeDistance = route.distance / 1000; // Konverter til km
       const routeDuration = route.duration / 3600; // Konverter til timer
+
+      // Lagre current route for re-kalkulering
+      setCurrentRoute(route);
 
       console.log('🎯 Valgt rute detaljer:', { 
         type: routeType, 
@@ -1165,78 +1319,11 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         `;
         el.innerHTML = '🔋';
 
-        // Legg til click handler for å simulere realistisk lading
+        // Legg til click handler for interaktiv lading
         el.addEventListener('click', () => {
-          console.log('🔋 LADER VED STASJON:', station.name, '- Syklus', (station as any).chargingCycle);
-          setChargingProgress(prev => {
-            const newProgress = prev + 1;
-            console.log('🔄 Øker ladesyklus til:', newProgress, '(batteriet er nå 80% og kan kjøre til neste kritiske punkt)');
-            toast({
-              title: "Lading fullført! 🔋",
-              description: `Batteriet er nå 80%. Neste blå markører vises når batteriet når 10-15% igjen.`,
-            });
-            
-            // Oppdater kartet med neste realistiske syklus
-            setTimeout(() => {
-              console.log('🔋 Oppdaterer med neste realistiske ladesyklus...');
-              const nextCycleStations = nextChargingStations.filter(s => 
-                (s as any).chargingCycle === newProgress
-              );
-              
-              if (nextCycleStations.length > 0) {
-                console.log('🔵 Viser', nextCycleStations.length, 'nye blå markører for realistisk syklus', newProgress);
-                
-                // Fjern gamle progressive markører
-                const oldMarkers = document.querySelectorAll('.progressive-charging-marker');
-                oldMarkers.forEach(marker => marker.remove());
-                
-                // Legg til nye progressive markører for neste realistiske syklus
-                nextCycleStations.forEach((nextStation, idx) => {
-                  const nextEl = document.createElement('div');
-                  nextEl.className = 'progressive-charging-marker';
-                  nextEl.style.cssText = el.style.cssText;
-                  nextEl.innerHTML = '🔋';
-                  
-                  // Rekursiv click handler for neste stasjoner
-                  nextEl.addEventListener('click', () => {
-                    console.log('🔋 LADER VED STASJON:', nextStation.name);
-                    setChargingProgress(p => p + 1);
-                    toast({
-                      title: "Lading fullført! 🔋", 
-                      description: `Batteriet er 80%. Ser etter neste kritiske punkt...`,
-                    });
-                  });
-                  
-                  const nextPopup = new mapboxgl.Popup().setHTML(`
-                    <div style="font-family: Arial, sans-serif; color: #333;">
-                      <h4 style="margin: 0 0 8px 0; color: #0066ff;"><strong>🔋 NESTE KRITISKE PUNKT: ${nextStation.name}</strong></h4>
-                      <p style="margin: 4px 0; color: #666;"><em>📍 ${nextStation.location}</em></p>
-                      <p style="margin: 4px 0; color: #0066ff;"><strong>🔋 Etter 80% lading vil batteriet være 10-15% her</strong></p>
-                      <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${nextStation.power}</p>
-                      <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${nextStation.cost} kr/kWh</p>
-                      <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${nextStation.available}/${nextStation.total} ladepunkter</p>
-                      <p style="margin: 4px 0; color: #0066ff;"><strong>👆 Klikk for å simulere lading til 80%</strong></p>
-                    </div>
-                  `);
-
-                  new mapboxgl.Marker(nextEl)
-                    .setLngLat([nextStation.longitude, nextStation.latitude])
-                    .setPopup(nextPopup)
-                    .addTo(map.current!);
-                  
-                  console.log('🔵 La til realistisk progressiv markør:', nextStation.name);
-                });
-              } else {
-                console.log('✅ Ingen flere kritiske ladepunkter - rekkevidde dekker resten av ruten!');
-                toast({
-                  title: "Reise fullført! 🎉",
-                  description: "80% batteri dekker resten av ruten til destinasjonen.",
-                });
-              }
-            }, 1000);
-            
-            return newProgress;
-          });
+          console.log('🔋 KLIKKET PÅ BLÅMARKØR:', station.name);
+          setSelectedChargingStation(station);
+          setShowChargingDialog(true);
         });
 
         const popup = new mapboxgl.Popup().setHTML(`
@@ -1895,6 +1982,86 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         </TabsContent>
         </Tabs>
       </div>
+
+      {/* Dialog for interaktiv lading */}
+      <Dialog open={showChargingDialog} onOpenChange={setShowChargingDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Battery className="h-5 w-5 text-blue-500" />
+              Velg ladeprosent ved {selectedChargingStation?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Hvor mye vil du lade? Dette påvirker hvor de neste blå markørene plasseres.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Ladeprosent:</span>
+                <span className="text-2xl font-bold text-blue-600">{selectedBatteryPercent}%</span>
+              </div>
+              
+              <Slider
+                value={[selectedBatteryPercent]}
+                onValueChange={(value) => setSelectedBatteryPercent(value[0])}
+                min={30}
+                max={100}
+                step={5}
+                className="w-full"
+              />
+              
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>30%</span>
+                <span>65%</span>
+                <span>100%</span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-4 gap-2">
+              {[50, 65, 80, 100].map((percent) => (
+                <Button
+                  key={percent}
+                  variant={selectedBatteryPercent === percent ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedBatteryPercent(percent)}
+                  className="h-8"
+                >
+                  {percent}%
+                </Button>
+              ))}
+            </div>
+            
+            <div className="bg-muted/50 rounded-lg p-3 text-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <Zap className="h-4 w-4 text-blue-500" />
+                <span className="font-medium">Estimert rekkevidde:</span>
+              </div>
+              <p className="text-muted-foreground">
+                {selectedBatteryPercent > 10 ? 
+                  `Ca. ${Math.round((selectedCar?.range || 380) * (selectedBatteryPercent - 10) / 100)} km til neste kritiske punkt` :
+                  'Velg minst 15% for sikker kjøring'
+                }
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowChargingDialog(false)}>
+              Avbryt
+            </Button>
+            <Button 
+              onClick={handleInteractiveCharging}
+              disabled={selectedBatteryPercent < 15}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Battery className="h-4 w-4 mr-2" />
+              Lad til {selectedBatteryPercent}%
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
