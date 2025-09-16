@@ -521,6 +521,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     console.log('📊 Start batteri:', startBatteryPercent + '%');
     console.log('📊 Bil rekkevidde:', car.range + 'km');
     console.log('📊 Total rutelengde:', (route.distance / 1000).toFixed(1) + 'km');
+    console.log('📊 Tilgjengelige stasjoner:', allStations.length);
     
     const routeCoords = route.geometry.coordinates;
     const totalRouteKm = route.distance / 1000;
@@ -551,7 +552,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       }
       
       // Finn beste ladestasjon nær det kritiske punktet
-      const searchRadius = 40; // Økt søkeradius
+      const searchRadius = 50; // Økt søkeradius for å finne flere
       const stationSearchStart = Math.max(0, nextCriticalPositionKm - searchRadius);
       const stationSearchEnd = Math.min(totalRouteKm, nextCriticalPositionKm + searchRadius);
       
@@ -576,11 +577,11 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           }
         }
         
-        // Må være nær ruten og i søkeområdet
-        const isNearRoute = minDistToRoute <= 8.0; // Litt mer fleksibel
+        // Må være nær ruten og i søkeområdet  
+        const isNearRoute = minDistToRoute <= 10.0; // Økt fra 8 til 10km
         const isInSearchArea = stationPositionKm >= stationSearchStart && 
                               stationPositionKm <= stationSearchEnd;
-        const isAhead = stationPositionKm > currentPositionKm + 5; // Redusert fra 10 til 5km
+        const isAhead = stationPositionKm > currentPositionKm; // Fjernet minimum avstand
         
         if (isNearRoute && isInSearchArea && isAhead) {
           station.distanceAlongRoute = stationPositionKm;
@@ -2537,162 +2538,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
     }, 100); // Redusert til 100ms for raskere respons
   };
 
-  // Optimaliser ladestasjoner
-  const optimizeChargingStations = (
-    routeCoordinates: number[][],
-    routeDistance: number,
-    car: CarModel,
-    batteryPercentage: number,
-    availableStations: ChargingStation[]
-  ): ChargingStation[] => {
-    console.log('🚀 OPTIMIZE CHARGING STATIONS KALT!');
-    console.log('📊 BATTERIPROSENT INPUT:', batteryPercentage, '%');
-    console.log('📊 RouteDistance:', routeDistance, 'km');
-    console.log('📊 Car range:', car.range, 'km');
-    console.log('📊 Tilgjengelige stasjoner INPUT:', availableStations.length);
-    console.log('📊 Første 3 stasjoner:', availableStations.slice(0, 3).map(s => s.name));
-    
-    const criticalBatteryLevel = 10; // Kritisk batterinivå på 10%
-    const maxChargingLevel = 80; // Lad til maks 80%
-    const maxDetourDistance = 3; // KUN 3km avvik fra ruten for å være rød
-    const maxStationsToShow = 100; // Økt igjen for å fange alle stasjoner på ruten
-
-    console.log('🔋 DETALJERT BEREGNING:');
-    console.log('   - Start batteri:', batteryPercentage + '%');
-    console.log('   - Kritisk nivå:', criticalBatteryLevel + '%');
-    console.log('   - Bil rekkevidde:', car.range + 'km');
-    console.log('   - Rutelengde:', routeDistance + 'km');
-
-    // Beregn total rekkevidde med startbatteri
-    const totalRangeWithStartBattery = (batteryPercentage / 100) * car.range;
-    console.log('   - Total rekkevidde med ' + batteryPercentage + '%:', totalRangeWithStartBattery.toFixed(1) + 'km');
-
-    // Selv om batteriet holder hele veien, vil vi fortsatt vise alle stasjoner på ruten som røde
-    if (totalRangeWithStartBattery >= routeDistance) {
-      console.log('✅ BATTERIET HOLDER HELE VEIEN, men viser fortsatt stasjoner på ruten');
-      // Ikke returner tom array - fortsett å finne stasjoner på ruten
-    }
-
-    console.log('🚨 TRENGER LADING! Rekkevidde mangler:', (routeDistance - totalRangeWithStartBattery).toFixed(1) + 'km');
-    
-    // Beregn hvor langt vi kan kjøre før kritisk nivå (10%)
-    const distanceBeforeCritical = ((batteryPercentage - criticalBatteryLevel) / 100) * car.range;
-    console.log('📍 Distanse før kritisk punkt (10%):', distanceBeforeCritical.toFixed(1) + 'km');
-
-    // Finn stasjoner langs ruten - MEGET LIBERALT
-    console.log('🔍 STARTER SØKING LANGS RUTEN...');
-    const stationsAlongRoute = availableStations
-      .map(station => {
-        // Finn nærmeste punkt på ruten til stasjonen
-        let minDistance = Infinity;
-        let closestPointIndex = 0;
-        let distanceAlongRoute = 0;
-
-        for (let i = 0; i < routeCoordinates.length; i++) {
-          const distance = getDistance(
-            station.latitude,
-            station.longitude,
-            routeCoordinates[i][1],
-            routeCoordinates[i][0]
-          );
-
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestPointIndex = i;
-          }
-        }
-
-        // Beregn faktisk distanse langs ruten til nærmeste punkt
-        for (let i = 0; i < closestPointIndex; i++) {
-          if (i < routeCoordinates.length - 1) {
-            distanceAlongRoute += getDistance(
-              routeCoordinates[i][1],
-              routeCoordinates[i][0],
-              routeCoordinates[i + 1][1],
-              routeCoordinates[i + 1][0]
-            );
-          }
-        }
-        
-        console.log('🗺️', station.name + ': avstand fra rute =', minDistance.toFixed(1) + 'km, distanse langs ruten =', distanceAlongRoute.toFixed(1) + 'km');
-        
-        if (minDistance <= maxDetourDistance) {
-          
-          return {
-            ...station,
-            distanceFromRoute: minDistance,
-            distanceAlongRoute: distanceAlongRoute
-          };
-        }
-        return null;
-      })
-      .filter((station): station is ChargingStation & {
-        distanceFromRoute: number;
-        distanceAlongRoute: number;
-      } => station !== null)
-      .slice(0, maxStationsToShow);
-
-    console.log('📍 Fant', stationsAlongRoute.length, 'stasjoner langs ruten (maks', maxStationsToShow + ', innen', maxDetourDistance + 'km)');
-
-    const optimizedStations: ChargingStation[] = [];
-    let currentBatteryLevel = batteryPercentage;
-    let currentDistance = 0;
-
-    console.log('🔍 Fant', stationsAlongRoute.length, 'stasjoner langs ruten totalt');
-
-    // Sorter stasjoner etter distanse langs ruten
-    stationsAlongRoute.sort((a, b) => a.distanceAlongRoute - b.distanceAlongRoute);
-
-    // Finn stasjoner hvor vi kan lade når batteriet blir lavt (MEGET liberale kriterier)
-    console.log('🔍 ANALYSERER ALLE', stationsAlongRoute.length, 'STASJONER LANGS RUTEN:');
-    // VISER ALLE STASJONER UANSETT BATTERINIVÅ!
-    console.log('🚨 VISER ALLE STASJONER - INGEN FILTRERING!');
-    const stationsBeforeCritical = stationsAlongRoute.map(station => {
-      const batteryAtStation = batteryPercentage - (station.distanceAlongRoute / car.range) * 100;
-      
-      console.log('🔍', station.name + ':', station.distanceAlongRoute.toFixed(1) + 'km, batteri ved ankomst:', batteryAtStation.toFixed(1) + '%');
-      console.log('   - LEGGER TIL DENNE STASJONEN UANSETT BATTERINIVÅ!');
-      
-      return station;
-    });
-
-    console.log('📍 RESULTAT: Funnet', stationsBeforeCritical.length, 'ladestasjoner TOTALT (alle vist)');
-    
-    // Hvis ingen stasjoner funnet, vis alle for debugging
-    if (stationsBeforeCritical.length === 0) {
-      console.log('🚨 INGEN STASJONER FUNNET! Viser alle stasjoner for debugging:');
-      stationsAlongRoute.forEach(station => {
-        const batteryAtStation = batteryPercentage - (station.distanceAlongRoute / car.range) * 100;
-        console.log('   📍', station.name + ':', batteryAtStation.toFixed(1) + '% batteri ved', station.distanceAlongRoute.toFixed(1) + 'km');
-      });
-    }
-
-    // RETURNER ALLE STASJONER SOM LIGGER PÅ RUTEN (innen 3km) SOM RØDE MARKØRER
-    console.log('🔴 RETURNERER ALLE', stationsAlongRoute.length, 'STASJONER PÅ RUTEN SOM RØDE MARKØRER!');
-    
-    const allStationsOnRoute = stationsAlongRoute.map((station, index) => {
-      const arrivalBattery = batteryPercentage - (station.distanceAlongRoute / car.range) * 100;
-      
-      console.log('🔴 RØD STASJON PÅ RUTEN:', station.name, 'ved', station.distanceAlongRoute.toFixed(1) + 'km, avstand fra rute:', station.distanceFromRoute.toFixed(1) + 'km');
-      
-      return {
-        ...station,
-        arrivalBatteryPercentage: arrivalBattery,
-        targetBatteryPercentage: 80,
-        isRequired: false, // Ikke nødvendigvis påkrevd, men på ruten
-        chargingTime: calculateChargingTime(arrivalBattery, 80, station.fastCharger)
-      };
-    });
-
-    console.log('📊 RESULTAT: Returnerer', allStationsOnRoute.length, 'ladestasjoner som ligger på ruten');
-    
-    allStationsOnRoute.forEach((station, index) => {
-      console.log('📍 Rød stasjon', (index + 1) + ':', station.name, 'på', station.distanceAlongRoute?.toFixed(1) + 'km fra start, avstand fra rute:', station.distanceFromRoute?.toFixed(1) + 'km');
-    });
-
-    console.log('🔍 RESULTAT fra optimizeChargingStations:', allStationsOnRoute.length, 'stasjoner');
-    return allStationsOnRoute;
-  };
+  // FJERNET - Bruker nå calculateAllCriticalPoints istedet
 
   // Beregn ladetid
   const calculateChargingTime = (fromBattery: number, toBattery: number, fastCharger: boolean): number => {
