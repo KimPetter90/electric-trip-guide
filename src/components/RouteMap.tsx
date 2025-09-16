@@ -3631,15 +3631,96 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                     // Send DENNE stasjonen (den som faktisk vises som blå) til ladestasjonkartet
                     console.log('🔵 SENDER BLUE MARKER STATION TIL PARENT:', nearestStation.name);
                     sendStationToChargingMap(nearestStation);
-                    
-                    // Beregn batteriprosent ved ankomst til kritisk punkt
-                    const batteryAtCriticalPoint = ((criticalPointDistance - currentDistance) / carRange) * 100;
-                    const remainingBattery = chargePercent - batteryAtCriticalPoint;
-                    
-                    toast({
-                      title: `⚡ Kritisk punkt funnet!`,
-                      description: `Med ${chargePercent}% lading vil batteriet nå ${remainingBattery.toFixed(0)}% ved ${nearestStation.name} (${criticalPointDistance.toFixed(0)}km fra start).`,
-                    });
+                     
+                     // Beregn batteriprosent ved ankomst til kritisk punkt
+                     const batteryAtCriticalPoint = ((criticalPointDistance - currentDistance) / carRange) * 100;
+                     const remainingBattery = chargePercent - batteryAtCriticalPoint;
+                     
+                     // VIKTIG: Beregn neste kritiske punkt etter lading på denne stasjonen
+                     const newBatteryAfterCharging = chargePercent; // Ny batteriprosent etter lading
+                     const usableRangeAfterCharging = (carRange * (newBatteryAfterCharging - 15)) / 100; // Rekkevidde til neste 15%
+                     const nextCriticalDistance = nearestStation.distanceAlongRoute! + usableRangeAfterCharging;
+                     
+                     console.log('🔋 BEREGNER NESTE KRITISKE PUNKT:');
+                     console.log('  - Lader til:', newBatteryAfterCharging + '%');
+                     console.log('  - Kan kjøre:', usableRangeAfterCharging.toFixed(1), 'km til neste kritiske punkt');
+                     console.log('  - Neste kritiske punkt på:', nextCriticalDistance.toFixed(1), 'km');
+                     
+                     // Finn nærmeste RØD stasjon til neste kritiske punkt og gjør den BLÅ
+                     let nextRedStation = null;
+                     let smallestDistanceToNext = Infinity;
+                     
+                     optimizedStations.forEach(station => {
+                       if (station.id !== nearestStation.id && station.distanceAlongRoute && station.distanceAlongRoute > nearestStation.distanceAlongRoute!) {
+                         const distanceToNextCritical = Math.abs(station.distanceAlongRoute - nextCriticalDistance);
+                         if (distanceToNextCritical < smallestDistanceToNext) {
+                           smallestDistanceToNext = distanceToNextCritical;
+                           nextRedStation = station;
+                         }
+                       }
+                     });
+                     
+                     if (nextRedStation && nextCriticalDistance < currentRoute.distance / 1000) {
+                       console.log('🔴➡️🔵 FANT NESTE RØD STASJON Å GJØRE BLÅ:', nextRedStation.name);
+                       console.log('🔴➡️🔵 Avstand til neste kritiske punkt:', smallestDistanceToNext.toFixed(1), 'km');
+                       
+                       // Fjern den røde markøren
+                       const existingRedMarkers = document.querySelectorAll('.charging-station-marker');
+                       existingRedMarkers.forEach(marker => {
+                         const markerElement = marker as HTMLElement;
+                         const stationId = markerElement.getAttribute('data-station-id');
+                         if (stationId === nextRedStation!.id) {
+                           console.log('🔴❌ FJERNER RØD MARKØR for å lage ny blå:', nextRedStation!.name);
+                           markerElement.remove();
+                         }
+                       });
+                       
+                       // Lag ny blå markør for neste kritiske stasjon
+                       const nextBlueEl = document.createElement('div');
+                       nextBlueEl.className = 'next-blue-critical-marker';
+                       nextBlueEl.setAttribute('data-station-id', nextRedStation.id);
+                       nextBlueEl.style.cssText = `
+                         background: linear-gradient(135deg, #0066ff, #00aaff);
+                         width: 25px;
+                         height: 25px;
+                         border-radius: 50%;
+                         border: 3px solid white;
+                         cursor: pointer;
+                         display: flex;
+                         align-items: center;
+                         justify-content: center;
+                         color: white;
+                         font-weight: bold;
+                         font-size: 12px;
+                         z-index: 999999 !important;
+                         position: relative;
+                         box-shadow: 0 0 20px rgba(0, 102, 255, 0.8);
+                         animation: pulse 2s infinite;
+                       `;
+                       nextBlueEl.innerHTML = '⚡';
+                       
+                       const nextBlueMarker = new mapboxgl.Marker(nextBlueEl)
+                         .setLngLat([nextRedStation.longitude, nextRedStation.latitude])
+                         .addTo(map.current!);
+                       
+                       console.log('🔵✅ NESTE BLÅ MARKØR LAGT TIL for:', nextRedStation.name);
+                       
+                       toast({
+                         title: `🔵 Neste ladestasjon markert!`,
+                         description: `${nextRedStation.name} vil være nødvendig etter ${nextCriticalDistance.toFixed(0)}km når batteriet igjen når kritisk nivå.`,
+                       });
+                     } else if (nextCriticalDistance >= currentRoute.distance / 1000) {
+                       console.log('✅ INGEN FLERE LADESTASJONER NØDVENDIG - kommer frem med gjenstående batteri');
+                       toast({
+                         title: `✅ Ingen flere ladestasjoner nødvendig!`,
+                         description: `Med ${chargePercent}% lading kommer du frem uten å lade igjen.`,
+                       });
+                     }
+                     
+                     toast({
+                       title: `⚡ Kritisk punkt funnet!`,
+                       description: `Med ${chargePercent}% lading vil batteriet nå ${remainingBattery.toFixed(0)}% ved ${nearestStation.name} (${criticalPointDistance.toFixed(0)}km fra start).`,
+                     });
                   }}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                 >
