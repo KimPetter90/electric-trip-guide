@@ -3582,64 +3582,80 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                    onClick={() => {
                      console.log('🎯 Beregn neste punkt knapp klikket!');
                      
-                     // ENKEL TEST: Finn den andre røde markøren og gjør den blå med en gang
+                     // ENKEL LØSNING: Finn alle røde markører og gjør den andre til blå
                      const allRedMarkers = document.querySelectorAll('.charging-station-marker');
-                     console.log('🔴 FUNNET', allRedMarkers.length, 'RØDE MARKØRER');
+                     console.log('🔴 Fant', allRedMarkers.length, 'røde markører');
                      
                      if (allRedMarkers.length > 1) {
-                       console.log('🎯 KONVERTERER ANDRE RØDE MARKØR TIL BLÅ NÅ!');
+                       // Ta den andre røde markøren (ikke den første)
+                       const targetMarker = allRedMarkers[1] as HTMLElement;
+                       const stationId = targetMarker.getAttribute('data-station-id');
                        
-                       const secondRedMarker = allRedMarkers[1] as HTMLElement;
-                       const markerPosition = secondRedMarker.getBoundingClientRect();
-                       console.log('🔴 Andre røde markør posisjon:', markerPosition);
+                       console.log('🎯 Konverterer markør med station ID:', stationId);
+                       
+                       // Finn stasjonen i optimizedStations
+                       let stationName = 'Ukjent stasjon';
+                       let stationCoords: [number, number] = [10.0, 60.0];
+                       
+                       if (stationId && optimizedStations) {
+                         const station = optimizedStations.find(s => s.id === stationId);
+                         if (station) {
+                           stationName = station.name;
+                           stationCoords = [station.longitude, station.latitude];
+                           console.log('✅ Fant stasjon:', stationName, 'på koordinater:', stationCoords);
+                         }
+                       }
                        
                        // Fjern den røde markøren
-                       secondRedMarker.remove();
-                       console.log('🔴❌ FJERNET ANDRE RØDE MARKØR');
+                       targetMarker.remove();
+                       console.log('🔴❌ FJERNET RØD MARKØR');
                        
-                       // Lag blå markør på samme koordinater som den andre røde
-                       if (optimizedStations && optimizedStations.length > 1) {
-                         const station = optimizedStations[1];
-                         console.log('🔵 LAGER BLÅ MARKØR FOR:', station.name);
-                         
-                         const blueEl = document.createElement('div');
-                         blueEl.style.cssText = `
-                           background: linear-gradient(135deg, #0066ff, #00aaff);
-                           width: 40px;
-                           height: 40px;
-                           border-radius: 50%;
-                           border: 4px solid white;
-                           cursor: pointer;
-                           display: flex;
-                           align-items: center;
-                           justify-content: center;
-                           color: white;
-                           font-weight: bold;
-                           font-size: 20px;
-                           z-index: 999999 !important;
-                           position: relative;
-                           box-shadow: 0 0 40px rgba(0, 102, 255, 1);
-                           animation: pulse 1s infinite;
-                         `;
-                         blueEl.innerHTML = '⚡';
-                         
-                         new mapboxgl.Marker(blueEl)
-                           .setLngLat([station.longitude, station.latitude])
-                           .addTo(map.current!);
-                         
-                         console.log('✅✅✅ BLÅ MARKØR LAGT TIL SUCCESSFULLY!');
-                         
-                         toast({
-                           title: `🔵 Neste ladestasjon markert!`,
-                           description: `${station.name} er nå markert som neste kritiske ladestasjon!`,
-                         });
-                       }
-                     } else {
-                       console.log('❌ Ikke nok røde markører funnet');
+                       // Lag ny stor blå markør på samme koordinater
+                       const blueEl = document.createElement('div');
+                       blueEl.className = 'next-critical-blue-marker';
+                       blueEl.style.cssText = `
+                         background: linear-gradient(135deg, #0066ff, #00aaff);
+                         width: 40px;
+                         height: 40px;
+                         border-radius: 50%;
+                         border: 4px solid white;
+                         cursor: pointer;
+                         display: flex;
+                         align-items: center;
+                         justify-content: center;
+                         color: white;
+                         font-weight: bold;
+                         font-size: 20px;
+                         z-index: 999999 !important;
+                         position: relative;
+                         box-shadow: 0 0 30px rgba(0, 102, 255, 1);
+                         animation: pulse 1s infinite;
+                       `;
+                       blueEl.innerHTML = '⚡';
+                       
+                       new mapboxgl.Marker(blueEl)
+                         .setLngLat(stationCoords)
+                         .addTo(map.current!);
+                       
+                       console.log('🔵✅ NY BLÅ MARKØR LAGT TIL på:', stationCoords);
+                       
                        toast({
-                         title: `❌ Ingen flere stasjoner`,
-                         description: `Ikke nok røde markører å konvertere.`,
+                         title: `🔵 Neste ladestasjon markert!`,
+                         description: `${stationName} er nå markert som neste kritiske ladestasjon!`,
                        });
+                       
+                       // Lukk modalen
+                       setChargingModal({ isOpen: false, stationId: '', stationName: '', distance: 0, arrivalBattery: 0 });
+                       
+                     } else {
+                       console.log('❌ Ikke nok røde markører å konvertere');
+                       toast({
+                         title: `✅ Ingen flere ladestasjoner nødvendig!`,
+                         description: `Du kommer frem uten flere ladestasjoner.`,
+                       });
+                       
+                       // Lukk modalen
+                       setChargingModal({ isOpen: false, stationId: '', stationName: '', distance: 0, arrivalBattery: 0 });
                      }
                      
                      const chargePercent = parseInt(chargePercentInput);
