@@ -124,39 +124,42 @@ function Index() {
     if (!selectedCar || !routeData.from || !routeData.to) return;
 
     setLoadingRoutes(true);
-    console.log('🚀 Genererer rutevalg...');
+    console.log('🚀 Genererer rutevalg for:', routeData.from, '->', routeData.to);
 
     // Simuler API-kall for å hente 3 forskjellige ruter
     await new Promise(resolve => setTimeout(resolve, 1500));
 
+    // Estimer avstand basert på destinasjoner (forenklet beregning)
+    const estimatedDistance = calculateApproximateDistance(routeData.from, routeData.to);
+    
     const mockRoutes: RouteOption[] = [
       {
         id: 'fastest',
         name: 'Raskeste rute',
-        distance: 463,
-        duration: 420, // minutter
-        chargingStops: 2,
-        estimatedCost: 280,
+        distance: Math.round(estimatedDistance * 1.02), // Litt lengre for motorveier
+        duration: Math.round((estimatedDistance * 1.02) / 90 * 60), // ~90 km/t snitt
+        chargingStops: Math.max(1, Math.round(estimatedDistance / 250)), // Stopp hvert 250km
+        estimatedCost: Math.round(estimatedDistance * 0.6), // 0.6 kr per km
         description: 'Hovedveier og motorveier. Minimale stopp, men mer kostbare ladestasjoner.',
         routeType: 'fastest'
       },
       {
         id: 'shortest',
         name: 'Korteste rute',
-        distance: 441,
-        duration: 465, // minutter
-        chargingStops: 1,
-        estimatedCost: 240,
+        distance: Math.round(estimatedDistance * 0.95), // Kortere, men tregere veier
+        duration: Math.round((estimatedDistance * 0.95) / 75 * 60), // ~75 km/t snitt
+        chargingStops: Math.max(1, Math.round(estimatedDistance / 280)), // Færre stasjoner
+        estimatedCost: Math.round(estimatedDistance * 0.55), // Billigere
         description: 'Direkteste vei mellom destinasjonene. Noen mindre veier, men kortere avstand.',
         routeType: 'shortest'
       },
       {
         id: 'eco',
         name: 'Miljøvennlig rute',
-        distance: 478,
-        duration: 485, // minutter
-        chargingStops: 3,
-        estimatedCost: 195,
+        distance: Math.round(estimatedDistance * 1.08), // Lengre, men mer effektiv
+        duration: Math.round((estimatedDistance * 1.08) / 80 * 60), // ~80 km/t snitt
+        chargingStops: Math.max(2, Math.round(estimatedDistance / 200)), // Flere stopp for optimalisering
+        estimatedCost: Math.round(estimatedDistance * 0.42), // Billigst
         description: 'Optimalisert for lavest energiforbruk. Bruker rimelige ladestasjoner med fornybar energi.',
         routeType: 'eco'
       }
@@ -165,7 +168,123 @@ function Index() {
     setRouteOptions(mockRoutes);
     setSelectedRouteId('fastest'); // Velg raskeste som standard
     setLoadingRoutes(false);
-    console.log('✅ Rutevalg generert, default valgt: fastest');
+    console.log('✅ Rutevalg generert for avstand:', estimatedDistance, 'km');
+  };
+
+  // Forenklet distanseberegning basert på kjente steder
+  const calculateApproximateDistance = (from: string, to: string): number => {
+    const distances: { [key: string]: { [key: string]: number } } = {
+      'oslo': {
+        'bergen': 463,
+        'trondheim': 543,
+        'stavanger': 518,
+        'kristiansand': 319,
+        'tromsø': 1369,
+        'ålesund': 651,
+        'drammen': 65,
+        'fredrikstad': 106,
+        'moss': 64,
+        'sarpsborg': 115,
+        'sandefjord': 125,
+        'tønsberg': 112,
+        'larvik': 147,
+        'porsgrunn': 162,
+        'skien': 171,
+        'lillehammer': 185,
+        'hamar': 126,
+        'gjøvik': 125,
+        'kongsberg': 90,
+        'notodden': 122,
+        'rjukan': 168
+      },
+      'bergen': {
+        'oslo': 463,
+        'stavanger': 209,
+        'trondheim': 656,
+        'kristiansand': 484,
+        'ålesund': 381,
+        'florø': 150,
+        'sogndal': 205,
+        'voss': 102,
+        'odda': 169,
+        'haugesund': 157
+      },
+      'trondheim': {
+        'oslo': 543,
+        'bergen': 656,
+        'ålesund': 300,
+        'steinkjer': 126,
+        'mo i rana': 285,
+        'tromsø': 520,
+        'røros': 157,
+        'kristiansund': 145,
+        'molde': 218
+      },
+      'stavanger': {
+        'oslo': 518,
+        'bergen': 209,
+        'kristiansand': 238,
+        'haugesund': 78,
+        'egersund': 69,
+        'sandnes': 15,
+        'bryne': 33
+      },
+      'kristiansand': {
+        'oslo': 319,
+        'stavanger': 238,
+        'bergen': 484,
+        'arendal': 67,
+        'mandal': 43,
+        'flekkefjord': 97,
+        'grimstad': 44
+      }
+    };
+
+    const fromKey = from.toLowerCase().split(' ')[0].split('(')[0];
+    const toKey = to.toLowerCase().split(' ')[0].split('(')[0];
+    
+    // Sjekk direkte avstand
+    if (distances[fromKey]?.[toKey]) {
+      return distances[fromKey][toKey];
+    }
+    
+    // Sjekk omvendt retning
+    if (distances[toKey]?.[fromKey]) {
+      return distances[toKey][fromKey];
+    }
+    
+    // Fallback: estimat basert på koordinater (forenklet)
+    const cityCoords: { [key: string]: [number, number] } = {
+      'oslo': [59.9139, 10.7522],
+      'bergen': [60.3913, 5.3221],
+      'trondheim': [63.4305, 10.3951],
+      'stavanger': [58.9700, 5.7331],
+      'kristiansand': [58.1467, 7.9956],
+      'tromsø': [69.6492, 18.9553],
+      'ålesund': [62.4722, 6.1495],
+      'drammen': [59.7439, 10.2045],
+      'fredrikstad': [59.2181, 10.9298],
+      'lillehammer': [61.1154, 10.4662]
+    };
+    
+    const fromCoords = cityCoords[fromKey];
+    const toCoords = cityCoords[toKey];
+    
+    if (fromCoords && toCoords) {
+      // Haversine formel for luftlinje, deretter * 1.3 for veier
+      const R = 6371; // Jordens radius i km
+      const dLat = (toCoords[0] - fromCoords[0]) * Math.PI / 180;
+      const dLon = (toCoords[1] - fromCoords[1]) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(fromCoords[0] * Math.PI / 180) * Math.cos(toCoords[0] * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const distance = R * c * 1.3; // Legg til 30% for veier
+      return Math.round(distance);
+    }
+    
+    // Siste fallback: 300km
+    return 300;
   };
 
   const handleRouteSelect = (routeId: string) => {
