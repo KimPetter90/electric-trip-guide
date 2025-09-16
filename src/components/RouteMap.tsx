@@ -1703,15 +1703,26 @@ const checkIfShouldGoViaTrondheim = (startCoords: [number, number], endCoords: [
 };
 
 // Rask Mapbox Directions API funksjon for parallellisering
-const fetchDirectionsData = async (startCoords: [number, number], endCoords: [number, number], routeType: string) => {
+const fetchDirectionsData = async (startCoords: [number, number], endCoords: [number, number], routeType: string, viaCity?: string) => {
   // Sjekk om vi trenger å gå via Trondheim for lange ruter nord-sør
   const waypoints = [startCoords];
   
-  // Bestem om vi skal gå via Trondheim
-  const shouldGoViaTrondheim = checkIfShouldGoViaTrondheim(startCoords, endCoords);
-  if (shouldGoViaTrondheim) {
-    console.log('🛣️ Legger til Trondheim som via-punkt for optimal rute gjennom Norge');
-    waypoints.push(cityCoordinates['trondheim']);
+  // Først sjekk om bruker har spesifisert via-punkt
+  if (viaCity) {
+    const viaCoords = await getCoordinatesForPlace(viaCity);
+    if (viaCoords) {
+      console.log('🛣️ Legger til bruker-spesifisert via-punkt:', viaCity, viaCoords);
+      waypoints.push(viaCoords);
+    } else {
+      console.log('⚠️ Kunne ikke finne koordinater for via-punkt:', viaCity);
+    }
+  } else {
+    // Bare bruk automatisk Trondheim via-punkt hvis bruker ikke har spesifisert noe
+    const shouldGoViaTrondheim = checkIfShouldGoViaTrondheim(startCoords, endCoords);
+    if (shouldGoViaTrondheim) {
+      console.log('🛣️ Legger til Trondheim som via-punkt for optimal rute gjennom Norge');
+      waypoints.push(cityCoordinates['trondheim']);
+    }
   }
   
   waypoints.push(endCoords);
@@ -1781,23 +1792,10 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         // Hent værdata parallelt
         fetchWeatherData(startCoords, endCoords),
         // Hent rute parallelt
-        fetchDirectionsData(startCoords, endCoords, routeType)
+        fetchDirectionsData(startCoords, endCoords, routeType, routeData.via)
       ]);
       
-      // Rask prosessering av rute-data
-      
-      // Sjekk om vi trenger å gå via Trondheim for lange ruter nord-sør
-      const waypoints = [startCoords];
-      
-      // Bestem om vi skal gå via Trondheim
-      const shouldGoViaTrondheim = checkIfShouldGoViaTrondheim(startCoords, endCoords);
-      if (shouldGoViaTrondheim) {
-        console.log('🛣️ Legger til Trondheim som via-punkt for optimal rute gjennom Norge');
-        waypoints.push(cityCoordinates['trondheim']);
-      }
-      
-      waypoints.push(endCoords);
-      const coordinates = waypoints.map(coord => coord.join(',')).join(';');
+      // Rask prosessering av rute-data - directionsData already contains the processed route
       
       // Velg riktig Mapbox profil og parametre basert på rutetype
       let mapboxProfile = 'driving';
