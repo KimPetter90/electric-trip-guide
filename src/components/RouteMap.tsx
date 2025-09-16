@@ -1524,9 +1524,25 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                 </div>
               </div>
               
-              <div style="text-align: center; background: #0066ff; color: white; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">
-                👆 Klikk markør for å velge ladeprosent
-              </div>
+              <button 
+                onclick="window.openChargingModal && window.openChargingModal('${station.id}', '${station.name}', ${station.distanceAlongRoute || 0}, 10)"
+                style="
+                  width: 100%; 
+                  background: #0066ff; 
+                  color: white; 
+                  border: none; 
+                  padding: 12px 16px; 
+                  border-radius: 6px; 
+                  font-size: 14px; 
+                  font-weight: 600; 
+                  cursor: pointer; 
+                  transition: background 0.2s;
+                "
+                onmouseover="this.style.background='#0052cc'"
+                onmouseout="this.style.background='#0066ff'"
+              >
+                ⚡ Velg ladeprosent
+              </button>
             </div>
           `);
           
@@ -1729,9 +1745,25 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
               </div>
             </div>
             
-            <div style="text-align: center; background: #0066ff; color: white; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">
-              👆 Klikk markør for å velge ladeprosent
-            </div>
+            <button 
+              onclick="window.openChargingModal && window.openChargingModal('${station.id}', '${station.name}', ${station.distanceAlongRoute || 0}, 10)"
+              style="
+                width: 100%; 
+                background: #0066ff; 
+                color: white; 
+                border: none; 
+                padding: 12px 16px; 
+                border-radius: 6px; 
+                font-size: 14px; 
+                font-weight: 600; 
+                cursor: pointer; 
+                transition: background 0.2s;
+              "
+              onmouseover="this.style.background='#0052cc'"
+              onmouseout="this.style.background='#0066ff'"
+            >
+              ⚡ Velg ladeprosent
+            </button>
           </div>
         `);
         
