@@ -40,6 +40,8 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
+    const origin = req.headers.get("origin") || "https://9a7124bc-51c6-4220-9c3e-a9b0a99b385b.lovableproject.com";
+    
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -50,8 +52,10 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/subscription-success`,
-      cancel_url: `${req.headers.get("origin")}/pricing`,
+      success_url: `${origin}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/pricing`,
+      allow_promotion_codes: true,
+      billing_address_collection: 'required',
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
