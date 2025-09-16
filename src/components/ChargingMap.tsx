@@ -150,9 +150,8 @@ export default function ChargingMap({ isVisible, routeAnalysis, optimizedStation
                       </div>
                     </div>
                     <div className="flex items-center gap-2 p-2 rounded-lg bg-background/50">
-                      <DollarSign className="h-4 w-4 text-primary" />
                       <div>
-                        <span className="font-orbitron font-medium text-lg">{stop.cost} kr</span>
+                        <span className="font-orbitron font-medium text-lg">{stop.cost} NOK</span>
                         <p className="text-xs text-muted-foreground">kostnad</p>
                       </div>
                     </div>

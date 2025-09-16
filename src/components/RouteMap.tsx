@@ -3297,10 +3297,9 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
 
               <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300">
                 <div className="flex items-center space-x-2">
-                  <DollarSign className="h-5 w-5 text-primary animate-glow-pulse" />
                   <div>
                     <p className="text-sm font-orbitron font-medium text-muted-foreground">Ladekostnad</p>
-                    <p className="text-3xl font-orbitron font-bold text-gradient">{routeAnalysis?.totalCost || 0} kr</p>
+                    <p className="text-3xl font-orbitron font-bold text-gradient">{routeAnalysis?.totalCost || 0} NOK</p>
                   </div>
                 </div>
               </Card>
