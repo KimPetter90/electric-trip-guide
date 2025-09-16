@@ -481,10 +481,47 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       console.error('❌ Geocoding feil:', error);
     }
     
-    return null;
-  };
+  return null;
+};
 
-  // Oppdater kart med rute
+// Funksjon for å bestemme om ruten skal gå via Trondheim
+const checkIfShouldGoViaTrondheim = (startCoords: [number, number], endCoords: [number, number]): boolean => {
+  const [startLng, startLat] = startCoords;
+  const [endLng, endLat] = endCoords;
+  
+  // Trondheim koordinater
+  const trondheimLat = 63.4305;
+  
+  // Sjekk om det er en lang nord-sør rute
+  const latDifference = Math.abs(endLat - startLat);
+  const isLongRoute = latDifference > 5; // Mer enn 5 grader breddegrad
+  
+  // Sjekk om en av punktene er nord for Trondheim og den andre sør for Trondheim
+  const oneNorthOneSouth = (startLat > trondheimLat && endLat < trondheimLat) || 
+                          (startLat < trondheimLat && endLat > trondheimLat);
+  
+  // Sjekk om ruten er innenfor Norge (rough check)
+  const isWithinNorway = startLng >= 4.65 && startLng <= 31.29 && 
+                        endLng >= 4.65 && endLng <= 31.29 &&
+                        startLat >= 57.93 && startLat <= 71.18 &&
+                        endLat >= 57.93 && endLat <= 71.18;
+  
+  const shouldUseVia = isLongRoute && oneNorthOneSouth && isWithinNorway;
+  
+  console.log('🛣️ Via Trondheim sjekk:', {
+    isLongRoute,
+    oneNorthOneSouth,
+    isWithinNorway,
+    shouldUseVia,
+    startLat: startLat.toFixed(2),
+    endLat: endLat.toFixed(2),
+    trondheimLat: trondheimLat.toFixed(2)
+  });
+  
+  return shouldUseVia;
+};
+
+// Oppdater kart med rute
   const updateMapRoute = async (routeType: string = 'fastest') => {
     if (!map.current || !accessToken || !routeData.from || !routeData.to) {
       console.log('🚫 Mangler requirements:', {
@@ -521,7 +558,17 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       console.log('🔍 RouteAnalysis status:', { routeAnalysis, hasData: !!routeAnalysis });
       console.log('🎯 Valgt rutetype:', routeType);
       
-      const waypoints = [startCoords, endCoords];
+      // Sjekk om vi trenger å gå via Trondheim for lange ruter nord-sør
+      const waypoints = [startCoords];
+      
+      // Bestem om vi skal gå via Trondheim
+      const shouldGoViaTrondheim = checkIfShouldGoViaTrondheim(startCoords, endCoords);
+      if (shouldGoViaTrondheim) {
+        console.log('🛣️ Legger til Trondheim som via-punkt for optimal rute gjennom Norge');
+        waypoints.push(cityCoordinates['trondheim']);
+      }
+      
+      waypoints.push(endCoords);
       const coordinates = waypoints.map(coord => coord.join(',')).join(';');
       
       // Velg riktig Mapbox profil og parametre basert på rutetype
