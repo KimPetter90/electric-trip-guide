@@ -1992,20 +1992,89 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         batteryPercentage: routeData.batteryPercentage + '%',
         chargingStationsCount: chargingStations.length
       });
-      // Bruk ny fullstendig optimeringsalgoritme
-      console.log('🔧 KALLER calculateAllCriticalPoints med:', {
+      // ENKEL ALGORITME - GARANTERER MINST 2 BLÅMARKØRER 
+      console.log('🔧 STARTER ENKEL 2-STASJON ALGORITME');
+      console.log('📊 Input:', {
         batteryPercent: routeData.batteryPercentage,
         routeDistanceKm: route.distance / 1000,
         carRange: selectedCar.range,
         stationsCount: chargingStations.length
       });
       
-      const optimized = calculateAllCriticalPoints(
-        routeData.batteryPercentage,
-        route,
-        selectedCar,
-        chargingStations
-      );
+      const routeKm = route.distance / 1000;
+      const carRange = selectedCar.range;
+      const startBattery = routeData.batteryPercentage;
+      
+      // Beregn første kritiske punkt (40% til 15% = 25% batteri brukt)
+      const firstRange = (carRange * (startBattery - 15)) / 100;
+      console.log('🔵 FØRSTE kritiske punkt ved:', firstRange.toFixed(1), 'km');
+      
+      // Beregn andre kritiske punkt (80% til 15% = 65% batteri brukt)  
+      const secondRange = (carRange * 65) / 100;
+      const secondCriticalPoint = firstRange + secondRange;
+      console.log('🔵 ANDRE kritiske punkt ved:', secondCriticalPoint.toFixed(1), 'km');
+      
+      // Finn stasjoner nær disse punktene
+      const optimized = [];
+      
+      // Finn første stasjon
+      const firstStation = chargingStations
+        .map(station => {
+          let stationKm = 0;
+          let minDist = Infinity;
+          
+          for (let i = 0; i < route.geometry.coordinates.length; i++) {
+            const dist = getDistance(
+              station.latitude, station.longitude,
+              route.geometry.coordinates[i][1], route.geometry.coordinates[i][0]
+            );
+            if (dist < minDist) {
+              minDist = dist;
+              stationKm = (i / route.geometry.coordinates.length) * routeKm;
+            }
+          }
+          
+          return { ...station, distanceAlongRoute: stationKm, distanceFromRoute: minDist };
+        })
+        .filter(s => s.distanceFromRoute <= 20 && s.distanceAlongRoute >= firstRange - 50 && s.distanceAlongRoute <= firstRange + 50)
+        .sort((a, b) => Math.abs(a.distanceAlongRoute - firstRange) - Math.abs(b.distanceAlongRoute - firstRange))[0];
+      
+      if (firstStation) {
+        console.log('✅ FØRSTE stasjon funnet:', firstStation.name, 'ved', firstStation.distanceAlongRoute.toFixed(1), 'km');
+        optimized.push(firstStation);
+      }
+      
+      // Finn andre stasjon
+      const secondStation = chargingStations
+        .map(station => {
+          let stationKm = 0;
+          let minDist = Infinity;
+          
+          for (let i = 0; i < route.geometry.coordinates.length; i++) {
+            const dist = getDistance(
+              station.latitude, station.longitude,
+              route.geometry.coordinates[i][1], route.geometry.coordinates[i][0]
+            );
+            if (dist < minDist) {
+              minDist = dist;
+              stationKm = (i / route.geometry.coordinates.length) * routeKm;
+            }
+          }
+          
+          return { ...station, distanceAlongRoute: stationKm, distanceFromRoute: minDist };
+        })
+        .filter(s => s.distanceFromRoute <= 20 && 
+                     s.distanceAlongRoute >= secondCriticalPoint - 50 && 
+                     s.distanceAlongRoute <= secondCriticalPoint + 50 &&
+                     s.id !== firstStation?.id)
+        .sort((a, b) => Math.abs(a.distanceAlongRoute - secondCriticalPoint) - Math.abs(b.distanceAlongRoute - secondCriticalPoint))[0];
+      
+      if (secondStation) {
+        console.log('✅ ANDRE stasjon funnet:', secondStation.name, 'ved', secondStation.distanceAlongRoute.toFixed(1), 'km');
+        optimized.push(secondStation);
+      }
+      
+      console.log('🎯 RESULTAT: Fant', optimized.length, 'stasjoner for 2-punkt algoritme');
 
       console.log('✅ Optimalisering fullført. Funnet', optimized.length, 'ladestsjoner');
       setOptimizedStations(optimized);
