@@ -1,12 +1,17 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import CarSelector from "@/components/CarSelector";
 import RouteInput from "@/components/RouteInput";
 import RouteSelector from "@/components/RouteSelector";
 import ChargingMap from "@/components/ChargingMap";
 import RouteMap from "@/components/RouteMap";
-import { Zap, Route, MapPin, Car, Battery } from "lucide-react";
+import { Zap, Route, MapPin, Car, Battery, LogIn, User, CreditCard, LogOut, AlertTriangle } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 import { type RouteOption } from "@/components/RouteSelector";
 
@@ -40,6 +45,10 @@ interface RouteAnalysis {
 }
 
 function Index() {
+  const { user, subscription, signOut, loading } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
   const [selectedCar, setSelectedCar] = useState<CarModel | null>(null);
   const [routeData, setRouteData] = useState<RouteData>({
     from: "",
@@ -135,13 +144,55 @@ function Index() {
     console.log('🔄 Index.tsx: selectedRouteId oppdatert til:', routeId);
   };
 
-  const handlePlanRoute = () => {
+  const handlePlanRoute = async () => {
     console.log('🚀 Planlegger rute med data:', { selectedCar, routeData });
+    
+    // Check if user is authenticated
+    if (!user) {
+      toast({
+        title: "Logg inn for å planlegge ruter",
+        description: "Du må være innlogget for å bruke ruteplanleggeren.",
+        variant: "destructive",
+      });
+      navigate('/auth');
+      return;
+    }
+
+    // Check route limits
+    if (subscription && subscription.route_limit !== -1 && subscription.route_count >= subscription.route_limit) {
+      toast({
+        title: "Rutegrense nådd",
+        description: `Du har brukt opp alle dine ${subscription.route_limit} ruter for denne måneden. Oppgrader for flere ruter.`,
+        variant: "destructive",
+      });
+      navigate('/pricing');
+      return;
+    }
+    
     if (selectedCar && routeData.from && routeData.to) {
       console.log('✅ Alle kriterier oppfylt, setter showRoute til true og trigger manuell oppdatering');
+      
+      // Increment route count if user is authenticated
+      if (user && subscription) {
+        try {
+          await supabase.rpc('increment_route_count', { user_uuid: user.id });
+          // Refresh subscription to update count
+          setTimeout(() => {
+            // We'll update this once refreshSubscription is available
+          }, 100);
+        } catch (error) {
+          console.error('Error incrementing route count:', error);
+        }
+      }
+      
       setShowRoute(true);
       setRouteTrigger(prev => prev + 1); // Trigger manuell oppdatering
       generateRouteOptions(); // Generer rutevalg
+      
+      toast({
+        title: "Rute planlagt!",
+        description: subscription ? `Ruter brukt: ${subscription.route_count + 1} / ${subscription.route_limit === -1 ? '∞' : subscription.route_limit}` : "Gratis rute planlagt",
+      });
     } else {
       console.log('❌ Mangler data:', { 
         harValgtBil: !!selectedCar, 
@@ -154,8 +205,83 @@ function Index() {
   // Vis kartet kun når "Planlegg rute" trykkes - ikke automatisk
   // (Fjernet automatisk visning)
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Logget ut",
+        description: "Du er nå logget ut.",
+      });
+    } catch (error) {
+      toast({
+        title: "Feil ved utlogging",
+        description: "Noe gikk galt.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+        <div className="text-center">
+          <Zap className="h-12 w-12 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Laster...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-hero relative overflow-hidden">
+      {/* Header with Auth */}
+      <header className="relative z-50 border-b border-border/20 bg-background/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Zap className="h-6 w-6 text-primary" />
+              <span className="text-xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+                ElRoute
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              {user ? (
+                <>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/pricing')}>
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    {subscription?.subscription_status === 'free' ? 'Oppgrader' : 'Abonnement'}
+                  </Button>
+                  
+                  {subscription && (
+                    <Badge variant={subscription.subscription_status === 'free' ? 'secondary' : 'default'}>
+                      {subscription.subscription_status === 'free' && (
+                        <AlertTriangle className="h-3 w-3 mr-1" />
+                      )}
+                      {subscription.route_count} / {subscription.route_limit === -1 ? '∞' : subscription.route_limit} ruter
+                    </Badge>
+                  )}
+                  
+                  <div className="flex items-center space-x-2">
+                    <User className="h-4 w-4" />
+                    <span className="text-sm">{user.email}</span>
+                  </div>
+                  
+                  <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={() => navigate('/auth')} size="sm">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Logg inn
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
       {/* Futuristisk animert bakgrunn */}
       <div className="fixed inset-0 opacity-30">
         <div 
