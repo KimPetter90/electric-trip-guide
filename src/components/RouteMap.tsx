@@ -480,7 +480,15 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
   // Oppdater kart med rute
   const updateMapRoute = async (routeType: string = 'fastest') => {
-    if (!map.current || !accessToken || !routeData.from || !routeData.to) return;
+    if (!map.current || !accessToken || !routeData.from || !routeData.to) {
+      console.log('🚫 Mangler requirements:', {
+        map: !!map.current,
+        accessToken: !!accessToken,
+        from: routeData.from,
+        to: routeData.to
+      });
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -539,18 +547,28 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       console.log('🇳🇴 API URL:', directionsUrl);
       
       const directionsResponse = await fetch(directionsUrl);
+      
+      console.log('📞 Mapbox Response Status:', directionsResponse.status);
+      console.log('📞 Mapbox Response OK:', directionsResponse.ok);
+      
       const directionsData = await directionsResponse.json();
       
-      console.log('📍 Mapbox API Response:', directionsData);
+      console.log('📍 Mapbox API Response:', {
+        status: directionsResponse.status,
+        ok: directionsResponse.ok,
+        routes: directionsData.routes?.length || 0,
+        error: directionsData.error || 'ingen feil',
+        message: directionsData.message || 'ingen melding'
+      });
       
       if (directionsResponse.status !== 200) {
         console.error('❌ Mapbox API feil:', directionsData);
-        throw new Error(`Mapbox API feil: ${directionsData.message || 'Ukjent feil'}`);
+        throw new Error(`Mapbox API feil: ${directionsData.message || directionsData.error || 'Ukjent feil'}`);
       }
 
       if (!directionsData.routes || directionsData.routes.length === 0) {
         console.log('❌ Ingen ruter returnert fra Mapbox API');
-        console.log('📊 Response data:', directionsData);
+        console.log('📊 Full Response data:', directionsData);
         throw new Error('Ingen rute funnet mellom de valgte punktene');
       }
 
@@ -1405,9 +1423,9 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       const { data, error } = await supabase.functions.invoke('weather-service', {
         body: {
           startLat: startCoords[1],
-          startLon: startCoords[0],
+          startLng: startCoords[0],
           endLat: endCoords[1],
-          endLon: endCoords[0]
+          endLng: endCoords[0]
         }
       });
 
