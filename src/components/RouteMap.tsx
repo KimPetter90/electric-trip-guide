@@ -2673,14 +2673,77 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           `;
           el.innerHTML = '⚡';
 
-          const popup = new mapboxgl.Popup().setHTML(`
-            <div style="font-family: Arial, sans-serif; color: #333;">
-              <h4 style="margin: 0 0 8px 0; color: #dc2626;"><strong>🔴 RUTE-STASJON: ${station.name}</strong></h4>
-              <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
-              <p style="margin: 4px 0; color: #dc2626;">🔴 <strong>Optimert for din rute!</strong></p>
-              <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
-              <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
-              <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${station.available}/${station.total} ladepunkter</p>
+          const popup = new mapboxgl.Popup({
+            maxWidth: '320px',
+            closeButton: true,
+            closeOnClick: false
+          }).setHTML(`
+            <div style="font-family: Inter, sans-serif; padding: 12px; line-height: 1.4;">
+              <div style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 10px; margin: -12px -12px 12px -12px; border-radius: 8px;">
+                <h4 style="margin: 0; font-size: 16px; font-weight: 600;">🔴 ${station.name}</h4>
+                <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">📍 ${station.location}</p>
+                <div style="margin-top: 6px;">
+                  <span style="background: rgba(255,255,255,0.3); padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">🎯 RUTE-OPTIMERT</span>
+                </div>
+              </div>
+              
+              <div style="background: #fef2f2; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
+                <p style="margin: 0; font-size: 13px; color: #dc2626; font-weight: 600;">🎯 Optimert for din rute</p>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                  <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">⚡ EFFEKT</div>
+                  <div style="color: #1e293b; font-size: 14px; font-weight: 700;">${station.power || 'N/A'}</div>
+                </div>
+                <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                  <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">💰 PRIS</div>
+                  <div style="color: #1e293b; font-size: 14px; font-weight: 700;">${station.cost || 'N/A'} kr/kWh</div>
+                </div>
+                <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                  <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">📊 LEDIG</div>
+                  <div style="color: ${(station.available || 0) > 0 ? '#16a34a' : '#dc2626'}; font-size: 14px; font-weight: 700;">${station.available || 0}/${station.total || 0}</div>
+                </div>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <button 
+                  onclick="window.showRouteToStation && window.showRouteToStation('${station.id}')"
+                  style="
+                    background: #22c55e; 
+                    color: white; 
+                    border: none; 
+                    padding: 10px 12px; 
+                    border-radius: 6px; 
+                    font-size: 13px; 
+                    font-weight: 600; 
+                    cursor: pointer; 
+                    transition: background 0.2s;
+                  "
+                  onmouseover="this.style.background='#16a34a'"
+                  onmouseout="this.style.background='#22c55e'"
+                >
+                  🗺️ Vis rute
+                </button>
+                <button 
+                  onclick="window.openChargingModal && window.openChargingModal('${station.id}', '${station.name}', ${(station as any).distanceAlongRoute || 0}, 50)"
+                  style="
+                    background: #ef4444; 
+                    color: white; 
+                    border: none; 
+                    padding: 10px 12px; 
+                    border-radius: 6px; 
+                    font-size: 13px; 
+                    font-weight: 600; 
+                    cursor: pointer; 
+                    transition: background 0.2s;
+                  "
+                  onmouseover="this.style.background='#dc2626'"
+                  onmouseout="this.style.background='#ef4444'"
+                >
+                  ⚡ Lading
+                </button>
+              </div>
             </div>
           `);
 
