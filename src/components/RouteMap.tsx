@@ -1355,12 +1355,16 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           duration: 1500
         });
         console.log('🗺️ Kartet tilpasset til ny rute:', routeType);
+        
+        // VIKTIG: Sett loading til false når alt er ferdig
+        setLoading(false);
+        console.log('✅ Ruteplanlegging fullført!');
       }, 500);
 
     } catch (error) {
       console.error('Feil ved oppdatering av rute:', error);
       setError(`Kunne ikke oppdatere ruten: ${error instanceof Error ? error.message : 'Ukjent feil'}`);
-      setLoading(false);
+      setLoading(false); // Sett loading til false også ved feil
     }
     }, 500); // 500ms debounce
   };
