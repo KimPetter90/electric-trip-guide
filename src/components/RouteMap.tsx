@@ -448,15 +448,26 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       chargePercent: chargePercent + '%' 
     });
     
-    // FORENKLEDE VERDIER FOR TESTING
-    const testKostnad = 200; // Fast 200 kr for testing
-    const testLadetid = 45; // Fast 45 min for testing
+    // REALISTISKE BEREGNINGER BASERT PÅ PROSENT
+    const forbrukPer100km = 18; // kWh/100km
+    const totalEnergi = (routeDistanceKm / 100) * forbrukPer100km;
+    const ladepris = 2.5; // kr/kWh
+    const kostnadPerStasjon = Math.round(totalEnergi * ladepris * (chargePercent / 100));
+    
+    // Antall stopp basert på rute og bil
+    const carRange = selectedCar?.range || 441;
+    const antallStopp = Math.ceil(routeDistanceKm / (carRange * 0.8));
+    const totalKostnad = kostnadPerStasjon * antallStopp;
+    
+    // Ladetid basert på prosent (mer % = lengre tid)
+    const minutterPerStopp = Math.round(15 + (chargePercent * 0.5)); // 15-65 min
+    const totalLadetid = antallStopp * minutterPerStopp;
     
     const updatedAnalysis = {
       totalDistance: routeDistanceKm,
-      totalTime: routeDurationHours + (testLadetid / 60),
-      totalCost: testKostnad, // FAST 200 KR
-      chargingTime: testLadetid, // FAST 45 MIN
+      totalTime: routeDurationHours + (totalLadetid / 60),
+      totalCost: totalKostnad,
+      chargingTime: totalLadetid,
       co2Saved: Math.round(routeDistanceKm * 0.13),
       efficiency: 0.88,
       weather: undefined
@@ -3187,15 +3198,24 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                       const newChargingStops = Math.ceil(routeDistanceKm / 350);
                       const newAverageCharge = 45; // litt mindre lading per stopp
                       const carCapacity = selectedCar.batteryCapacity || 75;
-                      // BRUKER SAMME FASTE VERDIER SOM updateAnalysisWithCharging
-                      const testKostnad = 200; // Fast 200 kr for testing
-                      const testLadetid = 45; // Fast 45 min for testing
+                      // SAMME REALISTISKE BEREGNINGER SOM updateAnalysisWithCharging
+                      const forbrukPer100km = 18; // kWh/100km
+                      const totalEnergi = (routeDistanceKm / 100) * forbrukPer100km;
+                      const ladepris = 2.5; // kr/kWh
+                      const kostnadPerStasjon = Math.round(totalEnergi * ladepris * (chargePercent / 100));
+                      
+                      const carRange = selectedCar?.range || 441;
+                      const antallStopp = Math.ceil(routeDistanceKm / (carRange * 0.8));
+                      const totalKostnad = kostnadPerStasjon * antallStopp;
+                      
+                      const minutterPerStopp = Math.round(15 + (chargePercent * 0.5)); // 15-65 min
+                      const totalLadetid = antallStopp * minutterPerStopp;
                       
                       const updatedAnalysis = {
                         totalDistance: routeDistanceKm,
-                        totalTime: routeDurationHours + (testLadetid / 60),
-                        totalCost: testKostnad, // FAST 200 KR
-                        chargingTime: testLadetid, // FAST 45 MIN
+                        totalTime: routeDurationHours + (totalLadetid / 60),
+                        totalCost: totalKostnad,
+                        chargingTime: totalLadetid,
                         co2Saved: Math.round(routeDistanceKm * 0.13),
                         efficiency: 0.88,
                         weather: undefined
@@ -3206,7 +3226,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                       
                       toast({
                         title: "✅ Analyse oppdatert",
-                        description: `Ny kostnad: ${testKostnad} kr med ${chargePercent}% lading`,
+                        description: `Ny kostnad: ${totalKostnad} kr med ${chargePercent}% lading`,
                         variant: "default"
                       });
                     }
