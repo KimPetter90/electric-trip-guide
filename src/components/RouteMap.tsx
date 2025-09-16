@@ -2480,27 +2480,33 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
     stations: ChargingStation[],
     weatherData?: WeatherData
   ): TripAnalysis => {
+    console.log('🧮 BEREGNING START:', { distance, timeHours, stationsCount: stations.length });
+    
     // Realistisk ladetid beregning (15-30 min per stopp)
     const averageChargingTimePerStop = 25; // minutter
     const totalChargingTime = stations.length * averageChargingTimePerStop;
+    console.log('⏱️ Ladetid beregning:', { stationsCount: stations.length, averageTime: averageChargingTimePerStop, totalTime: totalChargingTime });
     
     // Realistisk kostnad basert på distanse og strømforbruk
     // Typisk elbil: 20 kWh/100km, strømpris: 4-6 kr/kWh ved hurtiglading
     const consumptionPer100km = 20; // kWh
     const averageChargingCostPerKwh = 5.0; // kr/kWh
-    const totalEnergyNeeded = (distance / 1000) * (consumptionPer100km / 100); // kWh for hele turen
+    const distanceKm = distance / 1000; // Konverter meter til km
+    const totalEnergyNeeded = distanceKm * (consumptionPer100km / 100); // kWh for hele turen
     const totalCost = totalEnergyNeeded * averageChargingCostPerKwh;
+    console.log('💰 Kostnad beregning:', { distanceKm, totalEnergyNeeded, costPerKwh: averageChargingCostPerKwh, totalCost });
 
     // CO2-besparelse sammenlignet med bensinbil (ca 120g CO2/km)
-    const co2Saved = (distance / 1000) * 0.12; // kg CO2
+    const co2Saved = distanceKm * 0.12; // kg CO2
+    console.log('🌱 CO2 beregning:', { distanceKm, co2PerKm: 0.12, totalCo2Saved: co2Saved });
 
     // Effektivitet basert på værforhold, vind og hengervekt
     const weatherFactor = weatherData?.rangeFactor || 1;
     const trailerImpact = routeData.trailerWeight > 0 ? (1 - (routeData.trailerWeight * 0.0015)) : 1; // Redusert effektivitet med henger
     const efficiency = weatherFactor * trailerImpact * 0.85; // Base effektivitet 85%
 
-    return {
-      totalDistance: distance / 1000, // Konverter til km
+    const result = {
+      totalDistance: distanceKm, // Vis i km
       totalTime: timeHours + (totalChargingTime / 60), // Legg til ladetid
       totalCost: Math.round(totalCost),
       chargingTime: totalChargingTime,
@@ -2508,6 +2514,9 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       efficiency: Math.round(efficiency * 100) / 100, // Avrund til 2 desimaler
       weather: weatherData
     };
+    
+    console.log('✅ BEREGNING RESULTAT:', result);
+    return result;
   };
 
   // Fjernet duplikat weatherData funksjon - bruker den optimaliserte versjonen med cache
