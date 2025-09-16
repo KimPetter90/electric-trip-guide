@@ -968,27 +968,56 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     }
 
     // Finn ladestasjoner nær det beregnede punktet
-    const tolerance = 35; // 35km toleranse
+    let tolerance = 35; // Start med 35km toleranse
+    let nearbyStations: ChargingStation[] = [];
     
-    console.log('🔍 Søker etter ladestasjoner nær', nextCriticalDistance.toFixed(1), 'km med toleranse', tolerance, 'km');
-    console.log('🔍 Totalt', chargingStations.length, 'ladestasjoner tilgjengelig');
-    console.log('🔍 Første 3 stasjoner og deres distanceAlongRoute:', chargingStations.slice(0, 3).map(s => ({ name: s.name, distanceAlongRoute: s.distanceAlongRoute })));
-    
-    const nearbyStations = chargingStations.filter(station => {
-      if (!station.distanceAlongRoute) {
-        console.log('⚠️ Stasjon uten distanceAlongRoute:', station.name);
-        return false;
+    // Øk toleransen gradvis til vi finner minst 1 stasjon
+    for (let attempt = 0; attempt < 3 && nearbyStations.length === 0; attempt++) {
+      console.log(`🔍 Søk ${attempt + 1}: Søker etter ladestasjoner nær ${nextCriticalDistance.toFixed(1)} km med toleranse ${tolerance} km`);
+      
+      nearbyStations = chargingStations.filter(station => {
+        if (!station.distanceAlongRoute) {
+          console.log('⚠️ Stasjon uten distanceAlongRoute:', station.name);
+          return false;
+        }
+        const distanceFromTarget = Math.abs(station.distanceAlongRoute - nextCriticalDistance);
+        const isInRange = distanceFromTarget <= tolerance;
+        const isAfterCurrent = station.distanceAlongRoute > currentDistance; // Kun stasjoner fremover
+        
+        if (attempt === 0) { // Vis detaljer kun første gang
+          console.log(`📍 ${station.name}: distanceAlongRoute=${station.distanceAlongRoute?.toFixed(1)}km, fromTarget=${distanceFromTarget.toFixed(1)}km, inRange=${isInRange}, afterCurrent=${isAfterCurrent}`);
+        }
+        
+        return isInRange && isAfterCurrent;
+      });
+      
+      if (nearbyStations.length === 0) {
+        tolerance += 25; // Øk toleranse med 25km for neste forsøk
+        console.log(`⚠️ Ingen stasjoner funnet, øker toleranse til ${tolerance}km`);
       }
-      const distanceFromTarget = Math.abs(station.distanceAlongRoute - nextCriticalDistance);
-      const isInRange = distanceFromTarget <= tolerance;
-      const isAfterCurrent = station.distanceAlongRoute > currentDistance; // Kun stasjoner fremover
-      
-      console.log(`📍 ${station.name}: distanceAlongRoute=${station.distanceAlongRoute?.toFixed(1)}km, fromTarget=${distanceFromTarget.toFixed(1)}km, inRange=${isInRange}, afterCurrent=${isAfterCurrent}`);
-      
-      return isInRange && isAfterCurrent;
-    });
+    }
 
     console.log('🔍 Found', nearbyStations.length, 'nearby stations for next critical point at', nextCriticalDistance.toFixed(1), 'km');
+    
+    // Debug: vis alle stasjoner som ble funnet
+    if (nearbyStations.length > 0) {
+      console.log('🔍 Stasjoner funnet:', nearbyStations.map(s => ({
+        name: s.name,
+        distanceAlongRoute: s.distanceAlongRoute?.toFixed(1) + 'km',
+        isAfterCurrent: s.distanceAlongRoute! > currentDistance
+      })));
+    } else {
+      console.log('❌ INGEN STASJONER FUNNET - debugging nærmeste stasjoner:');
+      const allWithDistance = chargingStations
+        .filter(s => s.distanceAlongRoute && s.distanceAlongRoute > currentDistance)
+        .sort((a, b) => a.distanceAlongRoute! - b.distanceAlongRoute!)
+        .slice(0, 5);
+      console.log('🔍 Nærmeste 5 stasjoner fremover:', allWithDistance.map(s => ({
+        name: s.name,
+        distanceAlongRoute: s.distanceAlongRoute?.toFixed(1) + 'km',
+        distanceFromTarget: Math.abs(s.distanceAlongRoute! - nextCriticalDistance).toFixed(1) + 'km'
+      })));
+    }
 
     // Hvis ingen stasjoner er funnet, foreslå å lade mer
     if (nearbyStations.length === 0) {
