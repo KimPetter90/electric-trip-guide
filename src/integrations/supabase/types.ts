@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_usage_log: {
+        Row: {
+          client_ip: string | null
+          created_at: string
+          endpoint: string
+          id: string
+          response_status: number | null
+          user_agent: string | null
+        }
+        Insert: {
+          client_ip?: string | null
+          created_at?: string
+          endpoint: string
+          id?: string
+          response_status?: number | null
+          user_agent?: string | null
+        }
+        Update: {
+          client_ip?: string | null
+          created_at?: string
+          endpoint?: string
+          id?: string
+          response_status?: number | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       charging_stations: {
         Row: {
           address: string | null
