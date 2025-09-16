@@ -257,37 +257,7 @@ function Index() {
                   onChargingStationUpdate={handleChargingStationUpdate}
                 />
                 
-                {/* Ladeknapp som vises rett under kartet men over ruteanalyse */}
-                {showChargingButton && currentChargingStation && (
-                  <Card className="p-4 glass-card border-2 border-blue-500/50 bg-blue-50/10 animate-pulse">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Battery className="h-4 w-4 text-red-500" />
-                        <span className="text-sm font-orbitron font-medium text-red-600">
-                          Kritisk batterinivå ved: <strong>{currentChargingStation.name}</strong>
-                        </span>
-                      </div>
-                      
-                      <Button 
-                        onClick={() => {
-                          console.log('🔋 LADER TIL 80% VED:', currentChargingStation.name);
-                          
-                          const newProgress = chargingProgress + 1;
-                          setChargingProgress(newProgress);
-                          
-                          // Skjul knappen til neste kritiske punkt beregnes
-                          setShowChargingButton(false);
-                          
-                          console.log('🔋 Simulerer lading til 80% og beregner neste kritiske punkt...');
-                        }}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-orbitron text-sm"
-                        size="sm"
-                      >
-                        🔋 Lad til 80% ved {currentChargingStation.name}
-                      </Button>
-                    </div>
-                  </Card>
-                )}
+                {/* Fjernet kritisk batterinivå-seksjonen */}
                 
                 <ChargingMap isVisible={showRoute} />
               </div>

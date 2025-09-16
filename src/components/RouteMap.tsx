@@ -2283,23 +2283,35 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       console.log('✅ FitBounds fullført');
 
       // Beregn analyse med riktige verdier fra currentRoute
-      console.log('Beregner analyse...');
+      console.log('🧮 STARTER ANALYSE BEREGNING...');
       if (currentRoute) {
-        const routeDistanceKm = currentRoute.distance / 1000; // Konverter meter til km
+        const routeDistanceMeters = currentRoute.distance; // Allerede i meter
         const routeDurationHours = currentRoute.duration / 3600; // Konverter sekunder til timer
         console.log('📊 Route data for analyse:', { 
-          distanceMeters: currentRoute.distance, 
-          distanceKm: routeDistanceKm, 
+          distanceMeters: routeDistanceMeters, 
+          distanceKm: (routeDistanceMeters / 1000).toFixed(1), 
           durationSeconds: currentRoute.duration, 
-          durationHours: routeDurationHours 
+          durationHours: routeDurationHours.toFixed(2),
+          optimizedStationsCount: optimized.length 
         });
         
-        // VIKTIG: currentRoute.distance er i METER, ikke km!
-        const analysis = calculateTripAnalysis(currentRoute.distance, routeDurationHours, optimized, weatherData);
+        // Send meter til calculateTripAnalysis som konverterer det riktig
+        const analysis = calculateTripAnalysis(routeDistanceMeters, routeDurationHours, optimized, weatherData);
         setRouteAnalysis(analysis);
-        console.log('✅ Trip analysis calculated:', analysis);
+        console.log('✅ ANALYSE SATT I STATE:', analysis);
       } else {
         console.warn('⚠️ Ingen currentRoute tilgjengelig for analyse');
+        // Sett fallback-verdier hvis currentRoute mangler
+        const fallbackAnalysis = {
+          totalDistance: 0,
+          totalTime: 0,
+          totalCost: 0,
+          chargingTime: 0,
+          co2Saved: 0,
+          efficiency: 0.85
+        };
+        setRouteAnalysis(fallbackAnalysis);
+        console.log('⚠️ Satte fallback analyse:', fallbackAnalysis);
       }
 
       // FIT BOUNDS til slutt for å vise hele ruten
