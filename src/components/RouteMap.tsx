@@ -2982,72 +2982,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
   if (!isVisible) return null;
 
   return (
-    <div className="space-y-6 relative">
-      {/* TEST KNAPP - FAST PLASSERT */}
-      <div className="fixed top-4 right-4 z-[9999]">
-        <Button 
-          onClick={() => {
-            console.log('🧪🧪🧪 TEST KNAPP KLIKKET!');
-            alert('TEST KNAPP FUNGERER!');
-            
-            const allRedMarkers = document.querySelectorAll('.charging-station-marker');
-            console.log('🔴 Fant', allRedMarkers.length, 'røde markører');
-            
-            if (allRedMarkers.length > 1) {
-              console.log('🎯 Tester å konvertere andre røde markør...');
-              
-              // NYTT: I stedet for å fjerne, bare lag blå markør på en kjent lokasjon først
-              // Bruk koordinater fra midt på Norge for test
-              const testCoords: [number, number] = [9.5, 61.0]; // Midt på Norge
-              
-              console.log('🔵 Lager blå markør på test-koordinater:', testCoords);
-              
-              // Lag stor blå markør
-              const blueEl = document.createElement('div');
-              blueEl.style.cssText = `
-                background: linear-gradient(135deg, #0066ff, #00aaff);
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                border: 5px solid white;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-weight: bold;
-                font-size: 30px;
-                z-index: 999999 !important;
-                position: relative;
-                box-shadow: 0 0 50px rgba(0, 102, 255, 1);
-                animation: pulse 0.5s infinite;
-              `;
-              blueEl.innerHTML = '⚡';
-              
-              // Bruk test-koordinatene vi definerte
-              const coords = testCoords;
-              
-              new mapboxgl.Marker(blueEl)
-                .setLngLat(coords)
-                .addTo(map.current!);
-              console.log('✅ Lagt til blå test-markør på:', coords);
-              
-              toast({
-                title: "🔵 TEST VELLYKKET!",
-                description: "Rød markør fjernet og blå markør lagt til!",
-              });
-            } else {
-              console.log('❌ Ikke nok røde markører');
-              alert('Ikke nok røde markører å teste med!');
-            }
-          }}
-          className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-8 py-4 text-xl shadow-xl border-4 border-white"
-          style={{ fontSize: '20px', minWidth: '150px', minHeight: '60px' }}
-        >
-          🧪 TEST BLÅ
-        </Button>
-      </div>
-      
+    <div className="space-y-6">
       <div className="flex items-center gap-2">
         <Navigation className="h-5 w-5 text-primary animate-glow-pulse" />
         <h3 className="text-lg font-semibold text-foreground">Ruteplanlegging</h3>
