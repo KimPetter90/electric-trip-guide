@@ -427,6 +427,35 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
   const { toast } = useToast();
 
+  // Funksjon for å oppdatere analyse basert på ladingsprosent
+  const updateAnalysisWithCharging = (chargePercent: number) => {
+    if (!currentRoute || !routeData || isNaN(chargePercent)) return;
+    
+    const routeDistanceKm = currentRoute.distance / 1000;
+    const routeDurationHours = currentRoute.duration / 3600;
+    
+    // Beregn ny analyse basert på ladeprosent
+    const adjustedStops = Math.max(1, Math.ceil(routeDistanceKm / (300 + chargePercent * 2))); // Høyere lading = færre stopp
+    const chargeAmount = Math.min(45, chargePercent * 0.6); // Mer lading hvis høyere prosent
+    const carCapacity = selectedCar.batteryCapacity || 75;
+    const energyCharged = adjustedStops * (chargeAmount / 100) * carCapacity;
+    const cost = Math.round(energyCharged * 3.4); // 3.4 kr/kWh
+    const chargingTime = adjustedStops * Math.max(20, Math.min(40, chargePercent * 0.5)); // 20-40 min avhengig av prosent
+    
+    const updatedAnalysis = {
+      totalDistance: routeDistanceKm,
+      totalTime: routeDurationHours + (chargingTime / 60),
+      totalCost: cost,
+      chargingTime: chargingTime,
+      co2Saved: Math.round(routeDistanceKm * 0.13),
+      efficiency: chargePercent > 60 ? 0.89 : (chargePercent > 40 ? 0.86 : 0.82),
+      weather: undefined
+    };
+    
+    setRouteAnalysis(updatedAnalysis);
+    console.log(`🔄 OPPDATERT ANALYSE MED ${chargePercent}% LADING:`, updatedAnalysis);
+  };
+
   // Funksjon for å beregne nye kritiske punkter basert på valgt ladeprosent  
   const calculateNextCriticalPoints = (
     currentStation: ChargingStation,
@@ -3107,8 +3136,16 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                     max="100"
                     value={chargePercentInput}
                     onChange={(e) => {
-                      console.log('📝 Input changed to:', e.target.value);
-                      setChargePercentInput(e.target.value);
+                      const newValue = e.target.value;
+                      console.log('📝 Input changed to:', newValue);
+                      setChargePercentInput(newValue);
+                      
+                      // Oppdater analyse umiddelbart ved endring
+                      const chargePercent = parseInt(newValue);
+                      if (!isNaN(chargePercent) && chargePercent >= 10 && chargePercent <= 100) {
+                        updateAnalysisWithCharging(chargePercent);
+                        console.log(`🔄 Analyse oppdatert for ${chargePercent}% lading`);
+                      }
                     }}
                     className="flex-1 px-3 py-2 border-2 border-blue-300 rounded-md text-center text-xl font-bold text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="80"
