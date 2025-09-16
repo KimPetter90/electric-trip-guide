@@ -517,19 +517,19 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       switch (routeType) {
         case 'fastest':
           mapboxProfile = 'driving-traffic'; // Raskeste med trafikk
-          routeParams += '&steps=true&annotations=duration&exclude=ferry&country=NO';
+          routeParams += '&steps=true&annotations=duration&exclude=ferry';
           break;
         case 'shortest':
           mapboxProfile = 'driving'; // Standard driving
-          routeParams += '&steps=true&annotations=distance&overview=full&country=NO';
+          routeParams += '&steps=true&annotations=distance&overview=full';
           break;
         case 'eco':
           mapboxProfile = 'driving'; // Eco-vennlig
-          routeParams += '&steps=true&annotations=duration,distance&overview=full&exclude=toll&country=NO';
+          routeParams += '&steps=true&annotations=duration,distance&overview=full&exclude=toll';
           break;
         default:
           mapboxProfile = 'driving';
-          routeParams += '&steps=true&alternatives=true&country=NO';
+          routeParams += '&steps=true&alternatives=true';
       }
       
       // Legg til Norge-spesifikke begrensninger
