@@ -432,9 +432,19 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
   const sendStationsToChargingMap = (stations: ChargingStation[], mainStation?: ChargingStation) => {
     const primaryStation = mainStation || stations[0];
     console.log('🔌 SENDER', stations.length, 'STASJONER TIL LADESTASJONKART, hovedstasjon:', primaryStation?.name);
+    
+    // VIKTIG: Send kun stasjonene som faktisk er synlige på kartet
+    const visibleStations = stations.filter(station => {
+      // Sjekk om stasjonen har en markør på kartet
+      const marker = document.querySelector(`[data-station-id="${station.id}"]`);
+      return marker !== null;
+    });
+    
+    console.log('🔌 Filtrerte til', visibleStations.length, 'synlige stasjoner:', visibleStations.map(s => s.name));
+    
     setCurrentChargingStation(primaryStation);
     setShowChargingButton(true);
-    onChargingStationUpdate?.(primaryStation, true, stations);
+    onChargingStationUpdate?.(primaryStation, true, visibleStations);
   };
 
   // Enkel funksjon for å sende enkelt stasjon til ladestasjonkartet (bakoverkompatibilitet)
