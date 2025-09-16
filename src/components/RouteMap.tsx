@@ -839,11 +839,26 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
   // Funksjon for initialisering av kart
   const initializeMap = async () => {
-    if (!accessToken || !mapContainer.current || map.current) return;
+    console.log('🗺️ initializeMap called!', { 
+      hasToken: !!accessToken, 
+      hasContainer: !!mapContainer.current, 
+      hasExistingMap: !!map.current 
+    });
+    
+    if (!accessToken || !mapContainer.current || map.current) {
+      console.log('❌ initializeMap early return:', {
+        noToken: !accessToken,
+        noContainer: !mapContainer.current,
+        existingMap: !!map.current
+      });
+      return;
+    }
 
     try {
+      console.log('🚀 Setting mapboxgl.accessToken...');
       mapboxgl.accessToken = accessToken;
       
+      console.log('🗺️ Creating new Mapbox map...');
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/light-v11',
@@ -853,15 +868,20 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         bearing: 0
       });
 
+      console.log('🧭 Adding navigation control...');
       map.current.addControl(new mapboxgl.NavigationControl());
       
+      console.log('👂 Setting up load event listener...');
       map.current.on('load', () => {
-        console.log('✅ Kart lastet og klar');
+        console.log('✅ Kart lastet og klar!');
         setIsMapLoaded(true);
       });
 
+      console.log('🎉 Map creation completed successfully!');
+
     } catch (error) {
-      console.error('❌ Feil ved initialisering av kart:', error);
+      console.error('❌ KRITISK FEIL ved initialisering av kart:', error);
+      console.error('Error stack:', error.stack);
       setError('Kunne ikke laste kartet');
     }
   };
@@ -887,18 +907,25 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
   // Effekt for initialisering av kart
   useEffect(() => {
+    console.log('🔥 useEffect for kart-initialisering triggered!', { isVisible, accessToken: !!accessToken });
+    
     if (isVisible && accessToken) {
       console.log('🌟 Komponenten er synlig OG token er tilgjengelig, initialiserer kart...');
       const timer = setTimeout(() => {
+        console.log('⏰ Timer fired - calling initializeMap now');
         initializeMap();
       }, 200);
       
       return () => {
+        console.log('🧹 Cleanup timer');
         clearTimeout(timer);
       };
+    } else {
+      console.log('⏸️ Kart ikke klar:', { isVisible, hasToken: !!accessToken });
     }
     
     return () => {
+      console.log('🧹 Cleanup kart');
       cleanupMap();
       if (routeUpdateTimeoutRef.current) {
         clearTimeout(routeUpdateTimeoutRef.current);
