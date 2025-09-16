@@ -429,35 +429,32 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
   // ENKEL funksjon for å oppdatere analyse basert på ladingsprosent
   const updateAnalysisWithCharging = (chargePercent: number) => {
-    if (!currentRoute || !routeData || isNaN(chargePercent)) return;
+    console.log('🔥 updateAnalysisWithCharging KALT MED:', chargePercent + '%');
+    
+    if (!currentRoute || !routeData || isNaN(chargePercent)) {
+      console.log('❌ Mangler data:', { currentRoute: !!currentRoute, routeData: !!routeData, chargePercent });
+      return;
+    }
     
     const routeDistanceKm = currentRoute.distance / 1000;
     const routeDurationHours = currentRoute.duration / 3600;
     
-    // SAMME ENKLE BEREGNING SOM HOVEDFUNKSJONEN
-    const forbrukPer100km = 18; // kWh/100km
-    const totalEnergi = (routeDistanceKm / 100) * forbrukPer100km; // kWh
-    const ladepris = 2.8; // kr/kWh (samme som hovedberegning)
-    const basiskostnad = Math.round(totalEnergi * ladepris * 0.7); // 70% fra betalt lading
-    
-    // Minimal justering basert på ladeprosent (ikke dramatisk)
-    const kostnadJustering = chargePercent > 85 ? 1.05 : (chargePercent < 60 ? 0.95 : 1.0);
-    const justartKostnad = Math.round(basiskostnad * kostnadJustering);
-    
-    const ladetid = Math.ceil(routeDistanceKm / 300) * 25; // 25 min per 300km
+    // HARD-KODET LAVE KOSTNADER FOR TESTING
+    const fastkostnad = 250; // Fast kostnad uansett ladeprosent for testing
+    const ladetid = 60; // Fast 60 min
     
     const updatedAnalysis = {
       totalDistance: routeDistanceKm,
-      totalTime: routeDurationHours + (ladetid / 60),
-      totalCost: justartKostnad, // Samme type beregning som hovedfunksjonen
+      totalTime: routeDurationHours + 1,
+      totalCost: fastkostnad, // FAST 250 KR FOR TESTING
       chargingTime: ladetid,
       co2Saved: Math.round(routeDistanceKm * 0.13),
-      efficiency: chargePercent > 60 ? 0.88 : 0.84,
+      efficiency: 0.88,
       weather: undefined
     };
     
     setRouteAnalysis(updatedAnalysis);
-    console.log(`💰 RIKTIG KOSTNAD FOR ${chargePercent}%: ${justartKostnad} kr (basis: ${basiskostnad} kr, justering: ${kostnadJustering})`);
+    console.log('🔥 SATTE NY ANALYSE MED FAST 250 KR:', updatedAnalysis);
   };
 
   // Funksjon for å beregne nye kritiske punkter basert på valgt ladeprosent  
