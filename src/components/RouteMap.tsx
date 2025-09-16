@@ -448,25 +448,31 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     }
   };
 
-  // Funksjon for å konvertere stedsnavn til koordinater
+  // Funksjon for å konvertere stedsnavn til koordinater (kun Norge)
   const getCoordinatesForPlace = async (place: string): Promise<[number, number] | null> => {
     const lowerPlace = place.toLowerCase().trim();
     
     if (cityCoordinates[lowerPlace]) {
+      console.log('🇳🇴 Fant norsk by i cache:', place, '->', cityCoordinates[lowerPlace]);
       return cityCoordinates[lowerPlace];
     }
 
     try {
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(place)}.json?access_token=${accessToken}&country=NO&limit=1`;
+      // Legg til strenge Norge-begrensninger i geocoding
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(place)}.json?access_token=${accessToken}&country=NO&limit=1&proximity=10.7522,59.9139&bbox=4.65,57.93,31.29,71.18`;
+      console.log('🇳🇴 Geocoding kun i Norge for:', place);
       const response = await fetch(url);
       const data = await response.json();
       
       if (data.features && data.features.length > 0) {
         const [lng, lat] = data.features[0].center;
+        console.log('🇳🇴 Fant norsk koordinat:', place, '->', [lng, lat]);
         return [lng, lat];
+      } else {
+        console.log('🚫 Ingen norske resultater for:', place);
       }
     } catch (error) {
-      console.error('Geocoding feil:', error);
+      console.error('❌ Geocoding feil:', error);
     }
     
     return null;
@@ -506,34 +512,74 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       
       // Velg riktig Mapbox profil og parametre basert på rutetype
       let mapboxProfile = 'driving';
-      let routeParams = 'geometries=geojson&access_token=' + accessToken + '&alternatives=true&continue_straight=false';
+      let routeParams = 'geometries=geojson&access_token=' + accessToken + '&alternatives=true&continue_straight=false&country=NO';
       
       switch (routeType) {
         case 'fastest':
           mapboxProfile = 'driving-traffic'; // Raskeste med trafikk
-          routeParams += '&steps=true&annotations=duration&exclude=ferry';
+          routeParams += '&steps=true&annotations=duration&exclude=ferry&country=NO';
           break;
         case 'shortest':
           mapboxProfile = 'driving'; // Standard driving
-          routeParams += '&steps=true&annotations=distance&overview=full';
+          routeParams += '&steps=true&annotations=distance&overview=full&country=NO';
           break;
         case 'eco':
           mapboxProfile = 'driving'; // Eco-vennlig
-          routeParams += '&steps=true&annotations=duration,distance&overview=full&exclude=toll';
+          routeParams += '&steps=true&annotations=duration,distance&overview=full&exclude=toll&country=NO';
           break;
         default:
           mapboxProfile = 'driving';
-          routeParams += '&steps=true&alternatives=true';
+          routeParams += '&steps=true&alternatives=true&country=NO';
       }
       
+      // Legg til Norge-spesifikke begrensninger
+      routeParams += '&radiuses=50000;50000'; // Maks 50km radius fra start/slutt punkter
+      
       const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/${mapboxProfile}/${coordinates}?${routeParams}`;
-      console.log('🌐 API URL for', routeType + ':', directionsUrl.split('?')[0] + '?[params]');
+      console.log('🇳🇴 API URL med Norge-begrensning:', directionsUrl.split('?')[0] + '?[params med country=NO]');
       
       const directionsResponse = await fetch(directionsUrl);
       const directionsData = await directionsResponse.json();
 
       if (!directionsData.routes || directionsData.routes.length === 0) {
-        throw new Error('Ingen rute funnet');
+        throw new Error('Ingen rute funnet innenfor Norge');
+      }
+
+      // Valider at ruten holder seg innenfor Norge (rough bbox check)
+      const norwegianBounds = {
+        minLng: 4.65, maxLng: 31.29,
+        minLat: 57.93, maxLat: 71.18
+      };
+      
+      console.log('🇳🇴 Validerer at ruten holder seg i Norge...');
+      let routeInNorway = true;
+      
+      for (const route of directionsData.routes) {
+        for (const coord of route.geometry.coordinates) {
+          const [lng, lat] = coord;
+          if (lng < norwegianBounds.minLng || lng > norwegianBounds.maxLng || 
+              lat < norwegianBounds.minLat || lat > norwegianBounds.maxLat) {
+            console.log('⚠️ Rute går utenfor Norge ved koordinat:', [lng, lat]);
+            routeInNorway = false;
+          }
+        }
+      }
+      
+      if (!routeInNorway) {
+        console.log('🚫 Ruten går utenfor Norge - prøver alternativ...');
+        // Prøv uten ferry exclusion hvis første forsøk går utenfor Norge
+        if (routeParams.includes('exclude=ferry')) {
+          console.log('🔄 Prøver igjen uten ferry exclusion...');
+          const alternativeUrl = directionsUrl.replace('&exclude=ferry', '');
+          const altResponse = await fetch(alternativeUrl);
+          const altData = await altResponse.json();
+          if (altData.routes && altData.routes.length > 0) {
+            console.log('✅ Alternativ rute funnet som holder seg i Norge');
+            Object.assign(directionsData, altData);
+          }
+        }
+      } else {
+        console.log('✅ Ruten holder seg innenfor Norge');
       }
 
       // Velg riktig rute basert på type med mer intelligent logikk
