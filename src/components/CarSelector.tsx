@@ -1372,17 +1372,12 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-4">
-        <div 
-          className="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity"
-          onClick={handleShowBrands}
-        >
+      {selectedBrand && showBrands && (
+        <div className="flex items-center gap-2 mb-4">
           <Car className="h-5 w-5 text-primary animate-glow-pulse" />
           <h3 className="text-2xl font-orbitron font-bold text-gradient animate-glow-pulse">
-            {selectedBrand ? `${selectedBrand} modeller` : 'Velg bilmerke'}
+            {selectedBrand} modeller
           </h3>
-        </div>
-        {selectedBrand && showBrands && (
           <Button
             variant="outline"
             size="sm"
@@ -1392,15 +1387,14 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
             <ArrowLeft className="h-4 w-4 mr-2" />
             Tilbake
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {!showBrands && !selectedCar ? (
         /* Vis bare knappen for å velge bilmerke */
         <Card className="p-6 glass-card cyber-glow text-center">
           <Car className="h-16 w-16 mx-auto mb-4 text-primary animate-glow-pulse" />
           <h4 className="text-xl font-orbitron font-bold text-gradient mb-2">Ingen bil valgt</h4>
-          <p className="text-muted-foreground mb-4 font-orbitron">Trykk på "Velg bilmerke" ovenfor for å se tilgjengelige biler</p>
           <Button 
             onClick={handleShowBrands}
             className="bg-gradient-electric text-primary-foreground hover:shadow-neon transition-all duration-300 font-orbitron font-bold"
