@@ -171,83 +171,64 @@ function Index() {
     console.log('✅ Rutevalg generert for avstand:', estimatedDistance, 'km');
   };
 
-  // Forenklet distanseberegning basert på kjente steder
+  // Komplett distansetabell for norske byer
   const calculateApproximateDistance = (from: string, to: string): number => {
     const distances: { [key: string]: { [key: string]: number } } = {
       'oslo': {
-        'bergen': 463,
-        'trondheim': 543,
-        'stavanger': 518,
-        'kristiansand': 319,
-        'tromsø': 1369,
-        'ålesund': 651,
-        'drammen': 65,
-        'fredrikstad': 106,
-        'moss': 64,
-        'sarpsborg': 115,
-        'sandefjord': 125,
-        'tønsberg': 112,
-        'larvik': 147,
-        'porsgrunn': 162,
-        'skien': 171,
-        'lillehammer': 185,
-        'hamar': 126,
-        'gjøvik': 125,
-        'kongsberg': 90,
-        'notodden': 122,
-        'rjukan': 168
+        'bergen': 463, 'trondheim': 543, 'stavanger': 518, 'kristiansand': 319, 'tromsø': 1369,
+        'ålesund': 651, 'drammen': 65, 'fredrikstad': 106, 'moss': 64, 'sarpsborg': 115,
+        'sandefjord': 125, 'tønsberg': 112, 'larvik': 147, 'porsgrunn': 162, 'skien': 171,
+        'lillehammer': 185, 'hamar': 126, 'gjøvik': 125, 'kongsberg': 90, 'notodden': 122,
+        'rjukan': 168, 'molde': 718, 'kristiansund': 798, 'bodø': 1264, 'narvik': 1431,
+        'harstad': 1398, 'alta': 1844, 'kirkenes': 2104, 'hammerfest': 1956, 'vadsø': 2089,
+        'honningsvåg': 2007, 'lakselv': 1875, 'tana': 1987, 'kautokeino': 1798, 'karasjok': 1821
       },
       'bergen': {
-        'oslo': 463,
-        'stavanger': 209,
-        'trondheim': 656,
-        'kristiansand': 484,
-        'ålesund': 381,
-        'florø': 150,
-        'sogndal': 205,
-        'voss': 102,
-        'odda': 169,
-        'haugesund': 157
+        'oslo': 463, 'stavanger': 209, 'trondheim': 656, 'kristiansand': 484, 'ålesund': 381,
+        'florø': 150, 'sogndal': 205, 'voss': 102, 'odda': 169, 'haugesund': 157,
+        'drammen': 528, 'fredrikstad': 569, 'moss': 527, 'sandefjord': 588, 'tønsberg': 575,
+        'larvik': 610, 'skien': 634, 'lillehammer': 648, 'hamar': 589, 'gjøvik': 588,
+        'molde': 337, 'kristiansund': 417, 'tromsø': 1032, 'bodø': 927, 'narvik': 1094
       },
       'trondheim': {
-        'oslo': 543,
-        'bergen': 656,
-        'ålesund': 300,
-        'steinkjer': 126,
-        'mo i rana': 285,
-        'tromsø': 520,
-        'røros': 157,
-        'kristiansund': 145,
-        'molde': 218
+        'oslo': 543, 'bergen': 656, 'ålesund': 300, 'steinkjer': 126, 'mo i rana': 285,
+        'tromsø': 520, 'røros': 157, 'kristiansund': 145, 'molde': 218, 'stavanger': 757,
+        'kristiansand': 862, 'drammen': 608, 'bodø': 235, 'narvik': 402, 'harstad': 369,
+        'alta': 679, 'kirkenes': 939, 'hammerfest': 791, 'lillehammer': 358, 'hamar': 417
       },
       'stavanger': {
-        'oslo': 518,
-        'bergen': 209,
-        'kristiansand': 238,
-        'haugesund': 78,
-        'egersund': 69,
-        'sandnes': 15,
-        'bryne': 33
+        'oslo': 518, 'bergen': 209, 'kristiansand': 238, 'haugesund': 78, 'egersund': 69,
+        'sandnes': 15, 'bryne': 33, 'trondheim': 757, 'ålesund': 613, 'drammen': 583,
+        'fredrikstad': 624, 'moss': 582, 'sandefjord': 643, 'tønsberg': 630, 'larvik': 665,
+        'skien': 689, 'molde': 671, 'kristiansund': 751, 'tromsø': 1277, 'bodø': 1172
       },
       'kristiansand': {
-        'oslo': 319,
-        'stavanger': 238,
-        'bergen': 484,
-        'arendal': 67,
-        'mandal': 43,
-        'flekkefjord': 97,
-        'grimstad': 44
+        'oslo': 319, 'stavanger': 238, 'bergen': 484, 'arendal': 67, 'mandal': 43,
+        'flekkefjord': 97, 'grimstad': 44, 'trondheim': 862, 'ålesund': 832, 'drammen': 384,
+        'fredrikstad': 425, 'moss': 383, 'sandefjord': 444, 'tønsberg': 431, 'larvik': 466,
+        'skien': 490, 'lillehammer': 504, 'hamar': 445, 'gjøvik': 444, 'tromsø': 1688
       },
       'ålesund': {
-        'oslo': 651,
-        'bergen': 381,
-        'trondheim': 300,
-        'kristiansand': 832,
-        'stavanger': 613,
-        'molde': 70,
-        'kristiansund': 147,
-        'florø': 231,
-        'tromsø': 823
+        'oslo': 651, 'bergen': 381, 'trondheim': 300, 'kristiansand': 832, 'stavanger': 613,
+        'molde': 70, 'kristiansund': 147, 'florø': 231, 'tromsø': 823, 'bodø': 535,
+        'narvik': 702, 'harstad': 669, 'drammen': 716, 'fredrikstad': 757, 'moss': 715,
+        'sandefjord': 776, 'tønsberg': 763, 'larvik': 798, 'skien': 822, 'lillehammer': 466
+      },
+      'tromsø': {
+        'oslo': 1369, 'bergen': 1032, 'trondheim': 520, 'ålesund': 823, 'stavanger': 1277,
+        'kristiansand': 1688, 'bodø': 300, 'narvik': 167, 'harstad': 134, 'alta': 269,
+        'kirkenes': 529, 'hammerfest': 381, 'honningsvåg': 432, 'lakselv': 299, 'tana': 411,
+        'kautokeino': 408, 'karasjok': 431, 'vadsø': 680, 'mo i rana': 585, 'steinkjer': 646
+      },
+      'bodø': {
+        'oslo': 1264, 'bergen': 927, 'trondheim': 235, 'ålesund': 535, 'stavanger': 1172,
+        'kristiansand': 1583, 'tromsø': 300, 'narvik': 233, 'harstad': 200, 'mo i rana': 50,
+        'steinkjer': 361, 'røros': 392, 'kristiansund': 380, 'molde': 453, 'alta': 569
+      },
+      'drammen': {
+        'oslo': 65, 'bergen': 528, 'stavanger': 583, 'kristiansand': 384, 'ålesund': 716,
+        'trondheim': 608, 'tromsø': 1434, 'fredrikstad': 171, 'moss': 129, 'sarpsborg': 180,
+        'sandefjord': 190, 'tønsberg': 177, 'larvik': 212, 'porsgrunn': 227, 'skien': 236
       }
     };
 
