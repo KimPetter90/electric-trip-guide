@@ -3636,12 +3636,15 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                      console.log('🔥 BEREGNER NESTE KRITISKE PUNKT ETTER LADING:');
                      console.log('  - Lader til:', chargePercent + '%');
                      console.log('  - Nåværende posisjon:', nearestStation.distanceAlongRoute + 'km');
+                     console.log('  - Car range:', carRange + 'km');
+                     console.log('  - Current route distance:', (currentRoute.distance / 1000).toFixed(1) + 'km');
                      
                      const usableRangeAfterCharging = (carRange * (chargePercent - 15)) / 100; // Rekkevidde til neste 15%
                      const nextCriticalDistance = nearestStation.distanceAlongRoute! + usableRangeAfterCharging;
                      
                      console.log('  - Kan kjøre:', usableRangeAfterCharging.toFixed(1), 'km fra denne stasjonen');
                      console.log('  - Neste kritiske punkt vil være på:', nextCriticalDistance.toFixed(1), 'km');
+                     console.log('  - optimizedStations.length:', optimizedStations?.length || 0);
                      
                      // Finn alle RØDE markører som kan bli neste blå
                      const redMarkers = document.querySelectorAll('.charging-station-marker');
