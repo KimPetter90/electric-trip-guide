@@ -57,27 +57,27 @@ export default function ChargingMap({ isVisible }: ChargingMapProps) {
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
         <MapPin className="h-5 w-5 text-primary animate-glow-pulse" />
-        <h3 className="text-lg font-semibold text-foreground">Ladestasjonkart</h3>
+        <h3 className="text-2xl font-orbitron font-bold text-gradient animate-glow-pulse">Ladestasjonkart</h3>
       </div>
 
       {/* Route Overview */}
       <Card className="p-4 bg-gradient-electric text-primary-foreground shadow-neon animate-pulse-neon">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div>
-            <div className="text-2xl font-bold">465</div>
-            <div className="text-sm opacity-90">km totalt</div>
+            <div className="text-3xl font-orbitron font-bold text-primary-foreground">465</div>
+            <div className="text-sm font-orbitron opacity-90">km totalt</div>
           </div>
           <div>
-            <div className="text-2xl font-bold">6t 45min</div>
-            <div className="text-sm opacity-90">kjøretid</div>
+            <div className="text-3xl font-orbitron font-bold text-primary-foreground">6t 45min</div>
+            <div className="text-sm font-orbitron opacity-90">kjøretid</div>
           </div>
           <div>
-            <div className="text-2xl font-bold">650</div>
-            <div className="text-sm opacity-90">kr lading</div>
+            <div className="text-3xl font-orbitron font-bold text-primary-foreground">650</div>
+            <div className="text-sm font-orbitron opacity-90">kr lading</div>
           </div>
           <div>
-            <div className="text-2xl font-bold">3</div>
-            <div className="text-sm opacity-90">ladestopp</div>
+            <div className="text-3xl font-orbitron font-bold text-primary-foreground">3</div>
+            <div className="text-sm font-orbitron opacity-90">ladestopp</div>
           </div>
         </div>
       </Card>
@@ -91,36 +91,36 @@ export default function ChargingMap({ isVisible }: ChargingMapProps) {
                 <div className="w-8 h-8 rounded-full bg-gradient-electric text-primary-foreground flex items-center justify-center text-sm font-semibold shadow-neon animate-pulse-neon">
                   {index + 1}
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-semibold">{stop.name}</h4>
-                    {stop.fastCharger && (
-                      <Badge variant="secondary" className="text-xs">
-                        <Zap className="h-3 w-3 mr-1" />
-                        Hurtiglader
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">{stop.location}</p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-orbitron font-bold text-gradient">{stop.name}</h4>
+                      {stop.fastCharger && (
+                        <Badge variant="secondary" className="text-xs font-orbitron">
+                          <Zap className="h-3 w-3 mr-1" />
+                          Hurtiglader
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm font-orbitron text-muted-foreground">{stop.location}</p>
                   
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3 text-sm">
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3 text-muted-foreground" />
-                      <span>{stop.distance} km</span>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3 text-sm">
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3 text-primary animate-glow-pulse" />
+                        <span className="font-orbitron font-medium">{stop.distance} km</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3 text-primary animate-glow-pulse" />
+                        <span className="font-orbitron font-medium">{stop.chargeTime} min</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Zap className="h-3 w-3 text-primary animate-glow-pulse" />
+                        <span className="font-orbitron font-medium">{stop.chargeAmount} kWh</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="h-3 w-3 text-primary animate-glow-pulse" />
+                        <span className="font-orbitron font-medium">{stop.cost} kr</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3 text-muted-foreground" />
-                      <span>{stop.chargeTime} min</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Zap className="h-3 w-3 text-muted-foreground" />
-                      <span>{stop.chargeAmount} kWh</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="h-3 w-3 text-muted-foreground" />
-                      <span>{stop.cost} kr</span>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>

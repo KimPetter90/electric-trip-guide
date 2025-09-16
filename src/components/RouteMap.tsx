@@ -1188,22 +1188,22 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       {/* Analyse og ladestasjoner */}
       <div className="w-full mt-6 bg-transparent">
         <div className="flex items-center gap-2 mb-4">
-          <TrendingUp className="h-5 w-5 text-primary" />
-          <h4 className="text-lg font-semibold text-foreground">Ruteanalyse</h4>
+          <TrendingUp className="h-5 w-5 text-primary animate-glow-pulse" />
+          <h4 className="text-2xl font-orbitron font-bold text-gradient animate-glow-pulse">Ruteanalyse</h4>
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full bg-transparent" style={{backgroundColor: 'transparent'}}>
-          <TabsList className="grid w-full grid-cols-2 mb-4 !bg-transparent border border-border" style={{backgroundColor: 'transparent'}}>
+          <TabsList className="grid w-full grid-cols-2 mb-4 glass-card neon-glow border border-border">
             <TabsTrigger 
               value="analysis" 
-              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground !bg-transparent hover:bg-primary/10"
+              className="flex items-center gap-2 font-orbitron font-semibold data-[state=active]:bg-gradient-electric data-[state=active]:text-primary-foreground data-[state=active]:shadow-neon !bg-transparent hover:bg-primary/20 transition-all duration-300"
             >
               <TrendingUp className="h-4 w-4" />
               Analyse
             </TabsTrigger>
             <TabsTrigger 
               value="stations" 
-              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground !bg-transparent hover:bg-primary/10"
+              className="flex items-center gap-2 font-orbitron font-semibold data-[state=active]:bg-gradient-electric data-[state=active]:text-primary-foreground data-[state=active]:shadow-neon !bg-transparent hover:bg-primary/20 transition-all duration-300"
             >
               <Zap className="h-4 w-4" />
               Ladestasjoner
@@ -1212,12 +1212,12 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
         <TabsContent value="analysis" className="space-y-4 bg-transparent">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <Card className="p-4 bg-card/80 backdrop-blur-sm border-border">
+              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300 animate-float">
                 <div className="flex items-center space-x-2">
-                  <Route className="h-4 w-4 text-primary" />
+                  <Route className="h-5 w-5 text-primary animate-glow-pulse" />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total distanse</p>
-                    <p className="text-2xl font-bold text-foreground">{(() => {
+                    <p className="text-sm font-orbitron font-medium text-muted-foreground">Total distanse</p>
+                    <p className="text-3xl font-orbitron font-bold text-gradient">{(() => {
                       console.log('🔍 RouteAnalysis status:', { routeAnalysis, hasData: !!routeAnalysis });
                       return routeAnalysis ? Math.round(routeAnalysis.totalDistance) : '---';
                     })()} km</p>
@@ -1225,54 +1225,54 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
                 </div>
               </Card>
 
-              <Card className="p-4 bg-card/80 backdrop-blur-sm border-border">
+              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300 animate-float" style={{ animationDelay: '200ms' }}>
                 <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-primary" />
+                  <Clock className="h-5 w-5 text-primary animate-glow-pulse" />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total tid</p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-sm font-orbitron font-medium text-muted-foreground">Total tid</p>
+                    <p className="text-3xl font-orbitron font-bold text-gradient">
                       {routeAnalysis ? `${Math.floor(routeAnalysis.totalTime)}t ${Math.round((routeAnalysis.totalTime % 1) * 60)}m` : '---'}
                     </p>
                   </div>
                 </div>
               </Card>
 
-              <Card className="p-4 bg-card/80 backdrop-blur-sm border-border">
+              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300 animate-float" style={{ animationDelay: '400ms' }}>
                 <div className="flex items-center space-x-2">
-                  <DollarSign className="h-4 w-4 text-primary" />
+                  <DollarSign className="h-5 w-5 text-primary animate-glow-pulse" />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Ladekostnad</p>
-                    <p className="text-2xl font-bold text-foreground">{routeAnalysis?.totalCost || 0} kr</p>
+                    <p className="text-sm font-orbitron font-medium text-muted-foreground">Ladekostnad</p>
+                    <p className="text-3xl font-orbitron font-bold text-gradient">{routeAnalysis?.totalCost || 0} kr</p>
                   </div>
                 </div>
               </Card>
 
-              <Card className="p-4 bg-card/80 backdrop-blur-sm border-border">
+              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300 animate-float" style={{ animationDelay: '600ms' }}>
                 <div className="flex items-center space-x-2">
-                  <Zap className="h-4 w-4 text-primary" />
+                  <Zap className="h-5 w-5 text-primary animate-glow-pulse" />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Ladetid</p>
-                    <p className="text-2xl font-bold text-foreground">{routeAnalysis?.chargingTime || 0} min</p>
+                    <p className="text-sm font-orbitron font-medium text-muted-foreground">Ladetid</p>
+                    <p className="text-3xl font-orbitron font-bold text-gradient">{routeAnalysis?.chargingTime || 0} min</p>
                   </div>
                 </div>
               </Card>
 
-              <Card className="p-4 bg-card/80 backdrop-blur-sm border-border">
+              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300 animate-float" style={{ animationDelay: '800ms' }}>
                 <div className="flex items-center space-x-2">
-                  <Car className="h-4 w-4 text-green-500" />
+                  <Car className="h-5 w-5 text-green-500 animate-glow-pulse" />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">CO₂ spart</p>
-                    <p className="text-2xl font-bold text-foreground">{routeAnalysis ? Math.round(routeAnalysis.co2Saved) : 0} kg</p>
+                    <p className="text-sm font-orbitron font-medium text-muted-foreground">CO₂ spart</p>
+                    <p className="text-3xl font-orbitron font-bold text-gradient">{routeAnalysis ? Math.round(routeAnalysis.co2Saved) : 0} kg</p>
                   </div>
                 </div>
               </Card>
 
-              <Card className="p-4 bg-card/80 backdrop-blur-sm border-border">
+              <Card className="p-4 glass-card cyber-glow border-border hover:shadow-neon transition-all duration-300 animate-float" style={{ animationDelay: '1000ms' }}>
                 <div className="flex items-center space-x-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <TrendingUp className="h-5 w-5 text-primary animate-glow-pulse" />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Effektivitet</p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-sm font-orbitron font-medium text-muted-foreground">Effektivitet</p>
+                    <p className="text-3xl font-orbitron font-bold text-gradient">
                       {routeAnalysis ? Math.round(routeAnalysis.efficiency * 100) : 100}%
                     </p>
                   </div>
@@ -1326,7 +1326,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
                 {/* Vis obligatoriske stasjoner først */}
                 {optimizedStations.filter((station: any) => station.isRequired).length > 0 && (
                   <div className="space-y-3">
-                    <h4 className="text-lg font-semibold text-red-600 flex items-center gap-2">
+                    <h4 className="text-xl font-orbitron font-bold text-red-600 flex items-center gap-2 animate-glow-pulse">
                       ⚠️ Obligatoriske ladestoppler
                     </h4>
                     
@@ -1334,30 +1334,30 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
                       <Card key={station.id} className="p-4 glass-card neon-glow border-l-4 border-l-red-500">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <MapPin className="h-4 w-4 text-primary" />
-                              <h5 className="font-semibold text-foreground">{station.name}</h5>
-                            </div>
-                            
-                            <p className="text-sm text-muted-foreground mb-2">{station.location}</p>
+                             <div className="flex items-center gap-2 mb-2">
+                               <MapPin className="h-5 w-5 text-primary animate-glow-pulse" />
+                               <h5 className="text-lg font-orbitron font-bold text-gradient">{station.name}</h5>
+                             </div>
+                             
+                             <p className="text-sm font-orbitron text-muted-foreground mb-2">{station.location}</p>
                             
                             <div className="grid grid-cols-2 gap-4 mb-3">
-                              <div>
-                                <p className="text-xs text-muted-foreground">Distanse langs ruten</p>
-                                <p className="font-medium">{station.distanceAlongRoute?.toFixed(1)} km</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground">Batteri ved ankomst</p>
-                                <p className="font-medium text-red-600">{station.arrivalBatteryPercentage?.toFixed(1)}%</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground">Ladetid</p>
-                                <p className="font-medium">{station.chargingTime} min</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground">Kostnad</p>
-                                <p className="font-medium">{station.cost} kr/kWh</p>
-                              </div>
+                               <div>
+                                 <p className="text-xs font-orbitron text-muted-foreground">Distanse langs ruten</p>
+                                 <p className="font-orbitron font-bold text-foreground">{station.distanceAlongRoute?.toFixed(1)} km</p>
+                               </div>
+                               <div>
+                                 <p className="text-xs font-orbitron text-muted-foreground">Batteri ved ankomst</p>
+                                 <p className="font-orbitron font-bold text-red-600">{station.arrivalBatteryPercentage?.toFixed(1)}%</p>
+                               </div>
+                               <div>
+                                 <p className="text-xs font-orbitron text-muted-foreground">Ladetid</p>
+                                 <p className="font-orbitron font-bold text-foreground">{station.chargingTime} min</p>
+                               </div>
+                               <div>
+                                 <p className="text-xs font-orbitron text-muted-foreground">Kostnad</p>
+                                 <p className="font-orbitron font-bold text-foreground">{station.cost} kr/kWh</p>
+                               </div>
                             </div>
                             
                             <Badge variant={
@@ -1368,12 +1368,12 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
                             </Badge>
                           </div>
                           
-                          <div className="text-right">
-                            <div className="text-2xl font-bold text-primary mb-1">{station.power}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {station.available}/{station.total} ledige
-                            </div>
-                          </div>
+                           <div className="text-right">
+                             <div className="text-3xl font-orbitron font-bold text-gradient mb-1">{station.power}</div>
+                             <div className="text-sm font-orbitron text-muted-foreground">
+                               {station.available}/{station.total} ledige
+                             </div>
+                           </div>
                         </div>
                       </Card>
                     ))}
@@ -1383,7 +1383,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
                 {/* Vis valgfrie stasjoner */}
                 {optimizedStations.filter((station: any) => !station.isRequired).length > 0 && (
                   <div className="space-y-3">
-                    <h4 className="text-lg font-semibold text-blue-600 flex items-center gap-2">
+                    <h4 className="text-xl font-orbitron font-bold text-blue-600 flex items-center gap-2 animate-glow-pulse">
                       🔄 Valgfrie ladestoppler
                     </h4>
                     
@@ -1391,30 +1391,30 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
                       <Card key={station.id} className="p-4 glass-card cyber-glow border-l-4 border-l-blue-500">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <MapPin className="h-4 w-4 text-primary" />
-                              <h5 className="font-semibold text-foreground">{station.name}</h5>
-                            </div>
-                            
-                            <p className="text-sm text-muted-foreground mb-2">{station.location}</p>
+                             <div className="flex items-center gap-2 mb-2">
+                               <MapPin className="h-5 w-5 text-primary animate-glow-pulse" />
+                               <h5 className="text-lg font-orbitron font-bold text-gradient">{station.name}</h5>
+                             </div>
+                             
+                             <p className="text-sm font-orbitron text-muted-foreground mb-2">{station.location}</p>
                             
                             <div className="grid grid-cols-2 gap-4 mb-3">
-                              <div>
-                                <p className="text-xs text-muted-foreground">Distanse fra ruten</p>
-                                <p className="font-medium">{station.distanceFromRoute?.toFixed(1)} km</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground">Batteri ved ankomst</p>
-                                <p className="font-medium text-blue-600">{station.arrivalBatteryPercentage?.toFixed(1)}%</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground">Ladetid</p>
-                                <p className="font-medium">{station.chargingTime} min</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground">Kostnad</p>
-                                <p className="font-medium">{station.cost} kr/kWh</p>
-                              </div>
+                               <div>
+                                 <p className="text-xs font-orbitron text-muted-foreground">Distanse fra ruten</p>
+                                 <p className="font-orbitron font-bold text-foreground">{station.distanceFromRoute?.toFixed(1)} km</p>
+                               </div>
+                               <div>
+                                 <p className="text-xs font-orbitron text-muted-foreground">Batteri ved ankomst</p>
+                                 <p className="font-orbitron font-bold text-blue-600">{station.arrivalBatteryPercentage?.toFixed(1)}%</p>
+                               </div>
+                               <div>
+                                 <p className="text-xs font-orbitron text-muted-foreground">Ladetid</p>
+                                 <p className="font-orbitron font-bold text-foreground">{station.chargingTime} min</p>
+                               </div>
+                               <div>
+                                 <p className="text-xs font-orbitron text-muted-foreground">Kostnad</p>
+                                 <p className="font-orbitron font-bold text-foreground">{station.cost} kr/kWh</p>
+                               </div>
                             </div>
                             
                             <Badge variant={
@@ -1425,12 +1425,12 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
                             </Badge>
                           </div>
                           
-                          <div className="text-right">
-                            <div className="text-2xl font-bold text-primary mb-1">{station.power}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {station.available}/{station.total} ledige
-                            </div>
-                          </div>
+                           <div className="text-right">
+                             <div className="text-3xl font-orbitron font-bold text-gradient mb-1">{station.power}</div>
+                             <div className="text-sm font-orbitron text-muted-foreground">
+                               {station.available}/{station.total} ledige
+                             </div>
+                           </div>
                         </div>
                       </Card>
                     ))}
