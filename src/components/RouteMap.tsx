@@ -623,21 +623,57 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
               🎯 Beregn neste kritiske punkt
             </button>
           </div>
-              />
-              <span style="font-size: 16px; color: #0066ff; font-weight: 600;">%</span>
-              <button 
-                onclick="window.updateNextChargingPoint && window.updateNextChargingPoint('${station.id}', ${station.distanceAlongRoute || 0})" 
-                style="background: #0066ff; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s;"
-                onmouseover="this.style.background='#0052cc'"
-                onmouseout="this.style.background='#0066ff'"
-              >
-                🎯 Beregn neste punkt
-              </button>
-            </div>
-          </div>
         </div>
       `);
       
+      // Legg til event listeners for input-feltet etter at popup er opprettet
+      popup.on('open', () => {
+        setTimeout(() => {
+          const inputElement = document.getElementById(`chargePercent_${station.id}`) as HTMLInputElement;
+          const buttonElement = document.querySelector(`button[onclick*="${station.id}"]`) as HTMLButtonElement;
+          
+          if (inputElement) {
+            console.log('🔧 Setting up input events for station:', station.id);
+            
+            // Gjør input-feltet klikkbart og editerbart
+            inputElement.addEventListener('click', (e) => {
+              e.stopPropagation();
+              inputElement.focus();
+              inputElement.select();
+              console.log('📝 Input field focused and selected');
+            });
+            
+            inputElement.addEventListener('focus', (e) => {
+              e.stopPropagation();
+              inputElement.style.borderColor = '#0052cc';
+              inputElement.style.boxShadow = '0 0 0 3px rgba(0,102,255,0.2)';
+              console.log('📝 Input field focused');
+            });
+            
+            inputElement.addEventListener('blur', () => {
+              inputElement.style.borderColor = '#0066ff';
+              inputElement.style.boxShadow = 'none';
+            });
+            
+            inputElement.addEventListener('input', (e) => {
+              console.log('📝 Input value changed to:', (e.target as HTMLInputElement).value);
+            });
+            
+            // Hindre at popup lukkes når vi klikker på input
+            inputElement.addEventListener('mousedown', (e) => {
+              e.stopPropagation();
+            });
+          }
+          
+          if (buttonElement) {
+            buttonElement.addEventListener('click', (e) => {
+              e.stopPropagation();
+              console.log('🎯 Button clicked for station:', station.id);
+            });
+          }
+        }, 100);
+      });
+
       console.log('✅ New station popup created for', station.name, 'with live data:', {
         power: liveData.power,
         cost: liveData.cost,
