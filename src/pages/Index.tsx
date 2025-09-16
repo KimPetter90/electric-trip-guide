@@ -60,7 +60,6 @@ function Index() {
   const [currentChargingStation, setCurrentChargingStation] = useState<any>(null);
   const [chargingProgress, setChargingProgress] = useState(0);
   const [routeAnalysis, setRouteAnalysis] = useState<RouteAnalysis | null>(null);
-  const [optimizedStations, setOptimizedStations] = useState<any[]>([]);
 
   
   // Funksjon for å motta ladestasjon data fra RouteMap
@@ -77,12 +76,6 @@ function Index() {
   const handleRouteAnalysisUpdate = (analysis: RouteAnalysis | null) => {
     console.log('📊 INDEX: Mottatt routeAnalysis:', analysis);
     setRouteAnalysis(analysis);
-  };
-
-  // Funksjon for å motta optimizedStations fra RouteMap
-  const handleOptimizedStationsUpdate = (stations: any[]) => {
-    console.log('🔌 INDEX: Mottatt optimizedStations:', stations);
-    setOptimizedStations(stations);
   };
   // Generer rutevalg når ruten planlegges
   const generateRouteOptions = async () => {
@@ -279,16 +272,11 @@ function Index() {
                   selectedRouteId={selectedRouteId}
                   onChargingStationUpdate={handleChargingStationUpdate}
                   onRouteAnalysisUpdate={handleRouteAnalysisUpdate}
-                  onOptimizedStationsUpdate={handleOptimizedStationsUpdate}
                 />
                 
                 {/* Fjernet kritisk batterinivå-seksjonen */}
                 
-                <ChargingMap 
-                  isVisible={showRoute} 
-                  routeAnalysis={routeAnalysis}
-                  optimizedStations={optimizedStations}
-                />
+                <ChargingMap isVisible={showRoute} routeAnalysis={routeAnalysis} />
               </div>
             )}
           </div>
