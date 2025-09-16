@@ -445,6 +445,15 @@ function Index() {
                 >
                   Vilkår og betingelser
                 </Button>
+                {user && (
+                  <Button 
+                    variant="link" 
+                    onClick={() => navigate('/admin/test-users')}
+                    className="p-0 h-auto text-xs text-muted-foreground/60 hover:text-foreground justify-start"
+                  >
+                    Testbruker admin
+                  </Button>
+                )}
               </div>
             </div>
             

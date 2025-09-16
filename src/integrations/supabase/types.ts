@@ -322,6 +322,7 @@ export type Database = {
           auto_backup: boolean | null
           created_at: string
           id: string
+          is_test_user: boolean | null
           last_reset_date: string | null
           last_route_reset_date: string | null
           location_enabled: boolean | null
@@ -340,6 +341,7 @@ export type Database = {
           auto_backup?: boolean | null
           created_at?: string
           id?: string
+          is_test_user?: boolean | null
           last_reset_date?: string | null
           last_route_reset_date?: string | null
           location_enabled?: boolean | null
@@ -358,6 +360,7 @@ export type Database = {
           auto_backup?: boolean | null
           created_at?: string
           id?: string
+          is_test_user?: boolean | null
           last_reset_date?: string | null
           last_route_reset_date?: string | null
           location_enabled?: boolean | null
@@ -390,6 +393,10 @@ export type Database = {
       increment_route_count: {
         Args: { user_uuid: string }
         Returns: undefined
+      }
+      upgrade_to_test_user: {
+        Args: { target_email: string }
+        Returns: boolean
       }
     }
     Enums: {

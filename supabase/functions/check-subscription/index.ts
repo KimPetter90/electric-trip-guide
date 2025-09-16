@@ -60,11 +60,21 @@ serve(async (req) => {
           subscription_end_date: null
         });
 
+      // Check if user is test user even without Stripe customer
+      const { data: userSettings } = await supabaseClient
+        .from('user_settings')
+        .select('monthly_route_count, is_test_user')
+        .eq('user_id', user.id)
+        .single();
+
+      const isTestUser = userSettings?.is_test_user || false;
+      const routeCount = userSettings?.monthly_route_count || 0;
+
       return new Response(JSON.stringify({ 
-        subscribed: false,
-        subscription_status: 'free',
-        route_count: 0,
-        route_limit: 5
+        subscribed: isTestUser,
+        subscription_status: isTestUser ? 'premium' : 'free',
+        route_count: routeCount,
+        route_limit: isTestUser ? 100 : 5
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -107,14 +117,26 @@ serve(async (req) => {
       logStep("No active subscription found");
     }
 
-    // Get current route count from user settings
+    // Get current route count and test user status from user settings
     const { data: userSettings } = await supabaseClient
       .from('user_settings')
-      .select('monthly_route_count')
+      .select('monthly_route_count, is_test_user')
       .eq('user_id', user.id)
       .single();
 
     const routeCount = userSettings?.monthly_route_count || 0;
+    
+    // Override subscription status for test users
+    let finalSubscriptionStatus = subscriptionStatus;
+    let finalSubscribed = hasActiveSub;
+    let finalRouteLimit = routeLimit;
+    
+    if (userSettings?.is_test_user) {
+      finalSubscriptionStatus = 'premium';
+      finalSubscribed = true;
+      finalRouteLimit = 100;
+      logStep("User is test user with premium access");
+    }
 
     // Update user settings with subscription info
     await supabaseClient
@@ -122,18 +144,18 @@ serve(async (req) => {
       .upsert({ 
         user_id: user.id,
         stripe_customer_id: customerId,
-        subscription_status: subscriptionStatus,
+        subscription_status: finalSubscriptionStatus,
         subscription_product_id: productId,
         subscription_end_date: subscriptionEnd
       });
 
     return new Response(JSON.stringify({
-      subscribed: hasActiveSub,
-      subscription_status: subscriptionStatus,
+      subscribed: finalSubscribed,
+      subscription_status: finalSubscriptionStatus,
       product_id: productId,
       subscription_end: subscriptionEnd,
       route_count: routeCount,
-      route_limit: routeLimit
+      route_limit: finalRouteLimit
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
