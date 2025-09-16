@@ -239,6 +239,12 @@ export default function Pricing() {
                       plan.buttonText
                     )}
                   </Button>
+                  
+                  {plan.priceId && (
+                    <p className="text-xs text-muted-foreground text-center mt-2">
+                      14 dagers angrerett • Kanseller når som helst
+                    </p>
+                  )}
                 </CardFooter>
               </Card>
             ))}

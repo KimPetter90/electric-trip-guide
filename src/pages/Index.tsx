@@ -414,10 +414,53 @@ function Index() {
 
       {/* Footer */}
       <footer className="relative bg-card/60 backdrop-blur-sm border-t border-border py-8 mt-16">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-muted-foreground">
-            ElRoute - Fremtidens ruteplanlegging for elbiler i Norge
-          </p>
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <Zap className="h-6 w-6 text-primary" />
+                <span className="text-xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+                  ElRoute
+                </span>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                Fremtidens ruteplanlegging for elbiler i Norge
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-3">Juridisk</h4>
+              <div className="space-y-2">
+                <Button 
+                  variant="link" 
+                  onClick={() => navigate('/privacy')}
+                  className="p-0 h-auto text-sm text-muted-foreground hover:text-foreground justify-start"
+                >
+                  Personvernerklæring
+                </Button>
+                <Button 
+                  variant="link" 
+                  onClick={() => navigate('/terms')}
+                  className="p-0 h-auto text-sm text-muted-foreground hover:text-foreground justify-start"
+                >
+                  Vilkår og betingelser
+                </Button>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-3">Kontakt</h4>
+              <div className="space-y-1 text-sm text-muted-foreground">
+                <p>support@elroute.no</p>
+                <p>ElRoute AS</p>
+                <p>Org.nr: [Ditt org.nr]</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="border-t border-border mt-8 pt-6 text-center text-sm text-muted-foreground">
+            <p>&copy; {new Date().getFullYear()} ElRoute AS. Alle rettigheter forbeholdt.</p>
+          </div>
         </div>
       </footer>
     </div>
