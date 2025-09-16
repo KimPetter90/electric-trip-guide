@@ -2390,6 +2390,74 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         
         const nearRouteCount = nearRouteStations.length;
         console.log(`✅ ALLE ${chargingStations.length} MARKØRER LAGT TIL! (${nearRouteCount} røde innenfor 5km, ${chargingStations.length - nearRouteCount} grønne, ${bestStations.length} blå mest effektive)`);
+        
+        // FORCE FLERE BLÅ MARKØRER - legg til automatisk
+        console.log('🔵🔵 TVINGER FREM FLERE BLÅ MARKØRER 🔵🔵');
+        
+        const routeKm = route.distance / 1000;
+        const carRange = selectedCar?.range || 441;
+        const startBattery = routeData.batteryPercentage;
+        
+        // Beregn kritiske punkter
+        const criticalPoints = [];
+        let currentPos = 0;
+        let currentBattery = startBattery;
+        let pointNumber = 1;
+        
+        while (currentPos < routeKm && pointNumber <= 5) {
+          const usableRange = (carRange * (currentBattery - 15)) / 100;
+          const nextCritical = currentPos + usableRange;
+          
+          if (nextCritical >= routeKm) break;
+          
+          console.log(`🎯 KRITISK PUNKT ${pointNumber} ved ${nextCritical.toFixed(1)}km`);
+          criticalPoints.push(nextCritical);
+          
+          currentPos = nextCritical;
+          currentBattery = 80; // Lader til 80%
+          pointNumber++;
+        }
+        
+        console.log('📍 Totalt', criticalPoints.length, 'kritiske punkter beregnet');
+        
+        // Finn stasjoner for hvert kritisk punkt
+        criticalPoints.forEach((criticalKm, index) => {
+          const nearestStation = chargingStations
+            .filter(s => s.distanceAlongRoute && Math.abs(s.distanceAlongRoute - criticalKm) <= 50 && s.distanceFromRoute <= 20)
+            .sort((a, b) => Math.abs(a.distanceAlongRoute - criticalKm) - Math.abs(b.distanceAlongRoute - criticalKm))[0];
+            
+          if (nearestStation && !document.querySelector(`[data-station-${nearestStation.id}]`)) {
+            console.log(`🔵 LAGER EKSTRA BLÅ MARKØR ${index + 2}:`, nearestStation.name);
+            
+            const el = document.createElement('div');
+            el.className = 'forced-blue-marker';
+            el.setAttribute('data-station-' + nearestStation.id, 'true');
+            el.style.cssText = `
+              background: linear-gradient(135deg, #0066ff, #00aaff);
+              width: 26px;
+              height: 26px;
+              border-radius: 50%;
+              border: 3px solid white;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-weight: bold;
+              font-size: 14px;
+              z-index: 100;
+              box-shadow: 0 0 25px rgba(0, 102, 255, 0.9);
+              animation: pulse 2s infinite;
+            `;
+            el.innerHTML = `${index + 2}`;
+            
+            new mapboxgl.Marker(el)
+              .setLngLat([nearestStation.longitude, nearestStation.latitude])
+              .addTo(map.current!);
+              
+            console.log(`✅ EKSTRA BLÅ MARKØR ${index + 2} LAGT TIL!`);
+          }
+        });
         }
         
         // Beregn progressive ladestasjoner for fremtidige sykluser
