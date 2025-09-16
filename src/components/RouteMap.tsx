@@ -3101,8 +3101,28 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                       return;
                     }
                     
-                    // Lag blå markører for disse stasjonene
+                    // Lag blå markører for disse stasjonene LANGS RUTEN
                     stationsAhead.forEach((station, index) => {
+                      // Beregn posisjon langs ruten basert på distanceAlongRoute
+                      let routePosition = null;
+                      
+                      if (currentRoute && currentRoute.geometry && station.distanceAlongRoute) {
+                        // Finn koordinat langs ruten basert på distanse
+                        const totalRouteDistance = currentRoute.distance / 1000; // Convert to km
+                        const progressAlongRoute = station.distanceAlongRoute / totalRouteDistance;
+                        const routeCoords = currentRoute.geometry.coordinates;
+                        
+                        // Finn tilnærmet posisjon langs ruten
+                        const coordIndex = Math.floor(progressAlongRoute * (routeCoords.length - 1));
+                        const coord = routeCoords[Math.min(coordIndex, routeCoords.length - 1)];
+                        routePosition = coord;
+                        
+                        console.log(`📍 Plasserer blå markør for ${station.name} på ruten ved:`, coord);
+                      }
+                      
+                      // Fall back til stasjonens posisjon hvis rute-posisjon ikke finnes
+                      const position = routePosition || [station.longitude, station.latitude];
+                      
                       const el = document.createElement('div');
                       el.className = 'blue-next-point-marker';
                       el.style.cssText = `
@@ -3124,10 +3144,10 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                       el.innerHTML = '🔋';
                       
                       const marker = new mapboxgl.Marker(el)
-                        .setLngLat([station.longitude, station.latitude])
+                        .setLngLat(position)
                         .addTo(map.current!);
                         
-                      console.log('🔵 BLÅ MARKØR LAGET for:', station.name);
+                      console.log('🔵 BLÅ MARKØR LAGET LANGS RUTEN for:', station.name, 'ved posisjon:', position);
                     });
                     
                     toast({
