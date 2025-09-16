@@ -837,51 +837,48 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     console.log('🎉 TEST 8 COMPLETED - Function executed successfully');
   };
 
-  // HELT NY SIMPEL KART-INITIALISERING
+  // ULTRA SIMPEL KART-INITIALISERING - INGEN LOGGING, BARE VIRKE
   const initializeMap = async () => {
-    console.log('🚨🚨🚨 EMERGENCY INIT MAP 🚨🚨🚨');
-    
+    // Fjern eksisterende kart
     if (map.current) {
-      console.log('♻️ Removing existing map');
       map.current.remove();
       map.current = null;
     }
 
-    if (!accessToken) {
-      console.log('❌ No access token!');
-      return;
-    }
-
-    if (!mapContainer.current) {
-      console.log('❌ No map container!');
+    // Sjekk basic requirements
+    if (!accessToken || !mapContainer.current) {
+      setError('Mangler token eller container');
       return;
     }
 
     try {
+      // Sett token
       mapboxgl.accessToken = accessToken;
       
-      console.log('🔧 Creating map with container:', mapContainer.current);
-      
+      // Opprett kart - super enkelt
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12', // Prøv annen stil
-        center: [10.7522, 59.9139],
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [10.7522, 59.9139], // Oslo
         zoom: 6
       });
 
-      console.log('🗺️ Map created, adding controls...');
+      // Legg til kontroller
       map.current.addControl(new mapboxgl.NavigationControl());
       
+      // Når kart laster - sett status
       map.current.on('load', () => {
-        console.log('🎉 MAP LOADED SUCCESSFULLY!');
         setIsMapLoaded(true);
+        setError(null);
       });
 
-      console.log('✅ Map setup complete');
+      // Håndter errors
+      map.current.on('error', (e) => {
+        setError(`Kartfeil: ${e.error?.message || 'Ukjent feil'}`);
+      });
 
     } catch (error) {
-      console.error('💥 MAP CREATION FAILED:', error);
-      setError(`Kartfeil: ${error.message}`);
+      setError(`Initialisering feilet: ${error.message}`);
     }
   };
 
@@ -1004,16 +1001,20 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       <div className="mb-4">
         <Button 
           onClick={() => {
-            alert('🚨 KNAPP FUNGERER! Debug button clicked!');
-            console.log('🚨 FORCE INIT BUTTON CLICKED');
-            console.log('🚨 accessToken:', !!accessToken);
-            console.log('🚨 mapContainer:', !!mapContainer.current);
+            alert('Initialiserer kart nå...');
             initializeMap();
+            setTimeout(() => {
+              if (map.current) {
+                alert('✅ Kart opprettet suksessfullt!');
+              } else {
+                alert('❌ Kart feilet - sjekk error-melding over');
+              }
+            }, 2000);
           }}
           variant="destructive"
           className="w-full"
         >
-          🚨 TEST KNAPP (Trykk meg!)
+          🗺️ INITIALISER KART MANUELT
         </Button>
       </div>
 
