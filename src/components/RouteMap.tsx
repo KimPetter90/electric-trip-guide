@@ -520,12 +520,12 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       
       // Velg riktig Mapbox profil og parametre basert på rutetype
       let mapboxProfile = 'driving';
-      let routeParams = 'geometries=geojson&access_token=' + accessToken + '&alternatives=true&continue_straight=false&country=NO';
+      let routeParams = `geometries=geojson&access_token=${accessToken}&alternatives=true&continue_straight=false`;
       
       switch (routeType) {
         case 'fastest':
           mapboxProfile = 'driving-traffic'; // Raskeste med trafikk
-          routeParams += '&steps=true&annotations=duration&exclude=ferry';
+          routeParams += '&steps=true&annotations=duration';
           break;
         case 'shortest':
           mapboxProfile = 'driving'; // Standard driving
@@ -533,15 +533,12 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           break;
         case 'eco':
           mapboxProfile = 'driving'; // Eco-vennlig
-          routeParams += '&steps=true&annotations=duration,distance&overview=full&exclude=toll';
+          routeParams += '&steps=true&annotations=duration,distance&overview=full';
           break;
         default:
           mapboxProfile = 'driving';
           routeParams += '&steps=true&alternatives=true';
       }
-      
-      // Legg til Norge-spesifikke begrensninger
-      routeParams += '&radiuses=50000;50000'; // Maks 50km radius fra start/slutt punkter
       
       const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/${mapboxProfile}/${coordinates}?${routeParams}`;
       console.log('🇳🇴 API URL:', directionsUrl);
