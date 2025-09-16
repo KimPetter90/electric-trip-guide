@@ -186,6 +186,81 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return R * c;
 }
 
+// Funksjon for å beregne progressive ladestasjoner basert på ladesykluser
+function calculateProgressiveChargingStations(
+  routeCoordinates: number[][],
+  routeDistance: number,
+  car: CarModel,
+  batteryPercentage: number,
+  allStations: ChargingStation[],
+  chargingCycle: number = 0
+): ChargingStation[] {
+  console.log('🔄 BEREGNER PROGRESSIVE LADESTASJONER - Syklus:', chargingCycle);
+  
+  const usableRange = car.range * 0.85; // 85% av total rekkevidde for sikkerhet
+  const criticalLevel = 15; // Vis neste stasjon ved 15% batteri
+  
+  // Beregn hvor langt vi kan kjøre før vi trenger neste lading
+  const remainingRangeAfterCharging = usableRange * 0.8; // Etter lading til 80%
+  
+  // Beregn startposisjon basert på hvor mange ganger vi har ladet
+  const startDistanceAlongRoute = chargingCycle * remainingRangeAfterCharging;
+  
+  console.log('📊 Syklus', chargingCycle, '- Start avstand:', startDistanceAlongRoute.toFixed(1), 'km');
+  console.log('📊 Søker neste stasjon rundt:', (startDistanceAlongRoute + remainingRangeAfterCharging * 0.85).toFixed(1), 'km');
+  
+  // Finn stasjoner som er riktig plassert for neste ladesyklus
+  const candidateStations = allStations.filter(station => {
+    // Beregn stasjonens posisjon langs ruten
+    let minDistanceToRoute = Infinity;
+    let stationDistanceAlongRoute = 0;
+    
+    for (let i = 0; i < routeCoordinates.length; i++) {
+      const distanceToPoint = getDistance(
+        station.latitude,
+        station.longitude,
+        routeCoordinates[i][1],
+        routeCoordinates[i][0]
+      );
+      
+      if (distanceToPoint < minDistanceToRoute) {
+        minDistanceToRoute = distanceToPoint;
+        // Beregn approksimert distanse langs ruten basert på posisjon
+        stationDistanceAlongRoute = (i / routeCoordinates.length) * routeDistance;
+      }
+    }
+    
+    // Må være nær ruten (under 5km)
+    const isNearRoute = minDistanceToRoute <= 5.0;
+    
+    // Må være i riktig område for neste lading
+    const targetDistance = startDistanceAlongRoute + remainingRangeAfterCharging * 0.85;
+    const isInTargetArea = stationDistanceAlongRoute >= (targetDistance - 50) && 
+                          stationDistanceAlongRoute <= (targetDistance + 50);
+    
+    // Ikke vis stasjoner som er for nær start av denne syklusen
+    const isFarEnoughFromStart = stationDistanceAlongRoute > startDistanceAlongRoute + 50;
+    
+    return isNearRoute && isInTargetArea && isFarEnoughFromStart;
+  });
+  
+  console.log('🎯 Fant', candidateStations.length, 'kandidat-stasjoner for syklus', chargingCycle);
+  
+  // Sorter etter beste egenskaper og ta de 2 beste
+  const sortedStations = candidateStations
+    .map(station => ({
+      ...station,
+      score: (station.available / station.total * 0.3) + 
+             (station.fastCharger ? 0.4 : 0) + 
+             ((station.cost <= 5.0 ? 1 : 0) * 0.3)
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 2);
+  
+  console.log('✅ Valgte', sortedStations.length, 'stasjoner for syklus', chargingCycle);
+  return sortedStations;
+}
+
 const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, routeTrigger, selectedRouteId }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -196,6 +271,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
   const [optimizedStations, setOptimizedStations] = useState<ChargingStation[]>([]);
   const [routeAnalysis, setRouteAnalysis] = useState<TripAnalysis | null>(null);
   const [activeTab, setActiveTab] = useState<string>("analysis");
+  const [chargingProgress, setChargingProgress] = useState(0); // Hvor mange ganger du har ladet
+  const [nextChargingStations, setNextChargingStations] = useState<ChargingStation[]>([]); // Neste stasjoner å vise
   const { toast } = useToast();
 
   // Mapbox token henting
@@ -738,6 +815,36 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         const nearRouteCount = nearRouteStations.length;
         console.log(`✅ ALLE ${chargingStations.length} MARKØRER LAGT TIL! (${nearRouteCount} røde innenfor 5km, ${chargingStations.length - nearRouteCount} grønne, ${bestStations.length} blå mest effektive)`);
         }
+        
+        // Beregn progressive ladestasjoner for fremtidige sykluser
+        console.log('🔄 BEREGNER ALLE PROGRESSIVE LADESTASJONER...');
+        const allProgressiveStations = [];
+        
+        // Beregn hvor mange ladesykluser vi trenger for hele ruten
+        const maxCycles = Math.ceil(routeDistance / (adjustedRange * 0.7));
+        console.log('📊 Beregnet', maxCycles, 'maksimale ladesykluser for', routeDistance.toFixed(1), 'km rute');
+        
+        for (let cycle = 0; cycle < Math.min(maxCycles, 3); cycle++) {
+          const progressiveStations = calculateProgressiveChargingStations(
+            route.geometry.coordinates,
+            routeDistance,
+            selectedCar,
+            routeData.batteryPercentage,
+            nearRouteStations,
+            cycle
+          );
+          
+          if (progressiveStations.length > 0) {
+            allProgressiveStations.push(...progressiveStations.map(station => ({
+              ...station,
+              chargingCycle: cycle,
+              isVisible: cycle === chargingProgress // Vis kun aktuelle syklus
+            })));
+          }
+        }
+        
+        setNextChargingStations(allProgressiveStations);
+        console.log('🔄 Satt opp', allProgressiveStations.length, 'progressive ladestasjoner');
       }
 
       // DERETTER: Legg til markører for optimerte ladestasjoner (større og mer synlige)
@@ -790,6 +897,119 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           .addTo(map.current!);
         
         console.log('ℹ️ Optimerte stasjoner (lyn-markører) er nå erstattet med avstandsbaserte røde markører');
+      });
+      
+      // Legg til progressive blå markører for neste ladesyklus
+      console.log('🔄 LEGGER TIL PROGRESSIVE BLÅ MARKØRER...');
+      const visibleProgressiveStations = nextChargingStations.filter(station => 
+        (station as any).chargingCycle === chargingProgress
+      );
+      
+      console.log('🔵 Viser', visibleProgressiveStations.length, 'blå markører for syklus', chargingProgress);
+      
+      visibleProgressiveStations.forEach((station, index) => {
+        const el = document.createElement('div');
+        el.className = 'progressive-charging-marker';
+        el.style.cssText = `
+          background: linear-gradient(45deg, #0066ff, #00aaff);
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          border: 3px solid #ffffff;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          color: white;
+          font-weight: bold;
+          z-index: 20;
+          box-shadow: 0 0 20px rgba(0, 102, 255, 0.8), 0 0 40px rgba(0, 170, 255, 0.4);
+          animation: pulse 2s infinite;
+        `;
+        el.innerHTML = '🔋';
+
+        // Legg til click handler for å simulere lading
+        el.addEventListener('click', () => {
+          console.log('🔋 LADER VED STASJON:', station.name);
+          setChargingProgress(prev => {
+            const newProgress = prev + 1;
+            console.log('🔄 Øker ladesyklus til:', newProgress);
+            toast({
+              title: "Lading fullført! 🔋",
+              description: `Ladet ved ${station.name}. Neste ladestasjoner vises nå.`,
+            });
+            
+            // Oppdater kartet med neste syklus etter kort pause
+            setTimeout(() => {
+              console.log('🔄 Oppdaterer kart med nye progressive stasjoner...');
+              const nextCycleStations = nextChargingStations.filter(s => 
+                (s as any).chargingCycle === newProgress
+              );
+              
+              if (nextCycleStations.length > 0) {
+                console.log('🔵 Viser', nextCycleStations.length, 'nye blå markører for syklus', newProgress);
+                // Fjern gamle progressive markører
+                const oldMarkers = document.querySelectorAll('.progressive-charging-marker');
+                oldMarkers.forEach(marker => marker.remove());
+                
+                // Legg til nye progressive markører
+                nextCycleStations.forEach((nextStation, idx) => {
+                  const nextEl = document.createElement('div');
+                  nextEl.className = 'progressive-charging-marker';
+                  nextEl.style.cssText = el.style.cssText;
+                  nextEl.innerHTML = '🔋';
+                  
+                  const nextPopup = new mapboxgl.Popup().setHTML(`
+                    <div style="font-family: Arial, sans-serif; color: #333;">
+                      <h4 style="margin: 0 0 8px 0; color: #0066ff;"><strong>🔋 NESTE LADESTASJON: ${nextStation.name}</strong></h4>
+                      <p style="margin: 4px 0; color: #666;"><em>📍 ${nextStation.location}</em></p>
+                      <p style="margin: 4px 0; color: #0066ff;"><strong>🔄 Syklus ${newProgress + 1} - Vis når batteriet når 10-15%</strong></p>
+                      <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${nextStation.power}</p>
+                      <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${nextStation.cost} kr/kWh</p>
+                      <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${nextStation.available}/${nextStation.total} ladepunkter</p>
+                      <p style="margin: 4px 0; color: #0066ff;"><strong>👆 Klikk for å simulere lading her</strong></p>
+                    </div>
+                  `);
+
+                  new mapboxgl.Marker(nextEl)
+                    .setLngLat([nextStation.longitude, nextStation.latitude])
+                    .setPopup(nextPopup)
+                    .addTo(map.current!);
+                  
+                  console.log('🔵 La til ny progressiv markør:', nextStation.name);
+                });
+              } else {
+                console.log('✅ Ingen flere ladestasjoner nødvendig - du har nådd destinasjonen!');
+                toast({
+                  title: "Reise fullført! 🎉",
+                  description: "Du har nok energi til å nå destinasjonen.",
+                });
+              }
+            }, 1000);
+            
+            return newProgress;
+          });
+        });
+
+        const popup = new mapboxgl.Popup().setHTML(`
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h4 style="margin: 0 0 8px 0; color: #0066ff;"><strong>🔋 NESTE LADESTASJON: ${station.name}</strong></h4>
+            <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
+            <p style="margin: 4px 0; color: #0066ff;"><strong>🔄 Syklus ${(station as any).chargingCycle + 1} - Vis når batteriet når 10-15%</strong></p>
+            <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
+            <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
+            <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${station.available}/${station.total} ladepunkter</p>
+            <p style="margin: 4px 0; color: #0066ff;"><strong>👆 Klikk for å simulere lading her</strong></p>
+          </div>
+        `);
+
+        new mapboxgl.Marker(el)
+          .setLngLat([station.longitude, station.latitude])
+          .setPopup(popup)
+          .addTo(map.current!);
+        
+        console.log('🔵 La til progressiv blå markør:', station.name, 'for syklus', (station as any).chargingCycle);
       });
       
       console.log('ℹ️ Ladestasjoner er nå fargekodet: 🟢 Alle stasjoner, 🔴 Nær ruten (<5km), 🔵 Mest effektive (3 stk)');
