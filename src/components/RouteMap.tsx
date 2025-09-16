@@ -536,16 +536,20 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           </div>
           <div style="space-y: 6px;">
             <div style="background: #f0f8ff; padding: 6px; border-radius: 4px; margin: 6px 0;">
-              <p style="margin: 0; font-size: 12px; color: #0066ff; font-weight: 600;">🔋 Neste kritiske punkt</p>
+              <p style="margin: 0; font-size: 12px; color: #0066ff; font-weight: 600;">🔋 Neste kritiske punkt - ca. 10-15% batteri igjen</p>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px;">
               <div>
                 <span style="color: #666;">⚡ Effekt:</span><br>
-                <strong style="color: #333;">${station.power}</strong>
+                <strong style="color: #000;">${station.power}</strong>
               </div>
               <div>
                 <span style="color: #666;">💰 Pris:</span><br>
-                <strong style="color: #333;">${station.cost} kr/kWh</strong>
+                <strong style="color: #000;">${station.cost} kr/kWh</strong>
+              </div>
+              <div>
+                <span style="color: #666;">📊 Ledig:</span><br>
+                <strong style="color: #000;">${station.available}/${station.total}</strong>
               </div>
             </div>
             <div style="text-align: center; background: #0066ff; color: white; padding: 6px; border-radius: 4px; margin-top: 8px; font-size: 12px; font-weight: 600;">
@@ -1189,16 +1193,20 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
               </div>
               <div style="space-y: 6px;">
                 <div style="background: #f0f8ff; padding: 6px; border-radius: 4px; margin: 6px 0;">
-                  <p style="margin: 0; font-size: 12px; color: #0066ff; font-weight: 600;">⚡ Kritisk ladestasjon</p>
+                  <p style="margin: 0; font-size: 12px; color: #0066ff; font-weight: 600;">⚡ Kritisk ladestasjon - ca. ${Math.max(10, routeData.batteryPercentage - Math.round((station as any).distanceToRoute || 0))}% batteri igjen</p>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px;">
                   <div>
                     <span style="color: #666;">⚡ Effekt:</span><br>
-                    <strong style="color: #333;">${station.power}</strong>
+                    <strong style="color: #000;">${station.power}</strong>
                   </div>
                   <div>
                     <span style="color: #666;">💰 Pris:</span><br>
-                    <strong style="color: #333;">${station.cost} kr/kWh</strong>
+                    <strong style="color: #000;">${station.cost} kr/kWh</strong>
+                  </div>
+                  <div>
+                    <span style="color: #666;">📊 Ledig:</span><br>
+                    <strong style="color: #000;">${station.available}/${station.total}</strong>
                   </div>
                 </div>
               </div>
@@ -1371,16 +1379,20 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
             </div>
             <div style="space-y: 6px;">
               <div style="background: #f0f8ff; padding: 6px; border-radius: 4px; margin: 6px 0;">
-                <p style="margin: 0; font-size: 12px; color: #0066ff; font-weight: 600;">🔋 Kritisk ladepunkt</p>
+                <p style="margin: 0; font-size: 12px; color: #0066ff; font-weight: 600;">🔋 Kritisk ladepunkt - ca. 10-15% batteri igjen</p>
               </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 12px;">
                 <div>
                   <span style="color: #666;">⚡ Effekt:</span><br>
-                  <strong style="color: #333;">${station.power}</strong>
+                  <strong style="color: #000;">${station.power}</strong>
                 </div>
                 <div>
                   <span style="color: #666;">💰 Pris:</span><br>
-                  <strong style="color: #333;">${station.cost} kr/kWh</strong>
+                  <strong style="color: #000;">${station.cost} kr/kWh</strong>
+                </div>
+                <div>
+                  <span style="color: #666;">📊 Ledig:</span><br>
+                  <strong style="color: #000;">${station.available}/${station.total}</strong>
                 </div>
               </div>
               <div style="text-align: center; background: #0066ff; color: white; padding: 6px; border-radius: 4px; margin-top: 8px; font-size: 12px; font-weight: 600; cursor: pointer;" onclick="event.stopPropagation();">
