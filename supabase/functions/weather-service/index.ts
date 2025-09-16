@@ -6,6 +6,38 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Simple rate limiting - store requests per IP
+const requestCounts = new Map();
+const RATE_LIMIT = 50; // requests per hour (lower for weather API)
+const RATE_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const key = ip;
+  
+  if (!requestCounts.has(key)) {
+    requestCounts.set(key, { count: 1, resetTime: now + RATE_WINDOW });
+    return false;
+  }
+  
+  const record = requestCounts.get(key);
+  
+  // Reset if time window passed
+  if (now > record.resetTime) {
+    requestCounts.set(key, { count: 1, resetTime: now + RATE_WINDOW });
+    return false;
+  }
+  
+  // Check if limit exceeded
+  if (record.count >= RATE_LIMIT) {
+    return true;
+  }
+  
+  // Increment count
+  record.count++;
+  return false;
+}
+
 interface WeatherData {
   temperature: number;
   windSpeed: number;
@@ -30,6 +62,22 @@ serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Rate limiting
+  const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  if (isRateLimited(clientIP)) {
+    console.log(`Rate limit exceeded for IP: ${clientIP}`);
+    return new Response(
+      JSON.stringify({ 
+        error: 'Rate limit exceeded',
+        details: 'For mange forespørsler. Prøv igjen senere.'
+      }), 
+      { 
+        status: 429, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
   }
 
   try {
