@@ -2392,6 +2392,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         console.log(`✅ ALLE ${chargingStations.length} MARKØRER LAGT TIL! (${nearRouteCount} røde innenfor 5km, ${chargingStations.length - nearRouteCount} grønne, ${bestStations.length} blå mest effektive)`);
         
         // Finn kritisk batteripunkt og gjør en rød markør blå
+        console.log('🔴➡️🔵 STARTER KRITISK MARKØR LOGIKK 🔴➡️🔵');
         const routeKm = route.distance / 1000;
         const carRange = selectedCar?.range || 441;
         const startBattery = routeData.batteryPercentage;
@@ -2401,11 +2402,14 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         const criticalPointKm = usableRange;
         
         console.log(`🔴➡️🔵 KRITISK BATTERIPUNKT ved ${criticalPointKm.toFixed(1)}km (12% batteri igjen)`);
+        console.log(`🔴➡️🔵 HAR ${nearRouteStations.length} RØDE STASJONER Å VELGE FRA:`, nearRouteStations.map(s => `${s.name} ved ${s.distanceAlongRoute?.toFixed(1)}km`));
         
         // Finn nærmeste røde stasjon til kritisk punkt
         const criticalStation = nearRouteStations
           .filter(s => s.distanceAlongRoute && s.distanceAlongRoute >= criticalPointKm * 0.9) // Litt før kritisk punkt
           .sort((a, b) => Math.abs(a.distanceAlongRoute - criticalPointKm) - Math.abs(b.distanceAlongRoute - criticalPointKm))[0];
+        
+        console.log(`🔴➡️🔵 FUNNET KRITISK STASJON:`, criticalStation ? criticalStation.name : 'INGEN');
         
         if (criticalStation) {
           console.log(`🔵 GJØR RØD STASJON BLÅ:`, criticalStation.name, `ved ${criticalStation.distanceAlongRoute?.toFixed(1)}km`);
