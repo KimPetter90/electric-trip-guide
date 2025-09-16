@@ -866,17 +866,9 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     
     const chargePercent = parseInt(chargePercentInput);
     console.log('📊 Parsed charge percent:', chargePercent);
-    console.log('🔍 Validation check:', {
-      isNaN: isNaN(chargePercent),
-      chargePercent,
-      arrivalBattery: chargingModal.arrivalBattery,
-      lessThanArrival: chargePercent < chargingModal.arrivalBattery,
-      moreThan100: chargePercent > 100
-    });
     
     if (isNaN(chargePercent) || chargePercent < chargingModal.arrivalBattery || chargePercent > 100) {
       console.log('❌ Invalid charge percent detected');
-      console.log('🔧 Validation details:', { chargePercent, arrivalBattery: chargingModal.arrivalBattery });
       toast({
         title: "❌ Ugyldig ladeprosent",
         description: `Vennligst skriv inn en prosent mellom ${chargingModal.arrivalBattery} og 100.`,
@@ -895,35 +887,26 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       return;
     }
 
-    // DEBUGGING: Log all relevant data
-    console.log('🔍 FULL DEBUG INFO:');
-    console.log('chargingModal:', chargingModal);
-    console.log('chargingStations count:', chargingStations.length);
-    console.log('chargePercentInput:', chargePercentInput);
-    console.log('First 3 charging stations:', chargingStations.slice(0, 3).map(s => ({ id: s.id, name: s.name, distanceAlongRoute: s.distanceAlongRoute })));
+    // KRITISK DEBUG: Sjekk at chargingStations har distanceAlongRoute
+    const stationsWithDistance = chargingStations.filter(s => s.distanceAlongRoute !== undefined);
+    console.log('🔍 KRITISK DEBUG:');
+    console.log('- Total stasjoner:', chargingStations.length);
+    console.log('- Stasjoner med distanceAlongRoute:', stationsWithDistance.length);
+    console.log('- Første 3 med distanceAlongRoute:', stationsWithDistance.slice(0, 3).map(s => ({ 
+      name: s.name, 
+      distanceAlongRoute: s.distanceAlongRoute?.toFixed(1) + 'km' 
+    })));
     
-    // Finn stasjonen - prioriter modal distance over station distance
-    let station = chargingStations.find(s => s.id === chargingModal.stationId);
-    console.log('🔍 Station search result:', { 
-      found: !!station, 
-      stationId: chargingModal.stationId,
-      stationName: station?.name || 'Not found',
-      stationDistanceAlongRoute: station?.distanceAlongRoute,
-      modalDistance: chargingModal.distance
-    });
-    
-    if (!station) {
-      console.log('❌ Station not found - showing all available stations:');
-      console.log('Available stations:', chargingStations.map(s => ({ id: s.id, name: s.name })));
+    if (stationsWithDistance.length === 0) {
+      console.log('❌ INGEN STASJONER HAR distanceAlongRoute - dette er problemet!');
       toast({
-        title: "❌ Feil med stasjon",
-        description: "Kunne ikke finne stasjonsdata. Prøv å planlegge ruten på nytt.",
+        title: "❌ Teknisk feil",
+        description: "Rutedata er ikke beregnet riktig. Planlegg ruten på nytt.",
         variant: "destructive"
       });
       return;
     }
 
-    // KRITISK FIX: Bruk alltid modal distance da denne er satt når markøren klikkes
     const currentDistance = chargingModal.distance;
     console.log('📍 Using modal distance:', currentDistance);
     
@@ -1052,6 +1035,22 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
         });
       }
       return;
+    }
+
+    // FALLBACK: Hvis ingen stasjoner funnet, bruk de nærmeste fremover
+    if (nearbyStations.length === 0) {
+      console.log('🔄 FALLBACK: Bruker nærmeste stasjoner fremover på ruten');
+      const stationsAhead = chargingStations
+        .filter(s => s.distanceAlongRoute && s.distanceAlongRoute > currentDistance)
+        .sort((a, b) => a.distanceAlongRoute! - b.distanceAlongRoute!)
+        .slice(0, 3);
+        
+      console.log('📍 Fallback fant', stationsAhead.length, 'stasjoner fremover:', stationsAhead.map(s => ({
+        name: s.name,
+        distanceAlongRoute: s.distanceAlongRoute?.toFixed(1) + 'km'
+      })));
+      
+      nearbyStations = stationsAhead;
     }
 
     if (nearbyStations.length > 0 && map.current) {
