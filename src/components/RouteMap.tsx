@@ -3058,8 +3058,72 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                     e.stopPropagation();
                     console.log('🎯 Beregn neste punkt knapp klikket - event trigget!');
                     console.log('📊 Current state:', { chargingModal, chargePercentInput });
+                    
+                    alert('🎯 Knappen ble klikket! Nå beregner jeg neste punkt...');
+                    
                     try {
-                      calculateNextPoint();
+                      // Kjør calculateNextPoint funksjonen direkte her
+                      console.log('🎯🎯🎯 calculateNextPoint STARTET! 🎯🎯🎯');
+                      console.log('🎯 calculateNextPoint function called');
+                      console.log('📝 Current input value:', chargePercentInput);
+                      console.log('📝 Modal data:', chargingModal);
+                      
+                      alert('🎯 calculateNextPoint ble kalt! Sjekk konsollen for debugging...');
+                      
+                      // Lukk modalen med en gang
+                      setChargingModal({ isOpen: false, stationId: '', stationName: '', distance: 0, arrivalBattery: 0 });
+                      
+                      const chargePercent = parseInt(chargePercentInput);
+                      console.log('📊 Parsed charge percent:', chargePercent);
+                      
+                      if (isNaN(chargePercent) || chargePercent < 0 || chargePercent > 100) {
+                        console.log('❌ Ugyldig batteriprosent:', chargePercent);
+                        toast({
+                          title: "❌ Ugyldig batteriprosent",
+                          description: "Vennligst angi et tall mellom 0 og 100.",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+                      
+                      // TEST: Lag en enkel blå markør for å teste
+                      if (map.current && chargingStations.length > 0) {
+                        const testStation = chargingStations[0]; // Bruk første stasjon som test
+                        
+                        console.log('🔵 LAGER TEST BLÅ MARKØR:', testStation.name);
+                        
+                        const el = document.createElement('div');
+                        el.className = 'test-blue-marker';
+                        el.style.cssText = `
+                          background: #0066ff;
+                          width: 30px;
+                          height: 30px;
+                          border-radius: 50%;
+                          border: 3px solid white;
+                          cursor: pointer;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          color: white;
+                          font-weight: bold;
+                          font-size: 16px;
+                          z-index: 1000;
+                          box-shadow: 0 0 20px rgba(0, 102, 255, 0.8);
+                        `;
+                        el.innerHTML = '🔋';
+                        
+                        const marker = new mapboxgl.Marker(el)
+                          .setLngLat([testStation.longitude, testStation.latitude])
+                          .addTo(map.current!);
+                          
+                        console.log('🔵 TEST BLÅ MARKØR LAGET!', marker);
+                        
+                        toast({
+                          title: "🔵 Test blå markør laget!",
+                          description: `En test blå markør er laget ved ${testStation.name}`,
+                        });
+                      }
+                      
                     } catch (error) {
                       console.error('❌ Error in calculateNextPoint:', error);
                       toast({
