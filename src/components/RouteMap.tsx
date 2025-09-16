@@ -2511,7 +2511,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           const currentBatteryPercent = routeData.batteryPercentage;
           console.log('🔋 Nåværende batteriprosent:', currentBatteryPercent + '%');
           
-          if (currentBatteryPercent <= 15) {
+          if (currentBatteryPercent <= 10) {
             console.log('⚠️ KRITISK BATTERINIVÅ DETEKTERT! Lager blå markør...');
             
             // Finn nærmeste stasjon til kritisk punkt
