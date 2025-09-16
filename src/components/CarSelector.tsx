@@ -1374,7 +1374,7 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
         <Car className="h-5 w-5 text-primary animate-glow-pulse" />
-        <h3 className="text-2xl font-orbitron font-bold text-gradient animate-glow-pulse">
+        <h3 className="text-2xl font-audiowide font-bold text-gradient animate-glow-pulse tracking-wider">
           {selectedBrand ? `${selectedBrand} modeller` : 'Velg bilmerke'}
         </h3>
         {selectedBrand && showBrands && (
@@ -1394,10 +1394,10 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
         /* Vis bare knappen for å velge bilmerke */
         <Card className="p-6 glass-card cyber-glow text-center">
           <Car className="h-16 w-16 mx-auto mb-4 text-primary animate-glow-pulse" />
-          <h4 className="text-xl font-orbitron font-bold text-gradient mb-2">Ingen bil valgt</h4>
+          <h4 className="text-xl font-cyber font-bold text-gradient mb-2 tracking-wide">Ingen bil valgt</h4>
           <Button 
             onClick={handleShowBrands}
-            className="bg-gradient-electric text-primary-foreground hover:shadow-neon transition-all duration-300 font-orbitron font-bold"
+            className="bg-gradient-electric text-primary-foreground hover:shadow-neon transition-all duration-300 font-rajdhani font-bold tracking-wider text-lg"
           >
             Se tilgjengelige biler
           </Button>

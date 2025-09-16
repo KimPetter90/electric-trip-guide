@@ -122,7 +122,8 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground font-exo;
+    @apply bg-background text-foreground font-rajdhani;
+    letter-spacing: 0.5px;
   }
 }
 
@@ -148,6 +149,7 @@ All colors MUST be HSL.
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    text-shadow: 0 0 30px hsl(140 100% 50% / 0.6);
   }
 
   .animate-pulse-glow {
@@ -160,6 +162,28 @@ All colors MUST be HSL.
 
   .animate-glow-pulse {
     animation: glow-pulse 2s ease-in-out infinite alternate;
+  }
+
+  /* Ny futuristisk tekst-effekt */
+  .text-cyber {
+    text-shadow: 
+      0 0 5px hsl(140 100% 50%),
+      0 0 10px hsl(140 100% 50%),
+      0 0 15px hsl(140 100% 50%),
+      0 0 20px hsl(140 100% 50%);
+    animation: cyber-flicker 3s infinite;
+  }
+
+  .text-neon {
+    color: hsl(140 100% 50%);
+    text-shadow: 
+      0 0 7px hsl(140 100% 50%),
+      0 0 10px hsl(140 100% 50%),
+      0 0 21px hsl(140 100% 50%),
+      0 0 42px hsl(140 100% 50%),
+      0 0 82px hsl(140 100% 50%),
+      0 0 92px hsl(140 100% 50%),
+      0 0 151px hsl(140 100% 50%);
   }
 }
 
@@ -187,6 +211,22 @@ All colors MUST be HSL.
   }
   to {
     text-shadow: 0 0 20px hsl(140 100% 50% / 1), 0 0 30px hsl(140 100% 50% / 0.8);
+  }
+}
+
+@keyframes cyber-flicker {
+  0%, 100% {
+    text-shadow: 
+      0 0 5px hsl(140 100% 50%),
+      0 0 10px hsl(140 100% 50%),
+      0 0 15px hsl(140 100% 50%);
+  }
+  50% {
+    text-shadow: 
+      0 0 2px hsl(140 100% 50%),
+      0 0 5px hsl(140 100% 50%),
+      0 0 8px hsl(140 100% 50%),
+      0 0 12px hsl(140 100% 50%);
   }
 }
 

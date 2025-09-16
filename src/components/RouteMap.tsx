@@ -1188,8 +1188,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       {/* Analyse og ladestasjoner */}
       <div className="w-full mt-6 bg-transparent">
         <div className="flex items-center gap-2 mb-4">
-          <TrendingUp className="h-5 w-5 text-primary animate-glow-pulse" />
-          <h4 className="text-2xl font-orbitron font-bold text-gradient animate-glow-pulse">Ruteanalyse</h4>
+        <TrendingUp className="h-5 w-5 text-primary animate-glow-pulse" />
+        <h4 className="text-2xl font-audiowide font-bold text-gradient animate-glow-pulse tracking-wider">Ruteanalyse</h4>
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full bg-transparent" style={{backgroundColor: 'transparent'}}>

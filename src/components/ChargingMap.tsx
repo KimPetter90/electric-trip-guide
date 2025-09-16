@@ -57,7 +57,7 @@ export default function ChargingMap({ isVisible }: ChargingMapProps) {
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
         <MapPin className="h-5 w-5 text-primary animate-glow-pulse" />
-        <h3 className="text-2xl font-orbitron font-bold text-gradient animate-glow-pulse">Ladestasjonkart</h3>
+        <h3 className="text-2xl font-audiowide font-bold text-gradient animate-glow-pulse tracking-wider">Ladestasjonkart</h3>
       </div>
 
       {/* Route Overview */}
