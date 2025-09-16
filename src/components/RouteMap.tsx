@@ -1611,9 +1611,14 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       // FØRST: Cleanup eksisterende rute og markører GRUNDIG
       console.log('🧹 GRUNDIG CLEANUP - fjerner alt eksisterende innhold...');
       
-      // Fjern alle markører
+      // Fjern alle markører UNNTATT blå markører (progressive-charging-marker)
       const existingMarkers = document.querySelectorAll('.mapboxgl-marker');
-      existingMarkers.forEach(marker => marker.remove());
+      existingMarkers.forEach(marker => {
+        // Ikke fjern blå markører som viser neste kritiske punkt
+        if (!marker.querySelector('.progressive-charging-marker')) {
+          marker.remove();
+        }
+      });
       
       // Fjern rute-lag og kilder
       try {
