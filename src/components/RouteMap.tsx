@@ -1621,13 +1621,20 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       });
 
       // SETT REALISTISKE VERDIER UMIDDELBART
+      const energyConsumptionPer100km = 18; // kWh/100km (realistisk for moderne elbil)
+      const chargingCostPerKwh = 4.5; // kr/kWh (gjennomsnitt hurtiglading Norge)
+      const totalEnergyNeeded = (routeDistance / 100) * energyConsumptionPer100km; // kWh
+      const realisticCost = Math.round(totalEnergyNeeded * chargingCostPerKwh); // kr
+      const co2SavedVsBensin = Math.round(routeDistance * 0.15); // kg CO2 (150g/km bensinbil)
+      const weatherEfficiency = 0.88; // 88% effektivitet med vær og forhold
+      
       const realisticAnalysis = {
         totalDistance: routeDistance, // km
-        totalTime: routeDuration + 0.5, // timer + 30 min lading
-        totalCost: Math.round(routeDistance * 20 * 0.05), // 20 kWh/100km * 5kr/kWh
-        chargingTime: 50, // 50 minutter
-        co2Saved: Math.round(routeDistance * 0.12), // kg CO2
-        efficiency: 0.85,
+        totalTime: routeDuration + (Math.ceil(routeDistance / 250) * 0.4), // timer + ~25 min per 250km
+        totalCost: realisticCost, // Realistisk basert på 18 kWh/100km × 4.5 kr/kWh
+        chargingTime: Math.ceil(routeDistance / 250) * 25, // 25 min per 250km
+        co2Saved: co2SavedVsBensin, // kg CO2 spart vs bensinbil
+        efficiency: weatherEfficiency, // 88% med værforhold
         weather: undefined
       };
       
