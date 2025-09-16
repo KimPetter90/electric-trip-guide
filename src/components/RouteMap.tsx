@@ -945,8 +945,8 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
     // Fjern eksisterende blå markører (gamle kritiske punkter)
     if (map.current) {
-      const oldMarkers = document.querySelectorAll('.blue-charging-marker, .progressive-charging-marker');
-      console.log('🧹 Removing', oldMarkers.length, 'old blue markers');
+      const oldMarkers = document.querySelectorAll('.blue-charging-marker');
+      console.log('🧹 Removing', oldMarkers.length, 'old blue markers (NOT progressive ones)');
       oldMarkers.forEach(marker => marker.remove());
     }
 
