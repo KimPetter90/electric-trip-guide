@@ -1372,12 +1372,12 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
 
   return (
     <div className="space-y-4">
-      {selectedBrand && showBrands && (
-        <div className="flex items-center gap-2 mb-4">
-          <Car className="h-5 w-5 text-primary animate-glow-pulse" />
-          <h3 className="text-2xl font-orbitron font-bold text-gradient animate-glow-pulse">
-            {selectedBrand} modeller
-          </h3>
+      <div className="flex items-center gap-2 mb-4">
+        <Car className="h-5 w-5 text-primary animate-glow-pulse" />
+        <h3 className="text-2xl font-orbitron font-bold text-gradient animate-glow-pulse">
+          {selectedBrand ? `${selectedBrand} modeller` : 'Velg bilmerke'}
+        </h3>
+        {selectedBrand && showBrands && (
           <Button
             variant="outline"
             size="sm"
@@ -1387,8 +1387,8 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
             <ArrowLeft className="h-4 w-4 mr-2" />
             Tilbake
           </Button>
-        </div>
-      )}
+        )}
+      </div>
 
       {!showBrands && !selectedCar ? (
         /* Vis bare knappen for å velge bilmerke */
