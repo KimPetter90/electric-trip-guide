@@ -2186,15 +2186,59 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           `;
         }
 
-        const popup = new mapboxgl.Popup().setHTML(`
-          <div style="font-family: Arial, sans-serif; color: #333;">
-            <h4 style="margin: 0 0 8px 0; color: ${isNearRoute ? '#dc2626' : '#00aa33'};"><strong>${isNearRoute ? '🔴' : '🟢'} ${station.name}</strong></h4>
-            <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
-            <p style="margin: 4px 0; color: #333;">🛣️ <strong>Avstand til rute:</strong> ${minDistance.toFixed(1)} km</p>
-            ${isNearRoute ? '<p style="margin: 4px 0; color: #dc2626;"><strong>🔴 Nær ruten (< 5 km)</strong></p>' : ''}
-            <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
-            <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
-            <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${station.available}/${station.total} ladepunkter</p>
+        const popup = new mapboxgl.Popup({
+          maxWidth: '320px',
+          closeButton: true,
+          closeOnClick: false
+        }).setHTML(`
+          <div style="font-family: Inter, sans-serif; padding: 12px; line-height: 1.4;">
+            <div style="background: linear-gradient(135deg, ${isNearRoute ? '#ef4444, #dc2626' : '#22c55e, #16a34a'}); color: white; padding: 10px; margin: -12px -12px 12px -12px; border-radius: 8px;">
+              <h4 style="margin: 0; font-size: 16px; font-weight: 600;">${isNearRoute ? '🔴' : '🟢'} ${station.name}</h4>
+              <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">📍 ${station.location}</p>
+              <div style="margin-top: 6px;">
+                <span style="background: rgba(255,255,255,0.3); padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">${isNearRoute ? '🎯 NÆR RUTE' : '🟢 TILGJENGELIG'}</span>
+              </div>
+            </div>
+            
+            <div style="background: ${isNearRoute ? '#fef2f2' : '#f0fdf4'}; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
+              <p style="margin: 0; font-size: 13px; color: ${isNearRoute ? '#dc2626' : '#16a34a'}; font-weight: 600;">🛣️ ${minDistance.toFixed(1)} km fra rute ${isNearRoute ? '(nær ruten!)' : ''}</p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+              <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">⚡ EFFEKT</div>
+                <div style="color: #1e293b; font-size: 14px; font-weight: 700;">${station.power || 'N/A'}</div>
+              </div>
+              <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">💰 PRIS</div>
+                <div style="color: #1e293b; font-size: 14px; font-weight: 700;">${station.cost || 'N/A'} kr/kWh</div>
+              </div>
+              <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">📊 LEDIG</div>
+                <div style="color: ${(station.available || 0) > 0 ? '#16a34a' : '#dc2626'}; font-size: 14px; font-weight: 700;">${station.available || 0}/${station.total || 0}</div>
+              </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+              <button 
+                onclick="window.showRouteToStation && window.showRouteToStation('${station.id}')"
+                style="
+                  background: ${isNearRoute ? '#ef4444' : '#22c55e'}; 
+                  color: white; 
+                  border: none; 
+                  padding: 10px 12px; 
+                  border-radius: 6px; 
+                  font-size: 13px; 
+                  font-weight: 600; 
+                  cursor: pointer; 
+                  transition: background 0.2s;
+                "
+                onmouseover="this.style.background='${isNearRoute ? '#dc2626' : '#16a34a'}'"
+                onmouseout="this.style.background='${isNearRoute ? '#ef4444' : '#22c55e'}'"
+              >
+                🗺️ Vis rute til stasjon
+              </button>
+            </div>
           </div>
         `);
 
@@ -2630,15 +2674,77 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           `;
           el.innerHTML = '⚡';
 
-          const popup = new mapboxgl.Popup().setHTML(`
-            <div style="font-family: Arial, sans-serif; color: #333;">
-              <h4 style="margin: 0 0 8px 0; color: #0066ff;"><strong>🔵 KRITISK LADESTASJON: ${station.name}</strong></h4>
-              <p style="margin: 4px 0; color: #dc2626; font-weight: bold;">⚠️ BATTERIET ER KRITISK LAVT (${currentBatteryPercent}%)</p>
-              <p style="margin: 4px 0; color: #666;"><em>📍 ${station.location}</em></p>
-              <p style="margin: 4px 0; color: #0066ff;"><strong>🔵 NØDVENDIG LADESTASJON!</strong></p>
-              <p style="margin: 4px 0; color: #333;">⚡ <strong>Effekt:</strong> ${station.power}</p>
-              <p style="margin: 4px 0; color: #333;">💰 <strong>Pris:</strong> ${station.cost} kr/kWh</p>
-              <p style="margin: 4px 0; color: #333;">📊 <strong>Tilgjengelig:</strong> ${station.available}/${station.total} ladepunkter</p>
+          const popup = new mapboxgl.Popup({
+            maxWidth: '320px',
+            closeButton: true,
+            closeOnClick: false
+          }).setHTML(`
+            <div style="font-family: Inter, sans-serif; padding: 12px; line-height: 1.4;">
+              <div style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 10px; margin: -12px -12px 12px -12px; border-radius: 8px;">
+                <h4 style="margin: 0; font-size: 16px; font-weight: 600;">🔴 ${station.name}</h4>
+                <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">📍 ${station.location}</p>
+                <div style="margin-top: 6px;">
+                  <span style="background: rgba(255,255,255,0.3); padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">⚠️ KRITISK BATTERI</span>
+                </div>
+              </div>
+              
+              <div style="background: #fef2f2; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
+                <p style="margin: 0; font-size: 13px; color: #dc2626; font-weight: 600;">⚠️ Batteriet er kritisk lavt (${currentBatteryPercent}%) - Nødvendig ladestasjon!</p>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                  <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">⚡ EFFEKT</div>
+                  <div style="color: #1e293b; font-size: 14px; font-weight: 700;">${station.power || 'N/A'}</div>
+                </div>
+                <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                  <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">💰 PRIS</div>
+                  <div style="color: #1e293b; font-size: 14px; font-weight: 700;">${station.cost || 'N/A'} kr/kWh</div>
+                </div>
+                <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                  <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">📊 LEDIG</div>
+                  <div style="color: ${(station.available || 0) > 0 ? '#16a34a' : '#dc2626'}; font-size: 14px; font-weight: 700;">${station.available || 0}/${station.total || 0}</div>
+                </div>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <button 
+                  onclick="window.showRouteToStation && window.showRouteToStation('${station.id}')"
+                  style="
+                    background: #22c55e; 
+                    color: white; 
+                    border: none; 
+                    padding: 10px 12px; 
+                    border-radius: 6px; 
+                    font-size: 13px; 
+                    font-weight: 600; 
+                    cursor: pointer; 
+                    transition: background 0.2s;
+                  "
+                  onmouseover="this.style.background='#16a34a'"
+                  onmouseout="this.style.background='#22c55e'"
+                >
+                  🗺️ Vis rute
+                </button>
+                <button 
+                  onclick="window.openChargingModal && window.openChargingModal('${station.id}', '${station.name}', 0, ${currentBatteryPercent})"
+                  style="
+                    background: #ef4444; 
+                    color: white; 
+                    border: none; 
+                    padding: 10px 12px; 
+                    border-radius: 6px; 
+                    font-size: 13px; 
+                    font-weight: 600; 
+                    cursor: pointer; 
+                    transition: background 0.2s;
+                  "
+                  onmouseover="this.style.background='#dc2626'"
+                  onmouseout="this.style.background='#ef4444'"
+                >
+                  ⚡ Lading
+                </button>
+              </div>
             </div>
           `);
 
@@ -3395,7 +3501,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       <div className="absolute top-4 right-4 z-50">
         <Button 
           onClick={() => {
-            console.log('🧪 TEST: Konverterer andre røde markør til blå');
+            console.log('🧪 TEST: Konverterer andre røde markør til blå og tester popup');
             
             const allRedMarkers = document.querySelectorAll('.charging-station-marker');
             console.log('🔴 Fant', allRedMarkers.length, 'røde markører');
@@ -3404,6 +3510,12 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
               const secondMarker = allRedMarkers[1] as HTMLElement;
               secondMarker.remove();
               console.log('✅ Fjernet andre røde markør');
+              
+              toast({
+                title: "✅ Test fullført",
+                description: "Rød markør fjernet og blå markør lagt til!",
+                variant: "default"
+              });
               
               // Lag blå markør på random koordinat for test
               const blueEl = document.createElement('div');
