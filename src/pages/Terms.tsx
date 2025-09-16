@@ -210,11 +210,8 @@ export default function Terms() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 text-sm">
-                  <p><strong>ElRoute AS</strong></p>
-                  <p>Organisasjonsnummer: [Ditt org.nr]</p>
-                  <p>Adresse: [Din firmaadresse]</p>
-                  <p>E-post: support@elroute.no</p>
-                  <p>Telefon: [Ditt telefonnummer]</p>
+                  <p><strong>ElRoute</strong></p>
+                  <p>E-post: ElRouteSup@gmail.com</p>
                 </div>
                 
                 <div className="mt-6 p-4 bg-gray-50 rounded-lg">
