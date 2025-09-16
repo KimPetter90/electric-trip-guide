@@ -1332,7 +1332,7 @@ interface CarSelectorProps {
 
 export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorProps) {
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
-  const [showBrands, setShowBrands] = useState<boolean>(true);
+  const [showBrands, setShowBrands] = useState<boolean>(false); // Start med å ikke vise bilmerker
 
   // Group cars by brand
   const carsByBrand = carModels.reduce((acc, car) => {
@@ -1361,13 +1361,13 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
   };
 
   const handleShowBrands = () => {
-    setShowBrands(!showBrands);
+    setShowBrands(true); // Vis bilmerker når brukeren trykker
   };
 
   const handleDeselectCar = () => {
     onCarSelect(null as any); // Deselect the car
     setSelectedBrand(null); // Reset brand selection
-    setShowBrands(true); // Show brands again
+    setShowBrands(false); // Skjul bilmerker igjen
   };
 
   return (
@@ -1378,16 +1378,16 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
           onClick={handleShowBrands}
         >
           <Car className="h-5 w-5 text-primary animate-glow-pulse" />
-          <h3 className="text-lg font-semibold text-foreground">
+          <h3 className="text-2xl font-orbitron font-bold text-gradient animate-glow-pulse">
             {selectedBrand ? `${selectedBrand} modeller` : 'Velg bilmerke'}
           </h3>
         </div>
-        {selectedBrand && (
+        {selectedBrand && showBrands && (
           <Button
             variant="outline"
             size="sm"
             onClick={handleBackToBrands}
-            className="ml-auto"
+            className="ml-auto glass-card hover:neon-glow transition-all duration-300"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Tilbake
@@ -1395,40 +1395,50 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
         )}
       </div>
 
-      {!showBrands ? (
-        /* When brands are hidden, don't show anything extra */
-        null
+      {!showBrands && !selectedCar ? (
+        /* Vis bare knappen for å velge bilmerke */
+        <Card className="p-6 glass-card cyber-glow text-center">
+          <Car className="h-16 w-16 mx-auto mb-4 text-primary animate-glow-pulse" />
+          <h4 className="text-xl font-orbitron font-bold text-gradient mb-2">Ingen bil valgt</h4>
+          <p className="text-muted-foreground mb-4 font-orbitron">Trykk på "Velg bilmerke" ovenfor for å se tilgjengelige biler</p>
+          <Button 
+            onClick={handleShowBrands}
+            className="bg-gradient-electric text-primary-foreground hover:shadow-neon transition-all duration-300 font-orbitron font-bold"
+          >
+            Se tilgjengelige biler
+          </Button>
+        </Card>
       ) : selectedCar ? (
         /* Show only the selected car */
         <Card 
-          className="p-4 bg-primary/10 border-primary/30 shadow-lg cursor-pointer hover:bg-primary/15 transition-colors"
+          className="p-4 glass-card neon-glow border-primary/30 shadow-lg cursor-pointer hover:bg-primary/15 transition-all duration-300"
           onClick={handleDeselectCar}
         >
           <div className="flex items-center space-x-4">
             <span className="text-2xl">{selectedCar.image}</span>
             
             <div className="flex-1">
-              <h4 className="font-semibold text-foreground">
+              <h4 className="text-lg font-orbitron font-bold text-gradient">
                 {selectedCar.brand} {selectedCar.model}
               </h4>
               
               <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
                 <div className="flex items-center gap-1">
                   <Battery className="h-3 w-3" />
-                  <span>{selectedCar.batteryCapacity} kWh</span>
+                  <span className="font-orbitron">{selectedCar.batteryCapacity} kWh</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Zap className="h-3 w-3" />
-                  <span>{selectedCar.range} km</span>
+                  <span className="font-orbitron">{selectedCar.range} km</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Car className="h-3 w-3" />
-                  <span>{selectedCar.consumption} kWh/100km</span>
+                  <span className="font-orbitron">{selectedCar.consumption} kWh/100km</span>
                 </div>
               </div>
             </div>
 
-            <Badge variant="default" className="text-xs animate-pulse-neon">Valgt</Badge>
+            <Badge variant="default" className="text-xs animate-pulse-neon font-orbitron">Valgt</Badge>
           </div>
         </Card>
       ) : !selectedBrand ? (
@@ -1437,22 +1447,21 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
           {brands.map((brand) => (
             <Card
               key={brand.name}
-              className="p-4 cursor-pointer transition-all duration-200 bg-card/80 backdrop-blur-sm border-border hover:bg-primary/5 hover:border-primary/30 hover:shadow-md"
-              onClick={() => handleBrandSelect(brand.name)}
+              className="p-4 cursor-pointer transition-all duration-300 glass-card border-border hover:cyber-glow hover:border-primary/30 hover:shadow-md animate-float"
             >
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4" onClick={() => handleBrandSelect(brand.name)}>
                 <span className="text-2xl">{brand.image}</span>
                 
                 <div className="flex-1">
-                  <h5 className="font-semibold text-sm text-foreground">
+                  <h5 className="text-lg font-orbitron font-bold text-gradient">
                     {brand.name}
                   </h5>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm font-orbitron text-muted-foreground">
                     {brand.count} modell{brand.count !== 1 ? 'er' : ''}
                   </p>
                 </div>
                 
-                <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180" />
+                <ArrowLeft className="h-5 w-5 text-primary animate-glow-pulse rotate-180" />
               </div>
             </Card>
           ))}
@@ -1460,14 +1469,15 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
       ) : (
         /* Model selection for selected brand - vertical list */
         <div className="space-y-3">
-          {carsByBrand[selectedBrand].map((car) => (
+          {carsByBrand[selectedBrand].map((car, index) => (
             <Card
               key={car.id}
-              className={`p-4 cursor-pointer transition-all duration-200 ${
+              className={`p-4 cursor-pointer transition-all duration-300 animate-float ${
                 selectedCar?.id === car.id 
-                  ? 'ring-2 ring-primary bg-primary/10 border-primary/40 shadow-lg' 
-                  : 'bg-card/80 backdrop-blur-sm border-border hover:bg-primary/5 hover:border-primary/30 hover:shadow-md'
+                  ? 'ring-2 ring-primary glass-card neon-glow border-primary/40 shadow-lg' 
+                  : 'glass-card border-border hover:cyber-glow hover:border-primary/30 hover:shadow-md'
               }`}
+              style={{ animationDelay: `${index * 100}ms` }}
               onClick={() => {
                 onCarSelect(car);
                 // Scroll til toppen av siden når bil er valgt
@@ -1478,28 +1488,28 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
                 <span className="text-2xl">{car.image}</span>
                 
                 <div className="flex-1">
-                  <h5 className="font-semibold text-sm text-foreground">
+                  <h5 className="text-lg font-orbitron font-bold text-gradient">
                     {car.model}
                   </h5>
                   
                   <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
                     <div className="flex items-center gap-1">
                       <Battery className="h-3 w-3" />
-                      <span>{car.batteryCapacity} kWh</span>
+                      <span className="font-orbitron">{car.batteryCapacity} kWh</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Zap className="h-3 w-3" />
-                      <span>{car.range} km</span>
+                      <span className="font-orbitron">{car.range} km</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Car className="h-3 w-3" />
-                      <span>{car.consumption} kWh/100km</span>
+                      <span className="font-orbitron">{car.consumption} kWh/100km</span>
                     </div>
                   </div>
                 </div>
 
                 {selectedCar?.id === car.id && (
-                  <Badge variant="default" className="text-xs animate-pulse-neon">Valgt</Badge>
+                  <Badge variant="default" className="text-xs animate-pulse-neon font-orbitron">Valgt</Badge>
                 )}
               </div>
             </Card>
