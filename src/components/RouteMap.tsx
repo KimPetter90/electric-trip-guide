@@ -953,12 +953,12 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     // ROBUST STRATEGI: Finn alltid de 3 nærmeste stasjonene fremover på ruten
     let nearbyStations: ChargingStation[] = [];
     
-    // Start med å finne alle stasjoner fremover på ruten som har distanceAlongRoute
+    // Start med å finne alle stasjoner fremover fra hvor bilen kan nå med ny batteriprosent
     const stationsAhead = chargingStations
-      .filter(s => s.distanceAlongRoute && s.distanceAlongRoute > currentDistance)
+      .filter(s => s.distanceAlongRoute && s.distanceAlongRoute > nextCriticalDistance)
       .sort((a, b) => a.distanceAlongRoute! - b.distanceAlongRoute!);
     
-    console.log(`🔍 Totalt ${stationsAhead.length} stasjoner fremover på ruten fra ${currentDistance.toFixed(1)} km`);
+    console.log(`🔍 Totalt ${stationsAhead.length} stasjoner fremover fra kritisk punkt ${nextCriticalDistance.toFixed(1)} km`);
     
     if (stationsAhead.length === 0) {
       console.log('❌ INGEN stasjoner fremover på ruten funnet!');
