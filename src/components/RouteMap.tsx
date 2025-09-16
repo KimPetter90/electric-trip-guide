@@ -837,52 +837,51 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     console.log('🎉 TEST 8 COMPLETED - Function executed successfully');
   };
 
-  // Funksjon for initialisering av kart
+  // HELT NY SIMPEL KART-INITIALISERING
   const initializeMap = async () => {
-    console.log('🗺️ initializeMap called!', { 
-      hasToken: !!accessToken, 
-      hasContainer: !!mapContainer.current, 
-      hasExistingMap: !!map.current 
-    });
+    console.log('🚨🚨🚨 EMERGENCY INIT MAP 🚨🚨🚨');
     
-    if (!accessToken || !mapContainer.current || map.current) {
-      console.log('❌ initializeMap early return:', {
-        noToken: !accessToken,
-        noContainer: !mapContainer.current,
-        existingMap: !!map.current
-      });
+    if (map.current) {
+      console.log('♻️ Removing existing map');
+      map.current.remove();
+      map.current = null;
+    }
+
+    if (!accessToken) {
+      console.log('❌ No access token!');
+      return;
+    }
+
+    if (!mapContainer.current) {
+      console.log('❌ No map container!');
       return;
     }
 
     try {
-      console.log('🚀 Setting mapboxgl.accessToken...');
       mapboxgl.accessToken = accessToken;
       
-      console.log('🗺️ Creating new Mapbox map...');
+      console.log('🔧 Creating map with container:', mapContainer.current);
+      
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/light-v11',
-        center: [10.7522, 59.9139], // Oslo sentrum
-        zoom: 6,
-        pitch: 0,
-        bearing: 0
+        style: 'mapbox://styles/mapbox/streets-v12', // Prøv annen stil
+        center: [10.7522, 59.9139],
+        zoom: 6
       });
 
-      console.log('🧭 Adding navigation control...');
+      console.log('🗺️ Map created, adding controls...');
       map.current.addControl(new mapboxgl.NavigationControl());
       
-      console.log('👂 Setting up load event listener...');
       map.current.on('load', () => {
-        console.log('✅ Kart lastet og klar!');
+        console.log('🎉 MAP LOADED SUCCESSFULLY!');
         setIsMapLoaded(true);
       });
 
-      console.log('🎉 Map creation completed successfully!');
+      console.log('✅ Map setup complete');
 
     } catch (error) {
-      console.error('❌ KRITISK FEIL ved initialisering av kart:', error);
-      console.error('Error stack:', error.stack);
-      setError('Kunne ikke laste kartet');
+      console.error('💥 MAP CREATION FAILED:', error);
+      setError(`Kartfeil: ${error.message}`);
     }
   };
 
@@ -905,36 +904,21 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
   // Fjernet duplikat weatherData funksjon - bruker den optimaliserte versjonen med cache
 
-  // Effekt for initialisering av kart
+  // DIREKTE KART-INITIALISERING UTEN KOMPLEKSE USEEFFECTS
   useEffect(() => {
-    console.log('🔥 useEffect for kart-initialisering triggered!', { isVisible, accessToken: !!accessToken });
+    console.log('🚨 DIRECT MAP INIT - no delays, no complexity!');
     
-    if (isVisible && accessToken) {
-      console.log('🌟 Komponenten er synlig OG token er tilgjengelig, initialiserer kart...');
-      const timer = setTimeout(() => {
-        console.log('⏰ Timer fired - calling initializeMap now');
-        initializeMap();
-      }, 200);
-      
-      return () => {
-        console.log('🧹 Cleanup timer');
-        clearTimeout(timer);
-      };
+    if (isVisible && accessToken && mapContainer.current) {
+      console.log('🚀 All conditions met - calling initializeMap IMMEDIATELY');
+      initializeMap();
     } else {
-      console.log('⏸️ Kart ikke klar:', { isVisible, hasToken: !!accessToken });
+      console.log('⏸️ Waiting for conditions:', { 
+        isVisible, 
+        hasToken: !!accessToken, 
+        hasContainer: !!mapContainer.current 
+      });
     }
-    
-    return () => {
-      console.log('🧹 Cleanup kart');
-      cleanupMap();
-      if (routeUpdateTimeoutRef.current) {
-        clearTimeout(routeUpdateTimeoutRef.current);
-      }
-      if (map.current) {
-        map.current.remove();
-      }
-    };
-  }, [isVisible, accessToken]); // Legg til accessToken som dependency
+  }, [isVisible, accessToken]);
 
   // Effekt for lasting av ladestasjoner
   useEffect(() => {
@@ -1014,6 +998,20 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       <div className="flex items-center gap-2">
         <Navigation className="h-5 w-5 text-primary animate-glow-pulse" />
         <h3 className="text-lg font-semibold text-foreground">Ruteplanlegging</h3>
+      </div>
+
+      {/* DEBUG KNAPP FOR FORCE INIT */}
+      <div className="mb-4">
+        <Button 
+          onClick={() => {
+            console.log('🚨 FORCE INIT BUTTON CLICKED');
+            initializeMap();
+          }}
+          variant="destructive"
+          className="w-full"
+        >
+          🚨 FORCE INIT KART (DEBUG)
+        </Button>
       </div>
 
       {error && (
