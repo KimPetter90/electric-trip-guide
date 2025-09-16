@@ -2298,37 +2298,8 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       map.current!.fitBounds(bounds, { padding: 50 });
       console.log('✅ FitBounds fullført');
 
-      // Beregn analyse med riktige verdier fra currentRoute
-      console.log('🧮 STARTER ANALYSE BEREGNING...');
-      if (currentRoute) {
-        const routeDistanceMeters = currentRoute.distance; // Allerede i meter
-        const routeDurationHours = currentRoute.duration / 3600; // Konverter sekunder til timer
-        console.log('📊 Route data for analyse:', { 
-          distanceMeters: routeDistanceMeters, 
-          distanceKm: (routeDistanceMeters / 1000).toFixed(1), 
-          durationSeconds: currentRoute.duration, 
-          durationHours: routeDurationHours.toFixed(2),
-          optimizedStationsCount: optimized.length 
-        });
-        
-        // Send meter til calculateTripAnalysis som konverterer det riktig
-        const analysis = calculateTripAnalysis(routeDistanceMeters, routeDurationHours, optimized, weatherData);
-        setRouteAnalysis(analysis);
-        console.log('✅ ANALYSE SATT I STATE:', analysis);
-      } else {
-        console.warn('⚠️ Ingen currentRoute tilgjengelig for analyse');
-        // Sett fallback-verdier hvis currentRoute mangler
-        const fallbackAnalysis = {
-          totalDistance: 0,
-          totalTime: 0,
-          totalCost: 0,
-          chargingTime: 0,
-          co2Saved: 0,
-          efficiency: 0.85
-        };
-        setRouteAnalysis(fallbackAnalysis);
-        console.log('⚠️ Satte fallback analyse:', fallbackAnalysis);
-      }
+      // FJERNET: Overskrev den realistiske analysen som allerede er satt
+      console.log('ℹ️ Analyse allerede satt tidligere i koden');
 
       // FIT BOUNDS til slutt for å vise hele ruten
       const routeCoords = route.geometry.coordinates;
