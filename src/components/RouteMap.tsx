@@ -2391,73 +2391,63 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         const nearRouteCount = nearRouteStations.length;
         console.log(`✅ ALLE ${chargingStations.length} MARKØRER LAGT TIL! (${nearRouteCount} røde innenfor 5km, ${chargingStations.length - nearRouteCount} grønne, ${bestStations.length} blå mest effektive)`);
         
-        // FORCE FLERE BLÅ MARKØRER - legg til automatisk
-        console.log('🔵🔵 TVINGER FREM FLERE BLÅ MARKØRER 🔵🔵');
-        
+        // Finn kritisk batteripunkt og gjør en rød markør blå
         const routeKm = route.distance / 1000;
         const carRange = selectedCar?.range || 441;
         const startBattery = routeData.batteryPercentage;
         
-        // Beregn kritiske punkter
-        const criticalPoints = [];
-        let currentPos = 0;
-        let currentBattery = startBattery;
-        let pointNumber = 1;
+        // Beregn hvor langt man kan kjøre til 10-15% batteri igjen
+        const usableRange = (carRange * (startBattery - 12)) / 100; // 12% som kritisk punkt
+        const criticalPointKm = usableRange;
         
-        while (currentPos < routeKm && pointNumber <= 5) {
-          const usableRange = (carRange * (currentBattery - 15)) / 100;
-          const nextCritical = currentPos + usableRange;
-          
-          if (nextCritical >= routeKm) break;
-          
-          console.log(`🎯 KRITISK PUNKT ${pointNumber} ved ${nextCritical.toFixed(1)}km`);
-          criticalPoints.push(nextCritical);
-          
-          currentPos = nextCritical;
-          currentBattery = 80; // Lader til 80%
-          pointNumber++;
-        }
+        console.log(`🔴➡️🔵 KRITISK BATTERIPUNKT ved ${criticalPointKm.toFixed(1)}km (12% batteri igjen)`);
         
-        console.log('📍 Totalt', criticalPoints.length, 'kritiske punkter beregnet');
+        // Finn nærmeste røde stasjon til kritisk punkt
+        const criticalStation = nearRouteStations
+          .filter(s => s.distanceAlongRoute && s.distanceAlongRoute >= criticalPointKm * 0.9) // Litt før kritisk punkt
+          .sort((a, b) => Math.abs(a.distanceAlongRoute - criticalPointKm) - Math.abs(b.distanceAlongRoute - criticalPointKm))[0];
         
-        // Finn stasjoner for hvert kritisk punkt
-        criticalPoints.forEach((criticalKm, index) => {
-          const nearestStation = chargingStations
-            .filter(s => s.distanceAlongRoute && Math.abs(s.distanceAlongRoute - criticalKm) <= 50 && s.distanceFromRoute <= 20)
-            .sort((a, b) => Math.abs(a.distanceAlongRoute - criticalKm) - Math.abs(b.distanceAlongRoute - criticalKm))[0];
-            
-          if (nearestStation && !document.querySelector(`[data-station-${nearestStation.id}]`)) {
-            console.log(`🔵 LAGER EKSTRA BLÅ MARKØR ${index + 2}:`, nearestStation.name);
-            
-            const el = document.createElement('div');
-            el.className = 'forced-blue-marker';
-            el.setAttribute('data-station-' + nearestStation.id, 'true');
-            el.style.cssText = `
-              background: linear-gradient(135deg, #0066ff, #00aaff);
-              width: 26px;
-              height: 26px;
-              border-radius: 50%;
-              border: 3px solid white;
-              cursor: pointer;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              color: white;
-              font-weight: bold;
-              font-size: 14px;
-              z-index: 100;
-              box-shadow: 0 0 25px rgba(0, 102, 255, 0.9);
-              animation: pulse 2s infinite;
-            `;
-            el.innerHTML = `${index + 2}`;
-            
-            new mapboxgl.Marker(el)
-              .setLngLat([nearestStation.longitude, nearestStation.latitude])
-              .addTo(map.current!);
-              
-            console.log(`✅ EKSTRA BLÅ MARKØR ${index + 2} LAGT TIL!`);
+        if (criticalStation) {
+          console.log(`🔵 GJØR RØD STASJON BLÅ:`, criticalStation.name, `ved ${criticalStation.distanceAlongRoute?.toFixed(1)}km`);
+          
+          // Fjern den røde markøren først
+          const existingMarker = document.querySelector(`[data-station-id="${criticalStation.id}"]`);
+          if (existingMarker) {
+            existingMarker.remove();
           }
-        });
+          
+          // Lag blå markør
+          const blueEl = document.createElement('div');
+          blueEl.setAttribute('data-station-id', criticalStation.id);
+          blueEl.style.cssText = `
+            background: linear-gradient(135deg, #0066ff, #00aaff);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 3px solid white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            z-index: 100;
+            box-shadow: 0 0 30px rgba(0, 102, 255, 0.8);
+            animation: pulse 2s infinite;
+          `;
+          blueEl.innerHTML = '⚡';
+          
+          new mapboxgl.Marker(blueEl)
+            .setLngLat([criticalStation.longitude, criticalStation.latitude])
+            .addTo(map.current!);
+            
+          console.log(`✅ BLÅ KRITISK MARKØR LAGT TIL for ${criticalStation.name}!`);
+          
+          // Send til parent
+          onChargingStationUpdate?.(criticalStation, true);
+          setOptimizedStations([criticalStation]);
+        }
         }
         
         // Beregn progressive ladestasjoner for fremtidige sykluser
