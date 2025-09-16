@@ -1468,9 +1468,12 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
               key={car.id}
               className={`p-4 cursor-pointer transition-all duration-300 ${
                 selectedCar?.id === car.id 
-                  ? 'ring-2 ring-primary glass-card bg-primary/10 border-primary/60 shadow-[0_0_25px_rgba(0,255,136,0.4)] neon-glow' 
+                  ? 'ring-2 ring-primary glass-card bg-primary/15 border-primary/80' 
                   : 'glass-card border-border hover:border-primary/20 hover:shadow-[0_0_8px_rgba(0,255,136,0.05)]'
               }`}
+              style={selectedCar?.id === car.id ? {
+                boxShadow: '0 0 30px rgba(0, 255, 136, 0.5), 0 0 60px rgba(0, 255, 136, 0.3), inset 0 0 20px rgba(0, 255, 136, 0.1)'
+              } : {}}
               onClick={() => {
                 onCarSelect(car);
                 // Scroll til toppen av siden når bil er valgt
