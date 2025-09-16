@@ -132,15 +132,47 @@ function Index() {
     // Estimer avstand basert på destinasjoner (forenklet beregning)
     const estimatedDistance = calculateApproximateDistance(routeData.from, routeData.to);
     
+    // Beregn minimum ladestasjoner basert på valgt bil og ruteforholdene
+    const calculateMinimumStops = (distance: number, routeType: string): number => {
+      if (!selectedCar) return Math.max(1, Math.round(distance / 300)); // Fallback
+      
+      const currentRange = selectedCar.range * (routeData.batteryPercentage / 100);
+      const safetyMargin = 0.15; // 15% buffer for sikkerhet
+      const usableRange = currentRange * (1 - safetyMargin);
+      
+      // Juster for ruteforholdene og kjørestil
+      let rangeMultiplier = 1;
+      switch (routeType) {
+        case 'fastest':
+          rangeMultiplier = 0.85; // Høyere hastighet = mer forbruk
+          break;
+        case 'shortest':
+          rangeMultiplier = 0.9; // Noe mer effektiv
+          break;
+        case 'eco':
+          rangeMultiplier = 1.05; // Optimalisert kjøring
+          break;
+      }
+      
+      const effectiveRange = usableRange * rangeMultiplier;
+      const remainingDistance = Math.max(0, distance - effectiveRange);
+      
+      if (remainingDistance <= 0) return 0; // Kommer frem uten lading
+      
+      // Beregn antall stopp basert på bil og sikkerhetsbuffer
+      const fullChargeRange = selectedCar.range * 0.8 * rangeMultiplier;
+      return Math.ceil(remainingDistance / fullChargeRange);
+    };
+    
     const mockRoutes: RouteOption[] = [
       {
         id: 'fastest',
         name: 'Raskeste rute',
         distance: Math.round(estimatedDistance * 1.02), // Litt lengre for motorveier
         duration: Math.round((estimatedDistance * 1.02) / 90 * 60), // ~90 km/t snitt
-        chargingStops: Math.max(1, Math.round(estimatedDistance / 250)), // Stopp hvert 250km
+        chargingStops: calculateMinimumStops(estimatedDistance * 1.02, 'fastest'),
         estimatedCost: Math.round(estimatedDistance * 0.6), // 0.6 kr per km
-        description: 'Hovedveier og motorveier. Minimale stopp, men mer kostbare ladestasjoner.',
+        description: 'Hovedveier og motorveier. Rask fremkomst med minimum antall stopp.',
         routeType: 'fastest'
       },
       {
@@ -148,9 +180,9 @@ function Index() {
         name: 'Korteste rute',
         distance: Math.round(estimatedDistance * 0.95), // Kortere, men tregere veier
         duration: Math.round((estimatedDistance * 0.95) / 75 * 60), // ~75 km/t snitt
-        chargingStops: Math.max(1, Math.round(estimatedDistance / 280)), // Færre stasjoner
+        chargingStops: calculateMinimumStops(estimatedDistance * 0.95, 'shortest'),
         estimatedCost: Math.round(estimatedDistance * 0.55), // Billigere
-        description: 'Direkteste vei mellom destinasjonene. Noen mindre veier, men kortere avstand.',
+        description: 'Direkteste vei mellom destinasjonene. Minimum distanse og færrest stopp.',
         routeType: 'shortest'
       },
       {
@@ -158,9 +190,9 @@ function Index() {
         name: 'Miljøvennlig rute',
         distance: Math.round(estimatedDistance * 1.08), // Lengre, men mer effektiv
         duration: Math.round((estimatedDistance * 1.08) / 80 * 60), // ~80 km/t snitt
-        chargingStops: Math.max(2, Math.round(estimatedDistance / 200)), // Flere stopp for optimalisering
+        chargingStops: calculateMinimumStops(estimatedDistance * 1.08, 'eco'),
         estimatedCost: Math.round(estimatedDistance * 0.42), // Billigst
-        description: 'Optimalisert for lavest energiforbruk. Bruker rimelige ladestasjoner med fornybar energi.',
+        description: 'Optimalisert for lavest energiforbruk. Kan redusere antall nødvendige stopp.',
         routeType: 'eco'
       }
     ];
@@ -169,6 +201,7 @@ function Index() {
     setSelectedRouteId('fastest'); // Velg raskeste som standard
     setLoadingRoutes(false);
     console.log('✅ Rutevalg generert for avstand:', estimatedDistance, 'km');
+    console.log('🔋 Valgt bil:', selectedCar?.model, 'Rekkevidde:', selectedCar?.range, 'km');
   };
 
   // Komplett distansetabell for norske byer
