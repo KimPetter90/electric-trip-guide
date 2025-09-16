@@ -2697,10 +2697,9 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                   <Route className="h-5 w-5 text-primary animate-glow-pulse" />
                   <div>
                     <p className="text-sm font-orbitron font-medium text-muted-foreground">Total distanse</p>
-                    <p className="text-3xl font-orbitron font-bold text-gradient">{(() => {
-                      console.log('🔍 RouteAnalysis status:', { routeAnalysis, hasData: !!routeAnalysis });
-                      return routeAnalysis ? Math.round(routeAnalysis.totalDistance) : '---';
-                    })()} km</p>
+                     <p className="text-3xl font-orbitron font-bold text-gradient">
+                       {routeAnalysis ? Math.round(routeAnalysis.totalDistance) : '---'} km
+                     </p>
                   </div>
                 </div>
               </Card>
