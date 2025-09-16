@@ -51,16 +51,22 @@ export default function ChargingMap({ isVisible, routeAnalysis, optimizedStation
   const stops = optimizedStations ? optimizedStations.length : (routeAnalysis ? Math.ceil(routeAnalysis.totalDistance / 300) : 3);
 
   // Konverter optimizedStations til riktig format for visning
-  const chargingStops = optimizedStations ? optimizedStations.map((station, index) => ({
-    id: station.id,
-    name: station.name,
-    location: station.location,
-    distance: station.distanceAlongRoute ? Math.round(station.distanceAlongRoute) : (index + 1) * 150,
-    chargeTime: station.chargingTime || 30,
-    chargeAmount: 35 + (index * 10),
-    cost: Math.round(station.cost * 35) || 200,
-    fastCharger: station.fastCharger
-  })) : [];
+  console.log('🔌 ChargingMap: optimizedStations mottatt:', optimizedStations);
+  const chargingStops = optimizedStations ? optimizedStations.map((station, index) => {
+    console.log('🔌 ChargingMap: Konverterer stasjon:', station.name, station);
+    return {
+      id: station.id,
+      name: station.name,
+      location: station.location,
+      distance: station.distanceAlongRoute ? Math.round(station.distanceAlongRoute) : (index + 1) * 150,
+      chargeTime: station.chargingTime || 30,
+      chargeAmount: 35 + (index * 10),
+      cost: Math.round(station.cost * 35) || 200,
+      fastCharger: station.fastCharger
+    };
+  }) : [];
+  
+  console.log('🔌 ChargingMap: Finale chargingStops som vises:', chargingStops);
 
   return (
     <div className="space-y-4">

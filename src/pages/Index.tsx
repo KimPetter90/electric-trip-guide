@@ -66,9 +66,11 @@ function Index() {
   // Funksjon for å motta ladestasjon data fra RouteMap
   const handleChargingStationUpdate = (station: any, showButton: boolean, optimizedStations?: any[]) => {
     console.log('🔋 INDEX: Mottatt ladestasjon oppdatering:', station?.name, 'show:', showButton);
+    console.log('🔋 INDEX: Mottatt optimizedStations:', optimizedStations);
     setCurrentChargingStation(station);
     setShowChargingButton(showButton);
     if (optimizedStations) {
+      console.log('🔋 INDEX: Setter optimizedStations til:', optimizedStations);
       setOptimizedStations(optimizedStations);
     }
   };
