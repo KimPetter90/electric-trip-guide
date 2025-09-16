@@ -570,8 +570,27 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
             </div>
           </div>
           
-          <div style="text-align: center; background: #0066ff; color: white; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">
-            👆 Klikk markør for å velge ladeprosent
+          <div style="background: #f1f5f9; padding: 10px; border-radius: 6px; margin-bottom: 10px;">
+            <div style="color: #64748b; font-size: 12px; font-weight: 600; margin-bottom: 6px;">⚡ Planlagt ladeprosent:</div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input 
+                type="number" 
+                id="chargePercent_${station.id}" 
+                min="${arrivalBatteryPercent.toFixed(0)}" 
+                max="100" 
+                value="80" 
+                style="width: 70px; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; text-align: center;"
+              />
+              <span style="font-size: 14px; color: #64748b;">%</span>
+              <button 
+                onclick="window.updateNextChargingPoint && window.updateNextChargingPoint('${station.id}', ${station.distanceAlongRoute || 0})" 
+                style="background: #0066ff; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s;"
+                onmouseover="this.style.background='#0052cc'"
+                onmouseout="this.style.background='#0066ff'"
+              >
+                🎯 Beregn neste punkt
+              </button>
+            </div>
           </div>
         </div>
       `);
@@ -618,6 +637,109 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
     fetchMapboxToken();
   }, []);
+
+  // Global funksjon for å oppdatere neste ladepunkt
+  useEffect(() => {
+    (window as any).updateNextChargingPoint = (stationId: string, currentDistance: number) => {
+      const chargeInput = document.getElementById(`chargePercent_${stationId}`) as HTMLInputElement;
+      if (!chargeInput || !routeData || !selectedCar) return;
+
+      const chargePercent = parseInt(chargeInput.value);
+      if (isNaN(chargePercent) || chargePercent < 0 || chargePercent > 100) {
+        toast({
+          title: "❌ Ugyldig ladeprosent",
+          description: "Vennligst skriv inn en gyldig prosent mellom 0 og 100.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Beregn hvor langt bilen kan kjøre med ny ladeprosent
+      const carRange = selectedCar.range;
+      const criticalLevel = 10; // Når batteriet når 10%
+      const usableRange = (carRange * (chargePercent - criticalLevel)) / 100;
+      const nextCriticalDistance = currentDistance + usableRange;
+
+      console.log('🎯 Beregner neste kritiske punkt:', {
+        stationId,
+        currentDistance,
+        chargePercent,
+        carRange,
+        usableRange,
+        nextCriticalDistance
+      });
+
+      // Fjern eksisterende blå markører
+      if (map.current) {
+        const markers = document.querySelectorAll('.blue-charging-marker');
+        markers.forEach(marker => marker.remove());
+      }
+
+      // Finn ladestasjoner nær det beregnede punktet
+      const tolerance = 25; // 25km toleranse
+      const nearbyStations = chargingStations.filter(station => {
+        if (!station.distanceAlongRoute) return false;
+        return Math.abs(station.distanceAlongRoute - nextCriticalDistance) <= tolerance;
+      });
+
+      if (nearbyStations.length > 0 && map.current) {
+        nearbyStations.forEach(station => {
+          // Lag blå markør for nytt kritisk punkt
+          const el = document.createElement('div');
+          el.className = 'blue-charging-marker';
+          el.style.cssText = `
+            width: 15px;
+            height: 15px;
+            background-color: #0066ff;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 102, 255, 0.6);
+            cursor: pointer;
+            animation: pulse 2s infinite;
+          `;
+
+          const popup = new mapboxgl.Popup({
+            maxWidth: '280px',
+            closeButton: true,
+            closeOnClick: false
+          }).setHTML(`
+            <div style="font-family: Inter, sans-serif; padding: 12px;">
+              <div style="background: linear-gradient(135deg, #0066ff, #00aaff); color: white; padding: 10px; margin: -12px -12px 12px -12px; border-radius: 8px;">
+                <h4 style="margin: 0; font-size: 16px; font-weight: 600;">🎯 ${station.name}</h4>
+                <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">📍 ${station.location}</p>
+              </div>
+              <div style="background: #f1f5f9; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
+                <p style="margin: 0; font-size: 13px; color: #0066ff; font-weight: 600;">🔋 Nytt kritisk punkt - batteri når ~10% her</p>
+              </div>
+              <div style="text-align: center; background: #16a34a; color: white; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">
+                ✅ Beregnet basert på ${chargePercent}% lading
+              </div>
+            </div>
+          `);
+
+          new mapboxgl.Marker(el)
+            .setLngLat([station.longitude, station.latitude])
+            .setPopup(popup)
+            .addTo(map.current!);
+        });
+
+        toast({
+          title: `🎯 Neste kritisk punkt beregnet!`,
+          description: `Med ${chargePercent}% lading vil batteriet nå 10% etter ${usableRange.toFixed(0)}km. ${nearbyStations.length} stasjon(er) vist på kartet.`,
+        });
+      } else {
+        toast({
+          title: "⚠️ Ingen stasjoner funnet",
+          description: `Ingen ladestasjoner funnet nær det beregnede punktet (${nextCriticalDistance.toFixed(0)}km fra start).`,
+          variant: "destructive"
+        });
+      }
+    };
+
+    return () => {
+      delete (window as any).updateNextChargingPoint;
+    };
+  }, [routeData, selectedCar, chargingStations, toast]);
 
   // Realtime oppdateringer av ladestasjoner
   useEffect(() => {
