@@ -707,11 +707,17 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     (window as any).openChargingModal = (stationId: string, stationName: string, distance: number, arrivalBattery: number) => {
       console.log('🔧 Opening charging modal for station:', stationName);
       console.log('📊 Modal data:', { stationId, stationName, distance, arrivalBattery });
+      
+      // Debug hvis distance er 0 eller ugyldig
+      if (!distance && distance !== 0) {
+        console.warn('⚠️ Warning: Distance is undefined/null for station:', stationName);
+      }
+      
       setChargingModal({
         isOpen: true,
         stationId,
         stationName,
-        distance,
+        distance: distance || 0, // Sikre at vi aldri har undefined
         arrivalBattery
       });
       const defaultValue = Math.max(arrivalBattery, 80).toString();
@@ -754,9 +760,14 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     }
 
     // Finn stasjonen i listen for å få korrekt distanse
-    const station = chargingStations.find(s => s.id === chargingModal.stationId);
-    if (!station || !station.distanceAlongRoute) {
-      console.log('❌ Station not found or missing distance data');
+    let station = chargingStations.find(s => s.id === chargingModal.stationId);
+    
+    if (!station) {
+      console.log('❌ Station not found in chargingStations list');
+      console.log('🔍 Available stations:', { 
+        chargingStationsCount: chargingStations.length, 
+        searchingFor: chargingModal.stationId 
+      });
       toast({
         title: "❌ Feil med stasjon",
         description: "Kunne ikke finne stasjonsdata. Prøv å planlegge ruten på nytt.",
@@ -765,7 +776,22 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       return;
     }
 
-    const currentDistance = station.distanceAlongRoute;
+    // Bruk distanse fra modal hvis stasjonen ikke har distanceAlongRoute
+    const currentDistance = station.distanceAlongRoute || chargingModal.distance;
+    
+    if (!currentDistance && currentDistance !== 0) {
+      console.log('❌ No distance data available');
+      console.log('🔍 Station data:', station);
+      console.log('🔍 Modal data:', chargingModal);
+      toast({
+        title: "❌ Mangler distansedata",
+        description: "Kunne ikke bestemme posisjonen langs ruten. Prøv å planlegge ruten på nytt.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    
 
     // Beregn hvor langt bilen kan kjøre med ny ladeprosent
     const carRange = selectedCar.range;
