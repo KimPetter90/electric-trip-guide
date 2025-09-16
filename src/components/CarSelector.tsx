@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Zap, Car, Battery, ArrowLeft } from "lucide-react";
+import { Zap, Car, Battery, ArrowLeft, Heart, HeartOff } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface CarModel {
   id: string;
@@ -1331,6 +1333,8 @@ interface CarSelectorProps {
 }
 
 export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorProps) {
+  const { user, favoriteCar, saveFavoriteCar, removeFavoriteCar } = useAuth();
+  const { toast } = useToast();
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [showBrands, setShowBrands] = useState<boolean>(false); // Start med å ikke vise bilmerker
 
@@ -1504,9 +1508,40 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
                   </div>
                 </div>
 
-                {selectedCar?.id === car.id && (
-                  <Badge variant="default" className="text-xs animate-pulse-neon font-orbitron">Valgt</Badge>
-                )}
+                <div className="flex items-center gap-2">
+                  {selectedCar?.id === car.id && (
+                    <Badge variant="default" className="text-xs animate-pulse-neon font-orbitron">Valgt</Badge>
+                  )}
+                  
+                  {user && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (favoriteCar?.car_id === car.id) {
+                          removeFavoriteCar();
+                          toast({
+                            title: "Favoritt fjernet",
+                            description: "Bilen er ikke lenger din favoritt",
+                          });
+                        } else {
+                          saveFavoriteCar(car);
+                          toast({
+                            title: "Favoritt lagret",
+                            description: `${car.brand} ${car.model} er nå din favorittbil`,
+                          });
+                        }
+                      }}
+                    >
+                      {favoriteCar?.car_id === car.id ? 
+                        <Heart className="h-4 w-4 fill-red-500 text-red-500" /> : 
+                        <HeartOff className="h-4 w-4" />
+                      }
+                    </Button>
+                  )}
+                </div>
               </div>
             </Card>
           ))}

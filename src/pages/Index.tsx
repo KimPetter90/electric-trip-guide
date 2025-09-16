@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -45,7 +45,7 @@ interface RouteAnalysis {
 }
 
 function Index() {
-  const { user, subscription, signOut, loading, refreshSubscription } = useAuth();
+  const { user, subscription, favoriteCar, signOut, loading, refreshSubscription } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -71,6 +71,25 @@ function Index() {
   const [routeAnalysis, setRouteAnalysis] = useState<RouteAnalysis | null>(null);
   const [optimizedStations, setOptimizedStations] = useState<any[]>([]);
 
+  // Auto-select favorite car when user logs in
+  useEffect(() => {
+    if (user && favoriteCar && !selectedCar) {
+      const favoriteCarModel: CarModel = {
+        id: favoriteCar.car_id,
+        brand: favoriteCar.car_brand,
+        model: favoriteCar.car_model,
+        batteryCapacity: favoriteCar.battery_capacity,
+        range: favoriteCar.range_km,
+        consumption: favoriteCar.consumption,
+        image: favoriteCar.car_image || '/placeholder.svg'
+      };
+      setSelectedCar(favoriteCarModel);
+      toast({
+        title: "Favorittbil lastet",
+        description: `${favoriteCar.car_brand} ${favoriteCar.car_model} er valgt automatisk`,
+      });
+    }
+  }, [user, favoriteCar, selectedCar, toast]);
   
   // Funksjon for å motta ladestasjon data fra RouteMap
   const handleChargingStationUpdate = (station: any, showButton: boolean, optimizedStations?: any[]) => {

@@ -11,12 +11,26 @@ interface SubscriptionInfo {
   route_limit: number;
 }
 
+interface FavoriteCar {
+  id: string;
+  car_id: string;
+  car_brand: string;
+  car_model: string;
+  battery_capacity: number;
+  range_km: number;
+  consumption: number;
+  car_image?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   subscription: SubscriptionInfo | null;
+  favoriteCar: FavoriteCar | null;
   loading: boolean;
   refreshSubscription: () => Promise<void>;
+  saveFavoriteCar: (car: any) => Promise<void>;
+  removeFavoriteCar: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -26,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
+  const [favoriteCar, setFavoriteCar] = useState<FavoriteCar | null>(null);
   const [loading, setLoading] = useState(true);
 
   const checkSubscription = async (currentSession: Session | null) => {
@@ -73,6 +88,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const loadFavoriteCar = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('favorite_car')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error loading favorite car:', error);
+        return;
+      }
+      
+      setFavoriteCar(data);
+    } catch (error) {
+      console.error('Error loading favorite car:', error);
+    }
+  };
+
+  const saveFavoriteCar = async (car: any) => {
+    if (!user) return;
+    
+    try {
+      const favData = {
+        user_id: user.id,
+        car_id: car.id,
+        car_brand: car.brand,
+        car_model: car.model,
+        battery_capacity: car.batteryCapacity,
+        range_km: car.range,
+        consumption: car.consumption,
+        car_image: car.image
+      };
+
+      const { error } = await supabase
+        .from('favorite_car')
+        .upsert(favData, { 
+          onConflict: 'user_id',
+          ignoreDuplicates: false 
+        });
+      
+      if (error) {
+        console.error('Error saving favorite car:', error);
+        return;
+      }
+      
+      // Reload favorite car from database to get the complete object
+      await loadFavoriteCar(user.id);
+    } catch (error) {
+      console.error('Error saving favorite car:', error);
+    }
+  };
+
+  const removeFavoriteCar = async () => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('favorite_car')
+        .delete()
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error('Error removing favorite car:', error);
+        return;
+      }
+      
+      setFavoriteCar(null);
+    } catch (error) {
+      console.error('Error removing favorite car:', error);
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -84,13 +172,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Check subscription after auth state changes
+        // Check subscription and favorite car after auth state changes
         if (session?.user) {
           setTimeout(() => {
             checkSubscription(session);
+            loadFavoriteCar(session.user.id);
           }, 0);
         } else {
           setSubscription(null);
+          setFavoriteCar(null);
         }
         
         setLoading(false);
@@ -105,6 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         setTimeout(() => {
           checkSubscription(session);
+          loadFavoriteCar(session.user.id);
         }, 0);
       }
       
@@ -130,8 +221,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       session,
       subscription,
+      favoriteCar,
       loading,
       refreshSubscription,
+      saveFavoriteCar,
+      removeFavoriteCar,
       signOut
     }}>
       {children}

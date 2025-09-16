@@ -92,6 +92,48 @@ export type Database = {
         }
         Relationships: []
       }
+      favorite_car: {
+        Row: {
+          battery_capacity: number
+          car_brand: string
+          car_id: string
+          car_image: string | null
+          car_model: string
+          consumption: number
+          created_at: string
+          id: string
+          range_km: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          battery_capacity: number
+          car_brand: string
+          car_id: string
+          car_image?: string | null
+          car_model: string
+          consumption: number
+          created_at?: string
+          id?: string
+          range_km: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          battery_capacity?: number
+          car_brand?: string
+          car_id?: string
+          car_image?: string | null
+          car_model?: string
+          consumption?: number
+          created_at?: string
+          id?: string
+          range_km?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
