@@ -1627,6 +1627,8 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         totalRoutes: directionsData.routes.length 
       });
 
+      console.log('🚀 FORTSETTER TIL CLEANUP OG ANALYSE...');
+
       // FØRST: Cleanup eksisterende rute og markører GRUNDIG
       console.log('🧹 GRUNDIG CLEANUP - fjerner alt eksisterende innhold...');
       
