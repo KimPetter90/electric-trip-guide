@@ -393,6 +393,8 @@ const fetchWeatherData = async (startCoords: [number, number], endCoords: [numbe
 };
 
 const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, routeTrigger, selectedRouteId, onChargingStationUpdate }) => {
+  console.log('🚀🚀🚀 RouteMap komponent startet! 🚀🚀🚀');
+  console.log('📊 Props:', { isVisible, hasRouteData: !!routeData, hasSelectedCar: !!selectedCar });
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const routeUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Throttle API-kall
@@ -966,7 +968,19 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     }
   }, [routeTrigger, selectedRouteId]); // BARE disse dependencies for å unngå loops
 
-  if (!isVisible) return null;
+  if (!isVisible) {
+    console.log('⏸️ RouteMap ikke synlig - returnerer null');
+    return null;
+  }
+
+  console.log('👁️ RouteMap ER SYNLIG - renderer komponent');
+  console.log('🔍 Render state:', { 
+    isVisible, 
+    accessToken: !!accessToken, 
+    loading, 
+    error,
+    mapContainerExists: !!mapContainer.current
+  });
 
   return (
     <div className="space-y-6">
