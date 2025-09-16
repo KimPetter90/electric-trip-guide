@@ -892,12 +892,76 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     setIsMapLoaded(false);
   };
 
-  // Funksjon for oppdatering av kart med rute
+  // FAKTISK RUTEPLANLEGGING - IKKE TOM!
   const updateMapRoute = async () => {
-    if (!map.current || !routeData || !isMapLoaded) return;
+    if (!map.current || !routeData || !isMapLoaded) {
+      alert('❌ Kan ikke planlegge rute - mangler kart, rutedata eller kart ikke lastet');
+      return;
+    }
 
-    console.log('🗺️ Oppdaterer kart med rute...');
-    // Implementer rute-oppdatering her hvis nødvendig
+    alert('🚀 STARTER RUTEPLANLEGGING...');
+
+    try {
+      // Hent koordinater for start og stopp
+      const startCoords = cityCoordinates[routeData.from.toLowerCase()];
+      const endCoords = cityCoordinates[routeData.to.toLowerCase()];
+      
+      if (!startCoords || !endCoords) {
+        alert(`❌ Fant ikke koordinater for ${routeData.from} eller ${routeData.to}`);
+        return;
+      }
+
+      // Kall Mapbox Directions API
+      const response = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${startCoords[0]},${startCoords[1]};${endCoords[0]},${endCoords[1]}?geometries=geojson&access_token=${accessToken}&alternatives=true&continue_straight=false&steps=true&annotations=duration&overview=full`);
+      
+      const data = await response.json();
+
+      if (data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        
+        // Legg til rute på kartet
+        if (map.current.getSource('route')) {
+          map.current.removeLayer('route');
+          map.current.removeSource('route');
+        }
+
+        map.current.addSource('route', {
+          'type': 'geojson',
+          'data': {
+            'type': 'Feature',
+            'properties': {},
+            'geometry': route.geometry
+          }
+        });
+
+        map.current.addLayer({
+          'id': 'route',
+          'type': 'line',
+          'source': 'route',
+          'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          'paint': {
+            'line-color': '#3b82f6',
+            'line-width': 6
+          }
+        });
+
+        // Zoom til ruten
+        const bounds = new mapboxgl.LngLatBounds();
+        bounds.extend(startCoords);
+        bounds.extend(endCoords);
+        map.current.fitBounds(bounds, { padding: 50 });
+
+        alert('✅ RUTE TEGNET PÅ KARTET!');
+      } else {
+        alert('❌ Ingen rute funnet');
+      }
+
+    } catch (error) {
+      alert(`❌ Rutefeil: ${error.message}`);
+    }
   };
 
   // Fjernet duplikat weatherData funksjon - bruker den optimaliserte versjonen med cache
