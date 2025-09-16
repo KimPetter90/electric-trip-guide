@@ -990,6 +990,41 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
     console.log('🔍 Found', nearbyStations.length, 'nearby stations for next critical point at', nextCriticalDistance.toFixed(1), 'km');
 
+    // Hvis ingen stasjoner er funnet, foreslå å lade mer
+    if (nearbyStations.length === 0) {
+      console.log('❌ Ingen stasjoner funnet innenfor rekkevidde');
+      
+      // Finn neste stasjon fremover på ruten
+      const nextStationsAhead = chargingStations
+        .filter(station => station.distanceAlongRoute && station.distanceAlongRoute > currentDistance)
+        .sort((a, b) => a.distanceAlongRoute! - b.distanceAlongRoute!)
+        .slice(0, 3);
+
+      if (nextStationsAhead.length > 0) {
+        const nextStation = nextStationsAhead[0];
+        const distanceToNext = nextStation.distanceAlongRoute! - currentDistance;
+        const requiredRange = distanceToNext + 50; // 50km margin
+        const requiredBatteryPercent = Math.ceil((requiredRange / carRange * 100) + criticalLevel);
+        
+        console.log('📍 Neste stasjon:', nextStation.name, 'på', nextStation.distanceAlongRoute?.toFixed(1), 'km');
+        console.log('📏 Distanse til neste:', distanceToNext.toFixed(1), 'km');
+        console.log('🔋 Foreslått ladeprosent:', requiredBatteryPercent, '%');
+        
+        toast({
+          title: "⚡ Ingen stasjoner innenfor rekkevidde",
+          description: `Neste stasjon er ${nextStation.name} på ${nextStation.distanceAlongRoute?.toFixed(1)} km. Du trenger å lade til minst ${Math.min(requiredBatteryPercent, 100)}% for å nå dit.`,
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "❌ Ingen stasjoner funnet",
+          description: "Ingen ladestasjoner funnet fremover på ruten. Vurder en alternativ rute.",
+          variant: "destructive"
+        });
+      }
+      return;
+    }
+
     if (nearbyStations.length > 0 && map.current) {
       // Sorter stasjoner etter kvalitet og avstand
       const sortedStations = nearbyStations
@@ -1618,6 +1653,9 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       console.log('✅ Optimalisering fullført. Funnet', optimized.length, 'ladestsjoner');
       setOptimizedStations(optimized);
 
+      // Oppdater chargingStations med beregnet distanceAlongRoute FØRST
+      console.log('🔧 Updating charging stations with distanceAlongRoute...');
+
       // FØRST: Legg til ALLE ladestasjoner med fargekoding basert på avstand til rute
       console.log('🟢🔴 LEGGER TIL ALLE LADESTASJONER MED AVSTANDSBASERT FARGEKODING...');
       console.log('📊 Totalt antall ladestasjoner:', chargingStations.length);
@@ -1625,8 +1663,11 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       const mapRouteCoords = route.geometry.coordinates;
       
       chargingStations.forEach((station, index) => {
-        // Beregn korteste avstand fra stasjon til ruten
+        // Beregn korteste avstand fra stasjon til ruten OG distanse langs ruten
         let minDistance = Infinity;
+        let closestPointIndex = 0;
+        let distanceAlongRoute = 0;
+        
         for (let i = 0; i < mapRouteCoords.length; i++) {
           const distance = getDistance(
             station.latitude,
@@ -1636,11 +1677,25 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           );
           if (distance < minDistance) {
             minDistance = distance;
+            closestPointIndex = i;
           }
         }
         
-        // Legg til avstand som property på stasjonen for senere bruk
+        // Beregn faktisk distanse langs ruten til nærmeste punkt
+        for (let i = 0; i < closestPointIndex; i++) {
+          if (i < mapRouteCoords.length - 1) {
+            distanceAlongRoute += getDistance(
+              mapRouteCoords[i][1],
+              mapRouteCoords[i][0],
+              mapRouteCoords[i + 1][1],
+              mapRouteCoords[i + 1][0]
+            );
+          }
+        }
+        
+        // Legg til egenskaper på stasjonen for senere bruk
         (station as any).distanceToRoute = minDistance;
+        (station as any).distanceAlongRoute = distanceAlongRoute;
         
         // Bestem farge basert på avstand: Rød hvis innenfor 5 km, grønn ellers
         const isNearRoute = minDistance <= 5.0; // 5 km
@@ -1696,9 +1751,23 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           .addTo(map.current!);
         
         if (index < 10) {
-          console.log(`${isNearRoute ? '🔴' : '🟢'} MARKØR ${index + 1}: ${station.name} (${minDistance.toFixed(1)}km)`);
+          console.log(`${isNearRoute ? '🔴' : '🟢'} MARKØR ${index + 1}: ${station.name} (${minDistance.toFixed(1)}km along route: ${distanceAlongRoute.toFixed(1)}km)`);
         }
       });
+      
+      // KRITISK: Oppdater chargingStations state med beregnet distanceAlongRoute
+      console.log('🔧 Updating chargingStations state with calculated distanceAlongRoute...');
+      setChargingStations(prev => prev.map(station => {
+        const enhanced = chargingStations.find(s => s.id === station.id);
+        if (enhanced) {
+          return {
+            ...station,
+            distanceAlongRoute: (enhanced as any).distanceAlongRoute,
+            distanceToRoute: (enhanced as any).distanceToRoute
+          };
+        }
+        return station;
+      }));
       
       console.log('🔵 STARTER BLÅ MARKØR ANALYSE...');
       
