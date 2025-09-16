@@ -114,7 +114,13 @@ const cityCoordinates: Record<string, [number, number]> = {
   'bodø': [14.3951, 67.2804],
   'molde': [7.1574, 62.7378],
   'harstad': [16.5639, 68.7989],
-  'lillehammer': [10.4662, 61.1272]
+  'lillehammer': [10.4662, 61.1272],
+  'hammerfest': [23.6821, 70.6634],
+  'alta': [23.2716, 69.9689],
+  'kirkenes': [30.0456, 69.7272],
+  'narvik': [17.4272, 68.4384],
+  'mo i rana': [14.1424, 66.3128],
+  'leknes': [13.6150, 68.1486]
 };
 
 // Funksjon for å få rutens farge basert på type
