@@ -2391,70 +2391,6 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         const nearRouteCount = nearRouteStations.length;
         console.log(`✅ ALLE ${chargingStations.length} MARKØRER LAGT TIL! (${nearRouteCount} røde innenfor 5km, ${chargingStations.length - nearRouteCount} grønne, ${bestStations.length} blå mest effektive)`);
         
-        // Finn kritisk batteripunkt og gjør en rød markør blå
-        console.log('🔴➡️🔵 STARTER KRITISK MARKØR LOGIKK 🔴➡️🔵');
-        const routeKm = route.distance / 1000;
-        const carRange = selectedCar?.range || 441;
-        const startBattery = routeData.batteryPercentage;
-        
-        // Beregn hvor langt man kan kjøre til 10-15% batteri igjen
-        const usableRange = (carRange * (startBattery - 12)) / 100; // 12% som kritisk punkt
-        const criticalPointKm = usableRange;
-        
-        console.log(`🔴➡️🔵 KRITISK BATTERIPUNKT ved ${criticalPointKm.toFixed(1)}km (12% batteri igjen)`);
-        console.log(`🔴➡️🔵 HAR ${nearRouteStations.length} RØDE STASJONER Å VELGE FRA:`, nearRouteStations.map(s => `${s.name} ved ${s.distanceAlongRoute?.toFixed(1)}km`));
-        
-        // Finn nærmeste røde stasjon til kritisk punkt
-        const criticalStation = nearRouteStations
-          .filter(s => s.distanceAlongRoute && s.distanceAlongRoute >= criticalPointKm * 0.9) // Litt før kritisk punkt
-          .sort((a, b) => Math.abs(a.distanceAlongRoute - criticalPointKm) - Math.abs(b.distanceAlongRoute - criticalPointKm))[0];
-        
-        console.log(`🔴➡️🔵 FUNNET KRITISK STASJON:`, criticalStation ? criticalStation.name : 'INGEN');
-        
-        if (criticalStation) {
-          console.log(`🔵 GJØR RØD STASJON BLÅ:`, criticalStation.name, `ved ${criticalStation.distanceAlongRoute?.toFixed(1)}km`);
-          
-          // Fjern den røde markøren først
-          const existingMarker = document.querySelector(`[data-station-id="${criticalStation.id}"]`);
-          if (existingMarker) {
-            existingMarker.remove();
-          }
-          
-          // Lag blå markør
-          const blueEl = document.createElement('div');
-          blueEl.setAttribute('data-station-id', criticalStation.id);
-          blueEl.style.cssText = `
-            background: linear-gradient(135deg, #0066ff, #00aaff);
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            border: 3px solid white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 16px;
-            z-index: 100;
-            box-shadow: 0 0 30px rgba(0, 102, 255, 0.8);
-            animation: pulse 2s infinite;
-          `;
-          blueEl.innerHTML = '⚡';
-          
-          new mapboxgl.Marker(blueEl)
-            .setLngLat([criticalStation.longitude, criticalStation.latitude])
-            .addTo(map.current!);
-            
-          console.log(`✅ BLÅ KRITISK MARKØR LAGT TIL for ${criticalStation.name}!`);
-          
-          // Send til parent
-          onChargingStationUpdate?.(criticalStation, true);
-          setOptimizedStations([criticalStation]);
-        }
-        }
-        
-        // Beregn progressive ladestasjoner for fremtidige sykluser
         console.log('🔄 BEREGNER ALLE PROGRESSIVE LADESTASJONER...');
         const allProgressiveStations = [];
         
@@ -2503,7 +2439,6 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           console.log('🔵 DEBUG: Ingen stasjoner funnet, skjuler ladeknapp');
           setShowChargingButton(false);
         }
-      }
 
       // DERETTER: Legg til markører for optimerte ladestasjoner (større og mer synlige)
       console.log('⚡ LEGGER TIL ANBEFALTE STASJONER...');
@@ -2555,6 +2490,66 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           .addTo(map.current!);
         
         console.log('ℹ️ Optimerte stasjoner (lyn-markører) er nå erstattet med avstandsbaserte røde markører');
+        
+        // ENDRE EN RØD MARKØR TIL BLÅ VED KRITISK BATTERINIVÅ
+        console.log('🔴➡️🔵 STARTER KRITISK MARKØR LOGIKK 🔴➡️🔵');
+        if (optimized.length > 0 && routeData) {
+          const carRange = selectedCar?.range || 441;
+          const startBattery = routeData.batteryPercentage;
+          
+          // Beregn hvor langt man kan kjøre til 12% batteri igjen
+          const usableRange = (carRange * (startBattery - 12)) / 100;
+          console.log(`🔴➡️🔵 KRITISK BATTERIPUNKT ved ${usableRange.toFixed(1)}km (12% batteri igjen)`);
+          console.log(`🔴➡️🔵 HAR ${optimized.length} RØDE STASJONER:`, optimized.map(s => `${s.name} ved ${s.distanceAlongRoute?.toFixed(1)}km`));
+          
+          // Finn nærmeste røde stasjon til kritisk punkt
+          const criticalStation = optimized
+            .filter(s => s.distanceAlongRoute && s.distanceAlongRoute >= usableRange * 0.9)
+            .sort((a, b) => Math.abs(a.distanceAlongRoute - usableRange) - Math.abs(b.distanceAlongRoute - usableRange))[0];
+          
+          console.log(`🔴➡️🔵 FUNNET KRITISK STASJON:`, criticalStation ? criticalStation.name : 'INGEN');
+          
+          if (criticalStation) {
+            console.log(`🔵 GJØR RØD STASJON BLÅ:`, criticalStation.name);
+            
+            // Fjern eksisterende røde markører for denne stasjonen
+            const markers = document.querySelectorAll('.charging-station-marker');
+            markers.forEach(marker => {
+              const popup = (marker as any)._popup;
+              if (popup && popup.getHTML().includes(criticalStation.name)) {
+                marker.remove();
+                console.log(`🗑️ FJERNET RØD MARKØR for ${criticalStation.name}`);
+              }
+            });
+            
+            // Lag ny blå markør
+            const blueEl = document.createElement('div');
+            blueEl.className = 'critical-blue-marker';
+            blueEl.style.cssText = `
+              background: linear-gradient(135deg, #0066ff, #00aaff);
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              border: 3px solid white;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-weight: bold;
+              font-size: 14px;
+              z-index: 100;
+              box-shadow: 0 0 20px rgba(0, 102, 255, 0.8);
+            `;
+            blueEl.innerHTML = '⚡';
+            
+            new mapboxgl.Marker(blueEl)
+              .setLngLat([criticalStation.longitude, criticalStation.latitude])
+              .addTo(map.current!);
+              
+            console.log(`✅ BLÅ KRITISK MARKØR LAGT TIL for ${criticalStation.name}!`);
+          }
+        }
       });
       
       // Legg til progressive blå markører for neste ladesyklus
@@ -2710,10 +2705,9 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
     } catch (error) {
       console.error('Feil ved oppdatering av rute:', error);
       setError(`Kunne ikke oppdatere ruten: ${error instanceof Error ? error.message : 'Ukjent feil'}`);
-      setLoading(false); // Sett loading til false også ved feil
+      setLoading(false);
     }
-    }, 100); // Redusert til 100ms for raskere respons
-  };
+  }, 100);
 
   // FJERNET - Bruker nå calculateAllCriticalPoints istedet
 
