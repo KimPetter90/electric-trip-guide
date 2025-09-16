@@ -857,9 +857,12 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
   // Funksjon for å beregne neste kritiske punkt
   const calculateNextPoint = () => {
+    console.log('🎯🎯🎯 calculateNextPoint STARTET! 🎯🎯🎯');
     console.log('🎯 calculateNextPoint function called');
     console.log('📝 Current input value:', chargePercentInput);
     console.log('📝 Modal data:', chargingModal);
+    
+    alert('🎯 calculateNextPoint ble kalt! Sjekk konsollen for debugging...');
     
     // Lukk modalen med en gang
     setChargingModal({ isOpen: false, stationId: '', stationName: '', distance: 0, arrivalBattery: 0 });
@@ -1212,6 +1215,16 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
           .addTo(map.current!);
           
         console.log('🟢 BLÅ MARKØR LAGT TIL PÅ KARTET!', marker);
+        console.log('🟢 Markør posisjon:', [station.longitude, station.latitude]);
+        console.log('🟢 Markør element:', el);
+        console.log('🟢 Map objektet:', map.current);
+        
+        // Legg til en ekstra visuell indikator
+        setTimeout(() => {
+          console.log('🔍 Sjekker om markør er synlig etter 1 sekund...');
+          const markerElement = document.querySelector('.progressive-charging-marker');
+          console.log('🔍 Fant progressive-charging-marker element:', markerElement);
+        }, 1000);
       });
 
       toast({
