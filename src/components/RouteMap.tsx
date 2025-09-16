@@ -434,26 +434,33 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
     const routeDistanceKm = currentRoute.distance / 1000;
     const routeDurationHours = currentRoute.duration / 3600;
     
-    // Beregn ny analyse basert på ladeprosent
-    const adjustedStops = Math.max(1, Math.ceil(routeDistanceKm / (300 + chargePercent * 2))); // Høyere lading = færre stopp
-    const chargeAmount = Math.min(45, chargePercent * 0.6); // Mer lading hvis høyere prosent
-    const carCapacity = selectedCar.batteryCapacity || 75;
-    const energyCharged = adjustedStops * (chargeAmount / 100) * carCapacity;
-    const cost = Math.round(energyCharged * 3.4); // 3.4 kr/kWh
-    const chargingTime = adjustedStops * Math.max(20, Math.min(40, chargePercent * 0.5)); // 20-40 min avhengig av prosent
+    // REALISTISK BEREGNING AV LADEKOSTNADER
+    const carCapacity = selectedCar.batteryCapacity || 75; // kWh
+    const startBattery = 15; // Antar 15% ved ankomst
+    const chargingPercentage = chargePercent - startBattery; // Faktisk % som lades
+    const energyCharged = (chargingPercentage / 100) * carCapacity; // kWh som faktisk lades
+    const costPerKwh = 4.2; // kr/kWh (realistisk hurtiglading Norge)
+    const singleChargeCost = Math.round(energyCharged * costPerKwh); // Kostnad for denne ene ladingen
+    
+    // Beregn hvor mange slike ladinger trengs for hele ruten
+    const estimatedStops = Math.ceil(routeDistanceKm / 350); // Stopp per 350km
+    const totalTripCost = singleChargeCost * estimatedStops; // Total kostnad for turen
+    
+    const chargingTimeMinutes = Math.max(15, Math.min(45, chargingPercentage * 0.8)); // 15-45 min avhengig av %
+    const totalChargingTime = chargingTimeMinutes * estimatedStops;
     
     const updatedAnalysis = {
       totalDistance: routeDistanceKm,
-      totalTime: routeDurationHours + (chargingTime / 60),
-      totalCost: cost,
-      chargingTime: chargingTime,
+      totalTime: routeDurationHours + (totalChargingTime / 60),
+      totalCost: totalTripCost, // TOTAL for hele turen
+      chargingTime: totalChargingTime,
       co2Saved: Math.round(routeDistanceKm * 0.13),
       efficiency: chargePercent > 60 ? 0.89 : (chargePercent > 40 ? 0.86 : 0.82),
       weather: undefined
     };
     
     setRouteAnalysis(updatedAnalysis);
-    console.log(`🔄 OPPDATERT ANALYSE MED ${chargePercent}% LADING:`, updatedAnalysis);
+    console.log(`🔄 REALISTISK BEREGNING: ${chargingPercentage}% lading = ${energyCharged.toFixed(1)} kWh = ${singleChargeCost} kr per stopp. Total: ${totalTripCost} kr for ${estimatedStops} stopp`);
   };
 
   // Funksjon for å beregne nye kritiske punkter basert på valgt ladeprosent  
