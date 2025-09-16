@@ -1468,7 +1468,7 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
               key={car.id}
               className={`p-4 cursor-pointer transition-all duration-300 ${
                 selectedCar?.id === car.id 
-                  ? 'ring-1 ring-primary/60 glass-card bg-primary/5 border-primary/30 shadow-[0_0_15px_rgba(0,255,136,0.1)]' 
+                  ? 'ring-2 ring-primary glass-card bg-primary/10 border-primary/60 shadow-[0_0_25px_rgba(0,255,136,0.3)] neon-glow animate-glow-pulse' 
                   : 'glass-card border-border hover:border-primary/20 hover:shadow-[0_0_8px_rgba(0,255,136,0.05)]'
               }`}
               onClick={() => {
