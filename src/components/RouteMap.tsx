@@ -735,6 +735,7 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
 
   // Funksjon for å beregne neste kritiske punkt
   const calculateNextPoint = () => {
+    alert('🎉 calculateNextPoint KJØRER! Funksjonen virker!');
     console.log('🔥🔥🔥 VERSJON 2.0 - COMPLETE REWRITE calculateNextPoint 🔥🔥🔥');
     
     // TEST 1: Er funksjonen i det hele tatt tilgjengelig?
