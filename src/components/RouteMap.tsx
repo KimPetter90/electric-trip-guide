@@ -767,19 +767,26 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       return;
     }
 
-    // Finn stasjonen i listen for å få korrekt distanse
+    // DEBUGGING: Log all relevant data
+    console.log('🔍 FULL DEBUG INFO:');
+    console.log('chargingModal:', chargingModal);
+    console.log('chargingStations count:', chargingStations.length);
+    console.log('chargePercentInput:', chargePercentInput);
+    console.log('First 3 charging stations:', chargingStations.slice(0, 3).map(s => ({ id: s.id, name: s.name, distanceAlongRoute: s.distanceAlongRoute })));
+    
+    // Finn stasjonen - prioriter modal distance over station distance
     let station = chargingStations.find(s => s.id === chargingModal.stationId);
     console.log('🔍 Station search result:', { 
       found: !!station, 
       stationId: chargingModal.stationId,
       stationName: station?.name || 'Not found',
-      distanceAlongRoute: station?.distanceAlongRoute,
+      stationDistanceAlongRoute: station?.distanceAlongRoute,
       modalDistance: chargingModal.distance
     });
     
     if (!station) {
-      console.log('❌ Station not found in chargingStations list');
-      console.log('🔍 Available stations:', chargingStations.map(s => ({ id: s.id, name: s.name, distance: s.distanceAlongRoute })));
+      console.log('❌ Station not found - showing all available stations:');
+      console.log('Available stations:', chargingStations.map(s => ({ id: s.id, name: s.name })));
       toast({
         title: "❌ Feil med stasjon",
         description: "Kunne ikke finne stasjonsdata. Prøv å planlegge ruten på nytt.",
@@ -788,18 +795,12 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       return;
     }
 
-    // Bruk distanse fra modal eller stasjonen (0 er en gyldig verdi!)
-    const currentDistance = station.distanceAlongRoute !== undefined ? station.distanceAlongRoute : chargingModal.distance;
-    console.log('📍 Distance calculation:', { 
-      stationDistance: station.distanceAlongRoute, 
-      modalDistance: chargingModal.distance, 
-      finalDistance: currentDistance 
-    });
+    // KRITISK FIX: Bruk alltid modal distance da denne er satt når markøren klikkes
+    const currentDistance = chargingModal.distance;
+    console.log('📍 Using modal distance:', currentDistance);
     
     if (currentDistance === undefined || currentDistance === null) {
-      console.log('❌ No distance data available');
-      console.log('🔍 Station data:', station);
-      console.log('🔍 Modal data:', chargingModal);
+      console.log('❌ No modal distance available');
       toast({
         title: "❌ Mangler distansedata",
         description: "Kunne ikke bestemme posisjonen langs ruten. Prøv å planlegge ruten på nytt.",
