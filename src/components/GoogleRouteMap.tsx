@@ -551,9 +551,11 @@ const GoogleRouteMap: React.FC<RouteMapProps> = ({
   console.log('✅ GoogleRouteMap rendrer - visible:', isVisible, 'hasApiKey:', !!apiKey, 'loading:', loading);
 
   return (
-    <div data-testid="route-map" className="space-y-6">
+    <div data-testid="route-map" className="space-y-6" style={{border: '3px solid red', minHeight: '600px', background: 'yellow', padding: '20px'}}>
       <div className="flex items-center gap-2">
         <Navigation className="h-5 w-5 text-primary" />
+        <h2 className="text-xl font-semibold">Google Maps Ruteplanlegger</h2>
+        <div style={{color: 'red', fontWeight: 'bold'}}>DEBUG: Kart skal være synlig!</div>
         <h2 className="text-xl font-semibold">Google Maps Ruteplanlegger</h2>
         {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />}
       </div>
