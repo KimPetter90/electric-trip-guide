@@ -603,21 +603,29 @@ const GoogleRouteMap: React.FC<RouteMapProps> = ({
     );
   }
 
-  // Don't render if not visible
-  if (!isVisible) {
-    console.log('🚫 GoogleRouteMap ikke synlig - isVisible:', isVisible);
-    console.log('🔍 Stack trace for isVisible=false:', new Error().stack);
-    return null;
-  }
 
 
   console.log('✅ GoogleRouteMap rendrer - visible:', isVisible, 'hasApiKey:', !!apiKey, 'loading:', loading, 'error:', error);
+
+  // Show placeholder when not visible instead of returning null
+  if (!isVisible) {
+    return (
+      <div data-testid="route-map" className="space-y-6" style={{ minHeight: '500px', border: '2px solid blue', opacity: 0.5 }}>
+        <div className="flex items-center gap-2">
+          <Navigation className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold">Google Maps Ruteplanlegger (SKJULT)</h2>
+        </div>
+        <div className="w-full h-[500px] bg-muted/20 rounded-lg flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">Kart er skjult - isVisible: {String(isVisible)}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div data-testid="route-map" className="space-y-6" style={{ minHeight: '500px', border: '2px solid red' }}>
       <div className="flex items-center gap-2">
         <Navigation className="h-5 w-5 text-primary" />
-        <h2 className="text-xl font-semibold">Google Maps Ruteplanlegger</h2>
         <h2 className="text-xl font-semibold">Google Maps Ruteplanlegger</h2>
         {loading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />}
       </div>
