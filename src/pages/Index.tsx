@@ -629,6 +629,15 @@ function Index() {
       console.log('🎯 setShowRoute(true) kalt - RouteMap skal nå være synlig');
       setRouteTrigger(prev => prev + 1);
       console.log('🎯 setRouteTrigger kalt for å trigger RouteMap useEffect');
+      
+      // Scroll to map after a short delay to ensure it's rendered
+      setTimeout(() => {
+        const mapElement = document.querySelector('[data-testid="route-map"]');
+        if (mapElement) {
+          mapElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500);
+      
       await generateRouteOptions();
       
       toast({

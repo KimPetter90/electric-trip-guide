@@ -65,7 +65,9 @@ serve(async (req) => {
         let lastResetMonth = 0; // Default til januar hvis parsing feiler
         
         try {
-          lastResetMonth = new Date(lastReset || '2000-01-01').getMonth();
+          if (lastReset && lastReset.trim() !== '') {
+            lastResetMonth = new Date(lastReset).getMonth();
+          }
         } catch (error) {
           logStep("Error parsing last_route_reset_date, using default", { error: error.message, lastReset });
         }

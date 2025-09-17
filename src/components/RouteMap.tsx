@@ -3142,13 +3142,16 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       isLoading: loading
     });
 
-    // Kun oppdater når:
-    // 1. Manual trigger fra "Planlegg rute" knappen, ELLER
-    // 2. Rutevalg endres (men kun hvis rute allerede er planlagt)
-    const shouldUpdateRoute = routeTrigger > 0 || 
-                             (selectedRouteId && map.current && routeData.from && routeData.to);
+    // Simplified logic: if we have all requirements and a trigger, plan the route
+    const shouldUpdateRoute = (routeTrigger > 0 || selectedRouteId) && 
+                              map.current && 
+                              routeData.from && 
+                              routeData.to && 
+                              selectedCar && 
+                              accessToken && 
+                              !loading;
 
-    if (shouldUpdateRoute && map.current && routeData.from && routeData.to && selectedCar && accessToken && !loading) {
+    if (shouldUpdateRoute) {
       console.log('🚀 STARTER RUTEPLANLEGGING:', selectedRouteId || 'fastest');
       const routeType = selectedRouteId || 'fastest';
       
@@ -3177,7 +3180,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
   console.log('✅ RouteMap rendrer - isVisible:', isVisible, 'hasToken:', !!accessToken, 'loading:', loading);
 
   return (
-    <div className="space-y-6">
+    <div data-testid="route-map" className="space-y-6">
       <div className="flex items-center gap-2">
         <Navigation className="h-5 w-5 text-primary animate-glow-pulse" />
         <h3 className="text-lg font-semibold text-foreground">Ruteplanlegging</h3>
