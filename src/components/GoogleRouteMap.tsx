@@ -337,11 +337,35 @@ const GoogleRouteMap: React.FC<{
     calculateRoute();
   }, [routeData, selectedCar, routeTrigger, onRouteCalculated, onLoadingChange, onError]);
 
-  return <div 
-    ref={mapRef} 
-    id="google-map-container" 
-    style={{ width: '100%', height: '500px' }} 
-  />;
+  return (
+    <div style={{ width: '100%', height: '500px', position: 'relative' }}>
+      <div 
+        ref={mapRef} 
+        id="google-map-container" 
+        style={{ 
+          width: '100%', 
+          height: '500px',
+          backgroundColor: '#f0f0f0',
+          border: '2px solid #ddd',
+          borderRadius: '8px'
+        }} 
+      />
+      {/* Debug info overlay */}
+      <div style={{
+        position: 'absolute',
+        top: '10px',
+        left: '10px',
+        background: 'rgba(0,0,0,0.7)',
+        color: 'white',
+        padding: '5px 10px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        zIndex: 1000
+      }}>
+        Google Maps: {mapInstanceRef.current ? 'Lastet' : 'Laster...'}
+      </div>
+    </div>
+  );
 };
 
 export default GoogleRouteMap;

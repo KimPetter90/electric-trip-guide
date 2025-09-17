@@ -943,6 +943,7 @@ function Index() {
                   key={`${routeData.from}-${routeData.to}-${selectedCar?.id}`}
                   center={{ lat: 60.472, lng: 8.4689 }}
                   zoom={6}
+                  onMapLoad={(map) => console.log('🗺️ Kart lastet:', map)}
                   chargingStations={[]}
                   routeData={routeData}
                   selectedCar={selectedCar}
@@ -955,8 +956,8 @@ function Index() {
                     totalTime: analysis.totalTime,
                     totalCost: analysis.totalCost
                   })}
-                  onLoadingChange={() => {}}
-                  onError={() => {}}
+                  onLoadingChange={(loading) => console.log('🔄 Loading state:', loading)}
+                  onError={(error) => console.error('❌ Kartfeil:', error)}
                 />
               </div>
             )}
