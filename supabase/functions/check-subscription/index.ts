@@ -130,13 +130,12 @@ serve(async (req) => {
               typeof settings.trial_end_date === 'string' && 
               settings.trial_end_date.trim() !== '') {
             
+            // Bruk Date constructor direkte på ISO string
             const endDate = new Date(settings.trial_end_date);
             const now = new Date();
             
             // Valider at endDate er gyldig
-            if (isNaN(endDate.getTime())) {
-              logStep("Invalid trial_end_date, treating as no trial", { trial_end_date: settings.trial_end_date });
-            } else {
+            if (!isNaN(endDate.getTime()) && endDate.getTime() > 0) {
               isTrialActive = endDate > now;
               
               if (isTrialActive) {
@@ -144,6 +143,8 @@ serve(async (req) => {
                 daysLeftInTrial = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 3600 * 24)));
                 routeLimit = -1; // Unlimited during trial
               }
+            } else {
+              logStep("Invalid trial_end_date timestamp, treating as no trial", { trial_end_date: settings.trial_end_date });
             }
           } else {
             logStep("trial_end_date is null or invalid, treating as no trial", { trial_end_date: settings.trial_end_date });
@@ -242,18 +243,12 @@ serve(async (req) => {
             typeof settings.trial_end_date === 'string' && 
             settings.trial_end_date.trim() !== '') {
           
+          // Bruk Date constructor direkte på ISO string
           const endDate = new Date(settings.trial_end_date);
           const now = new Date();
           
           // Valider at endDate er gyldig
-          if (isNaN(endDate.getTime())) {
-            logStep("Invalid trial_end_date in final check, treating as no trial", { trial_end_date: settings.trial_end_date });
-            // Mark trial as inactive if invalid
-            await supabaseClient
-              .from('user_settings')
-              .update({ is_trial_active: false })
-              .eq('user_id', user.id);
-          } else {
+          if (!isNaN(endDate.getTime()) && endDate.getTime() > 0) {
             isTrialActive = endDate > now;
             
             if (isTrialActive) {
@@ -266,6 +261,13 @@ serve(async (req) => {
                 .update({ is_trial_active: false })
                 .eq('user_id', user.id);
             }
+          } else {
+            logStep("Invalid trial_end_date timestamp in final check, treating as no trial", { trial_end_date: settings.trial_end_date });
+            // Mark trial as inactive if invalid
+            await supabaseClient
+              .from('user_settings')
+              .update({ is_trial_active: false })
+              .eq('user_id', user.id);
           }
         } else {
           logStep("trial_end_date is null or invalid in final check, marking trial as inactive", { trial_end_date: settings.trial_end_date });
