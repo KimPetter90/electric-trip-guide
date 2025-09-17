@@ -45,46 +45,46 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
       // Mock data basert på reelle analytics mønstre
       const mockData: AnalyticsData = {
         visitors: [
-          { date: '2025-09-16', count: 8 },
-          { date: '2025-09-15', count: 6 },
-          { date: '2025-09-14', count: 12 },
-          { date: '2025-09-13', count: 4 },
-          { date: '2025-09-12', count: 7 },
-          { date: '2025-09-11', count: 9 },
-          { date: '2025-09-10', count: 5 }
-        ],
-        pageviews: [
-          { date: '2025-09-16', count: 15 },
-          { date: '2025-09-15', count: 11 },
-          { date: '2025-09-14', count: 24 },
-          { date: '2025-09-13', count: 8 },
-          { date: '2025-09-12', count: 14 },
-          { date: '2025-09-11', count: 18 },
-          { date: '2025-09-10', count: 10 }
-        ],
-        uniqueVisitors: [
-          { date: '2025-09-16', count: 7 },
-          { date: '2025-09-15', count: 5 },
-          { date: '2025-09-14', count: 10 },
-          { date: '2025-09-13', count: 4 },
-          { date: '2025-09-12', count: 6 },
-          { date: '2025-09-11', count: 8 },
-          { date: '2025-09-10', count: 4 }
-        ],
-        loggedInUsers: [
           { date: '2025-09-16', count: 3 },
           { date: '2025-09-15', count: 2 },
           { date: '2025-09-14', count: 4 },
           { date: '2025-09-13', count: 1 },
           { date: '2025-09-12', count: 2 },
           { date: '2025-09-11', count: 3 },
-          { date: '2025-09-10', count: 1 }
+          { date: '2025-09-10', count: 2 }
         ],
-        totalVisitors: 51,
-        totalPageviews: 100,
-        totalUniqueVisitors: 44,
-        totalLoggedInUsers: 16,
-        returningVisitors: 7
+        pageviews: [
+          { date: '2025-09-16', count: 6 },
+          { date: '2025-09-15', count: 4 },
+          { date: '2025-09-14', count: 8 },
+          { date: '2025-09-13', count: 2 },
+          { date: '2025-09-12', count: 5 },
+          { date: '2025-09-11', count: 7 },
+          { date: '2025-09-10', count: 4 }
+        ],
+        uniqueVisitors: [
+          { date: '2025-09-16', count: 3 },
+          { date: '2025-09-15', count: 2 },
+          { date: '2025-09-14', count: 4 },
+          { date: '2025-09-13', count: 1 },
+          { date: '2025-09-12', count: 2 },
+          { date: '2025-09-11', count: 3 },
+          { date: '2025-09-10', count: 2 }
+        ],
+        loggedInUsers: [
+          { date: '2025-09-16', count: 1 },
+          { date: '2025-09-15', count: 0 },
+          { date: '2025-09-14', count: 1 },
+          { date: '2025-09-13', count: 0 },
+          { date: '2025-09-12', count: 0 },
+          { date: '2025-09-11', count: 0 },
+          { date: '2025-09-10', count: 0 }
+        ],
+        totalVisitors: 17,
+        totalPageviews: 36,
+        totalUniqueVisitors: 17,
+        totalLoggedInUsers: 2,
+        returningVisitors: 0
       };
       
       setAnalytics(mockData);
