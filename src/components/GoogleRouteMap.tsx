@@ -624,7 +624,7 @@ const GoogleRouteMap: React.FC<RouteMapProps> = ({
   }
 
   return (
-    <div data-testid="route-map" className="space-y-6" style={{ minHeight: '500px', border: '2px solid red' }}>
+    <div data-testid="route-map" className="space-y-6" style={{ minHeight: '500px' }}>
       <div className="flex items-center gap-2">
         <Navigation className="h-5 w-5 text-primary" />
         <h2 className="text-xl font-semibold">Google Maps Ruteplanlegger</h2>
