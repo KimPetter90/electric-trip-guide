@@ -3104,12 +3104,21 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
     const loadChargingStations = async () => {
       try {
         console.log('🚀 Starter lasting av ladestasjoner...');
+        console.log('🔌 RouteMap: Henter ladestasjoner fra database...');
         const stations = await fetchNorwegianChargingStations();
         console.log('📋 Leste', stations.length, 'stasjoner fra database');
+        console.log('✅ RouteMap: Hentet', stations.length, 'ladestasjoner fra database');
+        
+        if (stations.length > 0) {
+          console.log('📊 RouteMap: Første 3 stasjoner:', stations.slice(0, 3).map(s => s.name));
+          console.log('🔄 RouteMap: Konverterte', stations.length, 'stasjoner til intern format');
+        }
+        
         setChargingStations(stations);
         console.log('✅ Ladestasjoner satt i state:', stations.length);
       } catch (error) {
         console.error('❌ Feil ved lasting av ladestasjoner:', error);
+        setError('Kunne ikke laste ladestasjoner');
       }
     };
 
@@ -3153,6 +3162,11 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
 
     if (shouldUpdateRoute) {
       console.log('🚀 STARTER RUTEPLANLEGGING:', selectedRouteId || 'fastest');
+      console.log('🗺️ Kart tilstand - map:', !!map.current, 'token:', !!accessToken, 'loading:', loading);
+      console.log('📍 Rute data - from:', routeData.from, 'to:', routeData.to);
+      console.log('🚗 Bil valgt:', selectedCar?.brand, selectedCar?.model);
+      console.log('🔌 Ladestasjoner loaded:', chargingStations.length);
+      
       const routeType = selectedRouteId || 'fastest';
       
       // Sjekk om ruten faktisk vises på kartet - hvis ikke, kjør beregning på nytt
