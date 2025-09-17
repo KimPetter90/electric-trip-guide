@@ -443,6 +443,7 @@ export type Database = {
           created_at: string
           id: string
           is_test_user: boolean | null
+          is_trial_active: boolean | null
           last_reset_date: string | null
           last_route_reset_date: string | null
           location_enabled: boolean | null
@@ -454,6 +455,8 @@ export type Database = {
           subscription_end_date: string | null
           subscription_product_id: string | null
           subscription_status: string | null
+          trial_end_date: string | null
+          trial_start_date: string | null
           updated_at: string
           user_id: string
         }
@@ -462,6 +465,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_test_user?: boolean | null
+          is_trial_active?: boolean | null
           last_reset_date?: string | null
           last_route_reset_date?: string | null
           location_enabled?: boolean | null
@@ -473,6 +477,8 @@ export type Database = {
           subscription_end_date?: string | null
           subscription_product_id?: string | null
           subscription_status?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
           updated_at?: string
           user_id: string
         }
@@ -481,6 +487,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_test_user?: boolean | null
+          is_trial_active?: boolean | null
           last_reset_date?: string | null
           last_route_reset_date?: string | null
           location_enabled?: boolean | null
@@ -492,6 +499,8 @@ export type Database = {
           subscription_end_date?: string | null
           subscription_product_id?: string | null
           subscription_status?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -520,9 +529,17 @@ export type Database = {
           unique_sessions: number
         }[]
       }
+      has_premium_access: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
       increment_route_count: {
         Args: { user_uuid: string }
         Returns: undefined
+      }
+      is_trial_active: {
+        Args: { user_uuid: string }
+        Returns: boolean
       }
       upgrade_to_test_user: {
         Args: { target_email: string }

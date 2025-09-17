@@ -44,10 +44,10 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Get current route count from user_settings
+    // Get current route count and trial info from user_settings
     const { data: settings, error: settingsError } = await supabaseClient
       .from('user_settings')
-      .select('monthly_route_count, last_route_reset_date, subscription_status, plan_type')
+      .select('monthly_route_count, last_route_reset_date, subscription_status, plan_type, trial_start_date, trial_end_date, is_trial_active')
       .eq('user_id', user.id)
       .maybeSingle();
 
@@ -105,13 +105,33 @@ serve(async (req) => {
       // Set route limits based on plan
       let routeLimit = 25; // Free plan
       
+      // Check trial for users without Stripe customer
+      let isTrialActive = false;
+      let trialEndDate = null;
+      let daysLeftInTrial = 0;
+
+      if (settings?.trial_end_date && settings?.is_trial_active) {
+        const endDate = new Date(settings.trial_end_date);
+        const now = new Date();
+        isTrialActive = endDate > now;
+        
+        if (isTrialActive) {
+          trialEndDate = settings.trial_end_date;
+          daysLeftInTrial = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 3600 * 24)));
+          routeLimit = -1; // Unlimited during trial
+        }
+      }
+
       return new Response(JSON.stringify({ 
         subscribed: false,
         subscription_status: subscriptionStatus,
         product_id: null,
         subscription_end: null,
         route_count: routeCount,
-        route_limit: routeLimit
+        route_limit: routeLimit,
+        is_trial_active: isTrialActive,
+        trial_end_date: trialEndDate,
+        days_left_in_trial: daysLeftInTrial
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -177,13 +197,43 @@ serve(async (req) => {
         .eq('user_id', user.id);
     }
 
+    // Check trial status
+    let isTrialActive = false;
+    let trialEndDate = null;
+    let daysLeftInTrial = 0;
+
+    if (settings?.trial_end_date && settings?.is_trial_active) {
+      const endDate = new Date(settings.trial_end_date);
+      const now = new Date();
+      isTrialActive = endDate > now;
+      
+      if (isTrialActive) {
+        trialEndDate = settings.trial_end_date;
+        daysLeftInTrial = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 3600 * 24)));
+      } else {
+        // Mark trial as inactive if expired
+        await supabaseClient
+          .from('user_settings')
+          .update({ is_trial_active: false })
+          .eq('user_id', user.id);
+      }
+    }
+
+    // Adjust route limits for trial users
+    if (isTrialActive && !hasActiveSub) {
+      routeLimit = -1; // Unlimited routes during trial
+    }
+
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
       subscription_status: newSubscriptionStatus,
       product_id: productId,
       subscription_end: subscriptionEnd,
       route_count: routeCount,
-      route_limit: routeLimit
+      route_limit: routeLimit,
+      is_trial_active: isTrialActive,
+      trial_end_date: trialEndDate,
+      days_left_in_trial: daysLeftInTrial
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

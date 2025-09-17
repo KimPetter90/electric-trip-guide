@@ -9,6 +9,9 @@ interface SubscriptionInfo {
   subscription_end: string | null;
   route_count: number;
   route_limit: number;
+  is_trial_active: boolean;
+  trial_end_date: string | null;
+  days_left_in_trial: number;
 }
 
 interface FavoriteCar {
@@ -80,7 +83,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         product_id: null,
         subscription_end: null,
         route_count: 0,
-        route_limit: 25
+        route_limit: 25,
+        is_trial_active: false,
+        trial_end_date: null,
+        days_left_in_trial: 0
       });
     }
   };

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { PremiumGate, usePremiumAccess } from "@/components/PremiumGate";
 import { 
   Cloud, 
   CloudRain, 
@@ -205,8 +206,26 @@ export default function WeatherImpact({ selectedCar, routeData }: WeatherImpactP
   const impact = getImpactLevel(weatherData.rangeFactor);
 
   return (
-    <Card className="p-4 glass-card cyber-glow">
-      <div className="space-y-4">
+    <PremiumGate 
+      feature="Værdata & Rekkeviddepåvirkning"
+      description="Se hvordan vær og temperatur påvirker bilens rekkevidde for optimal ruteplanlegging"
+      fallback={
+        <Card className="p-4 glass-card border-dashed border-muted-foreground/30">
+          <div className="flex items-center gap-2 mb-3">
+            <Thermometer className="h-5 w-5 text-muted-foreground" />
+            <h3 className="font-orbitron font-bold text-muted-foreground">Værpåvirkning</h3>
+            <Badge variant="outline" className="text-xs text-muted-foreground">
+              Premium funksjon
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Oppgrader til Premium for detaljert væranalyse og rekkeviddepåvirkning
+          </p>
+        </Card>
+      }
+    >
+      <Card className="p-4 glass-card cyber-glow">
+        <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center gap-2">
           <Thermometer className="h-5 w-5 text-primary" />
@@ -350,7 +369,8 @@ export default function WeatherImpact({ selectedCar, routeData }: WeatherImpactP
             </div>
           </div>
         )}
-      </div>
-    </Card>
+        </div>
+      </Card>
+    </PremiumGate>
   );
 }

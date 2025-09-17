@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { PremiumGate, usePremiumAccess } from '@/components/PremiumGate';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,6 +44,7 @@ export function FavoriteRoutes({ onRouteSelect, className }: FavoriteRoutesProps
   const [favorites, setFavorites] = useState<FavoriteRoute[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const { hasAccess } = usePremiumAccess();
   const [newRoute, setNewRoute] = useState({
     name: '',
     from_location: '',
@@ -210,13 +212,33 @@ export function FavoriteRoutes({ onRouteSelect, className }: FavoriteRoutesProps
   }
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-red-500" />
-            Favoritt-ruter
-          </CardTitle>
+    <PremiumGate 
+      feature="Favoritt-ruter"
+      description="Lagre og gjenbruk dine mest brukte ruter for raskere planlegging"
+      fallback={
+        <Card className={className}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="h-5 w-5 text-muted-foreground" />
+              Favoritt-ruter
+              <Badge variant="outline" className="text-xs">Premium</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Oppgrader til Premium for å lagre favoritt-ruter
+            </p>
+          </CardContent>
+        </Card>
+      }
+    >
+      <Card className={className}>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="h-5 w-5 text-red-500" />
+              Favoritt-ruter
+            </CardTitle>
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
               <Button size="sm" variant="outline">
