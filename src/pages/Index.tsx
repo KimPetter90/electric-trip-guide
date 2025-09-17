@@ -722,7 +722,7 @@ function Index() {
             <div className="flex flex-wrap items-center justify-center gap-6 text-muted-foreground">
               <div className="flex items-center gap-2 glass-card rounded-full px-6 py-3 border border-primary/30 neon-glow">
                 <Car className="h-5 w-5 text-primary animate-glow-pulse" />
-                <span className="font-exo font-medium">Alle elbilmodeller</span>
+                <span className="font-exo font-medium">150+ elbilmodeller</span>
               </div>
               <div className="flex items-center gap-2 glass-card rounded-full px-6 py-3 border border-secondary/30 cyber-glow animation-delay-500">
                 <Route className="h-5 w-5 text-secondary animate-glow-pulse" />
@@ -730,7 +730,7 @@ function Index() {
               </div>
               <div className="flex items-center gap-2 glass-card rounded-full px-6 py-3 border border-accent/30 neon-glow animation-delay-1000">
                 <MapPin className="h-5 w-5 text-accent" />
-                <span>Sanntids data</span>
+                <span>900+ ladestasjoner</span>
               </div>
             </div>
           </div>

@@ -1308,6 +1308,15 @@ const carModels: CarModel[] = [
 
   // XPeng
   {
+    id: "xpeng-g6",
+    brand: "XPeng",
+    model: "G6",
+    batteryCapacity: 87.5,
+    range: 570,
+    consumption: 17.2,
+    image: "🚙"
+  },
+  {
     id: "xpeng-g9",
     brand: "XPeng",
     model: "G9",
@@ -1323,6 +1332,145 @@ const carModels: CarModel[] = [
     batteryCapacity: 80.9,
     range: 706,
     consumption: 13.2,
+    image: "🚗"
+  },
+
+  // Zeekr
+  {
+    id: "zeekr-001",
+    brand: "Zeekr",
+    model: "001",
+    batteryCapacity: 100,
+    range: 741,
+    consumption: 15.1,
+    image: "🚙"
+  },
+  {
+    id: "zeekr-x",
+    brand: "Zeekr",
+    model: "X",
+    batteryCapacity: 69,
+    range: 512,
+    consumption: 15.6,
+    image: "🚙"
+  },
+
+  // Dongfeng
+  {
+    id: "dongfeng-nammi-box",
+    brand: "Dongfeng",
+    model: "Nammi Box",
+    batteryCapacity: 42.3,
+    range: 430,
+    consumption: 11.4,
+    image: "🚙"
+  },
+
+  // Ora
+  {
+    id: "ora-funky-cat",
+    brand: "Ora",
+    model: "Funky Cat",
+    batteryCapacity: 63,
+    range: 420,
+    consumption: 16.9,
+    image: "🚗"
+  },
+
+  // BYD tillegg
+  {
+    id: "byd-yuan-plus",
+    brand: "BYD",
+    model: "Yuan Plus",
+    batteryCapacity: 60.48,
+    range: 430,
+    consumption: 15.9,
+    image: "🚙"
+  },
+
+  // Lotus
+  {
+    id: "lotus-eletre",
+    brand: "Lotus",
+    model: "Eletre",
+    batteryCapacity: 112,
+    range: 600,
+    consumption: 20.4,
+    image: "🚙"
+  },
+
+  // Genesis tillegg
+  {
+    id: "genesis-gv90",
+    brand: "Genesis",
+    model: "GV90",
+    batteryCapacity: 117.8,
+    range: 563,
+    consumption: 23.1,
+    image: "🚙"
+  },
+
+  // Ford tillegg
+  {
+    id: "ford-capri",
+    brand: "Ford",
+    model: "Capri Electric",
+    batteryCapacity: 79,
+    range: 627,
+    consumption: 13.8,
+    image: "🚙"
+  },
+
+  // Audi tillegg
+  {
+    id: "audi-a6-etron",
+    brand: "Audi",
+    model: "A6 e-tron",
+    batteryCapacity: 100,
+    range: 756,
+    consumption: 14.6,
+    image: "🚗"
+  },
+
+  // VW tillegg
+  {
+    id: "vw-id2",
+    brand: "Volkswagen",
+    model: "ID.2",
+    batteryCapacity: 56,
+    range: 450,
+    consumption: 14.1,
+    image: "🚗"
+  },
+
+  // Leapmotor
+  {
+    id: "leapmotor-c10",
+    brand: "Leapmotor",
+    model: "C10",
+    batteryCapacity: 69.9,
+    range: 420,
+    consumption: 18.8,
+    image: "🚙"
+  },
+  {
+    id: "leapmotor-t03",
+    brand: "Leapmotor",
+    model: "T03",
+    batteryCapacity: 41,
+    range: 403,
+    consumption: 11.7,
+    image: "🚗"
+  },
+
+  // Rimac
+  {
+    id: "rimac-nevera",
+    brand: "Rimac",
+    model: "Nevera",
+    batteryCapacity: 120,
+    range: 490,
+    consumption: 26.7,
     image: "🚗"
   }
 ];
@@ -1405,6 +1553,9 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
         <Card className="p-6 glass-card cyber-glow text-center">
           <Car className="h-16 w-16 mx-auto mb-4 text-primary animate-glow-pulse" />
           <h4 className="text-xl font-orbitron font-bold text-gradient mb-2">Ingen bil valgt</h4>
+          <p className="text-muted-foreground mb-4">
+            Velg blant over {carModels.length} el-bil modeller fra {brands.length} forskjellige merker
+          </p>
           <Button 
             onClick={handleShowBrands}
             className="bg-gradient-electric text-primary-foreground hover:shadow-neon transition-all duration-300 font-orbitron font-bold"
