@@ -210,7 +210,15 @@ const MapComponent: React.FC<{
           }];
         }
 
+        // Set up timeout for the API call
+        const routeTimeout = setTimeout(() => {
+          console.warn('⏱️ Google Directions API timeout - ingen respons innen 30 sekunder');
+          onLoadingChange(false);
+          onError('Ruteberegning tok for lang tid. Prøv igjen.');
+        }, 30000);
+
         directionsServiceRef.current.route(request, (result, status) => {
+          clearTimeout(routeTimeout); // Clear timeout since we got a response
           console.log('🗺️ Google Directions API respons mottatt:', status);
           
           if (status === google.maps.DirectionsStatus.OK && result) {
@@ -293,7 +301,7 @@ const MapComponent: React.FC<{
                 errorMessage = `Rutefeil: ${status}`;
             }
             
-            onError(errorMessage);
+            onError(errorMessage + ' Prøv å endre destinasjoner eller sjekk internetforbindelsen.');
             // Show map with markers only, no route
             if (mapInstanceRef.current) {
               // Create simple markers for start and end
@@ -541,11 +549,11 @@ const GoogleRouteMap: React.FC<RouteMapProps> = ({
       setLoading(true);
       setError(null);
       
-      // Auto-clear loading after 60 seconds if no response (increased from 30)
+      // Auto-clear loading after 45 seconds as backup
       const timeout = setTimeout(() => {
         setLoading(false);
-        setError('Ruteberegning tok for lang tid. Sjekk internetforbindelsen og prøv igjen.');
-      }, 60000); // Increased from 30000 to 60000 (60 seconds)
+        setError('Ruteberegning tok for lang tid. Prøv igjen med andre destinasjoner.');
+      }, 45000);
       
       return () => clearTimeout(timeout);
     }
