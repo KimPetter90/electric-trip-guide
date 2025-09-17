@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [favoriteCar, setFavoriteCar] = useState<FavoriteCar | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const checkSubscription = async (currentSession: Session | null) => {
+  const checkSubscription = async (currentSession: Session | null, retryCount = 0) => {
     if (!currentSession) {
       setSubscription(null);
       return;
@@ -57,20 +57,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
-        console.error('Error checking subscription:', error);
-        setSubscription({
-          subscribed: false,
-          subscription_status: 'free',
-          product_id: null,
-          subscription_end: null,
-          route_count: 0,
-          route_limit: 5
-        });
-      } else {
-        setSubscription(data);
+        throw error;
       }
+      
+      setSubscription(data);
     } catch (error) {
       console.error('Error checking subscription:', error);
+      
+      // Retry logic for network errors
+      if (retryCount < 3) {
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+        setTimeout(() => {
+          checkSubscription(currentSession, retryCount + 1);
+        }, delay);
+        return;
+      }
+      
+      // Fallback til gratis abonnement
       setSubscription({
         subscribed: false,
         subscription_status: 'free',
@@ -88,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const loadFavoriteCar = async (userId: string) => {
+  const loadFavoriteCar = async (userId: string, retryCount = 0) => {
     try {
       const { data, error } = await supabase
         .from('favorite_car')
@@ -97,13 +100,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
       
       if (error) {
-        console.error('Error loading favorite car:', error);
-        return;
+        throw error;
       }
       
       setFavoriteCar(data);
     } catch (error) {
       console.error('Error loading favorite car:', error);
+      
+      // Retry for network errors
+      if (retryCount < 2) {
+        setTimeout(() => {
+          loadFavoriteCar(userId, retryCount + 1);
+        }, 1000 * (retryCount + 1));
+      }
     }
   };
 

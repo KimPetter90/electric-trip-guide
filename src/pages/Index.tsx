@@ -99,16 +99,18 @@ function Index() {
   // Sjekk om brukeren har tilgang til analytics
   const hasAnalyticsAccess = user?.email === 'kpkopperstad@gmail.com';
   
-  // Nullstill rutevalg når rutedata endres
+  // Optimalisert nullstilling av rutevalg med debounce
   useEffect(() => {
-    console.log('🔄 Sjekker om rutevalg skal nullstilles. Har ruter:', routeOptions.length > 0);
-    if (routeOptions.length > 0) {
-      console.log('🔄 Rutedata endret, nullstiller rutevalg');
-      setRouteOptions([]);
-      setSelectedRouteId(null);
-      setShowRoute(false);
-    }
-  }, [routeData.from, routeData.to, routeData.via, selectedCar?.id]);
+    const timer = setTimeout(() => {
+      if (routeOptions.length > 0) {
+        setRouteOptions([]);
+        setSelectedRouteId(null);
+        setShowRoute(false);
+      }
+    }, 300); // Debounce for å unngå unødvendige re-renders
+
+    return () => clearTimeout(timer);
+  }, [routeData.from, routeData.to, routeData.via, selectedCar?.id, routeOptions.length]);
   
   // Funksjon for å motta ladestasjon data fra RouteMap
   const handleChargingStationUpdate = (station: any, showButton: boolean, optimizedStations?: any[]) => {
@@ -127,15 +129,31 @@ function Index() {
     console.log('📊 INDEX: Mottatt routeAnalysis:', analysis);
     setRouteAnalysis(analysis);
   };
-  // Generer rutevalg når ruten planlegges
+  // Optimalisert generering av rutevalg med caching
   const generateRouteOptions = async () => {
     if (!selectedCar || !routeData.from || !routeData.to) return;
 
-    setLoadingRoutes(true);
-    console.log('🚀 Genererer rutevalg for:', routeData.from, '->', routeData.to);
+    const cacheKey = `${routeData.from}-${routeData.to}-${selectedCar.id}`;
+    const cached = localStorage.getItem(`routeCache_${cacheKey}`);
+    
+    if (cached) {
+      try {
+        const cachedData = JSON.parse(cached);
+        if (Date.now() - cachedData.timestamp < 300000) { // 5 min cache
+          setRouteOptions(cachedData.routes);
+          setSelectedRouteId('fastest');
+          setLoadingRoutes(false);
+          return;
+        }
+      } catch (e) {
+        localStorage.removeItem(`routeCache_${cacheKey}`);
+      }
+    }
 
-    // Simuler API-kall for å hente 3 forskjellige ruter
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    setLoadingRoutes(true);
+
+    // Redusert ventetid for bedre UX
+    await new Promise(resolve => setTimeout(resolve, 800));
 
     // Estimer avstand basert på destinasjoner (forenklet beregning)
     const estimatedDistance = calculateApproximateDistance(routeData.from, routeData.to);
@@ -206,10 +224,18 @@ function Index() {
     ];
 
     setRouteOptions(mockRoutes);
-    setSelectedRouteId('fastest'); // Velg raskeste som standard
+    setSelectedRouteId('fastest');
     setLoadingRoutes(false);
-    console.log('✅ Rutevalg generert for avstand:', estimatedDistance, 'km');
-    console.log('🔋 Valgt bil:', selectedCar?.model, 'Rekkevidde:', selectedCar?.range, 'km');
+    
+    // Cache resultatet
+    try {
+      localStorage.setItem(`routeCache_${cacheKey}`, JSON.stringify({
+        routes: mockRoutes,
+        timestamp: Date.now()
+      }));
+    } catch (e) {
+      console.warn('Cache lagring feilet:', e);
+    }
   };
 
   // Komplett distansetabell for norske byer
@@ -484,9 +510,35 @@ function Index() {
   };
 
   const handlePlanRoute = async () => {
-    console.log('🚀 Planlegger rute med data:', { selectedCar, routeData });
+    // Validering av input
+    if (!selectedCar) {
+      toast({
+        title: "Velg bil",
+        description: "Du må velge en bil før du kan planlegge rute.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!routeData.from || !routeData.to) {
+      toast({
+        title: "Angi rute",
+        description: "Du må fylle ut både start- og sluttdestinasjon.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (routeData.from.toLowerCase().trim() === routeData.to.toLowerCase().trim()) {
+      toast({
+        title: "Ugyldig rute",
+        description: "Start- og sluttdestinasjon kan ikke være den samme.",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    // Check if user is authenticated
+    // Sjekk autentisering
     if (!user) {
       toast({
         title: "Logg inn for å planlegge ruter",
@@ -497,7 +549,7 @@ function Index() {
       return;
     }
 
-    // Check route limits
+    // Sjekk rutegrenser
     if (subscription && subscription.route_limit !== -1 && subscription.route_count >= subscription.route_limit) {
       toast({
         title: "Rutegrense nådd",
@@ -508,35 +560,27 @@ function Index() {
       return;
     }
     
-    if (selectedCar && routeData.from && routeData.to) {
-      console.log('✅ Alle kriterier oppfylt, setter showRoute til true og trigger manuell oppdatering');
-      
-        // Increment route count if user is authenticated
-        if (user && subscription) {
-          try {
-            await supabase.rpc('increment_route_count', { user_uuid: user.id });
-            // Refresh subscription to update count
-            setTimeout(() => {
-              refreshSubscription();
-            }, 100);
-          } catch (error) {
-            console.error('Error incrementing route count:', error);
-          }
-        }
+    try {
+      // Oppdater ruteteller
+      if (user && subscription) {
+        await supabase.rpc('increment_route_count', { user_uuid: user.id });
+        setTimeout(() => refreshSubscription(), 100);
+      }
       
       setShowRoute(true);
-      setRouteTrigger(prev => prev + 1); // Trigger manuell oppdatering
-      generateRouteOptions(); // Generer rutevalg
+      setRouteTrigger(prev => prev + 1);
+      await generateRouteOptions();
       
       toast({
         title: "Rute planlagt!",
         description: subscription ? `Ruter brukt: ${subscription.route_count + 1} / ${subscription.route_limit === -1 ? '∞' : subscription.route_limit}` : "Gratis rute planlagt",
       });
-    } else {
-      console.log('❌ Mangler data:', { 
-        harValgtBil: !!selectedCar, 
-        harFra: !!routeData.from, 
-        harTil: !!routeData.to 
+    } catch (error) {
+      console.error('Feil ved ruteplanlegging:', error);
+      toast({
+        title: "Feil ved ruteplanlegging",
+        description: "Noe gikk galt. Prøv igjen senere.",
+        variant: "destructive",
       });
     }
   };
@@ -565,7 +609,8 @@ function Index() {
       <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
         <div className="text-center">
           <Zap className="h-12 w-12 text-primary animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Laster...</p>
+          <h2 className="text-xl font-orbitron font-semibold mb-2">Laster ElRoute</h2>
+          <p className="text-muted-foreground">Forbereder din ruteplanlegger...</p>
         </div>
       </div>
     );
@@ -573,15 +618,22 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-gradient-hero relative overflow-hidden">
+      {/* SEO Meta Tags */}
+      <meta name="description" content="ElRoute - Smart ruteplanlegging for elbiler i Norge. Finn beste ladestasjoner og optimaliser din elbiltur med AI-teknologi." />
+      <meta name="keywords" content="elbil, ruteplanlegging, ladestasjoner, Norge, elektrisk bil, EV, charging, route planning" />
+      <meta property="og:title" content="ElRoute - Smart Elbil Ruteplanlegging" />
+      <meta property="og:description" content="Fremtidens ruteplanlegging for elbiler i Norge med sanntids ladestasjondata" />
+      <meta property="og:type" content="website" />
+      
       {/* Header with Auth */}
-      <header className="relative z-50 border-b border-border/20 bg-background/80 backdrop-blur-sm">
+      <header className="relative z-50 border-b border-border/20 bg-background/80 backdrop-blur-sm" role="banner">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Zap className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+              <Zap className="h-6 w-6 text-primary" aria-hidden="true" />
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
                 ElRoute
-              </span>
+              </h1>
             </div>
 
             <div className="flex items-center space-x-4">
@@ -639,15 +691,17 @@ function Index() {
       </div>
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
+      <section className="relative overflow-hidden" aria-labelledby="hero-heading">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${futuristicBg})` }}
+          role="img"
+          aria-label="Futuristisk elbil bakgrunnsbilde"
         />
         <div className="absolute inset-0 bg-gradient-hero opacity-85" />
         
-        {/* Floating Energy Orbs */}
-        <div className="absolute inset-0">
+        {/* Floating Energy Orbs - Decorative */}
+        <div className="absolute inset-0" aria-hidden="true">
           <div className="absolute top-20 left-1/4 w-4 h-4 bg-primary rounded-full animate-float shadow-neon"></div>
           <div className="absolute top-40 right-1/3 w-3 h-3 bg-secondary rounded-full animate-float animation-delay-1000 shadow-glow"></div>
           <div className="absolute bottom-40 left-1/3 w-5 h-5 bg-accent rounded-full animate-float animation-delay-2000 shadow-neon"></div>
@@ -656,11 +710,11 @@ function Index() {
         <div className="relative container mx-auto px-4 py-20 text-center">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center justify-center gap-2 mb-6">
-              <Zap className="h-10 w-10 text-primary animate-glow-pulse" />
-              <h1 className="text-5xl md:text-7xl font-orbitron font-black text-gradient animate-glow-pulse">
+              <Zap className="h-10 w-10 text-primary animate-glow-pulse" aria-hidden="true" />
+              <h2 id="hero-heading" className="text-5xl md:text-7xl font-orbitron font-black text-gradient animate-glow-pulse">
                 ElRoute
-              </h1>
-              <Zap className="h-10 w-10 text-primary animate-glow-pulse" />
+              </h2>
+              <Zap className="h-10 w-10 text-primary animate-glow-pulse" aria-hidden="true" />
             </div>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 font-exo animate-float">
               Smart ruteplanlegging for mer effektiv elbilkjøring
@@ -681,21 +735,21 @@ function Index() {
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Main Content */}
-      <div className="relative container mx-auto px-4 py-12">
+      <main className="relative container mx-auto px-4 py-12" role="main">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column - Input */}
-          <div className="space-y-8">
-            <div className="">
+          <section className="space-y-8" aria-label="Ruteplanlegging input">
+            <div>
               <CarSelector 
                 selectedCar={selectedCar}
                 onCarSelect={setSelectedCar}
               />
             </div>
             
-            <div className="">
+            <div>
               <RouteInput
                 routeData={routeData}
                 onRouteChange={setRouteData}
@@ -704,20 +758,20 @@ function Index() {
             </div>
 
             {selectedCar && (
-              <Card className="p-4 bg-card/80 backdrop-blur-sm border-border shadow-lg">
-                <h4 className="font-semibold mb-2 text-primary">Valgt bil:</h4>
+              <Card className="p-4 bg-card/80 backdrop-blur-sm border-border shadow-lg" role="complementary">
+                <h3 className="font-semibold mb-2 text-primary">Valgt bil:</h3>
                 <p className="text-sm text-muted-foreground">
                   {selectedCar.brand} {selectedCar.model} - {selectedCar.batteryCapacity} kWh, {selectedCar.range} km rekkevidde
                 </p>
               </Card>
             )}
-          </div>
+          </section>
 
           {/* Right Column - Results */}
-          <div className="space-y-8">
+          <section className="space-y-8" aria-label="Ruteresultater">
             {!showRoute ? (
-              <Card className="p-8 text-center bg-card/80 backdrop-blur-sm border-border shadow-lg">
-                <MapPin className="h-12 w-12 text-primary mx-auto mb-4 animate-glow-pulse" />
+              <Card className="p-8 text-center bg-card/80 backdrop-blur-sm border-border shadow-lg" role="status">
+                <MapPin className="h-12 w-12 text-primary mx-auto mb-4 animate-glow-pulse" aria-hidden="true" />
                 <h3 className="text-lg font-semibold mb-2 text-foreground">Klar for ruteplanlegging</h3>
                 <p className="text-muted-foreground">
                   Velg bil og angi rute for å se det futuristiske ladestasjonkartet
@@ -741,19 +795,15 @@ function Index() {
                   onChargingStationUpdate={handleChargingStationUpdate}
                   onRouteAnalysisUpdate={handleRouteAnalysisUpdate}
                 />
-                
-                {/* Fjernet kritisk batterinivå-seksjonen */}
-                
-                
               </div>
             )}
-          </div>
+          </section>
         </div>
-      </div>
+      </main>
 
       {/* Analytics Dashboard - kun for autoriserte brukere */}
       {hasAnalyticsAccess && (
-        <section className="py-12 bg-muted/30">
+        <section className="py-12 bg-muted/30" aria-label="Analytics dashboard">
           <div className="container mx-auto px-4">
             <AnalyticsDashboard />
           </div>

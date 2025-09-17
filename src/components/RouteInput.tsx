@@ -268,9 +268,19 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
   };
 
   const handleInputChange = (field: keyof RouteData, value: string | number | Date) => {
-    // Hvis det er et stedsnavn og ikke finnes i listen, lær det
+    // Validering og sanitizing
     if ((field === 'from' || field === 'to' || field === 'via') && typeof value === 'string') {
-      learnNewPlace(value);
+      const sanitized = value.trim().slice(0, 50); // Begrenset lengde
+      learnNewPlace(sanitized);
+      value = sanitized;
+    }
+    
+    if (field === 'batteryPercentage' && typeof value === 'number') {
+      value = Math.max(0, Math.min(100, value)); // Sikre 0-100 range
+    }
+    
+    if (field === 'trailerWeight' && typeof value === 'number') {
+      value = Math.max(0, Math.min(3500, value)); // Sikre 0-3500 kg range
     }
     
     onRouteChange({
