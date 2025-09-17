@@ -126,13 +126,14 @@ function Index() {
   // Sjekk om brukeren har tilgang til analytics
   const hasAnalyticsAccess = user?.email === 'kpkopperstad@gmail.com';
   
-  // Optimalisert nullstilling av rutevalg med debounce
+  // Optimalisert nullstilling av rutevalg med debounce - men ikke reset showRoute hvis bruker har planlagt rute
   useEffect(() => {
     const timer = setTimeout(() => {
       if (routeOptions.length > 0) {
         setRouteOptions([]);
         setSelectedRouteId(null);
-        setShowRoute(false);
+        // Don't reset showRoute if user has actively planned a route
+        // setShowRoute(false); // Commented out to prevent hiding the map
       }
     }, 300); // Debounce for å unngå unødvendige re-renders
 
