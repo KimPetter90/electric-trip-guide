@@ -544,7 +544,7 @@ const GoogleRouteMap: React.FC<RouteMapProps> = ({
 
   // Don't render if not visible
   if (!isVisible) {
-    console.log('🚫 GoogleRouteMap ikke synlig');
+    console.log('🚫 GoogleRouteMap ikke synlig - isVisible:', isVisible);
     return null;
   }
 

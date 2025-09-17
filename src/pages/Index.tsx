@@ -128,8 +128,16 @@ function Index() {
   
   // Optimalisert nullstilling av rutevalg med debounce - men ikke reset showRoute hvis bruker har planlagt rute
   useEffect(() => {
+    console.log('🔍 ROUTE OPTIONS EFFECT - triggered:', {
+      routeOptionsLength: routeOptions.length,
+      showRoute,
+      fromTo: `${routeData.from} -> ${routeData.to}`,
+      selectedCarId: selectedCar?.id
+    });
+    
     const timer = setTimeout(() => {
       if (routeOptions.length > 0) {
+        console.log('🗑️ Clearing route options but keeping showRoute true');
         setRouteOptions([]);
         setSelectedRouteId(null);
         // Don't reset showRoute if user has actively planned a route
@@ -138,7 +146,12 @@ function Index() {
     }, 300); // Debounce for å unngå unødvendige re-renders
 
     return () => clearTimeout(timer);
-  }, [routeData.from, routeData.to, routeData.via, selectedCar?.id, routeOptions.length]);
+  }, [routeData.from, routeData.to, routeData.via, selectedCar?.id, routeOptions.length, showRoute]);
+  
+  // Debug logging for showRoute changes
+  useEffect(() => {
+    console.log('🎯 SHOWROUTE CHANGED:', showRoute, 'at time:', new Date().toISOString());
+  }, [showRoute]);
   
   // Funksjon for å motta ladestasjon data fra RouteMap
   const handleChargingStationUpdate = (station: any, showButton: boolean, optimizedStations?: any[]) => {
@@ -592,6 +605,7 @@ function Index() {
       console.log('🚀 Starter ruteplanlegging - viser kart umiddelbart');
       
       // Show route map immediately after validation
+      console.log('🎯 Setting showRoute to TRUE from planRoute function');
       setShowRoute(true);
       console.log('🎯 setShowRoute(true) kalt - RouteMap skal nå være synlig');
       setRouteTrigger(prev => prev + 1);
