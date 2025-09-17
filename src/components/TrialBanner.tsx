@@ -16,47 +16,49 @@ export function TrialBanner() {
   const isExpiringSoon = daysLeft <= 3;
 
   return (
-    <Card className={`mb-6 border-2 ${isExpiringSoon ? 'border-warning/50 bg-warning/5' : 'border-primary/50 bg-primary/5'}`}>
-      <CardContent className="p-4">
+    <Card className={`mb-6 glass-card border-2 ${isExpiringSoon ? 'border-destructive/50 neon-glow' : 'border-primary/50 cyber-glow'} transition-all duration-500 animate-fade-in`}>
+      <CardContent className="p-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-full ${isExpiringSoon ? 'bg-warning/20' : 'bg-primary/20'}`}>
+          <div className="flex items-center gap-4">
+            <div className={`flex h-12 w-12 items-center justify-center rounded-full relative ${isExpiringSoon ? 'bg-destructive/20' : 'bg-primary/20'}`}>
               {isExpiringSoon ? (
-                <Clock className={`h-5 w-5 ${isExpiringSoon ? 'text-warning' : 'text-primary'}`} />
+                <Clock className={`h-6 w-6 ${isExpiringSoon ? 'text-destructive' : 'text-primary'} animate-pulse`} />
               ) : (
-                <Crown className="h-5 w-5 text-primary" />
+                <Crown className="h-6 w-6 text-primary animate-float" />
               )}
+              <div className={`absolute inset-0 rounded-full ${isExpiringSoon ? 'bg-destructive/20' : 'bg-primary/20'} blur-xl animate-pulse-glow`} />
             </div>
             <div>
-              <h3 className="font-semibold flex items-center gap-2">
-                <Zap className="h-4 w-4 text-primary" />
+              <h3 className="font-orbitron font-bold text-lg flex items-center gap-3 text-gradient">
+                <Zap className="h-5 w-5 text-primary animate-float" style={{ animationDelay: '0.5s' }} />
                 Gratis Premium Trial
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground font-exo">
                 {daysLeft > 0 ? (
                   <>
-                    <span className={isExpiringSoon ? 'text-warning font-medium' : 'text-primary font-medium'}>
+                    <span className={`${isExpiringSoon ? 'text-destructive' : 'text-primary'} font-semibold text-glow`}>
                       {daysLeft} {daysLeft === 1 ? 'dag' : 'dager'}
                     </span> igjen av full tilgang
                   </>
                 ) : (
-                  <span className="text-warning font-medium">Trial utløper i dag!</span>
+                  <span className="text-destructive font-semibold text-glow animate-pulse">Trial utløper i dag!</span>
                 )}
               </p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowDetails(!showDetails)}
+              className="glass-card hover:neon-glow transition-all duration-300 font-exo font-medium"
             >
               {showDetails ? 'Skjul' : 'Vis'} detaljer
             </Button>
             <Button 
               size="sm"
-              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+              className="bg-gradient-electric hover:bg-gradient-neon text-primary-foreground font-orbitron font-bold px-6 py-3 neon-glow hover:scale-105 transition-all duration-300"
             >
               Oppgrader nå
             </Button>
@@ -64,23 +66,23 @@ export function TrialBanner() {
         </div>
 
         {showDetails && (
-          <div className="mt-4 pt-4 border-t border-border/50">
+          <div className="mt-6 pt-4 border-t border-glass-border animate-scale-in">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-3 bg-background/50 rounded-lg">
-                <div className="text-2xl font-bold text-primary">∞</div>
-                <div className="text-sm text-muted-foreground">Ubegrensede ruter</div>
+              <div className="text-center p-4 glass-card hover:neon-glow transition-all duration-300 group">
+                <div className="text-3xl font-orbitron font-bold text-primary text-glow group-hover:scale-110 transition-transform duration-300">∞</div>
+                <div className="text-sm text-foreground font-exo font-medium mt-2">Ubegrensede ruter</div>
               </div>
-              <div className="text-center p-3 bg-background/50 rounded-lg">
-                <div className="text-2xl font-bold text-primary">⚡</div>
-                <div className="text-sm text-muted-foreground">Værdata & optimering</div>
+              <div className="text-center p-4 glass-card hover:cyber-glow transition-all duration-300 group">
+                <div className="text-3xl font-orbitron font-bold text-secondary text-glow group-hover:scale-110 transition-transform duration-300">⚡</div>
+                <div className="text-sm text-foreground font-exo font-medium mt-2">Værdata & optimering</div>
               </div>
-              <div className="text-center p-3 bg-background/50 rounded-lg">
-                <div className="text-2xl font-bold text-primary">💾</div>
-                <div className="text-sm text-muted-foreground">Favoritt-ruter</div>
+              <div className="text-center p-4 glass-card hover:neon-glow transition-all duration-300 group">
+                <div className="text-3xl font-orbitron font-bold text-accent text-glow group-hover:scale-110 transition-transform duration-300">💾</div>
+                <div className="text-sm text-foreground font-exo font-medium mt-2">Favoritt-ruter</div>
               </div>
             </div>
             
-            <div className="mt-3 text-xs text-muted-foreground text-center">
+            <div className="mt-4 text-xs text-muted-foreground text-center font-exo italic">
               Etter trial: 25 gratis ruter per måned, begrensede funksjoner
             </div>
           </div>
