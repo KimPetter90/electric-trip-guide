@@ -950,14 +950,10 @@ function Index() {
                   onRouteCalculated={(analysis) => handleRouteAnalysisUpdate({
                     chargingTime: analysis.totalChargingTime,
                     co2Saved: 0,
-                    efficiency: analysis.routeEfficiency,
+                    efficiency: 85, // Default efficiency value
                     totalDistance: analysis.totalDistance,
                     totalTime: analysis.totalTime,
-                    totalCost: analysis.totalCost,
-                    batteryUsage: analysis.batteryUsage,
-                    requiredStops: analysis.requiredStops,
-                    weatherImpact: analysis.weatherImpact,
-                    routeEfficiency: analysis.routeEfficiency
+                    totalCost: analysis.totalCost
                   })}
                   onLoadingChange={() => {}}
                   onError={() => {}}

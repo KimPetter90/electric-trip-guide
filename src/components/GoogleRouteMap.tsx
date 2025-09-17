@@ -5,9 +5,12 @@ import { supabase } from '@/integrations/supabase/client';
 // Interfaces
 interface CarModel {
   id: string;
-  name: string;
+  brand: string;
+  model: string;
+  batteryCapacity: number;
   range: number;
   consumption: number;
+  image: string;
 }
 
 interface RouteData {
