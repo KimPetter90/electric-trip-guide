@@ -7,6 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Helper logging function for enhanced debugging
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
@@ -43,38 +44,74 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Get current route count from user_settings
+    const { data: settings, error: settingsError } = await supabaseClient
+      .from('user_settings')
+      .select('monthly_route_count, last_route_reset_date, subscription_status, plan_type')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    let routeCount = 0;
+    let subscriptionStatus = 'free';
+    let planType = 'free';
+
+    if (settings) {
+      // Check if we need to reset monthly count
+      const today = new Date().toISOString().split('T')[0];
+      const lastReset = settings.last_route_reset_date;
+      
+      if (lastReset !== today) {
+        const currentMonth = new Date().getMonth();
+        const lastResetMonth = new Date(lastReset || '2000-01-01').getMonth();
+        
+        if (currentMonth !== lastResetMonth) {
+          // Reset monthly count
+          await supabaseClient
+            .from('user_settings')
+            .update({ 
+              monthly_route_count: 0, 
+              last_route_reset_date: today 
+            })
+            .eq('user_id', user.id);
+          routeCount = 0;
+        } else {
+          routeCount = settings.monthly_route_count || 0;
+        }
+      } else {
+        routeCount = settings.monthly_route_count || 0;
+      }
+      
+      subscriptionStatus = settings.subscription_status || 'free';
+      planType = settings.plan_type || 'free';
+    } else {
+      // Create user settings if they don't exist
+      await supabaseClient
+        .from('user_settings')
+        .insert({
+          user_id: user.id,
+          monthly_route_count: 0,
+          last_route_reset_date: new Date().toISOString().split('T')[0],
+          subscription_status: 'free',
+          plan_type: 'free'
+        });
+    }
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
     if (customers.data.length === 0) {
-      logStep("No customer found, checking user settings");
+      logStep("No customer found, returning free subscription");
       
-      // Update user settings to free status
-      await supabaseClient
-        .from('user_settings')
-        .upsert({ 
-          user_id: user.id, 
-          subscription_status: 'free',
-          stripe_customer_id: null,
-          subscription_product_id: null,
-          subscription_end_date: null
-        });
-
-      // Check if user is test user even without Stripe customer
-      const { data: userSettings } = await supabaseClient
-        .from('user_settings')
-        .select('monthly_route_count, is_test_user')
-        .eq('user_id', user.id)
-        .single();
-
-      const isTestUser = userSettings?.is_test_user || false;
-      const routeCount = userSettings?.monthly_route_count || 0;
-
+      // Set route limits based on plan
+      let routeLimit = 25; // Free plan
+      
       return new Response(JSON.stringify({ 
-        subscribed: isTestUser,
-        subscription_status: isTestUser ? 'premium' : 'free',
+        subscribed: false,
+        subscription_status: subscriptionStatus,
+        product_id: null,
+        subscription_end: null,
         route_count: routeCount,
-        route_limit: isTestUser ? 100 : 25
+        route_limit: routeLimit
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -89,78 +126,64 @@ serve(async (req) => {
       status: "active",
       limit: 1,
     });
-    
     const hasActiveSub = subscriptions.data.length > 0;
     let productId = null;
     let subscriptionEnd = null;
-    let subscriptionStatus = 'free';
-    let routeLimit = 25;
+    let newSubscriptionStatus = 'free';
+    let newPlanType = 'free';
+    let routeLimit = 25; // Default free plan
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
-      try {
-        subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      } catch (dateError) {
-        console.log("Date conversion error:", dateError);
-        subscriptionEnd = null;
-      }
+      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
       logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd });
       
       productId = subscription.items.data[0].price.product as string;
+      const priceId = subscription.items.data[0].price.id;
       
-      // Determine subscription status based on product
-      if (productId === 'prod_T49B16Wt7QC3TT') {
-        subscriptionStatus = 'premium';
+      // Map price IDs to subscription tiers
+      if (priceId === 'price_1S80tCDgjF2NREPhFod9JnwM') {
+        newSubscriptionStatus = 'premium';
+        newPlanType = 'premium';
         routeLimit = 100;
-      } else if (productId === 'prod_T49BS2W6ASZzBO') {
-        subscriptionStatus = 'pro';
+      } else if (priceId === 'price_1S80tNDgjF2NREPhc16tZZVw') {
+        newSubscriptionStatus = 'pro';
+        newPlanType = 'pro';
         routeLimit = -1; // Unlimited
       }
       
-      logStep("Determined subscription tier", { productId, subscriptionStatus, routeLimit });
+      logStep("Determined subscription tier", { productId, priceId, newSubscriptionStatus, routeLimit });
+      
+      // Update user settings with subscription info
+      await supabaseClient
+        .from('user_settings')
+        .update({
+          subscription_status: newSubscriptionStatus,
+          plan_type: newPlanType,
+          subscription_end_date: subscriptionEnd
+        })
+        .eq('user_id', user.id);
     } else {
       logStep("No active subscription found");
+      
+      // Update user settings to free if no active subscription
+      await supabaseClient
+        .from('user_settings')
+        .update({
+          subscription_status: 'free',
+          plan_type: 'free',
+          subscription_end_date: null
+        })
+        .eq('user_id', user.id);
     }
-
-    // Get current route count and test user status from user settings
-    const { data: userSettings } = await supabaseClient
-      .from('user_settings')
-      .select('monthly_route_count, is_test_user')
-      .eq('user_id', user.id)
-      .single();
-
-    const routeCount = userSettings?.monthly_route_count || 0;
-    
-    // Override subscription status for test users
-    let finalSubscriptionStatus = subscriptionStatus;
-    let finalSubscribed = hasActiveSub;
-    let finalRouteLimit = routeLimit;
-    
-    if (userSettings?.is_test_user) {
-      finalSubscriptionStatus = 'premium';
-      finalSubscribed = true;
-      finalRouteLimit = 100;
-      logStep("User is test user with premium access");
-    }
-
-    // Update user settings with subscription info
-    await supabaseClient
-      .from('user_settings')
-      .upsert({ 
-        user_id: user.id,
-        stripe_customer_id: customerId,
-        subscription_status: finalSubscriptionStatus,
-        subscription_product_id: productId,
-        subscription_end_date: subscriptionEnd
-      });
 
     return new Response(JSON.stringify({
-      subscribed: finalSubscribed,
-      subscription_status: finalSubscriptionStatus,
+      subscribed: hasActiveSub,
+      subscription_status: newSubscriptionStatus,
       product_id: productId,
       subscription_end: subscriptionEnd,
       route_count: routeCount,
-      route_limit: finalRouteLimit
+      route_limit: routeLimit
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

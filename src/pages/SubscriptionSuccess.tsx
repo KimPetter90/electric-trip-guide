@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,6 +8,8 @@ import { CheckCircle, Zap } from 'lucide-react';
 export default function SubscriptionSuccess() {
   const { refreshSubscription } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const sessionId = searchParams.get('session_id');
 
   useEffect(() => {
     // Refresh subscription status when landing on success page
@@ -37,6 +39,11 @@ export default function SubscriptionSuccess() {
           <CardDescription className="text-green-600">
             Takk for at du oppgraderte til ElRoute Premium/Pro. 
             Ditt abonnement er nå aktivt og du har tilgang til alle funksjonene.
+            {sessionId && (
+              <span className="block text-xs mt-2 text-muted-foreground">
+                Transaksjon: {sessionId.slice(-8)}
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
 
