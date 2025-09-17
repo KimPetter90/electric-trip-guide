@@ -74,7 +74,7 @@ serve(async (req) => {
         subscribed: isTestUser,
         subscription_status: isTestUser ? 'premium' : 'free',
         route_count: routeCount,
-        route_limit: isTestUser ? 100 : 5
+        route_limit: isTestUser ? 100 : 25
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -94,7 +94,7 @@ serve(async (req) => {
     let productId = null;
     let subscriptionEnd = null;
     let subscriptionStatus = 'free';
-    let routeLimit = 5;
+    let routeLimit = 25;
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
