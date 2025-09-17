@@ -938,7 +938,9 @@ function Index() {
                   </Card>
                 )}
                 
+                {/* Add key prop to prevent unnecessary remounting */}
                 <GoogleRouteMap 
+                  key={`${routeData.from}-${routeData.to}-${selectedCar?.id}`}
                   isVisible={showRoute} 
                   routeData={routeData}
                   selectedCar={selectedCar}
