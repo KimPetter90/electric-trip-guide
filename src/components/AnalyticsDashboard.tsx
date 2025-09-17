@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { BarChart3, Users, Eye, TrendingUp, Calendar, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import ApiMonitoring from './ApiMonitoring';
 
 interface AnalyticsData {
   visitors: { date: string; count: number }[];
@@ -382,6 +383,9 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
           </CardContent>
         </Card>
       </div>
+      
+      {/* API Kostnadsovervåking */}
+      <ApiMonitoring />
     </div>
   );
 }
