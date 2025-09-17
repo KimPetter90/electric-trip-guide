@@ -11,9 +11,10 @@ import RouteInput from "@/components/RouteInput";
 import RouteSelector from "@/components/RouteSelector";
 import ChargingMap from "@/components/ChargingMap";
 import RouteMap from "@/components/RouteMap";
-import { Zap, Route, MapPin, Car, Battery, LogIn, User, CreditCard, LogOut, AlertTriangle } from "lucide-react";
+import { Zap, Route, MapPin, Car, Battery, LogIn, User, CreditCard, LogOut, AlertTriangle, BarChart3 } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 import { type RouteOption } from "@/components/RouteSelector";
+import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 
 interface CarModel {
   id: string;
@@ -90,6 +91,9 @@ function Index() {
       });
     }
   }, [user, favoriteCar, selectedCar, toast]);
+
+  // Sjekk om brukeren har tilgang til analytics
+  const hasAnalyticsAccess = user?.email === 'kpkopperstad@gmail.com';
   
   // Nullstill rutevalg når rutedata endres
   useEffect(() => {
@@ -742,6 +746,15 @@ function Index() {
           </div>
         </div>
       </div>
+
+      {/* Analytics Dashboard - kun for autoriserte brukere */}
+      {hasAnalyticsAccess && (
+        <section className="py-12 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <AnalyticsDashboard />
+          </div>
+        </section>
+      )}
 
       {/* Footer */}
       <footer className="relative bg-card/60 backdrop-blur-sm border-t border-border py-8 mt-16">
