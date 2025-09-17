@@ -581,27 +581,48 @@ function Index() {
           description: "Du må være innlogget for å bruke ruteplanleggeren.",
           variant: "destructive",
         });
-        navigate('/auth');
+        // Ikke naviger hvis vi allerede er på rett side
+        if (window.location.pathname !== '/auth') {
+          navigate('/auth');
+        }
         return;
       }
 
-      // Sjekk rutegrenser
-      if (subscription && subscription.route_limit !== -1 && subscription.route_count >= subscription.route_limit) {
+      // Sjekk rutegrenser - men bare hvis subscription data er tilgjengelig
+      if (subscription) {
+        if (subscription.route_limit !== -1 && subscription.route_count >= subscription.route_limit) {
+          toast({
+            title: "Rutegrense nådd",
+            description: `Du har brukt opp alle dine ${subscription.route_limit} ruter for denne måneden. Oppgrader for flere ruter.`,
+            variant: "destructive",
+          });
+          // Ikke naviger hvis vi allerede er på rett side
+          if (window.location.pathname !== '/pricing') {
+            navigate('/pricing');
+          }
+          return;
+        }
+      } else {
+        // Hvis subscription data ikke er tilgjengelig, fortsett likevel men med warning
+        console.warn('⚠️ Subscription data ikke tilgjengelig, fortsetter med ruteplanlegging');
         toast({
-          title: "Rutegrense nådd",
-          description: `Du har brukt opp alle dine ${subscription.route_limit} ruter for denne måneden. Oppgrader for flere ruter.`,
-          variant: "destructive",
+          title: "Begrensede funksjoner",
+          description: "Kan ikke verifisere subscription status. Planlegger rute likevel.",
+          variant: "default",
         });
-        navigate('/pricing');
-        return;
       }
       
       console.log('🚀 Starter ruteplanlegging...');
       
-      // Oppdater ruteteller
+      // Oppdater ruteteller - bare hvis subscription er tilgjengelig
       if (user && subscription) {
-        await supabase.rpc('increment_route_count', { user_uuid: user.id });
-        setTimeout(() => refreshSubscription(), 100);
+        try {
+          await supabase.rpc('increment_route_count', { user_uuid: user.id });
+          setTimeout(() => refreshSubscription(), 100);
+        } catch (error) {
+          console.warn('⚠️ Kunne ikke oppdatere ruteteller:', error);
+          // Fortsett likevel med ruteplanlegging
+        }
       }
       
       setShowRoute(true);

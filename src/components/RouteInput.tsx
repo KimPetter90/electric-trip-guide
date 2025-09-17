@@ -440,7 +440,12 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
         </div>
 
         <Button
-          onClick={onPlanRoute}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onPlanRoute();
+          }}
           disabled={isPlanning}
           className="w-full bg-gradient-electric hover:bg-gradient-eco shadow-neon hover:shadow-glow animate-pulse-neon disabled:opacity-50 disabled:cursor-not-allowed"
           size="lg"
