@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import CarSelector from "@/components/CarSelector";
 import RouteInput from "@/components/RouteInput";
 import RouteSelector from "@/components/RouteSelector";
@@ -47,6 +48,9 @@ interface RouteAnalysis {
 
 function Index() {
   const { user, subscription, favoriteCar, signOut, loading, refreshSubscription } = useAuth();
+  
+  // Track page view
+  useAnalytics();
   const navigate = useNavigate();
   const { toast } = useToast();
   

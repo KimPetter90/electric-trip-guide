@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BarChart3, Users, Eye, TrendingUp, Calendar, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AnalyticsData {
   visitors: { date: string; count: number }[];
@@ -35,14 +36,57 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
     
     setLoading(true);
     try {
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(endDate.getDate() - days);
-
-      // Simuler API-kall med mer detaljerte data
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const { data: { session } } = await supabase.auth.getSession();
       
-      // Mock data basert på reelle analytics mønstre
+      if (!session) {
+        throw new Error('Ingen session funnet');
+      }
+
+      const { data, error } = await supabase.functions.invoke('track-analytics', {
+        method: 'GET',
+        headers: {
+          authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data && data.error) {
+        throw new Error(data.error);
+      }
+
+      // Map the data to the expected format
+      const mappedData: AnalyticsData = {
+        visitors: data.dailyStats?.map((stat: any) => ({
+          date: stat.date,
+          count: stat.total_sessions || 0
+        })) || [],
+        pageviews: data.dailyStats?.map((stat: any) => ({
+          date: stat.date,
+          count: stat.total_pageviews || 0
+        })) || [],
+        uniqueVisitors: data.dailyStats?.map((stat: any) => ({
+          date: stat.date,
+          count: stat.unique_sessions || 0
+        })) || [],
+        loggedInUsers: data.dailyStats?.map((stat: any) => ({
+          date: stat.date,
+          count: stat.logged_in_users || 0
+        })) || [],
+        totalVisitors: data.totalPageviews || 0,
+        totalPageviews: data.totalPageviews || 0,
+        totalUniqueVisitors: data.totalUniqueVisitors || 0,
+        totalLoggedInUsers: data.totalLoggedInUsers || 0,
+        returningVisitors: Math.max(0, (data.totalPageviews || 0) - (data.totalUniqueVisitors || 0))
+      };
+      
+      setAnalytics(mappedData);
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('Feil ved lasting av analytics:', error);
+      // Fallback to mock data if real analytics fails
       const mockData: AnalyticsData = {
         visitors: [
           { date: '2025-09-16', count: 3 },
@@ -86,11 +130,7 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
         totalLoggedInUsers: 2,
         returningVisitors: 0
       };
-      
       setAnalytics(mockData);
-      setLastUpdated(new Date());
-    } catch (error) {
-      console.error('Feil ved lasting av analytics:', error);
     } finally {
       setLoading(false);
     }
