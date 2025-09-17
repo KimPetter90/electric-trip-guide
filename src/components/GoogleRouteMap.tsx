@@ -92,7 +92,8 @@ const MapComponent: React.FC<{
       const map = new google.maps.Map(mapRef.current, {
         center,
         zoom,
-        mapTypeControl: false,
+        mapTypeId: google.maps.MapTypeId.SATELLITE, // Satellittmodus
+        mapTypeControl: true, // Vis knapper for å bytte karttype
         streetViewControl: false,
         fullscreenControl: false,
         styles: [
