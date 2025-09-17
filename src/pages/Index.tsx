@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,8 @@ import RouteInput from "@/components/RouteInput";
 import RouteSelector from "@/components/RouteSelector";
 import ChargingMap from "@/components/ChargingMap";
 import RouteMap from "@/components/RouteMap";
+import { ShareRoute } from "@/components/ShareRoute";
+import { FavoriteRoutes } from "@/components/FavoriteRoutes";
 import { Zap, Route, MapPin, Car, Battery, LogIn, User, CreditCard, LogOut, AlertTriangle, BarChart3, Building2 } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 import { type RouteOption } from "@/components/RouteSelector";
@@ -54,6 +56,7 @@ function Index() {
   useAnalytics();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   
   const [selectedCar, setSelectedCar] = useState<CarModel | null>(null);
   const [routeData, setRouteData] = useState<RouteData>({
@@ -76,6 +79,27 @@ function Index() {
   const [chargingProgress, setChargingProgress] = useState(0);
   const [routeAnalysis, setRouteAnalysis] = useState<RouteAnalysis | null>(null);
   const [optimizedStations, setOptimizedStations] = useState<any[]>([]);
+
+  // Handle shared route parameters
+  useEffect(() => {
+    const fromParam = searchParams.get('from');
+    const toParam = searchParams.get('to');
+    
+    if (fromParam) {
+      setRouteData(prev => ({ ...prev, from: decodeURIComponent(fromParam) }));
+    }
+    if (toParam) {
+      setRouteData(prev => ({ ...prev, to: decodeURIComponent(toParam) }));
+    }
+  }, [searchParams]);
+
+  const handleFavoriteRouteSelect = (from: string, to: string) => {
+    setRouteData(prev => ({ ...prev, from, to }));
+    toast({
+      title: "Favoritt-rute valgt",
+      description: `Klar for å planlegge: ${from} → ${to}`,
+    });
+  };
 
   // Auto-select favorite car when user logs in
   useEffect(() => {
@@ -777,6 +801,13 @@ function Index() {
               />
             </div>
 
+            {/* Favoritt-ruter */}
+            <div>
+              <FavoriteRoutes
+                onRouteSelect={handleFavoriteRouteSelect}
+              />
+            </div>
+
             {selectedCar && (
               <Card className="p-4 bg-card/80 backdrop-blur-sm border-border shadow-lg" role="complementary">
                 <h3 className="font-semibold mb-2 text-primary">Valgt bil:</h3>
@@ -805,6 +836,25 @@ function Index() {
                   onRouteSelect={handleRouteSelect}
                   isLoading={loadingRoutes}
                 />
+                
+                {/* Del rute - vis bare hvis rute er valgt */}
+                {selectedRouteId && routeOptions.length > 0 && (
+                  <Card className="p-4 bg-card/80 backdrop-blur-sm border-border shadow-lg">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-primary">Valgt rute</h3>
+                      <ShareRoute
+                        routeData={{
+                          from: routeData.from,
+                          to: routeData.to,
+                          distance: String(routeOptions.find(r => r.id === selectedRouteId)?.distance) || '0 km',
+                          duration: String(routeOptions.find(r => r.id === selectedRouteId)?.duration) || '0 min',
+                          chargingCost: '150 kr', // Placeholder
+                          batteryUsed: '65%' // Placeholder
+                        }}
+                      />
+                    </div>
+                  </Card>
+                )}
                 
                 <RouteMap 
                   isVisible={showRoute} 

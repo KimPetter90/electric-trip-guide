@@ -67,13 +67,13 @@ export function FavoriteRoutes({ onRouteSelect, className }: FavoriteRoutesProps
     
     try {
       const { data, error } = await supabase
-        .from('favorite_routes')
+        .from('favorite_routes' as any)
         .select('*')
         .eq('user_id', user.id)
         .order('use_count', { ascending: false });
       
       if (error) throw error;
-      setFavorites(data || []);
+      setFavorites((data as any) || []);
     } catch (error) {
       console.error('Error loading favorite routes:', error);
       toast({
@@ -107,7 +107,7 @@ export function FavoriteRoutes({ onRouteSelect, className }: FavoriteRoutesProps
 
     try {
       const { error } = await supabase
-        .from('favorite_routes')
+        .from('favorite_routes' as any)
         .insert([{
           user_id: user.id,
           ...newRoute,
@@ -145,7 +145,7 @@ export function FavoriteRoutes({ onRouteSelect, className }: FavoriteRoutesProps
   const deleteFavoriteRoute = async (routeId: string) => {
     try {
       const { error } = await supabase
-        .from('favorite_routes')
+        .from('favorite_routes' as any)
         .delete()
         .eq('id', routeId);
 
@@ -171,7 +171,7 @@ export function FavoriteRoutes({ onRouteSelect, className }: FavoriteRoutesProps
     // Increment use count
     try {
       await supabase
-        .from('favorite_routes')
+        .from('favorite_routes' as any)
         .update({ use_count: route.use_count + 1 })
         .eq('id', route.id);
     } catch (error) {

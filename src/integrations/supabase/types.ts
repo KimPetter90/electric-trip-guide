@@ -134,6 +134,51 @@ export type Database = {
         }
         Relationships: []
       }
+      favorite_routes: {
+        Row: {
+          battery_usage: string | null
+          created_at: string
+          distance: string | null
+          duration: string | null
+          estimated_cost: string | null
+          from_location: string
+          id: string
+          name: string
+          to_location: string
+          updated_at: string
+          use_count: number | null
+          user_id: string
+        }
+        Insert: {
+          battery_usage?: string | null
+          created_at?: string
+          distance?: string | null
+          duration?: string | null
+          estimated_cost?: string | null
+          from_location: string
+          id?: string
+          name: string
+          to_location: string
+          updated_at?: string
+          use_count?: number | null
+          user_id: string
+        }
+        Update: {
+          battery_usage?: string | null
+          created_at?: string
+          distance?: string | null
+          duration?: string | null
+          estimated_cost?: string | null
+          from_location?: string
+          id?: string
+          name?: string
+          to_location?: string
+          updated_at?: string
+          use_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       page_views: {
         Row: {
           created_at: string | null
