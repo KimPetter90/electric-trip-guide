@@ -267,6 +267,7 @@ const MapComponent: React.FC<{
             
           } else {
             console.error('❌ Google Maps rute feil:', status);
+            
             let errorMessage = 'Kunne ikke beregne rute';
             
             switch (status) {
@@ -277,7 +278,7 @@ const MapComponent: React.FC<{
                 errorMessage = 'Ingen rute funnet. Sjekk destinasjonene.';
                 break;
               case google.maps.DirectionsStatus.REQUEST_DENIED:
-                errorMessage = 'Forespørsel avvist. Sjekk API-innstillinger.';
+                errorMessage = 'API-nøkkelen mangler tilgang til Directions API. Kontakt administrator.';
                 break;
               case google.maps.DirectionsStatus.OVER_QUERY_LIMIT:
                 errorMessage = 'For mange forespørsler. Prøv igjen senere.';
@@ -286,7 +287,75 @@ const MapComponent: React.FC<{
                 errorMessage = `Rutefeil: ${status}`;
             }
             
-            throw new Error(errorMessage);
+            // Show map with markers only, no route
+            if (mapInstanceRef.current) {
+              // Create simple markers for start and end
+              try {
+                const geocoder = new google.maps.Geocoder();
+                
+                // Geocode start location
+                geocoder.geocode({ address: routeData.from + ', Norge' }, (results, status) => {
+                  if (status === 'OK' && results && results[0]) {
+                    new google.maps.Marker({
+                      position: results[0].geometry.location,
+                      map: mapInstanceRef.current,
+                      title: 'Start: ' + routeData.from,
+                      icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 10,
+                        fillColor: '#22c55e',
+                        fillOpacity: 1,
+                        strokeColor: '#16a34a',
+                        strokeWeight: 2,
+                      }
+                    });
+                  }
+                });
+                
+                // Geocode end location  
+                geocoder.geocode({ address: routeData.to + ', Norge' }, (results, status) => {
+                  if (status === 'OK' && results && results[0]) {
+                    new google.maps.Marker({
+                      position: results[0].geometry.location,
+                      map: mapInstanceRef.current,
+                      title: 'Mål: ' + routeData.to,
+                      icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 10,
+                        fillColor: '#ef4444',
+                        fillOpacity: 1,
+                        strokeColor: '#dc2626',
+                        strokeWeight: 2,
+                      }
+                    });
+                    
+                    // Center map on end location
+                    mapInstanceRef.current?.setCenter(results[0].geometry.location);
+                    mapInstanceRef.current?.setZoom(8);
+                  }
+                });
+              } catch (geocodeError) {
+                console.warn('Kunne ikke geocode adresser:', geocodeError);
+              }
+            }
+            
+            // Still show some analysis even without route
+            const estimatedDistance = 400; // km estimate
+            const batteryUsagePercent = (estimatedDistance / selectedCar.range) * 100;
+            const requiredStops = Math.ceil(batteryUsagePercent / 60);
+            
+            const analysis: TripAnalysis = {
+              totalDistance: estimatedDistance,
+              totalTime: estimatedDistance * 1.2, // rough estimate
+              totalChargingTime: requiredStops * 30,
+              totalCost: requiredStops * 150,
+              batteryUsage: batteryUsagePercent,
+              requiredStops: requiredStops,
+              weatherImpact: 'Ukjent',
+              routeEfficiency: 'Ukjent - ' + errorMessage,
+            };
+
+            onRouteCalculated(analysis);
           }
         });
       } catch (error) {
@@ -442,6 +511,14 @@ const GoogleRouteMap: React.FC<RouteMapProps> = ({
     if (routeTrigger > 0 && routeData.from && routeData.to && selectedCar) {
       setLoading(true);
       setError(null);
+      
+      // Auto-clear loading after 10 seconds if no response
+      const timeout = setTimeout(() => {
+        setLoading(false);
+        setError('Ruteberegning tok for lang tid. Prøv igjen.');
+      }, 10000);
+      
+      return () => clearTimeout(timeout);
     }
   }, [routeTrigger, routeData.from, routeData.to, selectedCar]);
 
