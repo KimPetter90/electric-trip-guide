@@ -428,6 +428,10 @@ const GoogleRouteMap: React.FC<RouteMapProps> = ({
   // Debug logging for isVisible changes
   useEffect(() => {
     console.log('👁️ isVisible changed to:', isVisible);
+    if (!isVisible) {
+      console.log('🙈 KRITISK: GoogleRouteMap blir SKJULT! Undersøker årsak...');
+      console.log('📊 State ved skjuling:', { loading, error, apiKey: !!apiKey });
+    }
   }, [isVisible]);
   
   const [loading, setLoading] = useState(false);
@@ -559,6 +563,7 @@ const GoogleRouteMap: React.FC<RouteMapProps> = ({
   // Don't render if not visible
   if (!isVisible) {
     console.log('🚫 GoogleRouteMap ikke synlig - isVisible:', isVisible);
+    console.log('🔍 Stack trace for isVisible=false:', new Error().stack);
     return null;
   }
 
