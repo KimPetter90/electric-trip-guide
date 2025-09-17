@@ -3169,7 +3169,12 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
     }
   }, [routeTrigger, selectedRouteId]); // BARE disse dependencies for å unngå loops
 
-  if (!isVisible) return null;
+  if (!isVisible) {
+    console.log('🚫 RouteMap ikke synlig - isVisible:', isVisible);
+    return null;
+  }
+
+  console.log('✅ RouteMap rendrer - isVisible:', isVisible, 'hasToken:', !!accessToken, 'loading:', loading);
 
   return (
     <div className="space-y-6">

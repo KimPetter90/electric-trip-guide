@@ -626,7 +626,9 @@ function Index() {
       }
       
       setShowRoute(true);
+      console.log('🎯 setShowRoute(true) kalt - RouteMap skal nå være synlig');
       setRouteTrigger(prev => prev + 1);
+      console.log('🎯 setRouteTrigger kalt for å trigger RouteMap useEffect');
       await generateRouteOptions();
       
       toast({
@@ -634,7 +636,7 @@ function Index() {
         description: subscription ? `Ruter brukt: ${subscription.route_count + 1} / ${subscription.route_limit === -1 ? '∞' : subscription.route_limit}` : "Gratis rute planlagt",
       });
       
-      console.log('✅ Ruteplanlegging fullført');
+      console.log('✅ Ruteplanlegging fullført - showRoute:', true);
       
     } catch (error) {
       console.error('Feil ved ruteplanlegging:', error);
