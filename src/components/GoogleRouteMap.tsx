@@ -416,6 +416,20 @@ const GoogleRouteMap: React.FC<RouteMapProps> = ({
   onChargingStationUpdate, 
   onRouteAnalysisUpdate 
 }) => {
+  
+  // Debug logging for component lifecycle
+  useEffect(() => {
+    console.log('🟢 GoogleRouteMap MOUNTED');
+    return () => {
+      console.log('🔴 GoogleRouteMap UNMOUNTED');
+    };
+  }, []);
+  
+  // Debug logging for isVisible changes
+  useEffect(() => {
+    console.log('👁️ isVisible changed to:', isVisible);
+  }, [isVisible]);
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
@@ -548,7 +562,7 @@ const GoogleRouteMap: React.FC<RouteMapProps> = ({
     return null;
   }
 
-  console.log('✅ GoogleRouteMap rendrer - visible:', isVisible, 'hasApiKey:', !!apiKey, 'loading:', loading);
+  console.log('✅ GoogleRouteMap rendrer - visible:', isVisible, 'hasApiKey:', !!apiKey, 'loading:', loading, 'error:', error);
 
   return (
     <div data-testid="route-map" className="space-y-6">
