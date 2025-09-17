@@ -572,8 +572,45 @@ const GoogleRouteMap: React.FC<RouteMapProps> = ({
   }
 
   console.log('✅ GoogleRouteMap rendrer - visible:', isVisible, 'hasApiKey:', !!apiKey, 'loading:', loading, 'error:', error);
-  console.log('🗺️ KART ELEMENT STATUS - DOM container exists:', !!document.getElementById('google-map-container'));
-  console.log('🎯 KART SYNLIGHET CHECK - element style display:', document.getElementById('google-map-container')?.style?.display);
+  
+  // Overvåk parent element kontinuerlig
+  useEffect(() => {
+    const checkVisibility = () => {
+      const container = document.querySelector('[data-testid="route-map"]');
+      const mapElement = document.getElementById('google-map-container');
+      
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        const computedStyle = window.getComputedStyle(container);
+        console.log('🔍 CONTAINER STATUS:', {
+          display: computedStyle.display,
+          visibility: computedStyle.visibility,
+          opacity: computedStyle.opacity,
+          height: rect.height,
+          width: rect.width,
+          position: computedStyle.position
+        });
+      }
+      
+      if (mapElement) {
+        const rect = mapElement.getBoundingClientRect();
+        const computedStyle = window.getComputedStyle(mapElement);
+        console.log('🗺️ MAP ELEMENT STATUS:', {
+          display: computedStyle.display,
+          visibility: computedStyle.visibility,
+          opacity: computedStyle.opacity,
+          height: rect.height,
+          width: rect.width
+        });
+      }
+    };
+    
+    // Sjekk umiddelbart og hver 2. sekund
+    checkVisibility();
+    const interval = setInterval(checkVisibility, 2000);
+    
+    return () => clearInterval(interval);
+  }, [isVisible]);
 
   return (
     <div data-testid="route-map" className="space-y-6" style={{ minHeight: '500px', border: '2px solid red' }}>
