@@ -78,7 +78,9 @@ const MapComponent: React.FC<{
   selectedCar: CarModel | null;
   routeTrigger: number;
   onRouteCalculated: (analysis: TripAnalysis) => void;
-}> = ({ center, zoom, onMapLoad, chargingStations, routeData, selectedCar, routeTrigger, onRouteCalculated }) => {
+  onLoadingChange: (loading: boolean) => void;
+  onError: (error: string | null) => void;
+}> = ({ center, zoom, onMapLoad, chargingStations, routeData, selectedCar, routeTrigger, onRouteCalculated, onLoadingChange, onError }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const directionsServiceRef = useRef<google.maps.DirectionsService | null>(null);
@@ -209,6 +211,8 @@ const MapComponent: React.FC<{
         }
 
         directionsServiceRef.current.route(request, (result, status) => {
+          console.log('🗺️ Google Directions API respons mottatt:', status);
+          
           if (status === google.maps.DirectionsStatus.OK && result) {
             console.log('✅ Google Maps rute beregnet');
             directionsRendererRef.current!.setDirections(result);
@@ -267,7 +271,8 @@ const MapComponent: React.FC<{
             });
             
           } else {
-            console.error('❌ Google Maps rute feil:', status);
+            console.error('❌ Google Maps rute feil:', status, result);
+            onLoadingChange(false); // Stop loading on error
             
             let errorMessage = 'Kunne ikke beregne rute';
             
@@ -282,12 +287,13 @@ const MapComponent: React.FC<{
                 errorMessage = 'API-nøkkelen mangler tilgang til Directions API. Kontakt administrator.';
                 break;
               case google.maps.DirectionsStatus.OVER_QUERY_LIMIT:
-                errorMessage = 'For mange forespørsler. Prøv igjen senere.';
+                errorMessage = 'For mange forespørsler til Google Maps. Prøv igjen om litt.';
                 break;
               default:
                 errorMessage = `Rutefeil: ${status}`;
             }
             
+            onError(errorMessage);
             // Show map with markers only, no route
             if (mapInstanceRef.current) {
               // Create simple markers for start and end
@@ -535,11 +541,11 @@ const GoogleRouteMap: React.FC<RouteMapProps> = ({
       setLoading(true);
       setError(null);
       
-      // Auto-clear loading after 30 seconds if no response (increased from 10)
+      // Auto-clear loading after 60 seconds if no response (increased from 30)
       const timeout = setTimeout(() => {
         setLoading(false);
-        setError('Ruteberegning tok for lang tid. Prøv igjen.');
-      }, 30000); // Changed from 10000 to 30000
+        setError('Ruteberegning tok for lang tid. Sjekk internetforbindelsen og prøv igjen.');
+      }, 60000); // Increased from 30000 to 60000 (60 seconds)
       
       return () => clearTimeout(timeout);
     }
@@ -647,6 +653,8 @@ const GoogleRouteMap: React.FC<RouteMapProps> = ({
                   selectedCar={selectedCar}
                   routeTrigger={routeTrigger}
                   onRouteCalculated={handleRouteCalculated}
+                  onLoadingChange={setLoading}
+                  onError={setError}
                 />
               </Wrapper>
             )}
