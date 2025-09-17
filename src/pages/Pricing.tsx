@@ -14,9 +14,10 @@ const plans = [
     price: '0',
     description: 'Perfekt for å teste ElRoute',
     features: [
-      '5 ruter per måned',
+      '25 ruter per måned',
       'Grunnleggende ruteplanlegging',
       'Ladestasjons-oversikt',
+      'Værintegrasjon',
       'E-post support'
     ],
     buttonText: 'Kom i gang gratis',

@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         product_id: null,
         subscription_end: null,
         route_count: 0,
-        route_limit: 5
+        route_limit: 25
       });
     }
   };
