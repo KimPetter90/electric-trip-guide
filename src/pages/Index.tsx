@@ -588,6 +588,22 @@ function Index() {
         return;
       }
 
+      console.log('🚀 Starter ruteplanlegging - viser kart umiddelbart');
+      
+      // Show route map immediately after validation
+      setShowRoute(true);
+      console.log('🎯 setShowRoute(true) kalt - RouteMap skal nå være synlig');
+      setRouteTrigger(prev => prev + 1);
+      console.log('🎯 setRouteTrigger kalt for å trigger RouteMap useEffect');
+      
+      // Scroll to map after a short delay to ensure it's rendered
+      setTimeout(() => {
+        const mapElement = document.querySelector('[data-testid="route-map"]');
+        if (mapElement) {
+          mapElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500);
+
       // Sjekk rutegrenser - men bare hvis subscription data er tilgjengelig
       if (subscription) {
         if (subscription.route_limit !== -1 && subscription.route_count >= subscription.route_limit) {
@@ -606,13 +622,13 @@ function Index() {
         // Hvis subscription data ikke er tilgjengelig, fortsett likevel men med warning
         console.warn('⚠️ Subscription data ikke tilgjengelig, fortsetter med ruteplanlegging');
         toast({
-          title: "Begrensede funksjoner",
-          description: "Kan ikke verifisere subscription status. Planlegger rute likevel.",
+          title: "Planlegger rute",
+          description: "Starter ruteplanlegging...",
           variant: "default",
         });
       }
       
-      console.log('🚀 Starter ruteplanlegging...');
+      console.log('🚀 Fortsetter med ruteplanlegging...');
       
       // Oppdater ruteteller - bare hvis subscription er tilgjengelig
       if (user && subscription) {
