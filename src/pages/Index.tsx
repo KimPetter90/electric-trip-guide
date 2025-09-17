@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -153,8 +153,8 @@ function Index() {
     console.log('🎯 SHOWROUTE CHANGED:', showRoute, 'at time:', new Date().toISOString());
   }, [showRoute]);
   
-  // Funksjon for å motta ladestasjon data fra RouteMap
-  const handleChargingStationUpdate = (station: any, showButton: boolean, optimizedStations?: any[]) => {
+  // Funksjon for å motta ladestasjon data fra RouteMap - memoized to prevent component remounting
+  const handleChargingStationUpdate = useCallback((station: any, showButton: boolean, optimizedStations?: any[]) => {
     console.log('🔋 INDEX: Mottatt ladestasjon oppdatering:', station?.name, 'show:', showButton);
     console.log('🔋 INDEX: Mottatt optimizedStations:', optimizedStations);
     setCurrentChargingStation(station);
@@ -163,13 +163,13 @@ function Index() {
       console.log('🔋 INDEX: Setter optimizedStations til:', optimizedStations);
       setOptimizedStations(optimizedStations);
     }
-  };
+  }, []);
   
-  // Funksjon for å motta routeAnalysis fra RouteMap
-  const handleRouteAnalysisUpdate = (analysis: RouteAnalysis | null) => {
+  // Funksjon for å motta routeAnalysis fra RouteMap - memoized to prevent component remounting
+  const handleRouteAnalysisUpdate = useCallback((analysis: RouteAnalysis | null) => {
     console.log('📊 INDEX: Mottatt routeAnalysis:', analysis);
     setRouteAnalysis(analysis);
-  };
+  }, []);
   // Optimalisert generering av rutevalg med caching
   const generateRouteOptions = async () => {
     if (!selectedCar || !routeData.from || !routeData.to) return;
