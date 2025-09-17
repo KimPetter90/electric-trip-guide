@@ -941,13 +941,26 @@ function Index() {
                 {/* Add key prop to prevent unnecessary remounting */}
                 <GoogleRouteMap 
                   key={`${routeData.from}-${routeData.to}-${selectedCar?.id}`}
-                  isVisible={true}
+                  center={{ lat: 60.472, lng: 8.4689 }}
+                  zoom={6}
+                  chargingStations={[]}
                   routeData={routeData}
                   selectedCar={selectedCar}
                   routeTrigger={routeTrigger}
-                  selectedRouteId={selectedRouteId}
-                  onChargingStationUpdate={handleChargingStationUpdate}
-                  onRouteAnalysisUpdate={handleRouteAnalysisUpdate}
+                  onRouteCalculated={(analysis) => handleRouteAnalysisUpdate({
+                    chargingTime: analysis.totalChargingTime,
+                    co2Saved: 0,
+                    efficiency: analysis.routeEfficiency,
+                    totalDistance: analysis.totalDistance,
+                    totalTime: analysis.totalTime,
+                    totalCost: analysis.totalCost,
+                    batteryUsage: analysis.batteryUsage,
+                    requiredStops: analysis.requiredStops,
+                    weatherImpact: analysis.weatherImpact,
+                    routeEfficiency: analysis.routeEfficiency
+                  })}
+                  onLoadingChange={() => {}}
+                  onError={() => {}}
                 />
               </div>
             )}
