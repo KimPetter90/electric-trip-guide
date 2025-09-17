@@ -68,7 +68,7 @@ function Index() {
     batteryPercentage: 0,
     travelDate: undefined
   });
-  const [showRoute, setShowRoute] = useState(false);
+  const [showRoute, setShowRoute] = useState(true); // ALWAYS show route to prevent disappearing
   const [routeTrigger, setRouteTrigger] = useState(0); // Trigger for manual route updates
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
