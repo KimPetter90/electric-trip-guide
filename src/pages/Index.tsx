@@ -940,24 +940,24 @@ function Index() {
                 
                 {/* Add key prop to prevent unnecessary remounting */}
                 <GoogleRouteMap 
-                  key={`${routeData.from}-${routeData.to}-${selectedCar?.id}`}
+                  key="stable-google-map" // Stable key to prevent unnecessary remounting
                   center={{ lat: 60.472, lng: 8.4689 }}
                   zoom={6}
-                  onMapLoad={(map) => console.log('🗺️ Kart lastet:', map)}
+                  onMapLoad={useCallback((map) => console.log('🗺️ Kart lastet:', map), [])}
                   chargingStations={[]}
                   routeData={routeData}
                   selectedCar={selectedCar}
                   routeTrigger={routeTrigger}
-                  onRouteCalculated={(analysis) => handleRouteAnalysisUpdate({
+                  onRouteCalculated={useCallback((analysis) => handleRouteAnalysisUpdate({
                     chargingTime: analysis.totalChargingTime,
                     co2Saved: 0,
-                    efficiency: 85, // Default efficiency value
+                    efficiency: 85,
                     totalDistance: analysis.totalDistance,
                     totalTime: analysis.totalTime,
                     totalCost: analysis.totalCost
-                  })}
-                  onLoadingChange={(loading) => console.log('🔄 Loading state:', loading)}
-                  onError={(error) => console.error('❌ Kartfeil:', error)}
+                  }), [handleRouteAnalysisUpdate])}
+                  onLoadingChange={useCallback((loading) => console.log('🔄 Loading state:', loading), [])}
+                  onError={useCallback((error) => console.error('❌ Kartfeil:', error), [])}
                 />
               </div>
             )}
