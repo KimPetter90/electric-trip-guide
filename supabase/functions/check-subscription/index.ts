@@ -136,7 +136,6 @@ serve(async (req) => {
         } catch (error) {
           logStep("Error parsing trial_end_date, treating as no trial", { error: error.message, trial_end_date: settings.trial_end_date });
         }
-        }
       }
 
       return new Response(JSON.stringify({ 
