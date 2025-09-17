@@ -367,7 +367,7 @@ const MapComponent: React.FC<{
     if (routeTrigger > 0) {
       calculateRoute().catch(console.error);
     }
-  }, [routeTrigger, routeData, selectedCar, onRouteCalculated]);
+  }, [routeTrigger, routeData, selectedCar]); // Removed onRouteCalculated to prevent endless re-renders
 
   return <div ref={mapRef} style={{ width: '100%', height: '500px' }} />;
 };
