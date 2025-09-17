@@ -369,7 +369,11 @@ const MapComponent: React.FC<{
     }
   }, [routeTrigger, routeData, selectedCar]); // Removed onRouteCalculated to prevent endless re-renders
 
-  return <div ref={mapRef} style={{ width: '100%', height: '500px' }} />;
+  return <div 
+    ref={mapRef} 
+    id="google-map-container" 
+    style={{ width: '100%', height: '500px', border: '3px solid green', backgroundColor: 'lightblue' }} 
+  />;
 };
 
 // Fetch charging stations from Supabase
@@ -568,9 +572,11 @@ const GoogleRouteMap: React.FC<RouteMapProps> = ({
   }
 
   console.log('✅ GoogleRouteMap rendrer - visible:', isVisible, 'hasApiKey:', !!apiKey, 'loading:', loading, 'error:', error);
+  console.log('🗺️ KART ELEMENT STATUS - DOM container exists:', !!document.getElementById('google-map-container'));
+  console.log('🎯 KART SYNLIGHET CHECK - element style display:', document.getElementById('google-map-container')?.style?.display);
 
   return (
-    <div data-testid="route-map" className="space-y-6">
+    <div data-testid="route-map" className="space-y-6" style={{ minHeight: '500px', border: '2px solid red' }}>
       <div className="flex items-center gap-2">
         <Navigation className="h-5 w-5 text-primary" />
         <h2 className="text-xl font-semibold">Google Maps Ruteplanlegger</h2>
