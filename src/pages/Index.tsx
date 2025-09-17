@@ -12,7 +12,7 @@ import WeatherImpact from "@/components/WeatherImpact";
 import RouteInput from "@/components/RouteInput";
 import RouteSelector from "@/components/RouteSelector";
 import ChargingMap from "@/components/ChargingMap";
-import GoogleRouteMap from "@/components/GoogleRouteMap";
+import RouteMap from "@/components/RouteMap";
 import { ShareRoute } from "@/components/ShareRoute";
 import { FavoriteRoutes } from "@/components/FavoriteRoutes";
 import { TrialBanner } from "@/components/TrialBanner";
@@ -929,7 +929,7 @@ function Index() {
                   </Card>
                 )}
                 
-                <GoogleRouteMap 
+                <RouteMap 
                   isVisible={showRoute} 
                   routeData={routeData}
                   selectedCar={selectedCar}
