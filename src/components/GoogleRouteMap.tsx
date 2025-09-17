@@ -544,35 +544,6 @@ const GoogleRouteMap: React.FC<RouteMapProps> = ({
     }
   }, [routeTrigger, routeData.from, routeData.to, selectedCar]);
 
-  // Render loading state
-  const renderLoadingMap = () => (
-    <div className="w-full h-[500px] bg-muted/20 rounded-lg flex items-center justify-center">
-      <div className="text-center space-y-2">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
-        <p className="text-sm text-muted-foreground">Laster Google Maps...</p>
-      </div>
-    </div>
-  );
-
-  // Render error state
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    );
-  }
-
-  // Don't render if not visible
-  if (!isVisible) {
-    console.log('🚫 GoogleRouteMap ikke synlig - isVisible:', isVisible);
-    console.log('🔍 Stack trace for isVisible=false:', new Error().stack);
-    return null;
-  }
-
-  console.log('✅ GoogleRouteMap rendrer - visible:', isVisible, 'hasApiKey:', !!apiKey, 'loading:', loading, 'error:', error);
-  
   // Overvåk parent element kontinuerlig
   useEffect(() => {
     const checkVisibility = () => {
@@ -611,6 +582,36 @@ const GoogleRouteMap: React.FC<RouteMapProps> = ({
     
     return () => clearInterval(interval);
   }, [isVisible]);
+
+  // Render loading state
+  const renderLoadingMap = () => (
+    <div className="w-full h-[500px] bg-muted/20 rounded-lg flex items-center justify-center">
+      <div className="text-center space-y-2">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+        <p className="text-sm text-muted-foreground">Laster Google Maps...</p>
+      </div>
+    </div>
+  );
+
+  // Render error state
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  // Don't render if not visible
+  if (!isVisible) {
+    console.log('🚫 GoogleRouteMap ikke synlig - isVisible:', isVisible);
+    console.log('🔍 Stack trace for isVisible=false:', new Error().stack);
+    return null;
+  }
+
+
+  console.log('✅ GoogleRouteMap rendrer - visible:', isVisible, 'hasApiKey:', !!apiKey, 'loading:', loading, 'error:', error);
 
   return (
     <div data-testid="route-map" className="space-y-6" style={{ minHeight: '500px', border: '2px solid red' }}>
