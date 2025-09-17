@@ -434,7 +434,8 @@ export function FavoriteRoutes({ onRouteSelect, className }: FavoriteRoutesProps
             ))}
           </div>
         )}
-      </CardContent>
+       </CardContent>
     </Card>
-  );
+  </PremiumGate>
+);
 }
