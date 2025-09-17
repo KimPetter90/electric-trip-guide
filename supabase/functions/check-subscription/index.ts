@@ -62,7 +62,13 @@ serve(async (req) => {
       
       if (lastReset !== today) {
         const currentMonth = new Date().getMonth();
-        const lastResetMonth = new Date(lastReset || '2000-01-01').getMonth();
+        let lastResetMonth = 0; // Default til januar hvis parsing feiler
+        
+        try {
+          lastResetMonth = new Date(lastReset || '2000-01-01').getMonth();
+        } catch (error) {
+          logStep("Error parsing last_route_reset_date, using default", { error: error.message, lastReset });
+        }
         
         if (currentMonth !== lastResetMonth) {
           // Reset monthly count
@@ -111,14 +117,25 @@ serve(async (req) => {
       let daysLeftInTrial = 0;
 
       if (settings?.trial_end_date && settings?.is_trial_active) {
-        const endDate = new Date(settings.trial_end_date);
-        const now = new Date();
-        isTrialActive = endDate > now;
-        
-        if (isTrialActive) {
-          trialEndDate = settings.trial_end_date;
-          daysLeftInTrial = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 3600 * 24)));
-          routeLimit = -1; // Unlimited during trial
+        try {
+          const endDate = new Date(settings.trial_end_date);
+          const now = new Date();
+          
+          // Valider at endDate er gyldig
+          if (isNaN(endDate.getTime())) {
+            logStep("Invalid trial_end_date, treating as no trial", { trial_end_date: settings.trial_end_date });
+          } else {
+            isTrialActive = endDate > now;
+            
+            if (isTrialActive) {
+              trialEndDate = settings.trial_end_date;
+              daysLeftInTrial = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 3600 * 24)));
+              routeLimit = -1; // Unlimited during trial
+            }
+          }
+        } catch (error) {
+          logStep("Error parsing trial_end_date, treating as no trial", { error: error.message, trial_end_date: settings.trial_end_date });
+        }
         }
       }
 
@@ -203,15 +220,30 @@ serve(async (req) => {
     let daysLeftInTrial = 0;
 
     if (settings?.trial_end_date && settings?.is_trial_active) {
-      const endDate = new Date(settings.trial_end_date);
-      const now = new Date();
-      isTrialActive = endDate > now;
-      
-      if (isTrialActive) {
-        trialEndDate = settings.trial_end_date;
-        daysLeftInTrial = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 3600 * 24)));
-      } else {
-        // Mark trial as inactive if expired
+      try {
+        const endDate = new Date(settings.trial_end_date);
+        const now = new Date();
+        
+        // Valider at endDate er gyldig
+        if (isNaN(endDate.getTime())) {
+          logStep("Invalid trial_end_date in final check, treating as no trial", { trial_end_date: settings.trial_end_date });
+        } else {
+          isTrialActive = endDate > now;
+          
+          if (isTrialActive) {
+            trialEndDate = settings.trial_end_date;
+            daysLeftInTrial = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 3600 * 24)));
+          } else {
+            // Mark trial as inactive if expired
+            await supabaseClient
+              .from('user_settings')
+              .update({ is_trial_active: false })
+              .eq('user_id', user.id);
+          }
+        }
+      } catch (error) {
+        logStep("Error parsing trial_end_date in final check", { error: error.message, trial_end_date: settings.trial_end_date });
+        // Mark trial as inactive if there's a parsing error
         await supabaseClient
           .from('user_settings')
           .update({ is_trial_active: false })
