@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import CarSelector from "@/components/CarSelector";
+import WeatherImpact from "@/components/WeatherImpact";
 import RouteInput from "@/components/RouteInput";
 import RouteSelector from "@/components/RouteSelector";
 import ChargingMap from "@/components/ChargingMap";
@@ -754,6 +755,14 @@ function Index() {
                 routeData={routeData}
                 onRouteChange={setRouteData}
                 onPlanRoute={handlePlanRoute}
+              />
+            </div>
+
+            {/* Weather Impact Section */}
+            <div>
+              <WeatherImpact 
+                selectedCar={selectedCar}
+                routeData={routeData}
               />
             </div>
 
