@@ -13,7 +13,7 @@ import RouteInput from "@/components/RouteInput";
 import RouteSelector from "@/components/RouteSelector";
 import ChargingMap from "@/components/ChargingMap";
 import RouteMap from "@/components/RouteMap";
-import { Zap, Route, MapPin, Car, Battery, LogIn, User, CreditCard, LogOut, AlertTriangle, BarChart3 } from "lucide-react";
+import { Zap, Route, MapPin, Car, Battery, LogIn, User, CreditCard, LogOut, AlertTriangle, BarChart3, Building2 } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 import { type RouteOption } from "@/components/RouteSelector";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
@@ -662,12 +662,23 @@ function Index() {
                   <Button variant="ghost" size="sm" onClick={handleSignOut}>
                     <LogOut className="h-4 w-4" />
                   </Button>
+                  
+                  <Button variant="outline" size="sm" onClick={() => navigate('/business')}>
+                    <Building2 className="h-4 w-4 mr-2" />
+                    Business
+                  </Button>
                 </>
               ) : (
-                <Button onClick={() => navigate('/auth')} size="sm">
-                  <LogIn className="h-4 w-4 mr-2" />
-                  Logg inn
-                </Button>
+                <div className="flex items-center space-x-2">
+                  <Button onClick={() => navigate('/auth')} size="sm">
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Logg inn
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/business')}>
+                    <Building2 className="h-4 w-4 mr-2" />
+                    Business
+                  </Button>
+                </div>
               )}
             </div>
           </div>

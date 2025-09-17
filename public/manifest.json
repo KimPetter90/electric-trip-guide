@@ -1,0 +1,23 @@
+{
+  "name": "ElRoute - Smart EV Route Planning",
+  "short_name": "ElRoute",
+  "description": "AI-powered route planning for electric vehicles in Norway",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#00ff88",
+  "icons": [
+    {
+      "src": "/placeholder.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/placeholder.svg", 
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["navigation", "travel", "automotive"],
+  "orientation": "portrait-primary"
+}
