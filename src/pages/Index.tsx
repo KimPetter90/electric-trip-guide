@@ -126,8 +126,8 @@ function Index() {
   // Sjekk om brukeren har tilgang til analytics
   const hasAnalyticsAccess = user?.email === 'kpkopperstad@gmail.com';
   
-  // Optimalisert nullstilling av rutevalg med debounce - men ikke reset showRoute hvis bruker har planlagt rute
-  useEffect(() => {
+  // TEMPORARILY DISABLED - Optimalisert nullstilling av rutevalg med debounce
+  /*useEffect(() => {
     console.log('🔍 ROUTE OPTIONS EFFECT - triggered:', {
       routeOptionsLength: routeOptions.length,
       showRoute,
@@ -146,7 +146,7 @@ function Index() {
     }, 300); // Debounce for å unngå unødvendige re-renders
 
     return () => clearTimeout(timer);
-  }, [routeData.from, routeData.to, routeData.via, selectedCar?.id, routeOptions.length, showRoute]);
+  }, [routeData.from, routeData.to, routeData.via, selectedCar?.id, routeOptions.length, showRoute]);*/
   
   // Debug logging for showRoute changes
   useEffect(() => {
