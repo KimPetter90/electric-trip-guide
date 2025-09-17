@@ -465,6 +465,16 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: boolean
       }
+      get_daily_analytics: {
+        Args: { days_back: number }
+        Returns: {
+          date: string
+          logged_in_users: number
+          total_pageviews: number
+          total_sessions: number
+          unique_sessions: number
+        }[]
+      }
       increment_route_count: {
         Args: { user_uuid: string }
         Returns: undefined

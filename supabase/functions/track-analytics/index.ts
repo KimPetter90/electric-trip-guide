@@ -26,6 +26,9 @@ serve(async (req) => {
                       req.headers.get('x-real-ip') || 
                       'unknown'
 
+      // Generate session ID if not provided
+      const finalSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
       // Get user if authenticated
       const authHeader = req.headers.get('authorization')
       let userId = null
@@ -40,10 +43,10 @@ serve(async (req) => {
       const { error } = await supabase
         .from('page_views')
         .insert({
-          session_id: sessionId,
-          page_path: pagePath,
-          referrer: referrer,
-          user_agent: userAgent,
+          session_id: finalSessionId,
+          page_path: pagePath || '/',
+          referrer: referrer || null,
+          user_agent: userAgent || 'unknown',
           ip_address: clientIP,
           user_id: userId
         })

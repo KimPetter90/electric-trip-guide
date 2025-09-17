@@ -1,6 +1,16 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+// Generate a persistent session ID for the browser session
+const getSessionId = () => {
+  let sessionId = sessionStorage.getItem('analytics_session_id');
+  if (!sessionId) {
+    sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    sessionStorage.setItem('analytics_session_id', sessionId);
+  }
+  return sessionId;
+};
+
 export const useAnalytics = () => {
   useEffect(() => {
     const trackPageView = async () => {
@@ -9,9 +19,10 @@ export const useAnalytics = () => {
         
         await supabase.functions.invoke('track-analytics', {
           body: {
-            page_path: window.location.pathname,
+            sessionId: getSessionId(),
+            pagePath: window.location.pathname,
             referrer: document.referrer || null,
-            user_agent: navigator.userAgent
+            userAgent: navigator.userAgent
           },
           headers: session ? {
             authorization: `Bearer ${session.access_token}`
@@ -27,15 +38,18 @@ export const useAnalytics = () => {
 };
 
 export const trackEvent = async (eventData: { 
-  page_path: string; 
+  pagePath: string; 
   referrer?: string; 
-  user_agent?: string; 
+  userAgent?: string; 
 }) => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     
     await supabase.functions.invoke('track-analytics', {
-      body: eventData,
+      body: {
+        sessionId: getSessionId(),
+        ...eventData
+      },
       headers: session ? {
         authorization: `Bearer ${session.access_token}`
       } : {}
