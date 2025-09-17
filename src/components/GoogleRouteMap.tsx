@@ -107,44 +107,56 @@ const GoogleRouteMap: React.FC<{
           language: 'no'
         });
 
-        await loader.load();
-        console.log('✅ Google Maps API lastet');
+        console.log('🔧 Loading Google Maps JavaScript API...');
+        const google = await loader.load();
+        console.log('✅ Google Maps JavaScript API loaded successfully');
 
         if (!mapRef.current) {
+          console.error('❌ Map container element not found');
           onError('Kartcontainer ikke tilgjengelig');
           onLoadingChange(false);
           return;
         }
 
-        // Initialize map
-        const map = new google.maps.Map(mapRef.current, {
-          center: center,
-          zoom: zoom,
-          mapTypeId: google.maps.MapTypeId.SATELLITE,
-          mapTypeControl: true,
-          zoomControl: true,
-          streetViewControl: false,
-          fullscreenControl: true,
-        });
-
-        mapInstanceRef.current = map;
+        console.log('🗺️ Creating Google Maps instance...');
         
-        // Initialize directions service and renderer
-        directionsServiceRef.current = new google.maps.DirectionsService();
-        directionsRendererRef.current = new google.maps.DirectionsRenderer({
-          suppressMarkers: false,
-          polylineOptions: {
-            strokeColor: '#2563eb',
-            strokeWeight: 4,
-            strokeOpacity: 0.8
-          }
-        });
-        
-        directionsRendererRef.current.setMap(map);
+        // Initialize map with explicit error handling
+        try {
+          const map = new google.maps.Map(mapRef.current, {
+            center: center,
+            zoom: zoom,
+            mapTypeId: google.maps.MapTypeId.SATELLITE,
+            mapTypeControl: true,
+            zoomControl: true,
+            streetViewControl: false,
+            fullscreenControl: true,
+          });
 
-        console.log('✅ Google Maps initialisert');
-        onLoadingChange(false);
-        onMapLoad?.(map);
+          console.log('✅ Google Maps instance created successfully');
+          mapInstanceRef.current = map;
+          
+          // Initialize directions service and renderer
+          directionsServiceRef.current = new google.maps.DirectionsService();
+          directionsRendererRef.current = new google.maps.DirectionsRenderer({
+            suppressMarkers: false,
+            polylineOptions: {
+              strokeColor: '#2563eb',
+              strokeWeight: 4,
+              strokeOpacity: 0.8
+            }
+          });
+          
+          directionsRendererRef.current.setMap(map);
+          console.log('✅ Google Maps DirectionsService and DirectionsRenderer initialized');
+
+          onLoadingChange(false);
+          onMapLoad?.(map);
+          
+        } catch (mapInitError: any) {
+          console.error('❌ Error creating Google Maps instance:', mapInitError);
+          onError(`Kunne ikke initialisere Google Maps: ${mapInitError.message}`);
+          onLoadingChange(false);
+        }
 
       } catch (err) {
         console.error('❌ Feil ved initialisering av Google Maps:', err);
@@ -346,8 +358,9 @@ const GoogleRouteMap: React.FC<{
           width: '100%', 
           height: '500px',
           backgroundColor: '#f0f0f0',
-          border: '2px solid #ddd',
-          borderRadius: '8px'
+          border: '2px solid #007bff',
+          borderRadius: '8px',
+          minHeight: '500px' // Ensure minimum height
         }} 
       />
       {/* Debug info overlay */}
@@ -355,15 +368,39 @@ const GoogleRouteMap: React.FC<{
         position: 'absolute',
         top: '10px',
         left: '10px',
-        background: 'rgba(0,0,0,0.7)',
+        background: 'rgba(0,0,0,0.8)',
         color: 'white',
-        padding: '5px 10px',
-        borderRadius: '4px',
-        fontSize: '12px',
-        zIndex: 1000
+        padding: '8px 12px',
+        borderRadius: '6px',
+        fontSize: '14px',
+        fontWeight: 'bold',
+        zIndex: 1000,
+        fontFamily: 'monospace'
       }}>
-        Google Maps: {mapInstanceRef.current ? 'Lastet' : 'Laster...'}
+        🗺️ Status: {mapInstanceRef.current ? '✅ Kart lastet' : '⏳ Laster...'}
       </div>
+      
+      {/* Loading overlay */}
+      {!mapInstanceRef.current && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(240, 240, 240, 0.9)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '18px',
+          fontWeight: 'bold',
+          color: '#666',
+          borderRadius: '8px',
+          zIndex: 999
+        }}>
+          🔄 Laster Google Maps...
+        </div>
+      )}
     </div>
   );
 };
