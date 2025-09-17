@@ -73,6 +73,7 @@ function Index() {
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
+  const [planningRoute, setPlanningRoute] = useState(false); // Ny loading state for planlegging
   
   // Ladestasjon state for å vise ladeknapp
   const [showChargingButton, setShowChargingButton] = useState(false);
@@ -536,57 +537,67 @@ function Index() {
   };
 
   const handlePlanRoute = async () => {
-    // Validering av input
-    if (!selectedCar) {
-      toast({
-        title: "Velg bil",
-        description: "Du må velge en bil før du kan planlegge rute.",
-        variant: "destructive",
-      });
+    // Forhindre double-click
+    if (planningRoute) {
+      console.log('🚫 Ruteplanlegging pågår allerede, ignorerer klikk');
       return;
     }
 
-    if (!routeData.from || !routeData.to) {
-      toast({
-        title: "Angi rute",
-        description: "Du må fylle ut både start- og sluttdestinasjon.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (routeData.from.toLowerCase().trim() === routeData.to.toLowerCase().trim()) {
-      toast({
-        title: "Ugyldig rute",
-        description: "Start- og sluttdestinasjon kan ikke være den samme.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Sjekk autentisering
-    if (!user) {
-      toast({
-        title: "Logg inn for å planlegge ruter",
-        description: "Du må være innlogget for å bruke ruteplanleggeren.",
-        variant: "destructive",
-      });
-      navigate('/auth');
-      return;
-    }
-
-    // Sjekk rutegrenser
-    if (subscription && subscription.route_limit !== -1 && subscription.route_count >= subscription.route_limit) {
-      toast({
-        title: "Rutegrense nådd",
-        description: `Du har brukt opp alle dine ${subscription.route_limit} ruter for denne måneden. Oppgrader for flere ruter.`,
-        variant: "destructive",
-      });
-      navigate('/pricing');
-      return;
-    }
+    setPlanningRoute(true);
     
     try {
+      // Validering av input
+      if (!selectedCar) {
+        toast({
+          title: "Velg bil",
+          description: "Du må velge en bil før du kan planlegge rute.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!routeData.from || !routeData.to) {
+        toast({
+          title: "Angi rute",
+          description: "Du må fylle ut både start- og sluttdestinasjon.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (routeData.from.toLowerCase().trim() === routeData.to.toLowerCase().trim()) {
+        toast({
+          title: "Ugyldig rute",
+          description: "Start- og sluttdestinasjon kan ikke være den samme.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Sjekk autentisering
+      if (!user) {
+        toast({
+          title: "Logg inn for å planlegge ruter",
+          description: "Du må være innlogget for å bruke ruteplanleggeren.",
+          variant: "destructive",
+        });
+        navigate('/auth');
+        return;
+      }
+
+      // Sjekk rutegrenser
+      if (subscription && subscription.route_limit !== -1 && subscription.route_count >= subscription.route_limit) {
+        toast({
+          title: "Rutegrense nådd",
+          description: `Du har brukt opp alle dine ${subscription.route_limit} ruter for denne måneden. Oppgrader for flere ruter.`,
+          variant: "destructive",
+        });
+        navigate('/pricing');
+        return;
+      }
+      
+      console.log('🚀 Starter ruteplanlegging...');
+      
       // Oppdater ruteteller
       if (user && subscription) {
         await supabase.rpc('increment_route_count', { user_uuid: user.id });
@@ -601,6 +612,9 @@ function Index() {
         title: "Rute planlagt!",
         description: subscription ? `Ruter brukt: ${subscription.route_count + 1} / ${subscription.route_limit === -1 ? '∞' : subscription.route_limit}` : "Gratis rute planlagt",
       });
+      
+      console.log('✅ Ruteplanlegging fullført');
+      
     } catch (error) {
       console.error('Feil ved ruteplanlegging:', error);
       toast({
@@ -608,6 +622,11 @@ function Index() {
         description: "Noe gikk galt. Prøv igjen senere.",
         variant: "destructive",
       });
+    } finally {
+      // Alltid reset loading state etter en kort delay
+      setTimeout(() => {
+        setPlanningRoute(false);
+      }, 1000); // 1 sekund minimum loading
     }
   };
 
@@ -794,6 +813,7 @@ function Index() {
                 routeData={routeData}
                 onRouteChange={setRouteData}
                 onPlanRoute={handlePlanRoute}
+                isPlanning={planningRoute}
               />
             </div>
 

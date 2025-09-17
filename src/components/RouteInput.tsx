@@ -241,9 +241,10 @@ interface RouteInputProps {
   routeData: RouteData;
   onRouteChange: (data: RouteData) => void;
   onPlanRoute: () => void;
+  isPlanning?: boolean; // Ny prop for loading state
 }
 
-export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: RouteInputProps) {
+export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPlanning = false }: RouteInputProps) {
   const [allCities, setAllCities] = useState<string[]>([]);
   const [calendarOpen, setCalendarOpen] = useState(false);
 
@@ -440,11 +441,21 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute }: Ro
 
         <Button
           onClick={onPlanRoute}
-          className="w-full bg-gradient-electric hover:bg-gradient-eco shadow-neon hover:shadow-glow animate-pulse-neon"
+          disabled={isPlanning}
+          className="w-full bg-gradient-electric hover:bg-gradient-eco shadow-neon hover:shadow-glow animate-pulse-neon disabled:opacity-50 disabled:cursor-not-allowed"
           size="lg"
         >
-          <Route className="h-4 w-4 mr-2" />
-          Planlegg rute
+          {isPlanning ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></div>
+              Planlegger rute...
+            </>
+          ) : (
+            <>
+              <Route className="h-4 w-4 mr-2" />
+              Planlegg rute
+            </>
+          )}
         </Button>
       </div>
     </Card>
