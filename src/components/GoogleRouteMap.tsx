@@ -390,22 +390,16 @@ const GoogleRouteMap: React.FC<{
       const isNearRoute = !isRecommended && calculatedRoute && isStationNearRoute(station);
       
       
-      // Finn batteriprosent for anbefalte stasjoner
-      const optimizedPlan = getOptimizedChargingPlan();
-      const stationPlan = optimizedPlan.find(plan => plan.station.id === station.id);
-      const batteryAtArrival = stationPlan ? stationPlan.batteryLevelOnArrival.toFixed(0) : null;
-      
       const markerIcon = isRecommended ? {
-        // Blå markører for anbefalte ladestasjoner med batteriprosent
+        // Blå markører for anbefalte ladestasjoner (enkel design)
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 26 26">
-            <circle cx="13" cy="13" r="12" fill="#0066ff" stroke="#004499" stroke-width="1"/>
-            <text x="13" y="11" text-anchor="middle" fill="white" font-size="10" font-weight="bold">${batteryAtArrival || '?'}%</text>
-            <text x="13" y="20" text-anchor="middle" fill="white" font-size="8" font-weight="bold">⚡</text>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="9" fill="#0066ff" stroke="#004499" stroke-width="1"/>
+            <text x="10" y="14" text-anchor="middle" fill="white" font-size="11" font-weight="bold">⚡</text>
           </svg>
         `),
-        scaledSize: new google.maps.Size(26, 26),
-        anchor: new google.maps.Point(13, 13)
+        scaledSize: new google.maps.Size(20, 20),
+        anchor: new google.maps.Point(10, 10)
       } : isNearRoute ? {
         // Røde markører for stasjoner nær ruten (som på det gamle kartet)
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
@@ -430,12 +424,17 @@ const GoogleRouteMap: React.FC<{
       const marker = new google.maps.Marker({
         position: { lat: station.latitude, lng: station.longitude },
         map: mapInstanceRef.current!,
-        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isRecommended ? `\n💙 ANBEFALT LADESTASJON\n🔋 Ca ${batteryAtArrival || '?'}% batteri igjen ved ankomst` : isNearRoute ? '\n🔴 NÆR RUTEN' : '\n🟢 LANGT FRA RUTEN'}`,
+        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isRecommended ? '\n💙 ANBEFALT LADESTASJON' : isNearRoute ? '\n🔴 NÆR RUTEN' : '\n🟢 LANGT FRA RUTEN'}`,
         icon: markerIcon
       });
 
       // Legg til klikk-event for ladestasjon-markør
       marker.addListener('click', () => {
+        // Finn batteriprosent for anbefalte stasjoner
+        const optimizedPlan = getOptimizedChargingPlan();
+        const stationPlan = optimizedPlan.find(plan => plan.station.id === station.id);
+        const batteryAtArrival = stationPlan ? stationPlan.batteryLevelOnArrival.toFixed(1) : null;
+        
         const statusColor = station.available > 0 ? 'hsl(140 100% 50%)' : 'hsl(0 84% 60%)';
         const statusText = station.available > 0 ? 'TILGJENGELIG' : 'OPPTATT';
         const routeIndicator = isRecommended ? 'ANBEFALT LADESTASJON' : isNearRoute ? 'PÅ RUTEN' : 'LADESTASJON';
@@ -564,6 +563,44 @@ const GoogleRouteMap: React.FC<{
                   <span style="color: hsl(200 100% 80%); font-size: 13px; font-weight: 500;">📍 Koordinater</span>
                   <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%); font-family: 'Courier New', monospace;">${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}</span>
                 </div>
+                ${isRecommended && batteryAtArrival ? `
+                <div style="
+                  margin: 12px 0 0 0; 
+                  padding: 12px; 
+                  background: linear-gradient(135deg, hsl(240 100% 60% / 0.15) 0%, hsl(260 100% 50% / 0.15) 100%); 
+                  border-radius: 8px; 
+                  border: 1px solid hsl(240 100% 60% / 0.3);
+                  position: relative;
+                  overflow: hidden;
+                ">
+                  <div style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: radial-gradient(circle at 80% 20%, hsl(240 100% 60% / 0.1) 0%, transparent 70%);
+                  "></div>
+                  <div style="position: relative; z-index: 1;">
+                    <p style="
+                      margin: 0 0 8px 0; 
+                      color: hsl(240 100% 70%); 
+                      font-weight: 700; 
+                      font-size: 14px;
+                    ">💙 OPTIMAL LADESTOPPUNKT</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin: 4px 0;">
+                      <span style="color: hsl(240 100% 80%); font-size: 13px; font-weight: 500;">🔋 Batteri ved ankomst</span>
+                      <span style="font-weight: 700; font-size: 15px; color: hsl(240 100% 80%);">${batteryAtArrival}%</span>
+                    </div>
+                    <p style="
+                      margin: 6px 0 0 0; 
+                      color: hsl(240 100% 85%); 
+                      font-size: 12px;
+                      opacity: 0.9;
+                    ">Beregnet med værforhold og hengerlast</p>
+                  </div>
+                </div>
+                ` : ''}
                 ${isNearRoute ? `
                 <div style="
                   margin: 12px 0 0 0; 
