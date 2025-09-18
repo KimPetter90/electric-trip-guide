@@ -224,18 +224,21 @@ const GoogleRouteMap: React.FC<{
         const routeColor = isNearRoute ? 'hsl(0 84% 60%)' : 'hsl(140 100% 50%)';
         
         const infoWindow = new google.maps.InfoWindow({
+          maxWidth: 380,
+          disableAutoPan: false,
           content: `
             <div style="
               font-family: Inter, system-ui, sans-serif; 
               padding: 0; 
               line-height: 1.4; 
-              min-width: 320px; 
-              background: linear-gradient(135deg, hsl(225 25% 6% / 0.95) 0%, hsl(180 100% 6% / 0.9) 30%, hsl(225 25% 6% / 0.95) 100%);
-              border: 1px solid ${isNearRoute ? 'hsl(0 84% 60% / 0.4)' : 'hsl(140 100% 50% / 0.4)'};
+              width: 360px; 
+              max-height: none;
+              overflow: visible;
+              background: linear-gradient(135deg, hsl(225 25% 8% / 0.98) 0%, hsl(180 100% 8% / 0.95) 30%, hsl(225 25% 8% / 0.98) 100%);
+              border: 1px solid ${isNearRoute ? 'hsl(0 84% 60% / 0.5)' : 'hsl(140 100% 50% / 0.5)'};
               border-radius: 12px;
-              box-shadow: 0 8px 32px ${isNearRoute ? 'hsl(0 84% 60% / 0.15)' : 'hsl(140 100% 50% / 0.15)'}, 0 0 0 1px ${isNearRoute ? 'hsl(0 84% 60% / 0.1)' : 'hsl(140 100% 50% / 0.1)'};
-              backdrop-filter: blur(12px);
-              overflow: hidden;
+              box-shadow: 0 8px 32px ${isNearRoute ? 'hsl(0 84% 60% / 0.2)' : 'hsl(140 100% 50% / 0.2)'}, 0 0 0 1px ${isNearRoute ? 'hsl(0 84% 60% / 0.15)' : 'hsl(140 100% 50% / 0.15)'};
+              backdrop-filter: blur(16px);
             ">
               <div style="
                 background: linear-gradient(135deg, ${routeColor} 0%, ${isNearRoute ? 'hsl(320 100% 60%)' : 'hsl(120 100% 60%)'} 100%);
@@ -275,38 +278,38 @@ const GoogleRouteMap: React.FC<{
                   ">${statusText}</span>
                 </div>
               </div>
-              <div style="padding: 16px; background: hsl(225 25% 10% / 0.8);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(140 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(140 100% 50%);">
-                  <span style="color: hsl(140 100% 70%); font-size: 13px; font-weight: 500;">🔋 Tilgjengelighet</span>
-                  <span style="font-weight: 600; font-size: 13px; color: ${station.available > 0 ? 'hsl(140 100% 70%)' : 'hsl(0 84% 60%)'};">${station.available}/${station.total} ledige</span>
+              <div style="padding: 16px; background: transparent;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0; padding: 8px; background: hsl(140 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(140 100% 50%);">
+                  <span style="color: hsl(140 100% 80%); font-size: 13px; font-weight: 500;">🔋 Tilgjengelighet</span>
+                  <span style="font-weight: 600; font-size: 13px; color: ${station.available > 0 ? 'hsl(140 100% 80%)' : 'hsl(0 84% 70%)'};">${station.available}/${station.total} ledige</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(180 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(180 100% 50%);">
-                  <span style="color: hsl(180 100% 70%); font-size: 13px; font-weight: 500;">⚡ Ladeeffekt</span>
-                  <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%);">${station.power || 'Ikke oppgitt'}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0; padding: 8px; background: hsl(180 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(180 100% 50%);">
+                  <span style="color: hsl(180 100% 80%); font-size: 13px; font-weight: 500;">⚡ Ladeeffekt</span>
+                  <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%);">${station.power || 'Ikke oppgitt'}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(280 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(280 100% 50%);">
-                  <span style="color: hsl(280 100% 70%); font-size: 13px; font-weight: 500;">💰 Kostnad</span>
-                  <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%);">${station.cost || 'Gratis'} kr/kWh</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0; padding: 8px; background: hsl(280 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(280 100% 50%);">
+                  <span style="color: hsl(280 100% 80%); font-size: 13px; font-weight: 500;">💰 Kostnad</span>
+                  <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%);">${station.cost || 'Gratis'} kr/kWh</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(45 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(45 100% 50%);">
-                  <span style="color: hsl(45 100% 70%); font-size: 13px; font-weight: 500;">🏢 Leverandør</span>
-                  <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%);">${station.provider || 'Ukjent'}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0; padding: 8px; background: hsl(45 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(45 100% 50%);">
+                  <span style="color: hsl(45 100% 80%); font-size: 13px; font-weight: 500;">🏢 Leverandør</span>
+                  <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%);">${station.provider || 'Ukjent'}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(120 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(120 100% 50%);">
-                  <span style="color: hsl(120 100% 70%); font-size: 13px; font-weight: 500;">🚀 Hurtiglader</span>
-                  <span style="font-weight: 600; font-size: 13px; color: ${station.fast_charger ? 'hsl(140 100% 70%)' : 'hsl(0 84% 60%)'};">${station.fast_charger ? 'Ja' : 'Nei'}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0; padding: 8px; background: hsl(120 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(120 100% 50%);">
+                  <span style="color: hsl(120 100% 80%); font-size: 13px; font-weight: 500;">🚀 Hurtiglader</span>
+                  <span style="font-weight: 600; font-size: 13px; color: ${station.fast_charger ? 'hsl(140 100% 80%)' : 'hsl(0 84% 70%)'};">${station.fast_charger ? 'Ja' : 'Nei'}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(200 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(200 100% 50%);">
-                  <span style="color: hsl(200 100% 70%); font-size: 13px; font-weight: 500;">📍 Koordinater</span>
-                  <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%); font-family: 'Courier New', monospace;">${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0; padding: 8px; background: hsl(200 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(200 100% 50%);">
+                  <span style="color: hsl(200 100% 80%); font-size: 13px; font-weight: 500;">📍 Koordinater</span>
+                  <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%); font-family: 'Courier New', monospace;">${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}</span>
                 </div>
                 ${isNearRoute ? `
                 <div style="
                   margin: 12px 0 0 0; 
                   padding: 12px; 
-                  background: linear-gradient(135deg, hsl(0 84% 60% / 0.1) 0%, hsl(320 100% 50% / 0.1) 100%); 
+                  background: linear-gradient(135deg, hsl(0 84% 60% / 0.15) 0%, hsl(320 100% 50% / 0.15) 100%); 
                   border-radius: 8px; 
-                  border: 1px solid hsl(0 84% 60% / 0.2);
+                  border: 1px solid hsl(0 84% 60% / 0.3);
                   position: relative;
                   overflow: hidden;
                 ">
@@ -320,7 +323,7 @@ const GoogleRouteMap: React.FC<{
                   "></div>
                   <p style="
                     margin: 0; 
-                    color: hsl(0 84% 60%); 
+                    color: hsl(0 84% 70%); 
                     font-weight: 700; 
                     font-size: 14px;
                     position: relative;
@@ -453,18 +456,21 @@ const GoogleRouteMap: React.FC<{
         // Legg til klikk-event for start-markør
         startMarker.addListener('click', () => {
           const infoWindow = new google.maps.InfoWindow({
+            maxWidth: 350,
+            disableAutoPan: false,
             content: `
               <div style="
                 font-family: Inter, system-ui, sans-serif; 
                 padding: 0; 
                 line-height: 1.4; 
-                min-width: 280px; 
-                background: linear-gradient(135deg, hsl(225 25% 6% / 0.95) 0%, hsl(140 100% 6% / 0.9) 30%, hsl(225 25% 6% / 0.95) 100%);
-                border: 1px solid hsl(140 100% 50% / 0.3);
+                width: 320px; 
+                max-height: none;
+                overflow: visible;
+                background: linear-gradient(135deg, hsl(225 25% 8% / 0.98) 0%, hsl(140 100% 8% / 0.95) 30%, hsl(225 25% 8% / 0.98) 100%);
+                border: 1px solid hsl(140 100% 50% / 0.4);
                 border-radius: 12px;
-                box-shadow: 0 8px 32px hsl(140 100% 50% / 0.15), 0 0 0 1px hsl(140 100% 50% / 0.1);
-                backdrop-filter: blur(12px);
-                overflow: hidden;
+                box-shadow: 0 8px 32px hsl(140 100% 50% / 0.2), 0 0 0 1px hsl(140 100% 50% / 0.15);
+                backdrop-filter: blur(16px);
               ">
                 <div style="
                   background: linear-gradient(135deg, hsl(140 100% 50%) 0%, hsl(120 100% 60%) 100%);
@@ -495,18 +501,18 @@ const GoogleRouteMap: React.FC<{
                     ">RUTE START</span>
                   </div>
                 </div>
-                <div style="padding: 16px; background: hsl(225 25% 10% / 0.8);">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(140 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(140 100% 50%);">
-                    <span style="color: hsl(140 100% 70%); font-size: 13px; font-weight: 500;">📍 Koordinater</span>
-                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%); font-family: 'Courier New', monospace;">${leg.start_location.lat().toFixed(4)}, ${leg.start_location.lng().toFixed(4)}</span>
+                <div style="padding: 16px; background: transparent;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(140 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(140 100% 50%);">
+                    <span style="color: hsl(140 100% 80%); font-size: 13px; font-weight: 500;">📍 Koordinater</span>
+                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%); font-family: 'Courier New', monospace;">${leg.start_location.lat().toFixed(4)}, ${leg.start_location.lng().toFixed(4)}</span>
                   </div>
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(180 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(180 100% 50%);">
-                    <span style="color: hsl(180 100% 70%); font-size: 13px; font-weight: 500;">📏 Total avstand</span>
-                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%);">${leg.distance?.text || 'Beregner...'}</span>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(180 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(180 100% 50%);">
+                    <span style="color: hsl(180 100% 80%); font-size: 13px; font-weight: 500;">📏 Total avstand</span>
+                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%);">${leg.distance?.text || 'Beregner...'}</span>
                   </div>
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(280 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(280 100% 50%);">
-                    <span style="color: hsl(280 100% 70%); font-size: 13px; font-weight: 500;">⏰ Estimert tid</span>
-                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%);">${leg.duration?.text || 'Beregner...'}</span>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(280 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(280 100% 50%);">
+                    <span style="color: hsl(280 100% 80%); font-size: 13px; font-weight: 500;">⏰ Estimert tid</span>
+                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%);">${leg.duration?.text || 'Beregner...'}</span>
                   </div>
                 </div>
               </div>
@@ -535,18 +541,21 @@ const GoogleRouteMap: React.FC<{
         // Legg til klikk-event for slutt-markør
         endMarker.addListener('click', () => {
           const infoWindow = new google.maps.InfoWindow({
+            maxWidth: 350,
+            disableAutoPan: false,
             content: `
               <div style="
                 font-family: Inter, system-ui, sans-serif; 
                 padding: 0; 
                 line-height: 1.4; 
-                min-width: 280px; 
-                background: linear-gradient(135deg, hsl(225 25% 6% / 0.95) 0%, hsl(280 100% 6% / 0.9) 30%, hsl(225 25% 6% / 0.95) 100%);
-                border: 1px solid hsl(280 100% 50% / 0.3);
+                width: 320px; 
+                max-height: none;
+                overflow: visible;
+                background: linear-gradient(135deg, hsl(225 25% 8% / 0.98) 0%, hsl(280 100% 8% / 0.95) 30%, hsl(225 25% 8% / 0.98) 100%);
+                border: 1px solid hsl(280 100% 50% / 0.4);
                 border-radius: 12px;
-                box-shadow: 0 8px 32px hsl(280 100% 50% / 0.15), 0 0 0 1px hsl(280 100% 50% / 0.1);
-                backdrop-filter: blur(12px);
-                overflow: hidden;
+                box-shadow: 0 8px 32px hsl(280 100% 50% / 0.2), 0 0 0 1px hsl(280 100% 50% / 0.15);
+                backdrop-filter: blur(16px);
               ">
                 <div style="
                   background: linear-gradient(135deg, hsl(280 100% 50%) 0%, hsl(320 100% 60%) 100%);
@@ -577,18 +586,18 @@ const GoogleRouteMap: React.FC<{
                     ">DESTINASJON</span>
                   </div>
                 </div>
-                <div style="padding: 16px; background: hsl(225 25% 10% / 0.8);">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(280 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(280 100% 50%);">
-                    <span style="color: hsl(280 100% 70%); font-size: 13px; font-weight: 500;">📍 Koordinater</span>
-                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%); font-family: 'Courier New', monospace;">${leg.end_location.lat().toFixed(4)}, ${leg.end_location.lng().toFixed(4)}</span>
+                <div style="padding: 16px; background: transparent;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(280 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(280 100% 50%);">
+                    <span style="color: hsl(280 100% 80%); font-size: 13px; font-weight: 500;">📍 Koordinater</span>
+                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%); font-family: 'Courier New', monospace;">${leg.end_location.lat().toFixed(4)}, ${leg.end_location.lng().toFixed(4)}</span>
                   </div>
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(180 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(180 100% 50%);">
-                    <span style="color: hsl(180 100% 70%); font-size: 13px; font-weight: 500;">📏 Total avstand</span>
-                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%);">${leg.distance?.text || 'Beregner...'}</span>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(180 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(180 100% 50%);">
+                    <span style="color: hsl(180 100% 80%); font-size: 13px; font-weight: 500;">📏 Total avstand</span>
+                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%);">${leg.distance?.text || 'Beregner...'}</span>
                   </div>
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(140 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(140 100% 50%);">
-                    <span style="color: hsl(140 100% 70%); font-size: 13px; font-weight: 500;">⏰ Total tid</span>
-                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%);">${leg.duration?.text || 'Beregner...'}</span>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(140 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(140 100% 50%);">
+                    <span style="color: hsl(140 100% 80%); font-size: 13px; font-weight: 500;">⏰ Total tid</span>
+                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%);">${leg.duration?.text || 'Beregner...'}</span>
                   </div>
                 </div>
               </div>
