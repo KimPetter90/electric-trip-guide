@@ -130,6 +130,11 @@ const GoogleRouteMap: React.FC<{
             zoom: Math.max(zoom, 12), // Høy zoom for å sikre stedsnavn i HYBRID
             mapTypeId: google.maps.MapTypeId.HYBRID, // Tilbake til HYBRID (satellitt med navn)
             mapTypeControl: true,
+            mapTypeControlOptions: {
+              style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+              position: google.maps.ControlPosition.TOP_RIGHT,
+              mapTypeIds: [google.maps.MapTypeId.ROADMAP, google.maps.MapTypeId.SATELLITE]
+            },
             zoomControl: true,
             streetViewControl: false,
             fullscreenControl: true,
@@ -175,6 +180,37 @@ const GoogleRouteMap: React.FC<{
           setIsMapInitialized(true);
           onLoadingChange(false);
           onMapLoad?.(map);
+          
+          // Reduser størrelsen på kart/satellitt knappene med CSS
+          const observer = new MutationObserver(() => {
+            const mapTypeButtons = document.querySelectorAll('.gm-style .gm-style-mtc > div');
+            mapTypeButtons.forEach((button: any) => {
+              if (button) {
+                button.style.fontSize = '10px';
+                button.style.padding = '2px 4px';
+                button.style.minWidth = '30px';
+                button.style.height = '20px';
+                button.style.lineHeight = '16px';
+              }
+            });
+          });
+          
+          // Start observing for changes
+          observer.observe(mapRef.current, { childList: true, subtree: true });
+          
+          // Initial styling
+          setTimeout(() => {
+            const mapTypeButtons = document.querySelectorAll('.gm-style .gm-style-mtc > div');
+            mapTypeButtons.forEach((button: any) => {
+              if (button) {
+                button.style.fontSize = '10px';
+                button.style.padding = '2px 4px';
+                button.style.minWidth = '30px';
+                button.style.height = '20px';
+                button.style.lineHeight = '16px';
+              }
+            });
+          }, 500);
           
         } catch (mapInitError: any) {
           console.error('❌ Error creating Google Maps instance:', mapInitError);
