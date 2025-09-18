@@ -87,6 +87,7 @@ const GoogleRouteMap: React.FC<{
     const initializeMap = async () => {
       try {
         console.log('🗺️ Initialiserer Google Maps...');
+        console.log('🗺️ MapRef.current:', !!mapRef.current);
         onLoadingChange(true);
         onError(null);
 
@@ -1032,14 +1033,18 @@ const GoogleRouteMap: React.FC<{
   // Initial route calculation
   // Trigger route calculation when routeTrigger changes (from "Planlegg rute" button)
   useEffect(() => {
+    console.log('🎯 routeTrigger useEffect triggered:', { routeTrigger, isMapInitialized });
     if (routeTrigger > 0 && isMapInitialized) {
       console.log('🎯 routeTrigger changed:', routeTrigger, '- forcing route calculation');
       calculateRoute();
+    } else if (routeTrigger > 0 && !isMapInitialized) {
+      console.log('⚠️ routeTrigger changed but map not initialized yet');
     }
   }, [routeTrigger, isMapInitialized, calculateRoute]);
 
   // Initial route calculation
   useEffect(() => {
+    console.log('🔄 Initial calculation useEffect:', { isMapInitialized });
     if (isMapInitialized) {
       calculateRoute();
     }

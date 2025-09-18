@@ -245,6 +245,7 @@ function Index() {
   }, []);
 
   const onLoadingChange = useCallback((loading: boolean) => {
+    console.log('🔄 Map loading state changed to:', loading);
     setMapLoading(loading);
   }, []);
 
@@ -673,9 +674,11 @@ function Index() {
     }
 
     // Øyeblikkelig visning av kart og start av ruteberegning
+    console.log('🚀 Setting showRoute=true and routeTrigger=', Date.now());
     setShowRoute(true);
     setRouteTrigger(Date.now());
     setPlanningRoute(true);
+    console.log('🚀 State updated: showRoute=true, planningRoute=true');
     
     try {
       console.log('🚀 Starter ruteplanlegging øyeblikkelig!');
@@ -1002,14 +1005,14 @@ function Index() {
               
               {/* Kart vises alltid */}
               <div data-testid="route-map" className="relative min-h-[500px] bg-card rounded-lg border">
-                {mapLoading && (
-                  <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
-                    <div className="text-center space-y-2">
-                      <Zap className="h-8 w-8 text-primary animate-spin mx-auto" />
-                      <p className="text-sm text-muted-foreground">Laster kart...</p>
-                    </div>
+              {mapLoading && (
+                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+                  <div className="text-center space-y-2">
+                    <Zap className="h-8 w-8 text-primary animate-spin mx-auto" />
+                    <p className="text-sm text-muted-foreground">Laster kart... (Debug: {mapLoading ? 'true' : 'false'})</p>
                   </div>
-                )}
+                </div>
+              )}
                 {mapError && (
                   <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
                     <div className="flex items-center space-x-2">
