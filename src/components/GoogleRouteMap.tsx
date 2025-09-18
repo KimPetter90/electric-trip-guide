@@ -596,31 +596,11 @@ const GoogleRouteMap: React.FC<{
     });
   }, [chargingStations?.length, calculatedRoute, isStationNearRoute, getOptimizedChargingPlan]); // Oppdater når rute endres
 
-  // Calculate route when trigger changes - ROBUST and FOOLPROOF
+  // Fast route calculation
   const calculateRoute = useCallback(async () => {
-    console.log('🔍 ROBUST ruteberegning startet');
-    
-    // Wait for map to be fully initialized
-    let attempts = 0;
-    const maxAttempts = 20;
-    
-    while ((!mapInstanceRef.current || !directionsServiceRef.current || !directionsRendererRef.current) && attempts < maxAttempts) {
-      console.log(`⏳ Venter på kart initialisering (forsøk ${attempts + 1}/${maxAttempts})`);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      attempts++;
-    }
-    
-    // Final validation
+    // Quick validation - no long waits
     if (!mapInstanceRef.current || !directionsServiceRef.current || !directionsRendererRef.current || 
         !routeData.from || !routeData.to || !selectedCar || routeTrigger === 0) {
-      console.log('⏸️ Requirements fortsatt ikke oppfylt etter venting:');
-      console.log('📊 mapInstanceRef.current:', !!mapInstanceRef.current);
-      console.log('📊 directionsServiceRef.current:', !!directionsServiceRef.current);
-      console.log('📊 directionsRendererRef.current:', !!directionsRendererRef.current);
-      console.log('📊 routeData.from:', routeData.from);
-      console.log('📊 routeData.to:', routeData.to);
-      console.log('📊 selectedCar:', !!selectedCar);
-      console.log('📊 routeTrigger:', routeTrigger);
       return;
     }
 

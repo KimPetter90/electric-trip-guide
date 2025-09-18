@@ -659,21 +659,9 @@ function Index() {
       return;
     }
 
-    console.log('✅ Alle valideringer bestått - starter ruteplanlegging');
-    console.log('📊 selectedCar:', selectedCar);
-    console.log('📊 routeData:', routeData);
-
-    // FORCE KART SYNLIG FØRST - før loading state
-    console.log('🎯 FORCING showRoute to TRUE - 150% sikkert!');
+    // Øyeblikkelig visning av kart og start av ruteberegning
     setShowRoute(true);
-    console.log('🎯 FORCING routeTrigger update - garantert trigger!');
-    
-    // Sett routeTrigger til høy verdi for å sikre triggering
-    const newTrigger = Date.now(); // Bruk timestamp for å garantere endring
-    setRouteTrigger(newTrigger);
-    console.log(`🎯 routeTrigger satt til: ${newTrigger}`);
-
-    // BARE sett loading state ETTER at kart er satt synlig
+    setRouteTrigger(Date.now());
     setPlanningRoute(true);
     
     try {
