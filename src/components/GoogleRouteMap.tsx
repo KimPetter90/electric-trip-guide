@@ -173,7 +173,7 @@ const GoogleRouteMap: React.FC<{
           console.log('✅ Google Maps DirectionsService and DirectionsRenderer initialized');
 
           setIsMapInitialized(true);
-          console.log('🗺️ Google Maps loaded successfully');
+          console.log('🗺️ Google Maps loaded successfully - setting loading to false');
           onLoadingChange(false);
           onMapLoad?.(map);
           
@@ -1021,9 +1021,29 @@ const GoogleRouteMap: React.FC<{
     }
   }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, routeTrigger, onRouteCalculated, onLoadingChange, onError]);
 
+  // Trigger route calculation when routeTrigger changes
   useEffect(() => {
-    calculateRoute();
-  }, [calculateRoute]);
+    if (routeTrigger > 0) {
+      console.log('🎯 routeTrigger changed:', routeTrigger, '- forcing route calculation');
+      calculateRoute();
+    }
+  }, [routeTrigger, calculateRoute]);
+
+  // Initial route calculation
+  // Trigger route calculation when routeTrigger changes (from "Planlegg rute" button)
+  useEffect(() => {
+    if (routeTrigger > 0 && isMapInitialized) {
+      console.log('🎯 routeTrigger changed:', routeTrigger, '- forcing route calculation');
+      calculateRoute();
+    }
+  }, [routeTrigger, isMapInitialized, calculateRoute]);
+
+  // Initial route calculation
+  useEffect(() => {
+    if (isMapInitialized) {
+      calculateRoute();
+    }
+  }, [isMapInitialized, calculateRoute]);
 
   return (
     <div style={{ width: '100%', height: '500px', position: 'relative', border: '1px solid hsl(var(--border))', borderRadius: '8px', overflow: 'hidden' }}>
