@@ -640,24 +640,29 @@ function Index() {
       return;
     }
 
+    // FØRST: Sjekk grunnleggende validering UTEN å sette loading state
+    const validation = RouteOptimizer.validateRouteData(selectedCar, routeData);
+    
+    if (!validation.isValid) {
+      console.log('❌ Validering feilet:', validation.errors);
+      
+      // Vis første feil som hovedtittel og andre som beskrivelse
+      const [firstError, ...otherErrors] = validation.errors;
+      
+      toast({
+        title: firstError,
+        description: otherErrors.length > 0 ? `Andre problemer: ${otherErrors.join(', ')}` : "Fyll ut alle påkrevde felt for å planlegge ruten.",
+        variant: "destructive",
+      });
+      
+      // Ikke sett loading state hvis validering feiler
+      return;
+    }
+
+    // BARE sett loading state ETTER at validering har bestått
     setPlanningRoute(true);
     
     try {
-      // ROBUST VALIDERING med RouteOptimizer
-      const validation = RouteOptimizer.validateRouteData(selectedCar, routeData);
-      
-      if (!validation.isValid) {
-        console.log('❌ Validering feilet:', validation.errors);
-        
-        validation.errors.forEach(error => {
-          toast({
-            title: "Ugyldig input",
-            description: error,
-            variant: "destructive",
-          });
-        });
-        return;
-      }
       
       // Sjekk autentisering
       if (!user) {
