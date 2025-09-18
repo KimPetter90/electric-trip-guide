@@ -16,51 +16,49 @@ export function TrialBanner() {
   const isExpiringSoon = daysLeft <= 3;
 
   return (
-    <Card className={`mb-6 glass-card border-2 ${isExpiringSoon ? 'border-destructive/50 neon-glow' : 'border-primary/50 cyber-glow'} transition-all duration-500 animate-fade-in`}>
-      <CardContent className="p-6">
+    <Card className={`mb-3 glass-card border ${isExpiringSoon ? 'border-destructive/30' : 'border-primary/30'} transition-all duration-500`}>
+      <CardContent className="p-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-full relative ${isExpiringSoon ? 'bg-destructive/20' : 'bg-primary/20'}`}>
+          <div className="flex items-center gap-3">
+            <div className={`flex h-8 w-8 items-center justify-center rounded-full ${isExpiringSoon ? 'bg-destructive/20' : 'bg-primary/20'}`}>
               {isExpiringSoon ? (
-                <Clock className={`h-6 w-6 ${isExpiringSoon ? 'text-destructive' : 'text-primary'} animate-pulse`} />
+                <Clock className={`h-4 w-4 ${isExpiringSoon ? 'text-destructive' : 'text-primary'}`} />
               ) : (
-                <Crown className="h-6 w-6 text-primary animate-float" />
+                <Crown className="h-4 w-4 text-primary" />
               )}
-              <div className={`absolute inset-0 rounded-full ${isExpiringSoon ? 'bg-destructive/20' : 'bg-primary/20'} blur-xl animate-pulse-glow`} />
             </div>
             <div>
-              <h3 className="font-orbitron font-bold text-lg flex items-center gap-3 text-gradient">
-                <Zap className="h-5 w-5 text-primary animate-float" style={{ animationDelay: '0.5s' }} />
+              <h3 className="font-medium text-sm text-gradient">
                 Gratis Premium Trial
               </h3>
-              <p className="text-sm text-muted-foreground font-exo">
+              <p className="text-xs text-muted-foreground">
                 {daysLeft > 0 ? (
                   <>
-                    <span className={`${isExpiringSoon ? 'text-destructive' : 'text-primary'} font-semibold text-glow`}>
+                    <span className={`${isExpiringSoon ? 'text-destructive' : 'text-primary'} font-medium`}>
                       {daysLeft} {daysLeft === 1 ? 'dag' : 'dager'}
-                    </span> igjen av full tilgang
+                    </span> igjen
                   </>
                 ) : (
-                  <span className="text-destructive font-semibold text-glow animate-pulse">Trial utløper i dag!</span>
+                  <span className="text-destructive font-medium">Trial utløper i dag!</span>
                 )}
               </p>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowDetails(!showDetails)}
-              className="glass-card hover:neon-glow transition-all duration-300 font-exo font-medium"
+              className="text-xs px-3 py-1 h-7"
             >
-              {showDetails ? 'Skjul' : 'Vis'} detaljer
+              {showDetails ? 'Skjul' : 'Detaljer'}
             </Button>
             <Button 
               size="sm"
-              className="bg-gradient-electric hover:bg-gradient-neon text-primary-foreground font-orbitron font-bold px-6 py-3 neon-glow hover:scale-105 transition-all duration-300"
+              className="bg-primary hover:bg-primary/80 text-primary-foreground text-xs px-3 py-1 h-7"
             >
-              Oppgrader nå
+              Oppgrader
             </Button>
           </div>
         </div>
