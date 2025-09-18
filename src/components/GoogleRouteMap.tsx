@@ -271,6 +271,25 @@ const GoogleRouteMap: React.FC<{
                 position: relative;
                 overflow: hidden;
               ">
+                <button onclick="this.closest('.gm-style-iw').parentNode.querySelector('.gm-ui-hover-effect').click()" style="
+                  position: absolute;
+                  top: 8px;
+                  right: 8px;
+                  background: hsl(225 25% 6% / 0.3);
+                  border: 1px solid hsl(225 25% 6% / 0.2);
+                  border-radius: 50%;
+                  width: 24px;
+                  height: 24px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  cursor: pointer;
+                  font-size: 14px;
+                  font-weight: 700;
+                  color: hsl(225 25% 6%);
+                  z-index: 10;
+                  transition: all 0.2s ease;
+                " onmouseover="this.style.background='hsl(225 25% 6% / 0.5)'" onmouseout="this.style.background='hsl(225 25% 6% / 0.3)'">×</button>
                 <div style="
                   position: absolute;
                   top: 0;
@@ -527,6 +546,25 @@ const GoogleRouteMap: React.FC<{
                   position: relative;
                   overflow: hidden;
                 ">
+                  <button onclick="this.closest('.gm-style-iw').parentNode.querySelector('.gm-ui-hover-effect').click()" style="
+                    position: absolute;
+                    top: 8px;
+                    right: 8px;
+                    background: hsl(225 25% 6% / 0.3);
+                    border: 1px solid hsl(225 25% 6% / 0.2);
+                    border-radius: 50%;
+                    width: 24px;
+                    height: 24px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 700;
+                    color: hsl(225 25% 6%);
+                    z-index: 10;
+                    transition: all 0.2s ease;
+                  " onmouseover="this.style.background='hsl(225 25% 6% / 0.5)'" onmouseout="this.style.background='hsl(225 25% 6% / 0.3)'">×</button>
                   <div style="
                     position: absolute;
                     top: 0;
@@ -636,6 +674,25 @@ const GoogleRouteMap: React.FC<{
                   position: relative;
                   overflow: hidden;
                 ">
+                  <button onclick="this.closest('.gm-style-iw').parentNode.querySelector('.gm-ui-hover-effect').click()" style="
+                    position: absolute;
+                    top: 8px;
+                    right: 8px;
+                    background: hsl(225 25% 6% / 0.3);
+                    border: 1px solid hsl(225 25% 6% / 0.2);
+                    border-radius: 50%;
+                    width: 24px;
+                    height: 24px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 700;
+                    color: hsl(225 25% 6%);
+                    z-index: 10;
+                    transition: all 0.2s ease;
+                  " onmouseover="this.style.background='hsl(225 25% 6% / 0.5)'" onmouseout="this.style.background='hsl(225 25% 6% / 0.3)'">×</button>
                   <div style="
                     position: absolute;
                     top: 0;
