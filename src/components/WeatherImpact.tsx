@@ -243,9 +243,16 @@ export default function WeatherImpact({ selectedCar, routeData }: WeatherImpactP
               {adjustedRange} km ({percentChange > 0 ? '+' : ''}{percentChange.toFixed(1)}%)
             </span>
           </div>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-muted-foreground">Uten vær:</span>
+            <span className="text-xs">{originalRange} km</span>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {weatherData.averageConditions.temperature}°C • {weatherData.averageConditions.windSpeed} km/h vind
+          </div>
           <Progress 
             value={weatherData.rangeFactor * 100} 
-            className="h-1"
+            className="h-1 mt-1"
             max={120}
           />
         </div>
