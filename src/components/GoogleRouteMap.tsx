@@ -531,11 +531,11 @@ const GoogleRouteMap: React.FC<{
       console.log(`🏪 ${station.name}: anbefalt=${isRecommended}, nær rute=${isNearRoute}, kritisk=${isCriticalFor10Percent}`);
       
       const markerIcon = isCriticalFor10Percent ? {
-        // Blå markør for kritisk ladestasjon ved 10% batteri
+        // Helt blå markør med gult lyn for kritisk ladestasjon ved 10% batteri
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="11" fill="#0066ff" stroke="#ffffff" stroke-width="2"/>
-            <text x="12" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold">⚡</text>
+            <text x="12" y="16" text-anchor="middle" fill="#ffff00" font-size="12" font-weight="bold">⚡</text>
           </svg>
         `),
         scaledSize: new google.maps.Size(24, 24),
