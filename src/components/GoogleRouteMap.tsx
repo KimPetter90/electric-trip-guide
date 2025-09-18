@@ -132,6 +132,18 @@ const GoogleRouteMap: React.FC<{
             zoomControl: true,
             streetViewControl: false,
             fullscreenControl: true,
+            gestureHandling: 'greedy',
+            keyboardShortcuts: false,
+            clickableIcons: false,
+            disableDoubleClickZoom: false,
+            scrollwheel: true,
+            styles: [
+              {
+                featureType: "poi",
+                elementType: "labels",
+                stylers: [{ visibility: "off" }]
+              }
+            ]
           });
 
           console.log('✅ Google Maps instance created successfully');
