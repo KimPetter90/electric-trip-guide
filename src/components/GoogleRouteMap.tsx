@@ -432,24 +432,20 @@ const GoogleRouteMap: React.FC<{
       totalDistance
     );
 
-    // FIKSET: Filtrer BARE stasjoner som er nær ruten (maks 5km)
-    console.log(`🔧 BEFORE filtering: ${optimizedPlan.length} stasjoner i optimal plan`);
-    const filteredPlan = optimizedPlan.filter(plan => {
+    // FIKSET: Ta alltid anbefalte stasjoner fra RouteOptimizer, uavhengig av avstand til rute
+    console.log(`🔧 Bruker ${optimizedPlan.length} anbefalte stasjoner fra RouteOptimizer`);
+    
+    optimizedPlan.forEach((plan, index) => {
       const isNearRoute = isStationNearRoute(plan.station);
       console.log(`🔍 Stasjon ${plan.station.name}: nær rute=${isNearRoute}, avstand=${plan.distanceFromStart.toFixed(0)}km, batteri=${plan.batteryLevelOnArrival.toFixed(1)}%`);
-      return isNearRoute; // RETURNER BARE DE SOM ER NÆR RUTEN
     });
-    console.log(`🔧 AFTER filtering: ${filteredPlan.length} stasjoner er nær ruten`);
 
-    // Hvis ingen stasjoner er innenfor 5km, ta den nærmeste anbefalte stasjonen
-    const finalPlan = filteredPlan.length > 0 ? filteredPlan : 
-      (optimizedPlan.length > 0 ? [optimizedPlan[optimizedPlan.length - 1]] : []);
-
-    console.log(`🎯 Bruker ${finalPlan.length} stasjoner (${filteredPlan.length > 0 ? 'nær ruten' : 'nærmeste anbefalt'})`);
+    const finalPlan = optimizedPlan; // Bruk ALLE anbefalte stasjoner
+    console.log(`🎯 Bruker ${finalPlan.length} anbefalte stasjoner`);
     
-    if (filteredPlan.length === 0 && optimizedPlan.length > 0) {
-      console.log(`🔄 Bruker nærmeste anbefalt: ${optimizedPlan[optimizedPlan.length - 1].station.name}`);
-    }
+    finalPlan.forEach((plan, index) => {
+      console.log(`🔄 Anbefalt: ${plan.station.name} - ${plan.distanceFromStart.toFixed(0)}km fra start`);
+    });
 
     finalPlan.forEach((plan, index) => {
       console.log(`  📍 ${index + 1}. ${plan.station.name} - ${plan.distanceFromStart.toFixed(0)}km fra start`);
