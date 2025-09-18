@@ -177,21 +177,9 @@ const GoogleRouteMap: React.FC<{
           directionsRendererRef.current.setMap(map);
           console.log('✅ Google Maps DirectionsService and DirectionsRenderer initialized');
 
-          // Add click listener to place/move blue marker that snaps to route
+          // Add click listener for manual marker placement (optional)
           map.addListener('click', (event: google.maps.MapMouseEvent) => {
-            if (event.latLng && calculatedRoute) {
-              const clickedPosition = event.latLng;
-              const snappedPosition = findNearestPointOnRoute(clickedPosition, calculatedRoute);
-              
-              // Calculate battery level at clicked position
-              const distanceToPosition = calculateDistanceToPosition(snappedPosition, calculatedRoute);
-              const batteryAtPosition = Math.max(0, routeData.batteryPercentage - (distanceToPosition / selectedCar.range) * 100);
-              
-              updateCurrentPositionMarker(snappedPosition, batteryAtPosition);
-              setCurrentBatteryLevel(batteryAtPosition);
-              
-              console.log(`🔵 Blå markør: ${batteryAtPosition.toFixed(1)}% batteri ved ${distanceToPosition.toFixed(0)}km på ruten`);
-            }
+            console.log('🔍 Klikket på kartet - ladestasjonene vil oppdateres automatisk');
           });
 
           setIsMapInitialized(true);
@@ -528,6 +516,27 @@ const GoogleRouteMap: React.FC<{
     return optimizedPlan.some(plan => plan.station.id === station.id);
   }, [getOptimizedChargingPlan]);
 
+  // Hjelpefunksjon for å sjekke om stasjon er kritisk ved 10% batteri
+  const checkIfCriticalStation = useCallback((station: ChargingStation): boolean => {
+    if (!calculatedRoute || !selectedCar || routeData.batteryPercentage <= 10) {
+      return false;
+    }
+    
+    // Calculate distance where battery will be at 10%
+    const distanceAt10Percent = calculateDistanceForBatteryLevel(10, routeData.batteryPercentage, selectedCar.range);
+    
+    // Get optimized charging plan
+    const optimizedPlan = getOptimizedChargingPlan();
+    
+    // Find the first recommended station that comes after the 10% point
+    const criticalStation = optimizedPlan.find(plan => 
+      plan.distanceFromStart >= distanceAt10Percent - 20 && // 20km buffer before
+      plan.station.id === station.id
+    );
+    
+    return !!criticalStation;
+  }, [calculatedRoute, selectedCar, routeData.batteryPercentage, calculateDistanceForBatteryLevel, getOptimizedChargingPlan]);
+
   // Add charging station markers - update when route changes
   useEffect(() => {
     if (!mapInstanceRef.current || !chargingStations || chargingStations.length === 0) {
@@ -542,12 +551,25 @@ const GoogleRouteMap: React.FC<{
 
     // Add new charging station markers
     chargingStations.forEach(station => {
-      // Sjekk kategorier for markør-type (tilbake til original logikk)
+      // Sjekk kategorier for markør-type
       const isRecommended = isRecommendedStation(station);
       const isNearRoute = !isRecommended && calculatedRoute && isStationNearRoute(station);
       
-      const markerIcon = isRecommended ? {
-        // Blå markører for anbefalte ladestasjoner 
+      // Check if this station is critical for 10% battery
+      const isCriticalFor10Percent = checkIfCriticalStation(station);
+      
+      const markerIcon = isCriticalFor10Percent ? {
+        // Blå markør for kritisk ladestasjon ved 10% batteri
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="11" fill="#0066ff" stroke="#ffffff" stroke-width="2"/>
+            <text x="12" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold">⚡</text>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(24, 24),
+        anchor: new google.maps.Point(12, 12)
+      } : isRecommended ? {
+        // Vanlige anbefalte ladestasjoner (mindre blå)
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
             <circle cx="10" cy="10" r="9" fill="#0066ff" stroke="#004499" stroke-width="1"/>
@@ -580,9 +602,10 @@ const GoogleRouteMap: React.FC<{
       const marker = new google.maps.Marker({
         position: { lat: station.latitude, lng: station.longitude },
         map: mapInstanceRef.current!,
-        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isRecommended ? '\n💙 ANBEFALT LADESTASJON' : isNearRoute ? '\n🔴 NÆR RUTEN' : '\n🟢 LANGT FRA RUTEN'}`,
+        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isCriticalFor10Percent ? '\n🚨 KRITISK - MÅ LADE HER VED 10%!' : isRecommended ? '\n💙 ANBEFALT LADESTASJON' : isNearRoute ? '\n🔴 NÆR RUTEN' : '\n🟢 LANGT FRA RUTEN'}`,
         icon: markerIcon
       });
+
 
       // Legg til klikk-event for ladestasjon-markør
       marker.addListener('click', () => {
@@ -1144,16 +1167,10 @@ const GoogleRouteMap: React.FC<{
         // Lagre den beregnede ruten for ladestasjon-filtrering
         setCalculatedRoute(result);
         
-        // Automatically place blue marker at 10% battery position when route is calculated
+        // Automatically mark the critical charging station when battery would be at 10%
         if (selectedCar && routeData.batteryPercentage > 10) {
-          const distanceAt10Percent = calculateDistanceForBatteryLevel(10, routeData.batteryPercentage, selectedCar.range);
-          const positionAt10Percent = findPositionAtDistance(distanceAt10Percent, result);
-          
-          if (positionAt10Percent) {
-            updateCurrentPositionMarker(positionAt10Percent, 10);
-            setCurrentBatteryLevel(10);
-            console.log(`🔵 Automatisk plassering: Blå markør ved 10% batteri på ${distanceAt10Percent.toFixed(0)}km`);
-          }
+          console.log('🔍 Finner kritisk ladestasjon for 10% batteri...');
+          // This will be handled by the charging station effect that updates markers
         }
         
         console.log('🎯 Rute er satt på kartet - skal være synlig nå!');
