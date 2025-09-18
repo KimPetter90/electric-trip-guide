@@ -17,7 +17,7 @@ import GoogleRouteMap from "@/components/GoogleRouteMap";
 import { ShareRoute } from "@/components/ShareRoute";
 import { FavoriteRoutes } from "@/components/FavoriteRoutes";
 
-import { Zap, Route, MapPin, Car, Battery, LogIn, User, CreditCard, LogOut, AlertTriangle, BarChart3, Building2 } from "lucide-react";
+import { Zap, Route, MapPin, Car, Battery, LogIn, User, CreditCard, LogOut, AlertTriangle, BarChart3, Building2, Cloud, TrendingUp } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 import { type RouteOption } from "@/components/RouteSelector";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
@@ -1068,7 +1068,78 @@ function Index() {
                   />
                 </div>
                 
-                {/* Favoritt-ruter - liten og under kartet */}
+                {/* Route Information - under kartet */}
+                {tripAnalysis && selectedRouteId && (
+                  <Card className="p-6 bg-card/80 backdrop-blur-sm border-border shadow-lg">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Route className="h-5 w-5 text-primary" />
+                        <h3 className="text-lg font-semibold">Ruteinformasjon</h3>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="text-center p-4 rounded-lg bg-muted/50">
+                          <div className="text-2xl font-bold text-primary mb-1">{tripAnalysis.distance}</div>
+                          <div className="text-sm text-muted-foreground">Total avstand</div>
+                        </div>
+                        <div className="text-center p-4 rounded-lg bg-muted/50">
+                          <div className="text-2xl font-bold text-blue-500 mb-1">{tripAnalysis.time}</div>
+                          <div className="text-sm text-muted-foreground">Kjøretid</div>
+                        </div>
+                        <div className="text-center p-4 rounded-lg bg-muted/50">
+                          <div className="text-2xl font-bold text-green-500 mb-1">{tripAnalysis.stops}</div>
+                          <div className="text-sm text-muted-foreground">Ladestasjoner</div>
+                        </div>
+                        <div className="text-center p-4 rounded-lg bg-muted/50">
+                          <div className="text-2xl font-bold text-purple-500 mb-1">{tripAnalysis.batteryUsage}</div>
+                          <div className="text-sm text-muted-foreground">Batteriforbruk</div>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
+                        <div className="space-y-2">
+                          <h4 className="font-medium flex items-center gap-2">
+                            <Cloud className="h-4 w-4" />
+                            Værpåvirkning
+                          </h4>
+                          <p className="text-sm text-muted-foreground">{tripAnalysis.weatherImpact}</p>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-medium flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4" />
+                            Ruteeffektivitet
+                          </h4>
+                          <p className="text-sm text-muted-foreground">{tripAnalysis.routeEfficiency}</p>
+                        </div>
+                      </div>
+                      
+                      {selectedCar && (
+                        <div className="pt-4 border-t border-border">
+                          <h4 className="font-medium mb-2 flex items-center gap-2">
+                            <Car className="h-4 w-4" />
+                            Bilspesifikk informasjon
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Rekkevidde:</span>
+                              <span className="ml-2 font-medium">{selectedCar.range} km</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Batterikapasitet:</span>
+                              <span className="ml-2 font-medium">{selectedCar.batteryCapacity} kWh</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Forbruk:</span>
+                              <span className="ml-2 font-medium">{selectedCar.consumption} kWh/100km</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                )}
+                
+                {/* Favoritt-ruter - liten og under ruteinformasjon */}
                 <div className="mt-4">
                   <div className="max-w-sm">
                     <FavoriteRoutes
