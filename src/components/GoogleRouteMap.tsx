@@ -281,7 +281,7 @@ const GoogleRouteMap: React.FC<{
       });
     });
     
-    const isNear = minDistance <= 5000; // 5km grense som ønsket
+    const isNear = minDistance <= 20000; // 20km grense for store ruter
     console.log(`🔍 Stasjon ${station.name}: minste avstand=${(minDistance/1000).toFixed(1)}km, nær rute=${isNear}`);
     
     // SPESIELL SJEKK: Debug for Tesla stasjoner som burde være på ruten
@@ -463,15 +463,15 @@ const GoogleRouteMap: React.FC<{
       return false;
     }
     
-    // VIKTIG: Stasjonen MÅ være nær ruten for å kunne være kritisk
-    if (!isStationNearRoute(station)) {
-      console.log(`❌ ${station.name} IKKE nær ruten - kan ikke være kritisk`);
-      return false;
-    }
-    
-    // Få optimalisert ladeplan
+    // Få optimalisert ladeplan først
     const optimizedPlan = getOptimizedChargingPlan();
     console.log(`📋 Optimalisert plan har ${optimizedPlan.length} stasjoner`);
+    
+    // Hvis ingen anbefalte stasjoner er nær ruten, bruk de anbefalte uansett
+    if (optimizedPlan.length === 0) {
+      console.log(`⚠️ Ingen anbefalte stasjoner nær ruten - bruker alternativ logikk`);
+      return false; // Ingen stasjoner å velge fra
+    }
     
     // Beregn avstand hvor batteriet vil være på 10%
     const batteryUsed = routeData.batteryPercentage - 10; // Prosent brukt
@@ -479,17 +479,15 @@ const GoogleRouteMap: React.FC<{
     
     console.log(`🔍 Sjekker stasjon ${station.name}: 10% batteri ved ${distanceAt10Percent.toFixed(0)}km`);
     
-    // Finn anbefalte stasjoner som ER nær ruten
-    const nearRouteStations = optimizedPlan.filter(plan => isStationNearRoute(plan.station));
-    
-    console.log(`📍 ${nearRouteStations.length} av ${optimizedPlan.length} anbefalte stasjoner er nær ruten`);
-    
-    // Sjekk om denne stasjonen er i den filtrerte listen
-    const stationPlan = nearRouteStations.find(plan => plan.station.id === station.id);
+    // Sjekk om denne stasjonen er i den anbefalte listen
+    const stationPlan = optimizedPlan.find(plan => plan.station.id === station.id);
     
     if (!stationPlan) {
-      return false; // Stasjonen er ikke anbefalt eller ikke nær ruten
+      console.log(`❌ ${station.name} er ikke i anbefalte liste`);
+      return false; // Stasjonen er ikke anbefalt
     }
+    
+    console.log(`✅ ${station.name} ER anbefalt - sjekker avstand til 10% punkt`);
     
     // Sjekk om stasjonen er nær 10% punktet (±50km)
     const distanceFromCritical = Math.abs(stationPlan.distanceFromStart - distanceAt10Percent);
