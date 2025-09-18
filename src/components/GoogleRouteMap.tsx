@@ -289,19 +289,29 @@ const GoogleRouteMap: React.FC<{
     
     route.legs.forEach(leg => {
       leg.steps.forEach(step => {
-        // Sjekk mange punkter langs hvert steg av ruten for nøyaktig avstand
-        const stepStart = step.start_location;
-        const stepEnd = step.end_location;
+        // Sjekk mange punkter langs hvert steg av ruten for meget nøyaktig avstand
+        const path = step.path || [];
         
-        // Sjekk 5 punkter langs segmentet
-        for (let i = 0; i <= 4; i++) {
-          const ratio = i / 4;
-          const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
-          const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
-          const routePoint = new google.maps.LatLng(lat, lng);
+        if (path && path.length > 0) {
+          // Bruk den faktiske rutegeometrien hvis tilgjengelig
+          path.forEach(point => {
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, point);
+            minDistance = Math.min(minDistance, distance);
+          });
+        } else {
+          // Fallback: sjekk 20 punkter langs segmentet
+          const stepStart = step.start_location;
+          const stepEnd = step.end_location;
           
-          const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, routePoint);
-          minDistance = Math.min(minDistance, distance);
+          for (let i = 0; i <= 20; i++) {
+            const ratio = i / 20;
+            const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
+            const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
+            const routePoint = new google.maps.LatLng(lat, lng);
+            
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, routePoint);
+            minDistance = Math.min(minDistance, distance);
+          }
         }
       });
     });
@@ -984,6 +994,83 @@ const GoogleRouteMap: React.FC<{
         🗺️ Status: {isMapInitialized ? '✅ Kart stabilt' : '⏳ Laster...'}
       </div>
       
+      {/* Custom Zoom Controls */}
+      {mapInstanceRef.current && (
+        <div style={{
+          position: 'absolute',
+          bottom: '20px',
+          right: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          zIndex: 1000
+        }}>
+          <button
+            onClick={() => {
+              const currentZoom = mapInstanceRef.current?.getZoom() || 10;
+              mapInstanceRef.current?.setZoom(currentZoom + 1);
+            }}
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              border: '2px solid hsl(var(--border))',
+              backgroundColor: 'hsl(var(--background))',
+              color: 'hsl(var(--foreground))',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = 'hsl(var(--accent))';
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = 'hsl(var(--background))';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            +
+          </button>
+          <button
+            onClick={() => {
+              const currentZoom = mapInstanceRef.current?.getZoom() || 10;
+              mapInstanceRef.current?.setZoom(currentZoom - 1);
+            }}
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              border: '2px solid hsl(var(--border))',
+              backgroundColor: 'hsl(var(--background))',
+              color: 'hsl(var(--foreground))',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = 'hsl(var(--accent))';
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = 'hsl(var(--background))';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            -
+          </button>
+        </div>
+      )}
       {/* Loading overlay */}
       {!isMapInitialized && (
         <div style={{
