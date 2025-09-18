@@ -66,6 +66,7 @@ const GoogleRouteMap: React.FC<{
   const allMarkersRef = useRef<google.maps.Marker[]>([]);
   const chargingStationMarkersRef = useRef<google.maps.Marker[]>([]);
   const [isMapInitialized, setIsMapInitialized] = useState(false);
+  const [calculatedRoute, setCalculatedRoute] = useState<google.maps.DirectionsResult | null>(null);
 
   // Clear markers on unmount
   useEffect(() => {
@@ -184,7 +185,7 @@ const GoogleRouteMap: React.FC<{
     initializeMap();
   }, []);
 
-  // Add charging station markers
+  // Add charging station markers - update when route changes
   useEffect(() => {
     if (!mapInstanceRef.current || !chargingStations || chargingStations.length === 0) {
       return;
@@ -196,10 +197,37 @@ const GoogleRouteMap: React.FC<{
     chargingStationMarkersRef.current.forEach(marker => marker.setMap(null));
     chargingStationMarkersRef.current = [];
 
-    // Add new charging station markers with route detection
+    // Funksjon for å sjekke om ladestasjon er nær ruten
+    const isStationOnRoute = (station: any): boolean => {
+      if (!calculatedRoute) return false;
+      
+      const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
+      const route = calculatedRoute.routes[0];
+      
+      // Sjekk om stasjonen er innenfor 5km fra rutelinjen
+      let isNearRoute = false;
+      route.legs.forEach(leg => {
+        leg.steps.forEach(step => {
+          const stepStart = step.start_location;
+          const stepEnd = step.end_location;
+          
+          // Beregn avstand fra stasjon til denne delen av ruten
+          const distanceToStart = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
+          const distanceToEnd = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
+          
+          // Hvis stasjonen er innenfor 5km fra start eller slutt av dette segmentet
+          if (distanceToStart <= 5000 || distanceToEnd <= 5000) {
+            isNearRoute = true;
+          }
+        });
+      });
+      
+      return isNearRoute;
+    };
+
+    // Add new charging station markers
     chargingStations.forEach(station => {
-      // Funksjon for å sjekke om ladestasjon er nær ruten (placeholder logikk)
-      const isOnRoute = routeTrigger > 0; // Enkel sjekk - alle blir "på ruten" når rute er planlagt
+      const isOnRoute = isStationOnRoute(station);
       
       const markerIcon = isOnRoute ? {
         // Rød ladestasjon for stasjoner på ruten
@@ -230,7 +258,7 @@ const GoogleRouteMap: React.FC<{
         scaledSize: new google.maps.Size(14, 14),
         anchor: new google.maps.Point(7, 7)
       } : {
-        // Grønn ladestasjon for vanlige stasjoner
+        // Grønn ladestasjon for alle andre stasjoner
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
             <defs>
@@ -262,13 +290,13 @@ const GoogleRouteMap: React.FC<{
       const marker = new google.maps.Marker({
         position: { lat: station.latitude, lng: station.longitude },
         map: mapInstanceRef.current!,
-        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh`,
+        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isOnRoute ? '\n🔴 PÅ RUTEN' : ''}`,
         icon: markerIcon
       });
 
       chargingStationMarkersRef.current.push(marker);
     });
-  }, [chargingStations?.length]);
+  }, [chargingStations?.length, calculatedRoute]); // Oppdater når rute endres
 
   // Calculate route when trigger changes - use useCallback to stabilize function reference
   const calculateRoute = useCallback(async () => {
@@ -331,6 +359,10 @@ const GoogleRouteMap: React.FC<{
       if (directionsRendererRef.current && mapInstanceRef.current) {
         directionsRendererRef.current.setMap(mapInstanceRef.current);
         directionsRendererRef.current.setDirections(result);
+        
+        // Lagre den beregnede ruten for ladestasjon-filtrering
+        setCalculatedRoute(result);
+        
         console.log('🎯 Rute er satt på kartet - skal være synlig nå!');
       } else {
         console.error('❌ DirectionsRenderer eller kart ikke tilgjengelig');
