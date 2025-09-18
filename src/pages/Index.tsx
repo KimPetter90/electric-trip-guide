@@ -628,6 +628,9 @@ function Index() {
   const handleRouteSelect = (routeId: string) => {
     console.log('🎯 Index.tsx: Nytt rutevalg mottatt:', routeId);
     setSelectedRouteId(routeId);
+    
+    // Trigger ruteberegning på nytt for å vise ny rute på kartet
+    setRouteTrigger(prev => prev + 1);
     console.log('🔄 Index.tsx: selectedRouteId oppdatert til:', routeId);
   };
 
@@ -1049,13 +1052,15 @@ function Index() {
                     </div>
                   )}
                   <GoogleRouteMap 
-                    key="stable-google-map"
+                    key={`google-map-${selectedRouteId || 'default'}`}
                     center={{ lat: 60.472, lng: 8.4689 }}
                     zoom={6}
                     onMapLoad={onMapLoad}
                     chargingStations={chargingStations}
                     routeData={routeData}
                     selectedCar={selectedCar}
+                    selectedRouteId={selectedRouteId}
+                    routeOptions={routeOptions}
                     routeTrigger={routeTrigger}
                     onRouteCalculated={onRouteCalculated}
                     onLoadingChange={onLoadingChange}

@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import { supabase } from '@/integrations/supabase/client';
 import { RouteOptimizer, type OptimizedChargingPlan } from '@/utils/routeCalculation';
+import { type RouteOption } from '@/components/RouteSelector';
 interface CarModel {
   id: string;
   brand: string;
@@ -55,11 +56,13 @@ const GoogleRouteMap: React.FC<{
   chargingStations: ChargingStation[];
   routeData: RouteData;
   selectedCar: CarModel | null;
+  selectedRouteId?: string | null;
+  routeOptions?: RouteOption[];
   routeTrigger: number;
   onRouteCalculated: (analysis: TripAnalysis) => void;
   onLoadingChange: (loading: boolean) => void;
   onError: (error: string | null) => void;
-}> = ({ center, zoom, onMapLoad, chargingStations, routeData, selectedCar, routeTrigger, onRouteCalculated, onLoadingChange, onError }) => {
+}> = ({ center, zoom, onMapLoad, chargingStations, routeData, selectedCar, selectedRouteId, routeOptions, routeTrigger, onRouteCalculated, onLoadingChange, onError }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const directionsServiceRef = useRef<google.maps.DirectionsService | null>(null);
@@ -163,14 +166,14 @@ const GoogleRouteMap: React.FC<{
           console.log('✅ Google Maps instance created successfully');
           mapInstanceRef.current = map;
           
-          // Initialize directions service and renderer
+          // Initialize directions service and renderer - Vil bli oppdatert i calculateRoute
           directionsServiceRef.current = new google.maps.DirectionsService();
           directionsRendererRef.current = new google.maps.DirectionsRenderer({
             suppressMarkers: true, // Vi lager egne start/slutt-markører
             polylineOptions: {
-              strokeColor: '#3b82f6', // Blå farge som på det gamle kartet
-              strokeWeight: 6, // Samme tykkelse som det gamle kartet  
-              strokeOpacity: 0.8 // Samme opasitet som det gamle kartet
+              strokeColor: '#3b82f6', // Default farge, oppdateres i calculateRoute
+              strokeWeight: 6,
+              strokeOpacity: 0.8
             }
           });
           
@@ -832,14 +835,47 @@ const GoogleRouteMap: React.FC<{
     onError(null);
 
     try {
+      // Get route preferences based on selected route
+      const getRoutePreferences = (routeId: string | null) => {
+        switch (routeId) {
+          case 'fastest':
+            return {
+              avoidHighways: false,
+              avoidTolls: false,
+              optimizeWaypoints: false
+            };
+          case 'shortest':
+            return {
+              avoidHighways: true,
+              avoidTolls: false,
+              optimizeWaypoints: true
+            };
+          case 'eco':
+            return {
+              avoidHighways: true,
+              avoidTolls: true,
+              optimizeWaypoints: true
+            };
+          default:
+            return {
+              avoidHighways: false,
+              avoidTolls: false,
+              optimizeWaypoints: false
+            };
+        }
+      };
+
+      const routePrefs = getRoutePreferences(selectedRouteId);
+      
       const request: google.maps.DirectionsRequest = {
         origin: routeData.from + ', Norge',
         destination: routeData.to + ', Norge',
         travelMode: google.maps.TravelMode.DRIVING,
         unitSystem: google.maps.UnitSystem.METRIC,
         region: 'NO',
-        avoidHighways: false,
-        avoidTolls: false,
+        avoidHighways: routePrefs.avoidHighways,
+        avoidTolls: routePrefs.avoidTolls,
+        optimizeWaypoints: routePrefs.optimizeWaypoints,
       };
 
       if (routeData.via && routeData.via.trim()) {
@@ -877,6 +913,31 @@ const GoogleRouteMap: React.FC<{
       
       // Sørg for at DirectionsRenderer er koblet til kartet
       if (directionsRendererRef.current && mapInstanceRef.current) {
+        // Get route color based on selected route type
+        const getRouteColor = (routeId: string | null) => {
+          switch (routeId) {
+            case 'fastest':
+              return '#3b82f6'; // Blå for raskeste
+            case 'shortest':
+              return '#22c55e'; // Grønn for korteste  
+            case 'eco':
+              return '#8b5cf6'; // Lilla for miljøvennlig
+            default:
+              return '#3b82f6'; // Default blå
+          }
+        };
+
+        // Update polyline color
+        const routeColor = getRouteColor(selectedRouteId);
+        directionsRendererRef.current.setOptions({
+          suppressMarkers: true,
+          polylineOptions: {
+            strokeColor: routeColor,
+            strokeWeight: 6,
+            strokeOpacity: 0.8
+          }
+        });
+
         directionsRendererRef.current.setMap(mapInstanceRef.current);
         directionsRendererRef.current.setDirections(result);
         
@@ -1244,7 +1305,7 @@ const GoogleRouteMap: React.FC<{
       
       onError(errorMessage);
     }
-  }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, routeTrigger, onRouteCalculated, onLoadingChange, onError]);
+  }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, selectedRouteId, routeTrigger, onRouteCalculated, onLoadingChange, onError]);
 
   useEffect(() => {
     calculateRoute();
