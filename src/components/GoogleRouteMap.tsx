@@ -137,20 +137,8 @@ const GoogleRouteMap: React.FC<{
             keyboardShortcuts: false,
             clickableIcons: true,
             disableDoubleClickZoom: false,
-            scrollwheel: false,
-            // Eksplisitt styling for å vise stedsnavn på satelittkartet
-            styles: [
-              {
-                featureType: "administrative",
-                elementType: "labels.text",
-                stylers: [{ visibility: "on" }]
-              },
-              {
-                featureType: "locality",
-                elementType: "labels.text",
-                stylers: [{ visibility: "on" }]
-              }
-            ]
+            scrollwheel: false
+            // Ingen styles - standard satellittvisning
           });
 
           console.log('✅ Google Maps instance created successfully');
