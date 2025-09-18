@@ -190,14 +190,15 @@ const GoogleRouteMap: React.FC<{
         title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh`,
         icon: {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="green" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M7 7h10v10H7z"></path>
-              <path d="m12 4-2 3h4l-2-3z"></path>
-              <path d="M12 14v3"></path>
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
+              <!-- Grønn sirkel bakgrunn -->
+              <circle cx="14" cy="14" r="13" fill="#10b981" stroke="#059669" stroke-width="2"/>
+              <!-- Gult lyn ikon -->
+              <path d="M16 8l-3 6h2l-3 6 3-6h-2l3-6z" fill="#fbbf24" stroke="#f59e0b" stroke-width="0.5"/>
             </svg>
           `),
-          scaledSize: new google.maps.Size(20, 20),
-          anchor: new google.maps.Point(10, 10)
+          scaledSize: new google.maps.Size(28, 28),
+          anchor: new google.maps.Point(14, 14)
         }
       });
 
