@@ -556,7 +556,7 @@ const GoogleRouteMap: React.FC<{
         const routeColor = isRecommended ? 'hsl(240 100% 60%)' : isNearRoute ? 'hsl(0 84% 60%)' : 'hsl(140 100% 50%)';
         
         const infoWindow = new google.maps.InfoWindow({
-          maxWidth: 380,
+          maxWidth: 280,
           disableAutoPan: false,
           pixelOffset: new google.maps.Size(0, -10),
           zIndex: 10000,
@@ -863,7 +863,7 @@ const GoogleRouteMap: React.FC<{
         // Legg til klikk-event for start-markør
         startMarker.addListener('click', () => {
           const infoWindow = new google.maps.InfoWindow({
-            maxWidth: 350,
+            maxWidth: 250,
             disableAutoPan: false,
             pixelOffset: new google.maps.Size(0, -10),
             zIndex: 10000,
@@ -993,7 +993,7 @@ const GoogleRouteMap: React.FC<{
         // Legg til klikk-event for slutt-markør
         endMarker.addListener('click', () => {
           const infoWindow = new google.maps.InfoWindow({
-            maxWidth: 350,
+            maxWidth: 250,
             disableAutoPan: false,
             pixelOffset: new google.maps.Size(0, -10),
             zIndex: 10000,
