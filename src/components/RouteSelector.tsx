@@ -1,8 +1,6 @@
 import React, { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Route, Clock, Zap, TreePine, Info } from "lucide-react";
-import RouteDetailsSidebar from "./RouteDetailsSidebar";
+import { Route, Clock, Zap, TreePine, ChevronDown, ChevronUp } from "lucide-react";
 
 interface RouteOption {
   id: string;
@@ -28,34 +26,20 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
   onRouteSelect, 
   isLoading = false 
 }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedRouteForDetails, setSelectedRouteForDetails] = useState<RouteOption | null>(null);
+  const [expandedRoute, setExpandedRoute] = useState<string | null>(null);
 
   if (isLoading) {
     return (
       <div className="space-y-2">
         <p className="text-sm text-muted-foreground">Beregner rutevalg...</p>
-        <div className="flex gap-2">
+        <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 w-36 rounded-lg bg-muted animate-pulse" />
+            <div key={i} className="h-8 rounded bg-muted/30 animate-pulse" />
           ))}
         </div>
       </div>
     );
   }
-
-  const getRouteTypeColor = (routeType: string) => {
-    switch (routeType) {
-      case 'fastest':
-        return 'border-blue-500 bg-blue-50 dark:bg-blue-950/20';
-      case 'shortest':
-        return 'border-green-500 bg-green-50 dark:bg-green-950/20';
-      case 'eco':
-        return 'border-purple-500 bg-purple-50 dark:bg-purple-950/20';
-      default:
-        return 'border-gray-300 bg-gray-50 dark:bg-gray-800';
-    }
-  };
 
   const getRouteTypeIcon = (routeType: string) => {
     switch (routeType) {
@@ -83,6 +67,19 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
     }
   };
 
+  const getRouteDescription = (routeType: string) => {
+    switch (routeType) {
+      case 'fastest':
+        return 'Direkteste vei som prioriterer hastighet og hovedveier for å komme frem så raskt som mulig.';
+      case 'shortest':
+        return 'Direkteste vei mellom destinasjonene som minimerer total kjøreavstand for lavest batteriforbruk.';
+      case 'eco':
+        return 'Miljøvennlig rute som unngår hovedveier og bomveier for mer økonomisk og bærekraftig kjøring.';
+      default:
+        return 'Standard rutevalg basert på balansert kjøring.';
+    }
+  };
+
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -90,94 +87,96 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
   };
 
   const handleRouteClick = (route: RouteOption) => {
+    // Toggle expansion
+    setExpandedRoute(expandedRoute === route.id ? null : route.id);
+    // Select route
     onRouteSelect(route.id);
   };
 
-  const handleInfoClick = (route: RouteOption, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSelectedRouteForDetails(route);
-    setSidebarOpen(true);
-  };
-
   return (
-    <>
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Rutevalg</h3>
-        
-        {/* Vertical route selection cards */}
-        <div className="space-y-3">
-          {routes.map((route) => {
-            const isSelected = selectedRoute === route.id;
-            const colorClass = getRouteTypeColor(route.routeType);
-            
-            return (
-              <Card
-                key={route.id}
-                className={`cursor-pointer transition-all duration-200 border-2 ${
-                  isSelected 
-                    ? `${colorClass} ring-2 ring-offset-2 ring-blue-500 shadow-lg` 
-                    : 'border-border hover:border-primary/50 hover:shadow-md'
+    <div className="space-y-3">
+      <h3 className="text-lg font-semibold">Rutevalg</h3>
+      
+      <div className="space-y-2">
+        {routes.map((route) => {
+          const isSelected = selectedRoute === route.id;
+          const isExpanded = expandedRoute === route.id;
+          
+          return (
+            <div key={route.id} className="space-y-2">
+              {/* Main route line */}
+              <div
+                className={`flex items-center justify-between cursor-pointer p-2 rounded transition-colors ${
+                  isSelected ? 'bg-muted/50' : 'hover:bg-muted/30'
                 }`}
                 onClick={() => handleRouteClick(route)}
               >
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <Badge className={`flex items-center gap-1 ${
-                        route.routeType === 'fastest' ? 'bg-blue-500 text-white' :
-                        route.routeType === 'shortest' ? 'bg-green-500 text-white' :
-                        route.routeType === 'eco' ? 'bg-purple-500 text-white' :
-                        'bg-gray-500 text-white'
-                      }`}>
-                        {getRouteTypeIcon(route.routeType)}
-                        {getRouteTypeName(route.routeType)}
-                      </Badge>
-                      <h4 className="font-semibold text-foreground">{route.name}</h4>
-                    </div>
-                    {isSelected && (
-                      <Badge variant="default" className="animate-pulse">Valgt</Badge>
-                    )}
-                  </div>
+                <div className="flex items-center gap-3">
+                  <Badge className={`flex items-center gap-1 ${
+                    route.routeType === 'fastest' ? 'bg-blue-500 text-white' :
+                    route.routeType === 'shortest' ? 'bg-green-500 text-white' :
+                    route.routeType === 'eco' ? 'bg-purple-500 text-white' :
+                    'bg-gray-500 text-white'
+                  }`}>
+                    {getRouteTypeIcon(route.routeType)}
+                    {getRouteTypeName(route.routeType)}
+                  </Badge>
+                  <span className="font-medium">{getRouteTypeName(route.routeType)} rute</span>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="font-medium">{route.distance} km</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  {isSelected && (
+                    <Badge variant="outline" className="text-xs">Valgt</Badge>
+                  )}
+                  {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </div>
+              </div>
 
-                  <p className="text-sm text-muted-foreground mb-3">{route.description}</p>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div className="flex items-center gap-1">
-                      <Route className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-foreground font-medium">{route.distance} km</span>
+              {/* Expanded details */}
+              {isExpanded && (
+                <div className="ml-6 pl-4 border-l-2 border-muted space-y-3 pb-2">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {getRouteDescription(route.routeType)}
+                  </p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <div className="flex items-center gap-1 text-muted-foreground mb-1">
+                        <Route className="h-3 w-3" />
+                        <span>Avstand</span>
+                      </div>
+                      <div className="font-medium">{route.distance} km</div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-foreground font-medium">{formatDuration(route.duration)}</span>
+                    <div>
+                      <div className="flex items-center gap-1 text-muted-foreground mb-1">
+                        <Clock className="h-3 w-3" />
+                        <span>Kjøretid</span>
+                      </div>
+                      <div className="font-medium">{formatDuration(route.duration)}</div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Zap className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-foreground font-medium">{route.chargingStops} stopp</span>
+                    <div>
+                      <div className="flex items-center gap-1 text-muted-foreground mb-1">
+                        <Zap className="h-3 w-3" />
+                        <span>Ladestasjoner</span>
+                      </div>
+                      <div className="font-medium">{route.chargingStops} stopp</div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-foreground font-medium">{route.estimatedCost} NOK</span>
+                    <div>
+                      <div className="text-muted-foreground mb-1">
+                        Estimert kostnad
+                      </div>
+                      <div className="font-medium">{route.estimatedCost} NOK</div>
                     </div>
                   </div>
                 </div>
-              </Card>
-            );
-          })}
-        </div>
-
-        <div className="pt-3 border-t border-border">
-          <p className="text-xs text-muted-foreground text-center">
-            Velg en rute for å se den på kartet
-          </p>
-        </div>
+              )}
+            </div>
+          );
+        })}
       </div>
-
-      <RouteDetailsSidebar
-        route={selectedRouteForDetails}
-        isOpen={sidebarOpen}
-        onOpenChange={setSidebarOpen}
-        onSelectRoute={onRouteSelect}
-      />
-    </>
+    </div>
   );
 };
 
