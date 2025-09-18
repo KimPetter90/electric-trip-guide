@@ -559,10 +559,12 @@ const GoogleRouteMap: React.FC<{
           maxWidth: 380,
           disableAutoPan: false,
           pixelOffset: new google.maps.Size(0, -10),
+          zIndex: 10000,
           content: `
             <style>
               .gm-style .gm-style-iw-c {
                 background: transparent !important;
+                z-index: 10000 !important;
                 border: none !important;
                 border-radius: 0 !important;
                 box-shadow: none !important;
@@ -864,10 +866,12 @@ const GoogleRouteMap: React.FC<{
             maxWidth: 350,
             disableAutoPan: false,
             pixelOffset: new google.maps.Size(0, -10),
+            zIndex: 10000,
             content: `
               <style>
                 .gm-style .gm-style-iw-c {
                   background: transparent !important;
+                  z-index: 10000 !important;
                   border: none !important;
                   border-radius: 0 !important;
                   box-shadow: none !important;
@@ -992,10 +996,12 @@ const GoogleRouteMap: React.FC<{
             maxWidth: 350,
             disableAutoPan: false,
             pixelOffset: new google.maps.Size(0, -10),
+            zIndex: 10000,
             content: `
               <style>
                 .gm-style .gm-style-iw-c {
                   background: transparent !important;
+                  z-index: 10000 !important;
                   border: none !important;
                   border-radius: 0 !important;
                   box-shadow: none !important;
