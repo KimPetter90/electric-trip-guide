@@ -556,7 +556,7 @@ const GoogleRouteMap: React.FC<{
         const routeColor = isRecommended ? 'hsl(240 100% 60%)' : isNearRoute ? 'hsl(0 84% 60%)' : 'hsl(140 100% 50%)';
         
         const infoWindow = new google.maps.InfoWindow({
-          maxWidth: 280,
+          maxWidth: 200,
           disableAutoPan: false,
           pixelOffset: new google.maps.Size(0, -10),
           zIndex: 10000,
