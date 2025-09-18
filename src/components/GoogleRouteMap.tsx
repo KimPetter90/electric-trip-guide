@@ -201,39 +201,35 @@ const GoogleRouteMap: React.FC<{
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
-    // Sjekk om stasjonen er innenfor 5km fra rutelinjen
+    // Øk grense til 15km for å fange opp flere stasjoner langs hovedveier
     let minDistance = Infinity;
     
     route.legs.forEach(leg => {
       leg.steps.forEach(step => {
-        // Sjekk mange punkter langs hvert steg av ruten for meget nøyaktig avstand
-        const path = step.path || [];
+        // Bruk start og slutt av hvert steg + mellompunkter
+        const stepStart = step.start_location;
+        const stepEnd = step.end_location;
         
-        if (path && path.length > 0) {
-          // Bruk den faktiske rutegeometrien hvis tilgjengelig
-          path.forEach(point => {
-            const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, point);
-            minDistance = Math.min(minDistance, distance);
-          });
-        } else {
-          // Fallback: sjekk 20 punkter langs segmentet
-          const stepStart = step.start_location;
-          const stepEnd = step.end_location;
+        // Sjekk start og slutt av steget
+        let startDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
+        let endDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
+        minDistance = Math.min(minDistance, startDistance, endDistance);
+        
+        // Sjekk 10 punkter langs segmentet for bedre nøyaktighet
+        for (let i = 1; i <= 9; i++) {
+          const ratio = i / 10;
+          const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
+          const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
+          const routePoint = new google.maps.LatLng(lat, lng);
           
-          for (let i = 0; i <= 20; i++) {
-            const ratio = i / 20;
-            const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
-            const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
-            const routePoint = new google.maps.LatLng(lat, lng);
-            
-            const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, routePoint);
-            minDistance = Math.min(minDistance, distance);
-          }
+          const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, routePoint);
+          minDistance = Math.min(minDistance, distance);
         }
       });
     });
     
-    const isNear = minDistance <= 5000; // 5km grense
+    const isNear = minDistance <= 15000; // 15km grense for norske hovedveier
+    console.log(`🔍 Stasjon ${station.name}: minste avstand=${(minDistance/1000).toFixed(1)}km, nær rute=${isNear}`);
     return isNear;
   }, [calculatedRoute]);
 
