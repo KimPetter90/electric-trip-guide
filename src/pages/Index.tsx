@@ -990,12 +990,6 @@ function Index() {
               />
             </div>
 
-            {/* Favoritt-ruter */}
-            <div>
-              <FavoriteRoutes
-                onRouteSelect={handleFavoriteRouteSelect}
-              />
-            </div>
 
             {selectedCar && (
               <Card className="p-4 bg-card/80 backdrop-blur-sm border-border shadow-lg" role="complementary">
@@ -1075,6 +1069,15 @@ function Index() {
                     onLoadingChange={onLoadingChange}
                     onError={onError}
                   />
+                </div>
+                
+                {/* Favoritt-ruter - liten og under kartet */}
+                <div className="mt-4">
+                  <div className="max-w-sm">
+                    <FavoriteRoutes
+                      onRouteSelect={handleFavoriteRouteSelect}
+                    />
+                  </div>
                 </div>
               </div>
             )}

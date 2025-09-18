@@ -337,16 +337,16 @@ export function FavoriteRoutes({ onRouteSelect, className }: FavoriteRoutesProps
           </Dialog>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3">
         {isLoading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-            <p className="text-muted-foreground">Laster favoritt-ruter...</p>
+          <div className="text-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
+            <p className="text-xs text-muted-foreground">Laster...</p>
           </div>
         ) : favorites.length === 0 ? (
-          <div className="text-center py-8">
-            <Heart className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-            <p className="text-muted-foreground mb-4">
+          <div className="text-center py-4">
+            <Heart className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
+            <p className="text-xs text-muted-foreground mb-2">
               Ingen favoritt-ruter ennå
             </p>
             <Button 
@@ -359,79 +359,39 @@ export function FavoriteRoutes({ onRouteSelect, className }: FavoriteRoutesProps
             </Button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {favorites.map((route) => (
-              <Card key={route.id} className="border-l-4 border-l-primary/50">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-3">
+          <div className="space-y-2">
+            {favorites.slice(0, 3).map((route) => (
+              <Card key={route.id} className="border-l-2 border-l-primary/50">
+                <CardContent className="p-3">
+                  <div className="flex items-start justify-between mb-2">
                     <div>
-                      <h3 className="font-semibold flex items-center gap-2">
-                        {route.name}
-                        {route.use_count > 0 && (
-                          <Badge variant="secondary" className="text-xs">
-                            <Star className="h-3 w-3 mr-1" />
-                            {route.use_count}
-                          </Badge>
-                        )}
-                      </h3>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                        <MapPin className="h-4 w-4 text-green-600" />
-                        {route.from_location}
-                        <ArrowRight className="h-3 w-3" />
-                        <MapPin className="h-4 w-4 text-red-600" />
-                        {route.to_location}
+                      <h3 className="text-sm font-medium">{route.name}</h3>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPin className="h-3 w-3 text-green-600" />
+                        {route.from_location.split(',')[0]}
+                        <ArrowRight className="h-2 w-2" />
+                        <MapPin className="h-3 w-3 text-red-600" />
+                        {route.to_location.split(',')[0]}
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteFavoriteRoute(route.id)}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
-
-                  {(route.distance || route.duration || route.estimated_cost || route.battery_usage) && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {route.distance && (
-                        <Badge variant="outline" className="text-xs">
-                          <Route className="h-3 w-3 mr-1" />
-                          {route.distance}
-                        </Badge>
-                      )}
-                      {route.duration && (
-                        <Badge variant="outline" className="text-xs">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {route.duration}
-                        </Badge>
-                      )}
-                      {route.estimated_cost && (
-                        <Badge variant="outline" className="text-xs">
-                          <CreditCard className="h-3 w-3 mr-1" />
-                          {route.estimated_cost}
-                        </Badge>
-                      )}
-                      {route.battery_usage && (
-                        <Badge variant="outline" className="text-xs">
-                          <Battery className="h-3 w-3 mr-1" />
-                          {route.battery_usage}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
 
                   <Button
                     onClick={() => useFavoriteRoute(route)}
                     size="sm"
-                    className="w-full"
+                    className="w-full h-7 text-xs"
                   >
-                    <Route className="h-4 w-4 mr-2" />
-                    Bruk denne ruten
+                    <Route className="h-3 w-3 mr-1" />
+                    Bruk rute
                   </Button>
                 </CardContent>
               </Card>
             ))}
+            {favorites.length > 3 && (
+              <p className="text-xs text-muted-foreground text-center">
+                +{favorites.length - 3} flere ruter
+              </p>
+            )}
           </div>
         )}
        </CardContent>
