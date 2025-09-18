@@ -275,6 +275,34 @@ const GoogleRouteMap: React.FC<{
     initializeMap();
   }, []);
 
+  // Hjelpefunksjon for å sjekke om stasjon er nær ruten
+  const isStationNearRoute = useCallback((station: ChargingStation): boolean => {
+    if (!calculatedRoute || !window.google?.maps?.geometry) return false;
+    
+    const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
+    const route = calculatedRoute.routes[0];
+    
+    // Sjekk om stasjonen er innenfor 5km fra rutelinjen
+    let isNear = false;
+    route.legs.forEach(leg => {
+      leg.steps.forEach(step => {
+        const stepStart = step.start_location;
+        const stepEnd = step.end_location;
+        
+        // Beregn avstand fra stasjon til denne delen av ruten
+        const distanceToStart = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
+        const distanceToEnd = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
+        
+        // Hvis stasjonen er innenfor 5km fra start eller slutt av dette segmentet
+        if (distanceToStart <= 5000 || distanceToEnd <= 5000) {
+          isNear = true;
+        }
+      });
+    });
+    
+    return isNear;
+  }, [calculatedRoute]);
+
   // Add charging station markers - update when route changes
   useEffect(() => {
     if (!mapInstanceRef.current || !chargingStations || chargingStations.length === 0) {
@@ -487,35 +515,7 @@ const GoogleRouteMap: React.FC<{
 
       chargingStationMarkersRef.current.push(marker);
     });
-
-    // Hjelpefunksjon for å sjekke om stasjon er nær ruten
-    function isStationNearRoute(station: any): boolean {
-      if (!calculatedRoute) return false;
-      
-      const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
-      const route = calculatedRoute.routes[0];
-      
-      // Sjekk om stasjonen er innenfor 5km fra rutelinjen
-      let isNear = false;
-      route.legs.forEach(leg => {
-        leg.steps.forEach(step => {
-          const stepStart = step.start_location;
-          const stepEnd = step.end_location;
-          
-          // Beregn avstand fra stasjon til denne delen av ruten
-          const distanceToStart = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
-          const distanceToEnd = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
-          
-          // Hvis stasjonen er innenfor 5km fra start eller slutt av dette segmentet
-          if (distanceToStart <= 5000 || distanceToEnd <= 5000) {
-            isNear = true;
-          }
-        });
-      });
-      
-      return isNear;
-    }
-  }, [chargingStations?.length, calculatedRoute]); // Oppdater når rute endres
+  }, [chargingStations?.length, calculatedRoute, isStationNearRoute]); // Oppdater når rute endres
 
   // Calculate route when trigger changes - use useCallback to stabilize function reference
   const calculateRoute = useCallback(async () => {
