@@ -66,7 +66,7 @@ function Index() {
     to: "",
     via: "",
     trailerWeight: 0,
-    batteryPercentage: 0,
+    batteryPercentage: 80, // Sett default til 80% i stedet for 0%
     travelDate: undefined
   });
   const [showRoute, setShowRoute] = useState(true);
@@ -585,6 +585,11 @@ function Index() {
   };
 
   const handlePlanRoute = async () => {
+    // Debug logging
+    console.log('🔍 handlePlanRoute startet med:');
+    console.log('📊 selectedCar:', selectedCar);
+    console.log('📊 routeData:', routeData);
+    
     // Forhindre double-click
     if (planningRoute) {
       console.log('🚫 Ruteplanlegging pågår allerede, ignorerer klikk');
@@ -615,8 +620,17 @@ function Index() {
 
       if (routeData.from.toLowerCase().trim() === routeData.to.toLowerCase().trim()) {
         toast({
-          title: "Ugyldig rute",
+          title: "Ugyldig rute", 
           description: "Start- og sluttdestinasjon kan ikke være den samme.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (routeData.batteryPercentage <= 0 || routeData.batteryPercentage > 100) {
+        toast({
+          title: "Ugyldig batteriprosent",
+          description: "Batteriprosent må være mellom 1% og 100%.",
           variant: "destructive",
         });
         return;
