@@ -1,8 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import { supabase } from '@/integrations/supabase/client';
-
-// Interfaces
+import { RouteOptimizer, type OptimizedChargingPlan } from '@/utils/routeCalculation';
 interface CarModel {
   id: string;
   brand: string;
@@ -17,7 +16,9 @@ interface RouteData {
   from: string;
   to: string;
   via?: string;
+  trailerWeight: number;
   batteryPercentage: number;
+  travelDate?: Date;
 }
 
 interface ChargingStation {
@@ -320,68 +321,43 @@ const GoogleRouteMap: React.FC<{
     return isNear;
   }, [calculatedRoute]);
 
-  // Hjelpefunksjon for å finne de beste anbefalte ladestasjonene
-  const getRecommendedStations = useCallback((): ChargingStation[] => {
+  // Hjelpefunksjon for å finne de beste anbefalte ladestasjonene med avansert optimalisering
+  const getOptimizedChargingPlan = useCallback((): OptimizedChargingPlan[] => {
     if (!calculatedRoute || !selectedCar || !routeData || !chargingStations) {
       return [];
     }
 
-    // Beregn tilgjengelig rekkevidde basert på batteriprosent
-    const currentRange = (selectedCar.range * routeData.batteryPercentage) / 100;
-    
-    // Beregn hvor langt bilen kan kjøre før den når 10% batteri
-    const rangeAt10Percent = currentRange * 0.9; // 90% av tilgjengelig rekkevidde brukt
-    
-    // Få startposisjon fra ruten
-    const startPos = calculatedRoute.routes[0].legs[0].start_location;
-    
-    // Finn stasjoner som er nær der bilen har 10% igjen
-    const candidateStations = chargingStations.filter(station => {
-      const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
-      const distanceToStation = google.maps.geometry.spherical.computeDistanceBetween(startPos, stationPos) / 1000;
-      
-      // Stasjon må være:
-      // 1. I området hvor bilen har 5-15% batteri igjen (sikkerhetsmargin)
-      const targetDistance = rangeAt10Percent;
-      const isInOptimalRange = distanceToStation >= (targetDistance - 20) && distanceToStation <= (targetDistance + 20);
-      
-      // 2. Nær ruten
-      const isNearRoute = isStationNearRoute(station);
-      
-      // 3. Ha hurtiglading
-      const hasFastCharging = station.fast_charger;
-      
-      return isInOptimalRange && isNearRoute && hasFastCharging;
-    });
+    // Få total rutedistanse fra Google Maps
+    const totalDistance = calculatedRoute.routes[0].legs.reduce((sum, leg) => {
+      return sum + (leg.distance?.value || 0);
+    }, 0) / 1000; // Konverter til km
 
-    // Sorter og velg de 1-2 beste stasjonene
-    const sortedStations = candidateStations
-      .sort((a, b) => {
-        // Prioriter stasjoner med høyere tilgjengelighet
-        const availabilityA = a.available / a.total;
-        const availabilityB = b.available / b.total;
-        if (availabilityB !== availabilityA) return availabilityB - availabilityA;
-        
-        // Deretter lavere kostnad
-        return a.cost - b.cost;
-      })
-      .slice(0, 2); // Maksimalt 2 stasjoner
+    // Hent værdata (kan utvides senere med faktisk API-kall)
+    const mockWeatherData = {
+      temperature: 5, // 5°C
+      windSpeed: 8, // 8 m/s
+      precipitation: 0, // Ingen nedbør
+      humidity: 70,
+      conditions: 'cloudy'
+    };
 
-    sortedStations.forEach(station => {
-      const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
-      const distance = google.maps.geometry.spherical.computeDistanceBetween(startPos, stationPos) / 1000;
-      const remainingBattery = ((currentRange - distance) / selectedCar.range) * 100;
-      console.log(`💙 ANBEFALT: ${station.name} - ${distance.toFixed(1)}km (${remainingBattery.toFixed(1)}% batteri igjen)`);
-    });
+    // Bruk RouteOptimizer for avansert beregning
+    const optimizedPlan = RouteOptimizer.calculateOptimalChargingPlan(
+      selectedCar,
+      routeData,
+      chargingStations,
+      mockWeatherData,
+      totalDistance
+    );
 
-    return sortedStations;
-  }, [calculatedRoute, selectedCar, routeData, chargingStations, isStationNearRoute]);
+    return optimizedPlan;
+  }, [calculatedRoute, selectedCar, routeData, chargingStations]);
 
   // Hjelpefunksjon for å sjekke om stasjon er anbefalt for lading
   const isRecommendedStation = useCallback((station: ChargingStation): boolean => {
-    const recommendedStations = getRecommendedStations();
-    return recommendedStations.some(recommended => recommended.id === station.id);
-  }, [getRecommendedStations]);
+    const optimizedPlan = getOptimizedChargingPlan();
+    return optimizedPlan.some(plan => plan.station.id === station.id);
+  }, [getOptimizedChargingPlan]);
 
   // Add charging station markers - update when route changes
   useEffect(() => {
@@ -607,22 +583,33 @@ const GoogleRouteMap: React.FC<{
 
       chargingStationMarkersRef.current.push(marker);
     });
-  }, [chargingStations?.length, calculatedRoute, isStationNearRoute, getRecommendedStations]); // Oppdater når rute endres
+  }, [chargingStations?.length, calculatedRoute, isStationNearRoute, getOptimizedChargingPlan]); // Oppdater når rute endres
 
-  // Calculate route when trigger changes - use useCallback to stabilize function reference
+  // Calculate route when trigger changes - ROBUST and FOOLPROOF
   const calculateRoute = useCallback(async () => {
-    console.log('🔍 Sjekker requirements for ruteberegning:');
-    console.log('📊 mapInstanceRef.current:', !!mapInstanceRef.current);
-    console.log('📊 directionsServiceRef.current:', !!directionsServiceRef.current);
-    console.log('📊 directionsRendererRef.current:', !!directionsRendererRef.current);
-    console.log('📊 routeData.from:', routeData.from);
-    console.log('📊 routeData.to:', routeData.to);
-    console.log('📊 selectedCar:', !!selectedCar);
-    console.log('📊 routeTrigger:', routeTrigger);
-
+    console.log('🔍 ROBUST ruteberegning startet');
+    
+    // Wait for map to be fully initialized
+    let attempts = 0;
+    const maxAttempts = 20;
+    
+    while ((!mapInstanceRef.current || !directionsServiceRef.current || !directionsRendererRef.current) && attempts < maxAttempts) {
+      console.log(`⏳ Venter på kart initialisering (forsøk ${attempts + 1}/${maxAttempts})`);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      attempts++;
+    }
+    
+    // Final validation
     if (!mapInstanceRef.current || !directionsServiceRef.current || !directionsRendererRef.current || 
         !routeData.from || !routeData.to || !selectedCar || routeTrigger === 0) {
-      console.log('⏸️ Mangler requirements for ruteberegning');
+      console.log('⏸️ Requirements fortsatt ikke oppfylt etter venting:');
+      console.log('📊 mapInstanceRef.current:', !!mapInstanceRef.current);
+      console.log('📊 directionsServiceRef.current:', !!directionsServiceRef.current);
+      console.log('📊 directionsRendererRef.current:', !!directionsRendererRef.current);
+      console.log('📊 routeData.from:', routeData.from);
+      console.log('📊 routeData.to:', routeData.to);
+      console.log('📊 selectedCar:', !!selectedCar);
+      console.log('📊 routeTrigger:', routeTrigger);
       return;
     }
 

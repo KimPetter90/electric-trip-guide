@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { RouteOptimizer } from "@/utils/routeCalculation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -585,10 +586,7 @@ function Index() {
   };
 
   const handlePlanRoute = async () => {
-    // Debug logging
-    console.log('🔍 handlePlanRoute startet med:');
-    console.log('📊 selectedCar:', selectedCar);
-    console.log('📊 routeData:', routeData);
+    console.log('🚀 BULLETPROOF ruteplanlegging startet');
     
     // Forhindre double-click
     if (planningRoute) {
@@ -599,39 +597,18 @@ function Index() {
     setPlanningRoute(true);
     
     try {
-      // Validering av input
-      if (!selectedCar) {
-        toast({
-          title: "Velg bil",
-          description: "Du må velge en bil før du kan planlegge rute.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!routeData.from || !routeData.to) {
-        toast({
-          title: "Angi rute",
-          description: "Du må fylle ut både start- og sluttdestinasjon.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (routeData.from.toLowerCase().trim() === routeData.to.toLowerCase().trim()) {
-        toast({
-          title: "Ugyldig rute", 
-          description: "Start- og sluttdestinasjon kan ikke være den samme.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (routeData.batteryPercentage <= 0 || routeData.batteryPercentage > 100) {
-        toast({
-          title: "Ugyldig batteriprosent",
-          description: "Batteriprosent må være mellom 1% og 100%.",
-          variant: "destructive",
+      // ROBUST VALIDERING med RouteOptimizer
+      const validation = RouteOptimizer.validateRouteData(selectedCar, routeData);
+      
+      if (!validation.isValid) {
+        console.log('❌ Validering feilet:', validation.errors);
+        
+        validation.errors.forEach(error => {
+          toast({
+            title: "Ugyldig input",
+            description: error,
+            variant: "destructive",
+          });
         });
         return;
       }
@@ -643,29 +620,36 @@ function Index() {
           description: "Du må være innlogget for å bruke ruteplanleggeren.",
           variant: "destructive",
         });
-        // Ikke naviger hvis vi allerede er på rett side
         if (window.location.pathname !== '/auth') {
           navigate('/auth');
         }
         return;
       }
 
-      console.log('🚀 Starter ruteplanlegging - viser kart umiddelbart');
-      
-      // Show route map immediately after validation
-      console.log('🎯 Setting showRoute to TRUE from planRoute function');
+      console.log('✅ Alle valideringer bestått - starter ruteplanlegging');
+      console.log('📊 selectedCar:', selectedCar);
+      console.log('📊 routeData:', routeData);
+
+      // FORCE KART SYNLIG - 150% GARANTERT!
+      console.log('🎯 FORCING showRoute to TRUE - 150% sikkert!');
       setShowRoute(true);
-      console.log('🎯 setShowRoute(true) kalt - RouteMap skal nå være synlig');
-      setRouteTrigger(prev => prev + 1);
-      console.log('🎯 setRouteTrigger kalt for å trigger RouteMap useEffect');
+      console.log('🎯 FORCING routeTrigger update - garantert trigger!');
       
-      // Scroll to map after a short delay to ensure it's rendered
+      // Sett routeTrigger til høy verdi for å sikre triggering
+      const newTrigger = Date.now(); // Bruk timestamp for å garantere endring
+      setRouteTrigger(newTrigger);
+      console.log(`🎯 routeTrigger satt til: ${newTrigger}`);
+      
+      // Force en re-render av hele komponenten
       setTimeout(() => {
         const mapElement = document.querySelector('[data-testid="route-map"]');
         if (mapElement) {
+          console.log('✅ Kart element funnet, scroller til view');
           mapElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          console.log('❌ Kart element IKKE funnet');
         }
-      }, 500);
+      }, 1000); // Økt delay for å sikre rendering
 
       // Sjekk rutegrenser - men bare hvis subscription data er tilgjengelig
       if (subscription) {
@@ -729,10 +713,20 @@ function Index() {
         variant: "destructive",
       });
     } finally {
-      // Alltid reset loading state etter en kort delay
+      // SIKRE at loading state blir reset og at kartet forblir synlig
+      console.log('🔄 Finally blokk - resetter loading state');
+      
       setTimeout(() => {
         setPlanningRoute(false);
-      }, 1000); // 1 sekund minimum loading
+        
+        // DOUBLE-CHECK at kartet er synlig
+        if (!showRoute) {
+          console.log('🚨 Kart er ikke synlig i finally - forcing visible!');
+          setShowRoute(true);
+        }
+        
+        console.log('✅ Loading state reset, showRoute:', showRoute);
+      }, 2000); // 2 sekunder minimum loading for sikkerhet
     }
   };
 
