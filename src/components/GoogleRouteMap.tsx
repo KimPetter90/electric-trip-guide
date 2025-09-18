@@ -230,6 +230,13 @@ const GoogleRouteMap: React.FC<{
     
     const isNear = minDistance <= 15000; // 15km grense for norske hovedveier
     console.log(`🔍 Stasjon ${station.name}: minste avstand=${(minDistance/1000).toFixed(1)}km, nær rute=${isNear}`);
+    
+    // SPESIELL SJEKK: Hvis dette er Tesla Supercharger Larvik, logg ekstra info
+    if (station.name.includes('Tesla') && station.name.includes('Larvik')) {
+      console.log(`🚨 TESLA LARVIK DEBUG: lat=${station.latitude}, lng=${station.longitude}, avstand=${(minDistance/1000).toFixed(1)}km`);
+      console.log(`🚨 Rute har ${calculatedRoute?.routes[0]?.legs?.length} legs`);
+    }
+    
     return isNear;
   }, [calculatedRoute]);
 
@@ -262,14 +269,14 @@ const GoogleRouteMap: React.FC<{
       totalDistance
     );
 
-    // Filtrer bare stasjoner som er nær ruten (men IKKE filtrer på posisjon ennå)
-    const filteredPlan = optimizedPlan.filter(plan => {
+    // MIDLERTIDIG: Vis ALLE anbefalte stasjoner uansett avstand for debugging
+    const filteredPlan = optimizedPlan.map(plan => {
       const isNearRoute = isStationNearRoute(plan.station);
       console.log(`🔍 Stasjon ${plan.station.name}: nær rute=${isNearRoute}, avstand=${plan.distanceFromStart.toFixed(0)}km, batteri=${plan.batteryLevelOnArrival.toFixed(1)}%`);
-      return isNearRoute; // Kun filtrer på nærhet til rute
+      return plan; // Returner ALLE anbefalte stasjoner for nå
     });
 
-    console.log(`🎯 Optimal ladeplan: ${filteredPlan.length} stasjoner langs ruten`);
+    console.log(`🎯 Optimal ladeplan: ${filteredPlan.length} stasjoner (MIDLERTIDIG: viser alle anbefalte)`);
     filteredPlan.forEach(plan => {
       console.log(`  📍 ${plan.station.name} - ${plan.distanceFromStart.toFixed(0)}km fra start`);
     });
