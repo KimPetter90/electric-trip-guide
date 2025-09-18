@@ -847,16 +847,16 @@ const GoogleRouteMap: React.FC<{
             };
           case 'shortest':
             return {
-              avoidHighways: false,
+              avoidHighways: false, // Allow highways for potentially shorter routes
               avoidTolls: false,
-              avoidFerries: true, // Avoid ferries for shortest distance
+              avoidFerries: false,
               provideRouteAlternatives: true // Get multiple route options
             };
           case 'eco':
             return {
               avoidHighways: true,
               avoidTolls: true,
-              avoidFerries: true, // Most restrictive for eco-friendly
+              avoidFerries: false, // Only avoid highways and tolls for eco
               provideRouteAlternatives: false
             };
           default:
@@ -891,14 +891,15 @@ const GoogleRouteMap: React.FC<{
         }];
       }
 
-      console.log('📞 Sender Google Directions API-forespørsel...');
+      console.log('📞 Sender Google Directions API-forespørsel for', selectedRouteId || 'default', 'rute...');
+      console.log('📍 Request preferences:', routePrefs);
       
       // Create Promise wrapper for Directions API call with timeout
       const directionsPromise = new Promise<google.maps.DirectionsResult>((resolve, reject) => {
         const timeout = setTimeout(() => {
-          console.error('💥 Google Directions API TIMEOUT etter 20 sekunder');
+          console.error('💥 Google Directions API TIMEOUT etter 30 sekunder');
           reject(new Error('API_TIMEOUT'));
-        }, 20000);
+        }, 30000); // Increased timeout for better route alternatives
 
         directionsServiceRef.current!.route(request, (result, status) => {
           clearTimeout(timeout);
@@ -916,9 +917,17 @@ const GoogleRouteMap: React.FC<{
       
       // For shortest route, select the route with minimum distance if alternatives exist
       if (selectedRouteId === 'shortest' && result.routes.length > 1) {
-        console.log(`🛣️ Fant ${result.routes.length} alternative ruter, velger korteste`);
+        console.log(`🛣️ Fant ${result.routes.length} alternative ruter for korteste`);
+        
         let shortestRouteIndex = 0;
         let shortestDistance = result.routes[0].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0);
+        
+        // Log all routes with their distances
+        result.routes.forEach((route, index) => {
+          const distance = route.legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0);
+          const duration = route.legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0);
+          console.log(`   Rute ${index + 1}: ${(distance/1000).toFixed(1)} km, ${Math.round(duration/60)} min`);
+        });
         
         for (let i = 1; i < result.routes.length; i++) {
           const routeDistance = result.routes[i].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0);
@@ -933,7 +942,9 @@ const GoogleRouteMap: React.FC<{
           const shortestRoute = result.routes[shortestRouteIndex];
           result.routes[shortestRouteIndex] = result.routes[0];
           result.routes[0] = shortestRoute;
-          console.log(`🎯 Valgte rute ${shortestRouteIndex + 1} som korteste (${(shortestDistance/1000).toFixed(1)} km)`);
+          console.log(`🎯 Byttet til rute ${shortestRouteIndex + 1} som er korteste (${(shortestDistance/1000).toFixed(1)} km)`);
+        } else {
+          console.log(`🎯 Standard rute er allerede korteste (${(shortestDistance/1000).toFixed(1)} km)`);
         }
       }
       
