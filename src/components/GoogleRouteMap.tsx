@@ -128,7 +128,7 @@ const GoogleRouteMap: React.FC<{
           const map = new google.maps.Map(mapRef.current, {
             center: center,
             zoom: zoom,
-            mapTypeId: google.maps.MapTypeId.ROADMAP, // Roadmap viser stedsnavn klarest
+            mapTypeId: google.maps.MapTypeId.HYBRID, // Hybrid = satelitt + stedsnavn
             mapTypeControl: true,
             zoomControl: true,
             streetViewControl: false,
@@ -138,7 +138,7 @@ const GoogleRouteMap: React.FC<{
             clickableIcons: true,
             disableDoubleClickZoom: false,
             scrollwheel: false,
-            // Fjerner alle styles for å sikre at stedsnavn vises
+            // Minimal styling for å sikre stedsnavn vises på satelittkartet
             styles: []
           });
 
