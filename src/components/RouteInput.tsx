@@ -459,6 +459,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('🚀 BUTTON CLICKED: Planlegg rute!');
             onPlanRoute();
           }}
           disabled={isPlanning}

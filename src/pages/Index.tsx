@@ -674,11 +674,12 @@ function Index() {
     }
 
     // Øyeblikkelig visning av kart og start av ruteberegning
-    console.log('🚀 Setting showRoute=true and routeTrigger=', Date.now());
+    const newTrigger = Date.now();
+    console.log('🚀 Setting showRoute=true and routeTrigger=', newTrigger);
     setShowRoute(true);
-    setRouteTrigger(Date.now());
+    setRouteTrigger(newTrigger);
     setPlanningRoute(true);
-    console.log('🚀 State updated: showRoute=true, planningRoute=true');
+    console.log('🚀 State updated: showRoute=true, planningRoute=true, routeTrigger=', newTrigger);
     
     try {
       console.log('🚀 Starter ruteplanlegging øyeblikkelig!');
