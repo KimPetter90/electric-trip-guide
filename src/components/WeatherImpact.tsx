@@ -235,16 +235,19 @@ export default function WeatherImpact({ selectedCar, routeData }: WeatherImpactP
           </Badge>
         </div>
 
-        {/* Range Impact Summary - Subtle display */}
+        {/* Range Impact Summary - Compact display */}
         <div className="bg-background/20 rounded-lg p-2 border border-border/30">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-1">
             <span className="text-xs text-muted-foreground">Værpåvirkning:</span>
-            <div className="flex items-center gap-1">
-              <span className={`text-xs ${getImpactColor(weatherData.rangeFactor)}`}>
-                {adjustedRange} km ({percentChange > 0 ? '+' : ''}{percentChange.toFixed(1)}%)
-              </span>
-            </div>
+            <span className={`text-xs ${getImpactColor(weatherData.rangeFactor)}`}>
+              {adjustedRange} km ({percentChange > 0 ? '+' : ''}{percentChange.toFixed(1)}%)
+            </span>
           </div>
+          <Progress 
+            value={weatherData.rangeFactor * 100} 
+            className="h-1"
+            max={120}
+          />
         </div>
 
         {/* Weather Details */}
