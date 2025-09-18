@@ -140,25 +140,11 @@ const GoogleRouteMap: React.FC<{
           // Initialize directions service and renderer
           directionsServiceRef.current = new google.maps.DirectionsService();
           directionsRendererRef.current = new google.maps.DirectionsRenderer({
-            suppressMarkers: false,
+            suppressMarkers: true, // Vi lager egne start/slutt-markører
             polylineOptions: {
-              strokeColor: '#dc2626', // Mørkere rød
-              strokeWeight: 8, // Enda tykkere
-              strokeOpacity: 1.0, // Full opasitet
-              zIndex: 100 // Høyere z-index for å være over andre elementer
-            },
-            markerOptions: {
-              icon: {
-                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
-                    <circle cx="14" cy="14" r="12" fill="#dc2626" stroke="#ffffff" stroke-width="3"/>
-                    <circle cx="14" cy="14" r="6" fill="#ffffff"/>
-                    <text x="14" y="18" text-anchor="middle" fill="#dc2626" font-size="12" font-weight="bold">A</text>
-                  </svg>
-                `),
-                scaledSize: new google.maps.Size(28, 28),
-                anchor: new google.maps.Point(14, 14)
-              }
+              strokeColor: '#3b82f6', // Blå farge som på det gamle kartet
+              strokeWeight: 6, // Samme tykkelse som det gamle kartet  
+              strokeOpacity: 0.8 // Samme opasitet som det gamle kartet
             }
           });
           
@@ -323,6 +309,47 @@ const GoogleRouteMap: React.FC<{
       if (directionsRendererRef.current && mapInstanceRef.current) {
         directionsRendererRef.current.setMap(mapInstanceRef.current);
         directionsRendererRef.current.setDirections(result);
+        
+        // Lag egne start og slutt-markører som på det gamle kartet
+        const route = result.routes[0];
+        const leg = route.legs[0];
+        
+        // Start-markør (grønn som på det gamle kartet)
+        const startMarker = new google.maps.Marker({
+          position: leg.start_location,
+          map: mapInstanceRef.current,
+          title: `Start: ${routeData.from}`,
+          icon: {
+            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="#22c55e" stroke="#ffffff" stroke-width="2"/>
+                <text x="12" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold">S</text>
+              </svg>
+            `),
+            scaledSize: new google.maps.Size(24, 24),
+            anchor: new google.maps.Point(12, 12)
+          }
+        });
+        
+        // Slutt-markør (rød som på det gamle kartet)
+        const endMarker = new google.maps.Marker({
+          position: leg.end_location,
+          map: mapInstanceRef.current,
+          title: `Slutt: ${routeData.to}`,
+          icon: {
+            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
+                <text x="12" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold">M</text>
+              </svg>
+            `),
+            scaledSize: new google.maps.Size(24, 24),
+            anchor: new google.maps.Point(12, 12)
+          }
+        });
+        
+        // Lagre markørene for cleanup
+        allMarkersRef.current.push(startMarker, endMarker);
         
         // Lagre den beregnede ruten for ladestasjon-filtrering
         setCalculatedRoute(result);
