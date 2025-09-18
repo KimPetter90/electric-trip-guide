@@ -457,11 +457,37 @@ const GoogleRouteMap: React.FC<{
 
   // Hjelpefunksjon for å sjekke om stasjon er anbefalt for lading
   const isRecommendedStation = useCallback((station: ChargingStation): boolean => {
-    const optimizedPlan = getOptimizedChargingPlan();
+    if (!calculatedRoute || !selectedCar || !routeData || !chargingStations) {
+      return false;
+    }
+
+    // Få total rutedistanse fra Google Maps
+    const totalDistance = calculatedRoute.routes[0].legs.reduce((sum, leg) => {
+      return sum + (leg.distance?.value || 0);
+    }, 0) / 1000; // Konverter til km
+
+    // Hent værdata (kan utvides senere med faktisk API-kall)
+    const mockWeatherData = {
+      temperature: 5, // 5°C
+      windSpeed: 8, // 8 m/s
+      precipitation: 0, // Ingen nedbør
+      humidity: 70,
+      conditions: 'cloudy'
+    };
+
+    // Bruk RouteOptimizer for avansert beregning
+    const optimizedPlan = RouteOptimizer.calculateOptimalChargingPlan(
+      selectedCar,
+      routeData,
+      chargingStations,
+      mockWeatherData,
+      totalDistance
+    );
+    
     const isRecommended = optimizedPlan.some(plan => plan.station.id === station.id);
     console.log(`🔍 ${station.name}: i optimal plan=${isRecommended}, plan har ${optimizedPlan.length} stasjoner`);
     return isRecommended;
-  }, [getOptimizedChargingPlan]);
+  }, [calculatedRoute, selectedCar, routeData, chargingStations]);
 
   // Hjelpefunksjon for å sjekke om stasjon er kritisk ved 10% batteri
   const checkIfCriticalStation = useCallback((station: ChargingStation): boolean => {
