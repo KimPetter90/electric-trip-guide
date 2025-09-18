@@ -380,51 +380,12 @@ const GoogleRouteMap: React.FC<{
       }
     });
     
-    // If needs charging, show nearest charging station
+    // If needs charging, mark for later processing (after getOptimizedChargingPlan is available)
     if (needsCharging && calculatedRoute) {
-      // Get optimized plan to find nearest station
-      const optimizedPlan = getOptimizedChargingPlan();
-      
-      if (optimizedPlan.length > 0) {
-        const nearestStation = optimizedPlan[0];
-        
-        // Find the marker for this station
-        const stationMarker = chargingStationMarkersRef.current.find(marker => {
-          const markerPos = marker.getPosition();
-          const stationPos = new google.maps.LatLng(nearestStation.station.latitude, nearestStation.station.longitude);
-          return markerPos && google.maps.geometry.spherical.computeDistanceBetween(markerPos, stationPos) < 100;
-        });
-        
-        if (stationMarker && mapInstanceRef.current) {
-          const infoWindow = new google.maps.InfoWindow({
-            content: `
-              <div style="font-family: Arial, sans-serif; padding: 10px; max-width: 250px;">
-                <h3 style="margin: 0 0 8px 0; color: #ff0000;">🚨 LADING PÅKREVD!</h3>
-                <p style="margin: 0 0 8px 0; font-weight: bold;">${nearestStation.station.name}</p>
-                <p style="margin: 0 0 8px 0; font-size: 14px;">${nearestStation.station.address}</p>
-                <p style="margin: 0 0 8px 0; font-size: 14px;">
-                  <strong>Avstand:</strong> ${nearestStation.distanceFromStart.toFixed(0)} km fra start<br>
-                  <strong>Batteri ved ankomst:</strong> ${nearestStation.batteryLevelOnArrival.toFixed(1)}%<br>
-                  <strong>Effekt:</strong> ${nearestStation.station.power}<br>
-                  <strong>Pris:</strong> ${nearestStation.station.cost} kr/kWh
-                </p>
-                <div style="background: #ffe6e6; padding: 8px; border-radius: 4px; font-size: 12px;">
-                  <strong>⚠️ Du må lade her for å komme frem!</strong>
-                </div>
-              </div>
-            `
-          });
-          
-          infoWindow.open(mapInstanceRef.current, stationMarker);
-          
-          // Auto-close after 10 seconds
-          setTimeout(() => {
-            infoWindow.close();
-          }, 10000);
-        }
-      }
+      // This will be handled by the useEffect that watches currentBatteryLevel
+      console.log('🔋 Batteriet er lavt, nærmeste ladestasjon vil bli vist automatisk');
     }
-  }, [calculatedRoute, getOptimizedChargingPlan]);
+  }, [calculatedRoute]);
 
 
   // Hjelpefunksjon for å finne de beste anbefalte ladestasjonene med avansert optimalisering
@@ -471,6 +432,56 @@ const GoogleRouteMap: React.FC<{
 
     return filteredPlan;
   }, [calculatedRoute, selectedCar, routeData, chargingStations, isStationNearRoute]);
+
+  // Automatically show next charging station when battery gets low
+  useEffect(() => {
+    if (currentBatteryLevel <= 10 && calculatedRoute && currentPositionMarkerRef.current) {
+      const currentPos = currentPositionMarkerRef.current.getPosition();
+      if (currentPos) {
+        // Get optimized plan to find nearest station
+        const optimizedPlan = getOptimizedChargingPlan();
+        
+        if (optimizedPlan.length > 0) {
+          const nearestStation = optimizedPlan[0];
+          
+          // Find the marker for this station
+          const stationMarker = chargingStationMarkersRef.current.find(marker => {
+            const markerPos = marker.getPosition();
+            const stationPos = new google.maps.LatLng(nearestStation.station.latitude, nearestStation.station.longitude);
+            return markerPos && google.maps.geometry.spherical.computeDistanceBetween(markerPos, stationPos) < 100;
+          });
+          
+          if (stationMarker && mapInstanceRef.current) {
+            const infoWindow = new google.maps.InfoWindow({
+              content: `
+                <div style="font-family: Arial, sans-serif; padding: 10px; max-width: 250px;">
+                  <h3 style="margin: 0 0 8px 0; color: #ff0000;">🚨 LADING PÅKREVD!</h3>
+                  <p style="margin: 0 0 8px 0; font-weight: bold;">${nearestStation.station.name}</p>
+                  <p style="margin: 0 0 8px 0; font-size: 14px;">${nearestStation.station.address}</p>
+                  <p style="margin: 0 0 8px 0; font-size: 14px;">
+                    <strong>Avstand:</strong> ${nearestStation.distanceFromStart.toFixed(0)} km fra start<br>
+                    <strong>Batteri ved ankomst:</strong> ${nearestStation.batteryLevelOnArrival.toFixed(1)}%<br>
+                    <strong>Effekt:</strong> ${nearestStation.station.power}<br>
+                    <strong>Pris:</strong> ${nearestStation.station.cost} kr/kWh
+                  </p>
+                  <div style="background: #ffe6e6; padding: 8px; border-radius: 4px; font-size: 12px;">
+                    <strong>⚠️ Du må lade her for å komme frem!</strong>
+                  </div>
+                </div>
+              `
+            });
+            
+            infoWindow.open(mapInstanceRef.current, stationMarker);
+            
+            // Auto-close after 10 seconds
+            setTimeout(() => {
+              infoWindow.close();
+            }, 10000);
+          }
+        }
+      }
+    }
+  }, [currentBatteryLevel, calculatedRoute, getOptimizedChargingPlan]);
 
   // Hjelpefunksjon for å sjekke om stasjon er anbefalt for lading
   const isRecommendedStation = useCallback((station: ChargingStation): boolean => {
