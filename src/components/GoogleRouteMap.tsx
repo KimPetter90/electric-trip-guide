@@ -66,6 +66,7 @@ const GoogleRouteMap: React.FC<{
   const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
   const allMarkersRef = useRef<google.maps.Marker[]>([]);
   const chargingStationMarkersRef = useRef<google.maps.Marker[]>([]);
+  const currentPositionMarkerRef = useRef<google.maps.Marker | null>(null);
   const [isMapInitialized, setIsMapInitialized] = useState(false);
   const [calculatedRoute, setCalculatedRoute] = useState<google.maps.DirectionsResult | null>(null);
 
@@ -74,6 +75,9 @@ const GoogleRouteMap: React.FC<{
     return () => {
       allMarkersRef.current.forEach(marker => marker.setMap(null));
       chargingStationMarkersRef.current.forEach(marker => marker.setMap(null));
+      if (currentPositionMarkerRef.current) {
+        currentPositionMarkerRef.current.setMap(null);
+      }
       if (directionsRendererRef.current) {
         directionsRendererRef.current.setMap(null);
       }
@@ -172,6 +176,38 @@ const GoogleRouteMap: React.FC<{
           directionsRendererRef.current.setMap(map);
           console.log('✅ Google Maps DirectionsService and DirectionsRenderer initialized');
 
+          // Add click listener to place/move blue marker that snaps to route
+          map.addListener('click', (event: google.maps.MapMouseEvent) => {
+            if (event.latLng && calculatedRoute) {
+              const clickedPosition = event.latLng;
+              const snappedPosition = findNearestPointOnRoute(clickedPosition, calculatedRoute);
+              
+              // Remove existing current position marker
+              if (currentPositionMarkerRef.current) {
+                currentPositionMarkerRef.current.setMap(null);
+              }
+              
+              // Create new blue marker at snapped position
+              currentPositionMarkerRef.current = new google.maps.Marker({
+                position: snappedPosition,
+                map: map,
+                title: 'Din posisjon på ruten',
+                icon: {
+                  url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+                      <circle cx="10" cy="10" r="8" fill="#0066ff" stroke="#ffffff" stroke-width="2"/>
+                      <circle cx="10" cy="10" r="4" fill="#ffffff"/>
+                    </svg>
+                  `),
+                  scaledSize: new google.maps.Size(20, 20),
+                  anchor: new google.maps.Point(10, 10)
+                }
+              });
+              
+              console.log('🔵 Blå markør plassert på ruten:', snappedPosition.toJSON());
+            }
+          });
+
           setIsMapInitialized(true);
           onLoadingChange(false);
           onMapLoad?.(map);
@@ -259,6 +295,41 @@ const GoogleRouteMap: React.FC<{
     
     return isNear;
   }, [calculatedRoute]);
+
+  // Hjelpefunksjon for å finne nærmeste punkt på ruten
+  const findNearestPointOnRoute = useCallback((clickedPos: google.maps.LatLng, route: google.maps.DirectionsResult): google.maps.LatLng => {
+    if (!window.google?.maps?.geometry) {
+      return clickedPos;
+    }
+    
+    let minDistance = Infinity;
+    let nearestPoint = clickedPos;
+    
+    route.routes[0].legs.forEach(leg => {
+      leg.steps.forEach(step => {
+        // Check multiple points along each step for high accuracy
+        const stepStart = step.start_location;
+        const stepEnd = step.end_location;
+        
+        // Check 20 points along this step
+        for (let i = 0; i <= 20; i++) {
+          const ratio = i / 20;
+          const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
+          const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
+          const routePoint = new google.maps.LatLng(lat, lng);
+          
+          const distance = google.maps.geometry.spherical.computeDistanceBetween(clickedPos, routePoint);
+          if (distance < minDistance) {
+            minDistance = distance;
+            nearestPoint = routePoint;
+          }
+        }
+      });
+    });
+    
+    console.log(`🎯 Snappet til ruten, avstand: ${minDistance.toFixed(0)}m`);
+    return nearestPoint;
+  }, []);
 
   // Hjelpefunksjon for å finne de beste anbefalte ladestasjonene med avansert optimalisering
   const getOptimizedChargingPlan = useCallback((): OptimizedChargingPlan[] => {
