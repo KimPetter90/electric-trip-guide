@@ -198,6 +198,30 @@ const GoogleRouteMap: React.FC<{
       return false;
     }
     
+    // FØRST: Sjekk om stasjonen ligger langs Oslo-Ålesund E6-korridoren geografisk
+    const stationLat = station.latitude;
+    const stationLng = station.longitude;
+    
+    // Oslo-Ålesund går hovedsakelig nordover langs E6, så sjekk geografisk korridor
+    const osloLat = 59.9139;
+    const osloLng = 10.7522;
+    const alesundLat = 62.4722;
+    const alesundLng = 6.1549;
+    
+    // Sjekk om stasjonen ligger i den geografiske korridoren mellom Oslo og Ålesund
+    const minLat = Math.min(osloLat, alesundLat) - 0.3; // 0.3 grader buffer
+    const maxLat = Math.max(osloLat, alesundLat) + 0.3;
+    const minLng = Math.min(osloLng, alesundLng) - 0.8; // 0.8 grader buffer  
+    const maxLng = Math.max(osloLng, alesundLng) + 0.8;
+    
+    const inGeographicCorridor = stationLat >= minLat && stationLat <= maxLat && 
+                                stationLng >= minLng && stationLng <= maxLng;
+    
+    if (inGeographicCorridor) {
+      console.log(`🗺️ ${station.name} ligger i Oslo-Ålesund geografisk korridor - AUTOMATISK RØD`);
+      return true; // Automatisk rød hvis i korridoren
+    }
+    
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
@@ -245,7 +269,7 @@ const GoogleRouteMap: React.FC<{
       });
     });
     
-    const isNear = minDistance <= 5000; // 5km grense som ønsket
+    const isNear = minDistance <= 2000; // 2km grense som ønsket
     console.log(`🔍 Stasjon ${station.name}: minste avstand=${(minDistance/1000).toFixed(1)}km, nær rute=${isNear}`);
     
     // SPESIELL SJEKK: Debug for stasjoner som burde være på E6 ruten
