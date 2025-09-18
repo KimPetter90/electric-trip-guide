@@ -220,20 +220,41 @@ const GoogleRouteMap: React.FC<{
       marker.addListener('click', () => {
         const infoWindow = new google.maps.InfoWindow({
           content: `
-            <div style="padding: 10px; min-width: 250px;">
-              <h3 style="margin: 0 0 10px 0; color: ${isNearRoute ? '#ef4444' : '#22c55e'}; font-weight: bold;">
-                ${isNearRoute ? '🔴 PÅ RUTEN' : '🟢 LADESTASJON'}
-              </h3>
-              <p style="margin: 5px 0;"><strong>Navn:</strong> ${station.name}</p>
-              <p style="margin: 5px 0;"><strong>Adresse:</strong> ${station.address || station.location || 'Ikke tilgjengelig'}</p>
-              <p style="margin: 5px 0;"><strong>Tilgjengelighet:</strong> ${station.available}/${station.total} ledige plasser</p>
-              <p style="margin: 5px 0;"><strong>Ladeeffekt:</strong> ${station.power || 'Ikke oppgitt'}</p>
-              <p style="margin: 5px 0;"><strong>Kostnad:</strong> ${station.cost || 'Gratis'} kr/kWh</p>
-              <p style="margin: 5px 0;"><strong>Leverandør:</strong> ${station.provider || 'Ukjent'}</p>
-              <p style="margin: 5px 0;"><strong>Hurtiglader:</strong> <span style="color: ${station.fast_charger ? '#22c55e' : '#ef4444'};">${station.fast_charger ? 'Ja' : 'Nei'}</span></p>
-              <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: ${station.available > 0 ? '#22c55e' : '#ef4444'};">${station.available > 0 ? 'Tilgjengelig' : 'Opptatt'}</span></p>
-              <p style="margin: 5px 0;"><strong>Koordinater:</strong> ${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}</p>
-              ${isNearRoute ? '<p style="margin: 10px 0 0 0; color: #ef4444; font-weight: bold;">⚡ Denne ladestasjonen ligger nær ruten din!</p>' : ''}
+            <div style="font-family: Inter, sans-serif; padding: 12px; line-height: 1.4; min-width: 250px;">
+              <div style="background: linear-gradient(135deg, ${isNearRoute ? '#ef4444, #dc2626' : '#22c55e, #16a34a'}); color: white; padding: 10px; margin: -12px -12px 12px -12px; border-radius: 8px;">
+                <h4 style="margin: 0; font-size: 16px; font-weight: 600;">${isNearRoute ? '🔴' : '🟢'} ${station.name}</h4>
+                <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">📍 ${station.address || station.location || 'Ikke tilgjengelig'}</p>
+                <div style="margin-top: 6px;">
+                  <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; font-size: 12px;">${isNearRoute ? 'PÅ RUTEN' : 'LADESTASJON'}</span>
+                </div>
+              </div>
+              <div style="margin: 8px 0;">
+                <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+                  <span style="color: #666; font-size: 13px;">🔋 Tilgjengelighet:</span>
+                  <span style="font-weight: 500; font-size: 13px; color: ${station.available > 0 ? '#22c55e' : '#ef4444'};">${station.available}/${station.total} ledige</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+                  <span style="color: #666; font-size: 13px;">⚡ Ladeeffekt:</span>
+                  <span style="font-weight: 500; font-size: 13px;">${station.power || 'Ikke oppgitt'}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+                  <span style="color: #666; font-size: 13px;">💰 Kostnad:</span>
+                  <span style="font-weight: 500; font-size: 13px;">${station.cost || 'Gratis'} kr/kWh</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+                  <span style="color: #666; font-size: 13px;">🏢 Leverandør:</span>
+                  <span style="font-weight: 500; font-size: 13px;">${station.provider || 'Ukjent'}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+                  <span style="color: #666; font-size: 13px;">🚀 Hurtiglader:</span>
+                  <span style="font-weight: 500; font-size: 13px; color: ${station.fast_charger ? '#22c55e' : '#ef4444'};">${station.fast_charger ? 'Ja' : 'Nei'}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+                  <span style="color: #666; font-size: 13px;">📍 Koordinater:</span>
+                  <span style="font-weight: 500; font-size: 13px;">${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}</span>
+                </div>
+                ${isNearRoute ? '<div style="margin: 10px 0 0 0; padding: 8px; background: #fef2f2; border-radius: 6px; border-left: 3px solid #ef4444;"><p style="margin: 0; color: #dc2626; font-weight: 600; font-size: 13px;">⚡ Denne ladestasjonen ligger nær ruten din!</p></div>' : ''}
+              </div>
             </div>
           `
         });
@@ -359,12 +380,28 @@ const GoogleRouteMap: React.FC<{
         startMarker.addListener('click', () => {
           const infoWindow = new google.maps.InfoWindow({
             content: `
-              <div style="padding: 10px; min-width: 200px;">
-                <h3 style="margin: 0 0 10px 0; color: #22c55e; font-weight: bold;">🟢 STARTPUNKT</h3>
-                <p style="margin: 5px 0;"><strong>Adresse:</strong> ${routeData.from}</p>
-                <p style="margin: 5px 0;"><strong>Koordinater:</strong> ${leg.start_location.lat().toFixed(4)}, ${leg.start_location.lng().toFixed(4)}</p>
-                <p style="margin: 5px 0;"><strong>Avstand:</strong> ${leg.distance?.text || 'N/A'}</p>
-                <p style="margin: 5px 0;"><strong>Estimert tid:</strong> ${leg.duration?.text || 'N/A'}</p>
+              <div style="font-family: Inter, sans-serif; padding: 12px; line-height: 1.4; min-width: 250px;">
+                <div style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 10px; margin: -12px -12px 12px -12px; border-radius: 8px;">
+                  <h4 style="margin: 0; font-size: 16px; font-weight: 600;">🟢 STARTPUNKT</h4>
+                  <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">📍 ${routeData.from}</p>
+                  <div style="margin-top: 6px;">
+                    <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; font-size: 12px;">Start</span>
+                  </div>
+                </div>
+                <div style="margin: 8px 0;">
+                  <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+                    <span style="color: #666; font-size: 13px;">📍 Koordinater:</span>
+                    <span style="font-weight: 500; font-size: 13px;">${leg.start_location.lat().toFixed(4)}, ${leg.start_location.lng().toFixed(4)}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+                    <span style="color: #666; font-size: 13px;">📏 Total avstand:</span>
+                    <span style="font-weight: 500; font-size: 13px;">${leg.distance?.text || 'N/A'}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+                    <span style="color: #666; font-size: 13px;">⏰ Estimert tid:</span>
+                    <span style="font-weight: 500; font-size: 13px;">${leg.duration?.text || 'N/A'}</span>
+                  </div>
+                </div>
               </div>
             `
           });
@@ -392,12 +429,28 @@ const GoogleRouteMap: React.FC<{
         endMarker.addListener('click', () => {
           const infoWindow = new google.maps.InfoWindow({
             content: `
-              <div style="padding: 10px; min-width: 200px;">
-                <h3 style="margin: 0 0 10px 0; color: #ef4444; font-weight: bold;">🔴 MÅLPUNKT</h3>
-                <p style="margin: 5px 0;"><strong>Adresse:</strong> ${routeData.to}</p>
-                <p style="margin: 5px 0;"><strong>Koordinater:</strong> ${leg.end_location.lat().toFixed(4)}, ${leg.end_location.lng().toFixed(4)}</p>
-                <p style="margin: 5px 0;"><strong>Total avstand:</strong> ${leg.distance?.text || 'N/A'}</p>
-                <p style="margin: 5px 0;"><strong>Total tid:</strong> ${leg.duration?.text || 'N/A'}</p>
+              <div style="font-family: Inter, sans-serif; padding: 12px; line-height: 1.4; min-width: 250px;">
+                <div style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 10px; margin: -12px -12px 12px -12px; border-radius: 8px;">
+                  <h4 style="margin: 0; font-size: 16px; font-weight: 600;">🔴 MÅLPUNKT</h4>
+                  <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">📍 ${routeData.to}</p>
+                  <div style="margin-top: 6px;">
+                    <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; font-size: 12px;">Mål</span>
+                  </div>
+                </div>
+                <div style="margin: 8px 0;">
+                  <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+                    <span style="color: #666; font-size: 13px;">📍 Koordinater:</span>
+                    <span style="font-weight: 500; font-size: 13px;">${leg.end_location.lat().toFixed(4)}, ${leg.end_location.lng().toFixed(4)}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+                    <span style="color: #666; font-size: 13px;">📏 Total avstand:</span>
+                    <span style="font-weight: 500; font-size: 13px;">${leg.distance?.text || 'N/A'}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+                    <span style="color: #666; font-size: 13px;">⏰ Total tid:</span>
+                    <span style="font-weight: 500; font-size: 13px;">${leg.duration?.text || 'N/A'}</span>
+                  </div>
+                </div>
               </div>
             `
           });
