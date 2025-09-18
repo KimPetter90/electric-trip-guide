@@ -141,20 +141,22 @@ const GoogleRouteMap: React.FC<{
           directionsRendererRef.current = new google.maps.DirectionsRenderer({
             suppressMarkers: false,
             polylineOptions: {
-              strokeColor: '#ff0000', // Rød farge for å være mer synlig
-              strokeWeight: 6, // Tykkere linje
-              strokeOpacity: 1.0 // Full opasitet
+              strokeColor: '#dc2626', // Mørkere rød
+              strokeWeight: 8, // Enda tykkere
+              strokeOpacity: 1.0, // Full opasitet
+              zIndex: 100 // Høyere z-index for å være over andre elementer
             },
             markerOptions: {
               icon: {
                 url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" fill="#ff0000" stroke="#ffffff" stroke-width="2"/>
-                    <circle cx="12" cy="12" r="4" fill="#ffffff"/>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
+                    <circle cx="14" cy="14" r="12" fill="#dc2626" stroke="#ffffff" stroke-width="3"/>
+                    <circle cx="14" cy="14" r="6" fill="#ffffff"/>
+                    <text x="14" y="18" text-anchor="middle" fill="#dc2626" font-size="12" font-weight="bold">A</text>
                   </svg>
                 `),
-                scaledSize: new google.maps.Size(24, 24),
-                anchor: new google.maps.Point(12, 12)
+                scaledSize: new google.maps.Size(28, 28),
+                anchor: new google.maps.Point(14, 14)
               }
             }
           });
@@ -194,46 +196,74 @@ const GoogleRouteMap: React.FC<{
     chargingStationMarkersRef.current.forEach(marker => marker.setMap(null));
     chargingStationMarkersRef.current = [];
 
-    // Add new charging station markers
+    // Add new charging station markers with route detection
     chargingStations.forEach(station => {
+      // Funksjon for å sjekke om ladestasjon er nær ruten (placeholder logikk)
+      const isOnRoute = routeTrigger > 0; // Enkel sjekk - alle blir "på ruten" når rute er planlagt
+      
+      const markerIcon = isOnRoute ? {
+        // Rød ladestasjon for stasjoner på ruten
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14">
+            <defs>
+              <linearGradient id="redLightning" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#fef08a;stop-opacity:1" />
+                <stop offset="50%" style="stop-color:#fbbf24;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+              </linearGradient>
+              <filter id="redGlow">
+                <feGaussianBlur stdDeviation="0.5" result="coloredBlur"/>
+                <feMerge> 
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+            <!-- Rød sirkel bakgrunn -->
+            <circle cx="7" cy="7" r="6" fill="#dc2626" stroke="#b91c1c" stroke-width="1"/>
+            <!-- Gult lyn med glød -->
+            <path d="M8.8 2.2L5.8 6h1.7L4.8 9.8L7.2 6H5.5L8.8 2.2z" fill="url(#redLightning)" filter="url(#redGlow)"/>
+            <path d="M8.5 2.5L6 6h1.3L5.2 9.2L7 6H5.7L8.5 2.5z" fill="#fef3c7"/>
+            <path d="M8.2 2.8L6.2 5.8h1L5.5 8.8L6.8 6H6L8.2 2.8z" fill="#ffffff" opacity="0.7"/>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(14, 14),
+        anchor: new google.maps.Point(7, 7)
+      } : {
+        // Grønn ladestasjon for vanlige stasjoner
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+            <defs>
+              <linearGradient id="lightning" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#fef08a;stop-opacity:1" />
+                <stop offset="50%" style="stop-color:#fbbf24;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="0.5" result="coloredBlur"/>
+                <feMerge> 
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+            <!-- Grønn sirkel bakgrunn -->
+            <circle cx="6" cy="6" r="5" fill="#10b981" stroke="#059669" stroke-width="1"/>
+            <!-- Gult lyn med glød -->
+            <path d="M7.8 2.2L4.8 6h1.7L3.8 9.8L6.2 6H4.5L7.8 2.2z" fill="url(#lightning)" filter="url(#glow)"/>
+            <path d="M7.5 2.5L5 6h1.3L4.2 9.2L6 6H4.7L7.5 2.5z" fill="#fef3c7"/>
+            <path d="M7.2 2.8L5.2 5.8h1L4.5 8.8L5.8 6H5L7.2 2.8z" fill="#ffffff" opacity="0.7"/>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(12, 12),
+        anchor: new google.maps.Point(6, 6)
+      };
+
       const marker = new google.maps.Marker({
         position: { lat: station.latitude, lng: station.longitude },
         map: mapInstanceRef.current!,
         title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh`,
-        icon: {
-          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
-              <defs>
-                <!-- Gradient for ekstra glød -->
-                <linearGradient id="lightning" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style="stop-color:#fef08a;stop-opacity:1" />
-                  <stop offset="50%" style="stop-color:#fbbf24;stop-opacity:1" />
-                  <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
-                </linearGradient>
-                <!-- Glød-effekt -->
-                <filter id="glow">
-                  <feGaussianBlur stdDeviation="0.5" result="coloredBlur"/>
-                  <feMerge> 
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
-              <!-- Grønn sirkel bakgrunn -->
-              <circle cx="6" cy="6" r="5" fill="#10b981" stroke="#059669" stroke-width="1"/>
-              <!-- Glød lag bak -->
-              <path d="M7.8 2.2L4.8 6h1.7L3.8 9.8L6.2 6H4.5L7.8 2.2z" fill="#fef08a" opacity="0.8" filter="url(#glow)"/>
-              <!-- Hoved lyn med gradient -->
-              <path d="M7.8 2.2L4.8 6h1.7L3.8 9.8L6.2 6H4.5L7.8 2.2z" fill="url(#lightning)" stroke="#d97706" stroke-width="0.4"/>
-              <!-- Lysende highlight -->
-              <path d="M7.5 2.5L5 6h1.3L4.2 9.2L6 6H4.7L7.5 2.5z" fill="#fef3c7" opacity="0.9"/>
-              <!-- Skarp hvit glød i midten -->
-              <path d="M7.2 2.8L5.2 5.8h1L4.5 8.8L5.8 6H5L7.2 2.8z" fill="#ffffff" opacity="0.7"/>
-            </svg>
-          `),
-          scaledSize: new google.maps.Size(12, 12),
-          anchor: new google.maps.Point(6, 6)
-        }
+        icon: markerIcon
       });
 
       chargingStationMarkersRef.current.push(marker);
