@@ -226,7 +226,31 @@ const GoogleRouteMap: React.FC<{
         const infoWindow = new google.maps.InfoWindow({
           maxWidth: 380,
           disableAutoPan: false,
+          pixelOffset: new google.maps.Size(0, -10),
           content: `
+            <style>
+              .gm-style .gm-style-iw-c {
+                background: transparent !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                overflow: visible !important;
+                max-height: none !important;
+              }
+              .gm-style .gm-style-iw-d {
+                overflow: visible !important;
+                max-height: none !important;
+                scrollbar-width: none !important;
+                -ms-overflow-style: none !important;
+              }
+              .gm-style .gm-style-iw-d::-webkit-scrollbar {
+                display: none !important;
+              }
+              .gm-style .gm-style-iw-tc {
+                display: none !important;
+              }
+            </style>
             <div style="
               font-family: Inter, system-ui, sans-serif; 
               padding: 0; 
@@ -458,7 +482,31 @@ const GoogleRouteMap: React.FC<{
           const infoWindow = new google.maps.InfoWindow({
             maxWidth: 350,
             disableAutoPan: false,
+            pixelOffset: new google.maps.Size(0, -10),
             content: `
+              <style>
+                .gm-style .gm-style-iw-c {
+                  background: transparent !important;
+                  border: none !important;
+                  border-radius: 0 !important;
+                  box-shadow: none !important;
+                  padding: 0 !important;
+                  overflow: visible !important;
+                  max-height: none !important;
+                }
+                .gm-style .gm-style-iw-d {
+                  overflow: visible !important;
+                  max-height: none !important;
+                  scrollbar-width: none !important;
+                  -ms-overflow-style: none !important;
+                }
+                .gm-style .gm-style-iw-d::-webkit-scrollbar {
+                  display: none !important;
+                }
+                .gm-style .gm-style-iw-tc {
+                  display: none !important;
+                }
+              </style>
               <div style="
                 font-family: Inter, system-ui, sans-serif; 
                 padding: 0; 
@@ -543,7 +591,31 @@ const GoogleRouteMap: React.FC<{
           const infoWindow = new google.maps.InfoWindow({
             maxWidth: 350,
             disableAutoPan: false,
+            pixelOffset: new google.maps.Size(0, -10),
             content: `
+              <style>
+                .gm-style .gm-style-iw-c {
+                  background: transparent !important;
+                  border: none !important;
+                  border-radius: 0 !important;
+                  box-shadow: none !important;
+                  padding: 0 !important;
+                  overflow: visible !important;
+                  max-height: none !important;
+                }
+                .gm-style .gm-style-iw-d {
+                  overflow: visible !important;
+                  max-height: none !important;
+                  scrollbar-width: none !important;
+                  -ms-overflow-style: none !important;
+                }
+                .gm-style .gm-style-iw-d::-webkit-scrollbar {
+                  display: none !important;
+                }
+                .gm-style .gm-style-iw-tc {
+                  display: none !important;
+                }
+              </style>
               <div style="
                 font-family: Inter, system-ui, sans-serif; 
                 padding: 0; 
