@@ -127,8 +127,8 @@ const GoogleRouteMap: React.FC<{
         try {
           const map = new google.maps.Map(mapRef.current, {
             center: center,
-            zoom: Math.max(zoom, 8), // MINIMUM zoom 8 for å sikre stedsnavn
-            mapTypeId: google.maps.MapTypeId.ROADMAP, // Start med ROADMAP som ALLTID har navn
+            zoom: Math.max(zoom, 8),
+            mapTypeId: google.maps.MapTypeId.HYBRID,
             mapTypeControl: true,
             zoomControl: true,
             streetViewControl: false,
@@ -137,14 +137,10 @@ const GoogleRouteMap: React.FC<{
             keyboardShortcuts: false,
             clickableIcons: true,
             disableDoubleClickZoom: false,
-            scrollwheel: false
-          });
-
-          // ETTER 2 sekunder: bytt til HYBRID for å bevare stedsnavn
-          setTimeout(() => {
-            console.log('🔄 Bytter til HYBRID med stedsnavn...');
-            map.setMapTypeId(google.maps.MapTypeId.HYBRID);
-          }, 2000);
+            scrollwheel: false,
+            // KRITISK: labels må eksplisitt settes til true!
+            labels: true
+          } as any);
 
           console.log('✅ Google Maps instance created successfully');
           mapInstanceRef.current = map;
