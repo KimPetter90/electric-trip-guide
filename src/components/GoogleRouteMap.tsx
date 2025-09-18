@@ -835,28 +835,32 @@ const GoogleRouteMap: React.FC<{
     onError(null);
 
     try {
-      // Get route preferences based on selected route
+      // Get route preferences based on selected route - Made more distinct
       const getRoutePreferences = (routeId: string | null) => {
+        console.log(`🛣️ Setter rutepreferanser for: ${routeId}`);
         switch (routeId) {
           case 'fastest':
+            console.log('⚡ Fastest: Tillater alt for raskeste rute');
             return {
               avoidHighways: false,
               avoidTolls: false,
               avoidFerries: false,
-              provideRouteAlternatives: false
+              provideRouteAlternatives: true // Try to get alternatives for fastest too
             };
           case 'shortest':
+            console.log('📏 Shortest: Forcerer alternative ruter og velger korteste');
             return {
-              avoidHighways: false, // Allow highways for potentially shorter routes
-              avoidTolls: false,
+              avoidHighways: false,
+              avoidTolls: true, // Avoid tolls to potentially get different route
               avoidFerries: false,
-              provideRouteAlternatives: true // Get multiple route options
+              provideRouteAlternatives: true
             };
           case 'eco':
+            console.log('🌱 Eco: Unngår hovedveier og bomveier');
             return {
-              avoidHighways: true,
+              avoidHighways: true, // This should give a very different route
               avoidTolls: true,
-              avoidFerries: false, // Only avoid highways and tolls for eco
+              avoidFerries: true,
               provideRouteAlternatives: false
             };
           default:
@@ -904,10 +908,12 @@ const GoogleRouteMap: React.FC<{
         directionsServiceRef.current!.route(request, (result, status) => {
           clearTimeout(timeout);
           console.log('🗺️ Google Directions API respons:', status);
+          console.log(`📊 Antall ruter mottatt: ${result?.routes?.length || 0}`);
           
           if (status === google.maps.DirectionsStatus.OK && result) {
             resolve(result);
           } else {
+            console.error('❌ Directions API feil:', status);
             reject(new Error(status));
           }
         });
