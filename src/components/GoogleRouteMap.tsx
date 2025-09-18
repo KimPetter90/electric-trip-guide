@@ -1223,21 +1223,20 @@ const GoogleRouteMap: React.FC<{
           minHeight: '500px' // Ensure minimum height
         }} 
       />
-      {/* Debug info overlay */}
+      {/* STATUSKARTET ER FULLSTENDIG SKJULT - INGENTING VISES! */}
       <div style={{
+        display: 'none',
+        visibility: 'hidden',
+        opacity: 0,
+        height: 0,
+        width: 0,
+        overflow: 'hidden',
         position: 'absolute',
-        top: '10px',
-        left: '10px',
-        background: 'rgba(0,0,0,0.8)',
-        color: 'white',
-        padding: '8px 12px',
-        borderRadius: '6px',
-        fontSize: '14px',
-        fontWeight: 'bold',
-        zIndex: 1000,
-        fontFamily: 'monospace'
-      }}>
-        🗺️ Status: {isMapInitialized ? '✅ Kart stabilt' : '⏳ Laster...'}
+        left: -9999,
+        top: -9999,
+        zIndex: -1000
+      } as React.CSSProperties}>
+        SKJULT
       </div>
       
       {/* Custom Zoom Controls */}
