@@ -431,18 +431,37 @@ const GoogleRouteMap: React.FC<{
     // Få optimalisert ladeplan
     const optimizedPlan = getOptimizedChargingPlan();
     
-    // Finn første anbefalte stasjon som kommer etter 10% punktet
-    const criticalStation = optimizedPlan.find(plan => 
-      plan.distanceFromStart >= distanceAt10Percent - 10 && // 10km buffer før
-      plan.distanceFromStart <= distanceAt10Percent + 50 && // 50km buffer etter
+    // Først: prøv å finne en stasjon ETTER 10% punktet (innenfor 50km)
+    const stationAfter10Percent = optimizedPlan.find(plan => 
+      plan.distanceFromStart >= distanceAt10Percent && 
+      plan.distanceFromStart <= distanceAt10Percent + 50 && 
       plan.station.id === station.id
     );
     
-    if (criticalStation) {
-      console.log(`🔵 Kritisk stasjon funnet: ${station.name} ved ${criticalStation.distanceFromStart.toFixed(0)}km (10% ved ${distanceAt10Percent.toFixed(0)}km)`);
+    if (stationAfter10Percent) {
+      console.log(`🔵 Kritisk stasjon funnet ETTER 10%: ${station.name} ved ${stationAfter10Percent.distanceFromStart.toFixed(0)}km (10% ved ${distanceAt10Percent.toFixed(0)}km)`);
+      return true;
     }
     
-    return !!criticalStation;
+    // Hvis ingen stasjon etter 10%, finn den SISTE stasjonen FØR 10% punktet
+    const stationsBefore10Percent = optimizedPlan.filter(plan => 
+      plan.distanceFromStart < distanceAt10Percent && 
+      plan.distanceFromStart >= distanceAt10Percent - 100 // Max 100km før
+    );
+    
+    if (stationsBefore10Percent.length > 0) {
+      // Finn den som er nærmest 10% punktet
+      const lastStationBefore = stationsBefore10Percent.reduce((closest, current) => 
+        current.distanceFromStart > closest.distanceFromStart ? current : closest
+      );
+      
+      if (lastStationBefore.station.id === station.id) {
+        console.log(`🔵 Kritisk stasjon funnet FØR 10%: ${station.name} ved ${lastStationBefore.distanceFromStart.toFixed(0)}km (siste sjanse før 10% ved ${distanceAt10Percent.toFixed(0)}km)`);
+        return true;
+      }
+    }
+    
+    return false;
   }, [calculatedRoute, selectedCar, routeData.batteryPercentage, getOptimizedChargingPlan]);
 
   // Add charging station markers - update when route changes
@@ -510,7 +529,7 @@ const GoogleRouteMap: React.FC<{
       const marker = new google.maps.Marker({
         position: { lat: station.latitude, lng: station.longitude },
         map: mapInstanceRef.current!,
-        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isCriticalFor10Percent ? '\n🚨 KRITISK - MÅ LADE HER VED 10%!' : isRecommended ? '\n💙 ANBEFALT LADESTASJON' : isNearRoute ? '\n🔴 NÆR RUTEN' : '\n🟢 LANGT FRA RUTEN'}`,
+        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isCriticalFor10Percent ? '\n🚨 KRITISK - SISTE SJANSE FØR/VED 10%!' : isRecommended ? '\n💙 ANBEFALT LADESTASJON' : isNearRoute ? '\n🔴 NÆR RUTEN' : '\n🟢 LANGT FRA RUTEN'}`,
         icon: markerIcon
       });
 
