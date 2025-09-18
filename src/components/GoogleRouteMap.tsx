@@ -127,8 +127,8 @@ const GoogleRouteMap: React.FC<{
         try {
           const map = new google.maps.Map(mapRef.current, {
             center: center,
-            zoom: Math.max(zoom, 8),
-            mapTypeId: google.maps.MapTypeId.HYBRID,
+            zoom: Math.max(zoom, 10), // Høyere zoom for å tvinge fram stedsnavn
+            mapTypeId: google.maps.MapTypeId.TERRAIN, // TERRAIN mode GARANTERT med stedsnavn
             mapTypeControl: true,
             zoomControl: true,
             streetViewControl: false,
@@ -138,9 +138,8 @@ const GoogleRouteMap: React.FC<{
             clickableIcons: true,
             disableDoubleClickZoom: false,
             scrollwheel: false,
-            // KRITISK: labels må eksplisitt settes til true!
-            labels: true
-          } as any);
+            styles: [] // Tom styles array for å sikre at ALLE stedsnavn vises
+          });
 
           console.log('✅ Google Maps instance created successfully');
           mapInstanceRef.current = map;
