@@ -441,13 +441,22 @@ const GoogleRouteMap: React.FC<{
     });
     console.log(`🔧 AFTER filtering: ${filteredPlan.length} stasjoner er nær ruten`);
 
-    console.log(`🎯 Optimal ladeplan: ${filteredPlan.length} stasjoner (BARE DE NÆR RUTEN)`);
-    filteredPlan.forEach((plan, index) => {
+    // Hvis ingen stasjoner er innenfor 5km, ta den nærmeste anbefalte stasjonen
+    const finalPlan = filteredPlan.length > 0 ? filteredPlan : 
+      (optimizedPlan.length > 0 ? [optimizedPlan[optimizedPlan.length - 1]] : []);
+
+    console.log(`🎯 Bruker ${finalPlan.length} stasjoner (${filteredPlan.length > 0 ? 'nær ruten' : 'nærmeste anbefalt'})`);
+    
+    if (filteredPlan.length === 0 && optimizedPlan.length > 0) {
+      console.log(`🔄 Bruker nærmeste anbefalt: ${optimizedPlan[optimizedPlan.length - 1].station.name}`);
+    }
+
+    finalPlan.forEach((plan, index) => {
       console.log(`  📍 ${index + 1}. ${plan.station.name} - ${plan.distanceFromStart.toFixed(0)}km fra start`);
       console.log(`      ID: ${plan.station.id}`);
     });
 
-    return filteredPlan;
+    return finalPlan;
   }, [calculatedRoute, selectedCar, routeData, chargingStations, isStationNearRoute]);
 
   // Hjelpefunksjon for å sjekke om stasjon er anbefalt for lading
