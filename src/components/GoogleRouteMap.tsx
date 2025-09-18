@@ -106,8 +106,8 @@ const GoogleRouteMap: React.FC<{
           apiKey: data.apiKey,
           version: 'weekly',
           libraries: ['places', 'geometry'],
-          region: 'NO',
-          language: 'no'
+          region: 'NO', // Norge
+          language: 'no' // Norsk for å sikre norske stedsnavn
         });
 
         console.log('🔧 Loading Google Maps JavaScript API...');
@@ -127,8 +127,8 @@ const GoogleRouteMap: React.FC<{
         try {
           const map = new google.maps.Map(mapRef.current, {
             center: center,
-            zoom: zoom,
-            mapTypeId: google.maps.MapTypeId.HYBRID, // HYBRID = Satelitt + Stedsnavn
+            zoom: Math.max(zoom, 8), // MINIMUM zoom 8 for å sikre stedsnavn
+            mapTypeId: google.maps.MapTypeId.ROADMAP, // Start med ROADMAP som ALLTID har navn
             mapTypeControl: true,
             zoomControl: true,
             streetViewControl: false,
@@ -137,10 +137,14 @@ const GoogleRouteMap: React.FC<{
             keyboardShortcuts: false,
             clickableIcons: true,
             disableDoubleClickZoom: false,
-            scrollwheel: false,
-            // INGEN styles - la Google Maps være helt normal
-            styles: []
+            scrollwheel: false
           });
+
+          // ETTER 2 sekunder: bytt til HYBRID for å bevare stedsnavn
+          setTimeout(() => {
+            console.log('🔄 Bytter til HYBRID med stedsnavn...');
+            map.setMapTypeId(google.maps.MapTypeId.HYBRID);
+          }, 2000);
 
           console.log('✅ Google Maps instance created successfully');
           mapInstanceRef.current = map;
