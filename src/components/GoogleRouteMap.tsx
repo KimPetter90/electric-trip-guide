@@ -462,7 +462,9 @@ const GoogleRouteMap: React.FC<{
   // Hjelpefunksjon for å sjekke om stasjon er anbefalt for lading
   const isRecommendedStation = useCallback((station: ChargingStation): boolean => {
     const optimizedPlan = getOptimizedChargingPlan();
-    return optimizedPlan.some(plan => plan.station.id === station.id);
+    const isRecommended = optimizedPlan.some(plan => plan.station.id === station.id);
+    console.log(`🔍 ${station.name}: i optimal plan=${isRecommended}, plan har ${optimizedPlan.length} stasjoner`);
+    return isRecommended;
   }, [getOptimizedChargingPlan]);
 
   // Hjelpefunksjon for å sjekke om stasjon er kritisk ved 10% batteri
