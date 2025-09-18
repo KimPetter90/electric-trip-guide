@@ -277,29 +277,41 @@ const GoogleRouteMap: React.FC<{
 
   // Hjelpefunksjon for å sjekke om stasjon er nær ruten
   const isStationNearRoute = useCallback((station: ChargingStation): boolean => {
-    if (!calculatedRoute || !window.google?.maps?.geometry) return false;
+    if (!calculatedRoute || !window.google?.maps?.geometry) {
+      console.log('❌ Mangler calculatedRoute eller geometry API for stasjon:', station.name);
+      return false;
+    }
     
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
-    // Sjekk om stasjonen er innenfor 5km fra rutelinjen
-    let isNear = false;
+    // Sjekk om stasjonen er innenfor 10km fra rutelinjen (økt fra 5km)
+    let minDistance = Infinity;
+    
     route.legs.forEach(leg => {
       leg.steps.forEach(step => {
+        // Sjekk flere punkter langs hvert steg av ruten
         const stepStart = step.start_location;
         const stepEnd = step.end_location;
         
-        // Beregn avstand fra stasjon til denne delen av ruten
+        // Beregn avstand fra stasjon til start og slutt av dette segmentet
         const distanceToStart = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
         const distanceToEnd = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
         
-        // Hvis stasjonen er innenfor 5km fra start eller slutt av dette segmentet
-        if (distanceToStart <= 5000 || distanceToEnd <= 5000) {
-          isNear = true;
-        }
+        minDistance = Math.min(minDistance, distanceToStart, distanceToEnd);
+        
+        // Sjekk også midtpunktet av segmentet
+        const midLat = (stepStart.lat() + stepEnd.lat()) / 2;
+        const midLng = (stepStart.lng() + stepEnd.lng()) / 2;
+        const midPoint = new google.maps.LatLng(midLat, midLng);
+        const distanceToMid = google.maps.geometry.spherical.computeDistanceBetween(stationPos, midPoint);
+        
+        minDistance = Math.min(minDistance, distanceToMid);
       });
     });
     
+    const isNear = minDistance <= 10000; // 10km grense
+    console.log(`🔌 Stasjon ${station.name}: ${(minDistance/1000).toFixed(1)}km fra ruten -> ${isNear ? 'RØD (nær)' : 'GRØNN (langt)'}`);
     return isNear;
   }, [calculatedRoute]);
 
@@ -317,7 +329,7 @@ const GoogleRouteMap: React.FC<{
 
     // Add new charging station markers - eksakt som det gamle Mapbox-kartet
     chargingStations.forEach(station => {
-      // Sjekk om stasjon er nær ruten (innenfor 5km)
+      // Sjekk om stasjon er nær ruten (innenfor 10km)
       const isNearRoute = calculatedRoute && isStationNearRoute(station);
       
       const markerIcon = isNearRoute ? {
