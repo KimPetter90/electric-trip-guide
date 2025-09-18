@@ -216,6 +216,30 @@ const GoogleRouteMap: React.FC<{
         icon: markerIcon
       });
 
+      // Legg til klikk-event for ladestasjon-markør
+      marker.addListener('click', () => {
+        const infoWindow = new google.maps.InfoWindow({
+          content: `
+            <div style="padding: 10px; min-width: 250px;">
+              <h3 style="margin: 0 0 10px 0; color: ${isNearRoute ? '#ef4444' : '#22c55e'}; font-weight: bold;">
+                ${isNearRoute ? '🔴 PÅ RUTEN' : '🟢 LADESTASJON'}
+              </h3>
+              <p style="margin: 5px 0;"><strong>Navn:</strong> ${station.name}</p>
+              <p style="margin: 5px 0;"><strong>Adresse:</strong> ${station.address || station.location || 'Ikke tilgjengelig'}</p>
+              <p style="margin: 5px 0;"><strong>Tilgjengelighet:</strong> ${station.available}/${station.total} ledige plasser</p>
+              <p style="margin: 5px 0;"><strong>Ladeeffekt:</strong> ${station.power || 'Ikke oppgitt'}</p>
+              <p style="margin: 5px 0;"><strong>Kostnad:</strong> ${station.cost || 'Gratis'} kr/kWh</p>
+              <p style="margin: 5px 0;"><strong>Leverandør:</strong> ${station.provider || 'Ukjent'}</p>
+              <p style="margin: 5px 0;"><strong>Hurtiglader:</strong> <span style="color: ${station.fast_charger ? '#22c55e' : '#ef4444'};">${station.fast_charger ? 'Ja' : 'Nei'}</span></p>
+              <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: ${station.available > 0 ? '#22c55e' : '#ef4444'};">${station.available > 0 ? 'Tilgjengelig' : 'Opptatt'}</span></p>
+              <p style="margin: 5px 0;"><strong>Koordinater:</strong> ${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}</p>
+              ${isNearRoute ? '<p style="margin: 10px 0 0 0; color: #ef4444; font-weight: bold;">⚡ Denne ladestasjonen ligger nær ruten din!</p>' : ''}
+            </div>
+          `
+        });
+        infoWindow.open(mapInstanceRef.current, marker);
+      });
+
       chargingStationMarkersRef.current.push(marker);
     });
 
@@ -331,6 +355,22 @@ const GoogleRouteMap: React.FC<{
           }
         });
         
+        // Legg til klikk-event for start-markør
+        startMarker.addListener('click', () => {
+          const infoWindow = new google.maps.InfoWindow({
+            content: `
+              <div style="padding: 10px; min-width: 200px;">
+                <h3 style="margin: 0 0 10px 0; color: #22c55e; font-weight: bold;">🟢 STARTPUNKT</h3>
+                <p style="margin: 5px 0;"><strong>Adresse:</strong> ${routeData.from}</p>
+                <p style="margin: 5px 0;"><strong>Koordinater:</strong> ${leg.start_location.lat().toFixed(4)}, ${leg.start_location.lng().toFixed(4)}</p>
+                <p style="margin: 5px 0;"><strong>Avstand:</strong> ${leg.distance?.text || 'N/A'}</p>
+                <p style="margin: 5px 0;"><strong>Estimert tid:</strong> ${leg.duration?.text || 'N/A'}</p>
+              </div>
+            `
+          });
+          infoWindow.open(mapInstanceRef.current, startMarker);
+        });
+        
         // Slutt-markør (rød som på det gamle kartet)
         const endMarker = new google.maps.Marker({
           position: leg.end_location,
@@ -346,6 +386,22 @@ const GoogleRouteMap: React.FC<{
             scaledSize: new google.maps.Size(24, 24),
             anchor: new google.maps.Point(12, 12)
           }
+        });
+        
+        // Legg til klikk-event for slutt-markør
+        endMarker.addListener('click', () => {
+          const infoWindow = new google.maps.InfoWindow({
+            content: `
+              <div style="padding: 10px; min-width: 200px;">
+                <h3 style="margin: 0 0 10px 0; color: #ef4444; font-weight: bold;">🔴 MÅLPUNKT</h3>
+                <p style="margin: 5px 0;"><strong>Adresse:</strong> ${routeData.to}</p>
+                <p style="margin: 5px 0;"><strong>Koordinater:</strong> ${leg.end_location.lat().toFixed(4)}, ${leg.end_location.lng().toFixed(4)}</p>
+                <p style="margin: 5px 0;"><strong>Total avstand:</strong> ${leg.distance?.text || 'N/A'}</p>
+                <p style="margin: 5px 0;"><strong>Total tid:</strong> ${leg.duration?.text || 'N/A'}</p>
+              </div>
+            `
+          });
+          infoWindow.open(mapInstanceRef.current, endMarker);
         });
         
         // Lagre markørene for cleanup
