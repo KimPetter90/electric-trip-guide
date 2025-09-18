@@ -85,6 +85,29 @@ function Index() {
   const [mapError, setMapError] = useState<string | null>(null);
   const [chargingStations, setChargingStations] = useState<any[]>([]);
 
+  // Load charging stations on component mount
+  useEffect(() => {
+    const loadChargingStations = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('charging_stations')
+          .select('*');
+        
+        if (error) {
+          console.error('Feil ved lasting av ladestasjoner:', error);
+          return;
+        }
+        
+        console.log('✅ Lastet inn', data?.length || 0, 'ladestasjoner');
+        setChargingStations(data || []);
+      } catch (error) {
+        console.error('Feil ved lasting av ladestasjoner:', error);
+      }
+    };
+
+    loadChargingStations();
+  }, []);
+
   // Handle shared route parameters
   useEffect(() => {
     const fromParam = searchParams.get('from');
