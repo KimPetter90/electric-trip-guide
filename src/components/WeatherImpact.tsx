@@ -235,42 +235,16 @@ export default function WeatherImpact({ selectedCar, routeData }: WeatherImpactP
           </Badge>
         </div>
 
-        {/* Range Impact Summary */}
-        <div className="bg-background/30 rounded-lg p-3 border border-primary/20">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Rekkevidde påvirkning</span>
+        {/* Range Impact Summary - Subtle display */}
+        <div className="bg-background/20 rounded-lg p-2 border border-border/30">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Værpåvirkning:</span>
             <div className="flex items-center gap-1">
-              {impact.icon}
-              <span className={`text-sm font-bold ${getImpactColor(weatherData.rangeFactor)}`}>
-                {percentChange > 0 ? '+' : ''}{percentChange.toFixed(1)}%
+              <span className={`text-xs ${getImpactColor(weatherData.rangeFactor)}`}>
+                {adjustedRange} km ({percentChange > 0 ? '+' : ''}{percentChange.toFixed(1)}%)
               </span>
             </div>
           </div>
-          
-          <div className="flex items-center gap-4 text-sm">
-            <div>
-              <span className="text-muted-foreground">Original: </span>
-              <span className="font-bold">{originalRange} km</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Justert: </span>
-              <span className={`font-bold ${getImpactColor(weatherData.rangeFactor)}`}>
-                {adjustedRange} km
-              </span>
-            </div>
-          </div>
-          
-          <div className="mt-2">
-            <Progress 
-              value={weatherData.rangeFactor * 100} 
-              className="h-2"
-              max={120}
-            />
-          </div>
-          
-          <p className={`text-xs mt-1 ${getImpactColor(weatherData.rangeFactor)}`}>
-            {impact.level}
-          </p>
         </div>
 
         {/* Weather Details */}
