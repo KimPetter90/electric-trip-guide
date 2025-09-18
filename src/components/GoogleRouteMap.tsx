@@ -284,7 +284,7 @@ const GoogleRouteMap: React.FC<{
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
-    // Sjekk om stasjonen er innenfor 25km fra rutelinjen (økt for lange ruter)
+    // Sjekk om stasjonen er innenfor 5km fra rutelinjen
     let minDistance = Infinity;
     
     route.legs.forEach(leg => {
@@ -306,7 +306,7 @@ const GoogleRouteMap: React.FC<{
       });
     });
     
-    const isNear = minDistance <= 25000; // 25km grense for lange ruter
+    const isNear = minDistance <= 5000; // 5km grense
     console.log(`🔌 Stasjon ${station.name}: ${(minDistance/1000).toFixed(1)}km fra ruten -> ${isNear ? 'RØD (nær)' : 'GRØNN (langt)'}`);
     return isNear;
   }, [calculatedRoute]);
@@ -325,7 +325,7 @@ const GoogleRouteMap: React.FC<{
 
     // Add new charging station markers - eksakt som det gamle Mapbox-kartet
     chargingStations.forEach(station => {
-      // Sjekk om stasjon er nær ruten (innenfor 25km)
+      // Sjekk om stasjon er nær ruten (innenfor 5km)
       const isNearRoute = calculatedRoute && isStationNearRoute(station);
       
       const markerIcon = isNearRoute ? {
