@@ -190,7 +190,7 @@ const GoogleRouteMap: React.FC<{
               updateCurrentPositionMarker(snappedPosition, batteryAtPosition);
               setCurrentBatteryLevel(batteryAtPosition);
               
-              console.log(`🔵 Blå markør: ${batteryAtPosition.toFixed(1)}% batteri ved denne posisjonen`);
+              console.log(`🔵 Blå markør: ${batteryAtPosition.toFixed(1)}% batteri ved ${distanceToPosition.toFixed(0)}km på ruten`);
             }
           });
 
@@ -347,6 +347,45 @@ const GoogleRouteMap: React.FC<{
     
     return totalDistance / 1000; // Return in kilometers
   }, [selectedCar]);
+
+  // Hjelpefunksjon for å beregne avstand for et gitt batterinivå
+  const calculateDistanceForBatteryLevel = useCallback((targetBatteryLevel: number, startBatteryLevel: number, carRange: number): number => {
+    const batteryUsed = startBatteryLevel - targetBatteryLevel;
+    const distanceForBatteryUsed = (batteryUsed / 100) * carRange;
+    return distanceForBatteryUsed;
+  }, []);
+
+  // Hjelpefunksjon for å finne posisjon på gitt avstand på ruten
+  const findPositionAtDistance = useCallback((targetDistance: number, route: google.maps.DirectionsResult): google.maps.LatLng | null => {
+    if (!route || targetDistance <= 0) return null;
+    
+    let accumulatedDistance = 0;
+    
+    for (const leg of route.routes[0].legs) {
+      for (const step of leg.steps) {
+        const stepDistance = (step.distance?.value || 0) / 1000;
+        
+        if (accumulatedDistance + stepDistance >= targetDistance) {
+          const remainingDistance = targetDistance - accumulatedDistance;
+          const ratio = remainingDistance / stepDistance;
+          
+          const startLat = step.start_location.lat();
+          const startLng = step.start_location.lng();
+          const endLat = step.end_location.lat();
+          const endLng = step.end_location.lng();
+          
+          const targetLat = startLat + (endLat - startLat) * ratio;
+          const targetLng = startLng + (endLng - startLng) * ratio;
+          
+          return new google.maps.LatLng(targetLat, targetLng);
+        }
+        
+        accumulatedDistance += stepDistance;
+      }
+    }
+    
+    return route.routes[0].legs[route.routes[0].legs.length - 1].end_location;
+  }, []);
 
   // Hjelpefunksjon for å oppdatere den blå markøren
   const updateCurrentPositionMarker = useCallback((position: google.maps.LatLng, batteryLevel: number) => {
@@ -1104,6 +1143,18 @@ const GoogleRouteMap: React.FC<{
         
         // Lagre den beregnede ruten for ladestasjon-filtrering
         setCalculatedRoute(result);
+        
+        // Automatically place blue marker at 10% battery position when route is calculated
+        if (selectedCar && routeData.batteryPercentage > 10) {
+          const distanceAt10Percent = calculateDistanceForBatteryLevel(10, routeData.batteryPercentage, selectedCar.range);
+          const positionAt10Percent = findPositionAtDistance(distanceAt10Percent, result);
+          
+          if (positionAt10Percent) {
+            updateCurrentPositionMarker(positionAt10Percent, 10);
+            setCurrentBatteryLevel(10);
+            console.log(`🔵 Automatisk plassering: Blå markør ved 10% batteri på ${distanceAt10Percent.toFixed(0)}km`);
+          }
+        }
         
         console.log('🎯 Rute er satt på kartet - skal være synlig nå!');
       } else {
