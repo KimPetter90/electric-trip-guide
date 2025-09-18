@@ -173,6 +173,7 @@ const GoogleRouteMap: React.FC<{
           console.log('✅ Google Maps DirectionsService and DirectionsRenderer initialized');
 
           setIsMapInitialized(true);
+          console.log('🗺️ Google Maps loaded successfully');
           onLoadingChange(false);
           onMapLoad?.(map);
           
