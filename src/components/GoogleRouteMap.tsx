@@ -69,6 +69,7 @@ const GoogleRouteMap: React.FC<{
   const currentPositionMarkerRef = useRef<google.maps.Marker | null>(null);
   const [isMapInitialized, setIsMapInitialized] = useState(false);
   const [calculatedRoute, setCalculatedRoute] = useState<google.maps.DirectionsResult | null>(null);
+  const [currentBatteryLevel, setCurrentBatteryLevel] = useState(routeData.batteryPercentage);
 
   // Clear markers on unmount
   useEffect(() => {
@@ -182,29 +183,14 @@ const GoogleRouteMap: React.FC<{
               const clickedPosition = event.latLng;
               const snappedPosition = findNearestPointOnRoute(clickedPosition, calculatedRoute);
               
-              // Remove existing current position marker
-              if (currentPositionMarkerRef.current) {
-                currentPositionMarkerRef.current.setMap(null);
-              }
+              // Calculate battery level at clicked position
+              const distanceToPosition = calculateDistanceToPosition(snappedPosition, calculatedRoute);
+              const batteryAtPosition = Math.max(0, routeData.batteryPercentage - (distanceToPosition / selectedCar.range) * 100);
               
-              // Create new blue marker at snapped position
-              currentPositionMarkerRef.current = new google.maps.Marker({
-                position: snappedPosition,
-                map: map,
-                title: 'Din posisjon på ruten',
-                icon: {
-                  url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
-                      <circle cx="10" cy="10" r="8" fill="#0066ff" stroke="#ffffff" stroke-width="2"/>
-                      <circle cx="10" cy="10" r="4" fill="#ffffff"/>
-                    </svg>
-                  `),
-                  scaledSize: new google.maps.Size(20, 20),
-                  anchor: new google.maps.Point(10, 10)
-                }
-              });
+              updateCurrentPositionMarker(snappedPosition, batteryAtPosition);
+              setCurrentBatteryLevel(batteryAtPosition);
               
-              console.log('🔵 Blå markør plassert på ruten:', snappedPosition.toJSON());
+              console.log(`🔵 Blå markør: ${batteryAtPosition.toFixed(1)}% batteri ved denne posisjonen`);
             }
           });
 
@@ -330,6 +316,116 @@ const GoogleRouteMap: React.FC<{
     console.log(`🎯 Snappet til ruten, avstand: ${minDistance.toFixed(0)}m`);
     return nearestPoint;
   }, []);
+
+  // Hjelpefunksjon for å beregne avstand til en posisjon på ruten
+  const calculateDistanceToPosition = useCallback((position: google.maps.LatLng, route: google.maps.DirectionsResult): number => {
+    if (!route || !selectedCar) return 0;
+    
+    let totalDistance = 0;
+    let found = false;
+    
+    route.routes[0].legs.forEach(leg => {
+      if (!found) {
+        leg.steps.forEach(step => {
+          if (!found) {
+            // Check if position is close to this step
+            const distanceToStep = google.maps.geometry.spherical.computeDistanceBetween(
+              position, 
+              step.start_location
+            );
+            
+            if (distanceToStep < 100) { // Within 100 meters
+              found = true;
+              return;
+            }
+            
+            totalDistance += (step.distance?.value || 0);
+          }
+        });
+      }
+    });
+    
+    return totalDistance / 1000; // Return in kilometers
+  }, [selectedCar]);
+
+  // Hjelpefunksjon for å oppdatere den blå markøren
+  const updateCurrentPositionMarker = useCallback((position: google.maps.LatLng, batteryLevel: number) => {
+    if (!mapInstanceRef.current) return;
+    
+    // Remove existing marker
+    if (currentPositionMarkerRef.current) {
+      currentPositionMarkerRef.current.setMap(null);
+    }
+    
+    const isLowBattery = batteryLevel <= 15;
+    const needsCharging = batteryLevel <= 10;
+    
+    // Create icon based on battery level
+    const iconColor = needsCharging ? '#ff0000' : isLowBattery ? '#ff9900' : '#0066ff';
+    const iconSymbol = needsCharging ? '⚡' : isLowBattery ? '⚠' : '📍';
+    
+    currentPositionMarkerRef.current = new google.maps.Marker({
+      position: position,
+      map: mapInstanceRef.current,
+      title: `Din posisjon: ${batteryLevel.toFixed(1)}% batteri ${needsCharging ? '- TRENGER LADING NÅ!' : isLowBattery ? '- Lav batteri' : ''}`,
+      icon: {
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" fill="${iconColor}" stroke="#ffffff" stroke-width="2"/>
+            <text x="12" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold">${iconSymbol}</text>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(24, 24),
+        anchor: new google.maps.Point(12, 12)
+      }
+    });
+    
+    // If needs charging, show nearest charging station
+    if (needsCharging && calculatedRoute) {
+      // Get optimized plan to find nearest station
+      const optimizedPlan = getOptimizedChargingPlan();
+      
+      if (optimizedPlan.length > 0) {
+        const nearestStation = optimizedPlan[0];
+        
+        // Find the marker for this station
+        const stationMarker = chargingStationMarkersRef.current.find(marker => {
+          const markerPos = marker.getPosition();
+          const stationPos = new google.maps.LatLng(nearestStation.station.latitude, nearestStation.station.longitude);
+          return markerPos && google.maps.geometry.spherical.computeDistanceBetween(markerPos, stationPos) < 100;
+        });
+        
+        if (stationMarker && mapInstanceRef.current) {
+          const infoWindow = new google.maps.InfoWindow({
+            content: `
+              <div style="font-family: Arial, sans-serif; padding: 10px; max-width: 250px;">
+                <h3 style="margin: 0 0 8px 0; color: #ff0000;">🚨 LADING PÅKREVD!</h3>
+                <p style="margin: 0 0 8px 0; font-weight: bold;">${nearestStation.station.name}</p>
+                <p style="margin: 0 0 8px 0; font-size: 14px;">${nearestStation.station.address}</p>
+                <p style="margin: 0 0 8px 0; font-size: 14px;">
+                  <strong>Avstand:</strong> ${nearestStation.distanceFromStart.toFixed(0)} km fra start<br>
+                  <strong>Batteri ved ankomst:</strong> ${nearestStation.batteryLevelOnArrival.toFixed(1)}%<br>
+                  <strong>Effekt:</strong> ${nearestStation.station.power}<br>
+                  <strong>Pris:</strong> ${nearestStation.station.cost} kr/kWh
+                </p>
+                <div style="background: #ffe6e6; padding: 8px; border-radius: 4px; font-size: 12px;">
+                  <strong>⚠️ Du må lade her for å komme frem!</strong>
+                </div>
+              </div>
+            `
+          });
+          
+          infoWindow.open(mapInstanceRef.current, stationMarker);
+          
+          // Auto-close after 10 seconds
+          setTimeout(() => {
+            infoWindow.close();
+          }, 10000);
+        }
+      }
+    }
+  }, [calculatedRoute, getOptimizedChargingPlan]);
+
 
   // Hjelpefunksjon for å finne de beste anbefalte ladestasjonene med avansert optimalisering
   const getOptimizedChargingPlan = useCallback((): OptimizedChargingPlan[] => {
