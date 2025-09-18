@@ -228,7 +228,7 @@ const GoogleRouteMap: React.FC<{
       });
     });
     
-    const isNear = minDistance <= 15000; // 15km grense for norske hovedveier
+    const isNear = minDistance <= 5000; // 5km grense for røde markører
     console.log(`🔍 Stasjon ${station.name}: minste avstand=${(minDistance/1000).toFixed(1)}km, nær rute=${isNear}`);
     
     // SPESIELL SJEKK: Hvis dette er Tesla Supercharger Larvik, logg ekstra info
