@@ -305,41 +305,39 @@ const GoogleRouteMap: React.FC<{
 
     // Add new charging station markers
     chargingStations.forEach(station => {
-      // Sjekk om denne stasjonen er i den optimale ladeplanen
-      const optimizedPlan = getOptimizedChargingPlan();
-      const isRecommended = optimizedPlan.some(plan => plan.station.id === station.id);
-      const isNearRoute = false; // Forenklet for nå - vi fokuserer bare på anbefalte stasjoner
+      // Sjekk kategorier for markør-type (tilbake til original logikk)
+      const isRecommended = isRecommendedStation(station);
+      const isNearRoute = !isRecommended && calculatedRoute && isStationNearRoute(station);
       
-      console.log(`🔌 Sjekker stasjon: ${station.name}`);
-      console.log(`   - Station ID: ${station.id}`);
-      console.log(`   - isRecommended: ${isRecommended}`);
-      console.log(`   - Optimized plan har ${optimizedPlan.length} stasjoner`);
-      if (optimizedPlan.length > 0) {
-        console.log(`   - Første anbefalt stasjon ID: ${optimizedPlan[0].station.id}`);
-        console.log(`   - Første anbefalt stasjon navn: ${optimizedPlan[0].station.name}`);
-      }
-      
-      // Forenklet markør-logikk: blå for anbefalte, røde for andre
       const markerIcon = isRecommended ? {
-        // Blå markører for ANBEFALTE ladestasjoner (større og tydeligere)
+        // Blå markører for anbefalte ladestasjoner 
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="11" fill="#0066ff" stroke="#ffffff" stroke-width="2"/>
-            <text x="12" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold">⚡</text>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="9" fill="#0066ff" stroke="#004499" stroke-width="1"/>
+            <text x="10" y="14" text-anchor="middle" fill="white" font-size="11" font-weight="bold">⚡</text>
           </svg>
         `),
-        scaledSize: new google.maps.Size(24, 24),
-        anchor: new google.maps.Point(12, 12)
+        scaledSize: new google.maps.Size(20, 20),
+        anchor: new google.maps.Point(10, 10)
+      } : isNearRoute ? {
+        // Røde markører for stasjoner nær ruten
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="7" fill="#ff4444" stroke="#cc0000" stroke-width="1"/>
+            <text x="8" y="12" text-anchor="middle" fill="white" font-size="10" font-weight="bold">⚡</text>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(16, 16),
+        anchor: new google.maps.Point(8, 8)
       } : {
-        // Røde markører for alle andre stasjoner
+        // Grønne markører for stasjoner langt fra ruten
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
-            <circle cx="6" cy="6" r="5" fill="#ff4444" stroke="#ffffff" stroke-width="1"/>
-            <text x="6" y="9" text-anchor="middle" fill="white" font-size="8" font-weight="bold">⚡</text>
+          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8">
+            <circle cx="4" cy="4" r="3" fill="#00ff41" stroke="#00cc33" stroke-width="1"/>
           </svg>
         `),
-        scaledSize: new google.maps.Size(12, 12),
-        anchor: new google.maps.Point(6, 6)
+        scaledSize: new google.maps.Size(8, 8),
+        anchor: new google.maps.Point(4, 4)
       };
 
       const marker = new google.maps.Marker({
