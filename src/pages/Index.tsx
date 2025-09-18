@@ -67,7 +67,7 @@ function Index() {
     to: "",
     via: "",
     trailerWeight: 0,
-    batteryPercentage: 80, // Sett default til 80% i stedet for 0%
+    batteryPercentage: 0, // Sett default til 0% i stedet for 80%
     travelDate: undefined
   });
   const [showRoute, setShowRoute] = useState(true);
