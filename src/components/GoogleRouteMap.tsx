@@ -201,66 +201,80 @@ const GoogleRouteMap: React.FC<{
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
-    // Øk grense til 15km for å fange opp flere stasjoner langs hovedveier
+    // Bruk Google Maps' isLocationOnEdge for å sjekke om stasjon er nær ruten
+    let isNearRoute = false;
     let minDistance = Infinity;
     
+    // Gå gjennom hver etappe og hvert steg i ruten
     route.legs.forEach(leg => {
       leg.steps.forEach(step => {
-        // Bruk start og slutt av hvert steg + mellompunkter
-        const stepStart = step.start_location;
-        const stepEnd = step.end_location;
-        
-        // Sjekk start og slutt av steget + MEGET mange flere mellompunkter
-        let startDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
-        let endDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
-        minDistance = Math.min(minDistance, startDistance, endDistance);
-        
-        // Sjekk 100 punkter langs segmentet for EKSTREM høy nøyaktighet
-        for (let i = 1; i <= 99; i++) {
-          const ratio = i / 100;
-          const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
-          const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
-          const routePoint = new google.maps.LatLng(lat, lng);
+        // Hvis steget har en sti, bruk den
+        if (step.path && step.path.length > 0) {
+          for (let i = 0; i < step.path.length - 1; i++) {
+            const pathStart = step.path[i];
+            const pathEnd = step.path[i + 1];
+            
+            // Bruk Google Maps' isLocationOnEdge for høy presisjon
+            const pathSegment = new google.maps.Polyline({
+              path: [pathStart, pathEnd]
+            });
+            
+            // Sjekk om stasjonen er innenfor 2km av dette segmentet
+            const isOnEdge = google.maps.geometry.poly.isLocationOnEdge(
+              stationPos, 
+              pathSegment, 
+              2000 // 2km toleranse
+            );
+            
+            if (isOnEdge) {
+              isNearRoute = true;
+            }
+            
+            // Beregn også eksakt avstand for debugging
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, pathStart);
+            minDistance = Math.min(minDistance, distance);
+          }
+        } else {
+          // Fallback: bruk start og slutt av steget
+          const stepStart = step.start_location;
+          const stepEnd = step.end_location;
           
-          const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, routePoint);
-          minDistance = Math.min(minDistance, distance);
-        }
-        
-        // EKSTRA: Sjekk punkter i STØRRE radius rundt hvert rutepunkt for E6/hovedveier  
-        for (let i = 0; i <= 100; i++) {
-          const ratio = i / 100;
-          const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
-          const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
+          // Lag et enkelt linje-segment og sjekk om stasjonen er nær
+          const polylinePoints = [stepStart, stepEnd];
+          const polyline = new google.maps.Polyline({ path: polylinePoints });
           
-          // Sjekk 16 punkter i større radius rundt hvert rutepunkt
-          for (let angle = 0; angle < 360; angle += 22.5) {
-            const radiusOffset = 2000; // 2km radius for å fange E6/hovedveier
-            const offsetLat = lat + (radiusOffset / 111000) * Math.cos(angle * Math.PI / 180);
-            const offsetLng = lng + (radiusOffset / (111000 * Math.cos(lat * Math.PI / 180))) * Math.sin(angle * Math.PI / 180);
-            const offsetPoint = new google.maps.LatLng(offsetLat, offsetLng);
-            const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, offsetPoint);
+          const isOnEdge = google.maps.geometry.poly.isLocationOnEdge(
+            stationPos, 
+            polyline, 
+            2000 // 2km toleranse
+          );
+          
+          if (isOnEdge) {
+            isNearRoute = true;
+          }
+          
+          // Beregn avstand for debugging  
+          const startDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
+          const endDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
+          minDistance = Math.min(minDistance, startDistance, endDistance);
+          
+          // Sjekk mellompunkter langs segmentet
+          for (let i = 1; i <= 20; i++) {
+            const ratio = i / 21;
+            const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
+            const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
+            const routePoint = new google.maps.LatLng(lat, lng);
+            
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, routePoint);
             minDistance = Math.min(minDistance, distance);
           }
         }
       });
     });
     
-    const isNear = minDistance <= 5000; // 5km grense som ønsket
-    console.log(`🔍 Stasjon ${station.name}: minste avstand=${(minDistance/1000).toFixed(1)}km, nær rute=${isNear}`);
+    console.log(`🔍 Stasjon ${station.name}: minste avstand=${(minDistance/1000).toFixed(1)}km, nær rute=${isNearRoute}`);
     
-    // SPESIELL SJEKK: Debug for stasjoner som burde være på E6 ruten
-    if (station.name.includes('Tesla') && (station.name.includes('Ringebu') || station.name.includes('Larvik')) ||
-        station.name.includes('Eviny') && station.name.includes('Råholt') ||
-        station.name.includes('Fortum') && station.name.includes('Hamar') ||
-        station.name.includes('Circle K') && station.name.includes('Raufoss')) {
-      console.log(`🚨 E6-STASJON DEBUG ${station.name}:`);
-      console.log(`   - Koordinater: lat=${station.latitude}, lng=${station.longitude}`);
-      console.log(`   - Minste avstand til rute: ${(minDistance/1000).toFixed(1)}km`);
-      console.log(`   - Blir klassifisert som: ${isNear ? 'RØD (nær rute)' : 'GRØNN (langt fra rute)'}`);
-      console.log(`   - Rute har ${calculatedRoute?.routes[0]?.legs?.length} legs med totalt ${calculatedRoute?.routes[0]?.legs?.reduce((sum, leg) => sum + leg.steps.length, 0)} steps`);
-    }
-    
-    return isNear;
+    return isNearRoute;
   }, [calculatedRoute]);
 
   // Hjelpefunksjon for å finne de beste anbefalte ladestasjonene med avansert optimalisering
