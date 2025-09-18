@@ -128,7 +128,7 @@ const GoogleRouteMap: React.FC<{
           const map = new google.maps.Map(mapRef.current, {
             center: center,
             zoom: zoom,
-            mapTypeId: google.maps.MapTypeId.SATELLITE, // Satellittvisning
+            mapTypeId: google.maps.MapTypeId.HYBRID, // HYBRID = satellitt MED stedsnavn!
             mapTypeControl: true,
             zoomControl: true,
             streetViewControl: false,
@@ -137,29 +137,7 @@ const GoogleRouteMap: React.FC<{
             keyboardShortcuts: false,
             clickableIcons: true,
             disableDoubleClickZoom: false,
-            scrollwheel: false,
-            styles: [
-              {
-                featureType: "administrative.country",
-                elementType: "labels.text",
-                stylers: [{ visibility: "on" }]
-              },
-              {
-                featureType: "administrative.province",
-                elementType: "labels.text",
-                stylers: [{ visibility: "on" }]
-              },
-              {
-                featureType: "administrative.locality",
-                elementType: "labels.text",
-                stylers: [{ visibility: "on" }]
-              },
-              {
-                featureType: "locality",
-                elementType: "labels.text",
-                stylers: [{ visibility: "on" }]
-              }
-            ]
+            scrollwheel: false
           });
 
           console.log('✅ Google Maps instance created successfully');
