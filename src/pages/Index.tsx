@@ -84,6 +84,52 @@ function Index() {
   const [tripAnalysis, setTripAnalysis] = useState<any>(null);
   const [mapLoading, setMapLoading] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
+  // Handle route reset function
+  const handleResetRoutes = async () => {
+    if (!user) {
+      toast({
+        title: "Logg inn påkrevd",
+        description: "Du må være innlogget for å nullstille ruter.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      toast({
+        title: "Nullstiller ruter...",
+        description: "Vent litt mens vi nullstiller rutetellingen din.",
+      });
+
+      const { data, error } = await supabase.functions.invoke('reset-routes');
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Ukjent feil');
+      }
+
+      toast({
+        title: "✅ Ruter nullstilt!",
+        description: "Du har nå fått nullstilt rutetellingen og kan planlegge nye ruter.",
+        variant: "default",
+      });
+
+      // Refresh subscription data to show updated route count
+      setTimeout(() => refreshSubscription(), 100);
+      
+    } catch (error: any) {
+      console.error('❌ Error resetting routes:', error);
+      toast({
+        title: "Feil ved nullstilling",
+        description: error.message || "Kunne ikke nullstille ruter. Prøv igjen senere.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const [chargingStations, setChargingStations] = useState<any[]>([]);
 
   // Load charging stations on component mount
@@ -801,7 +847,28 @@ function Index() {
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4" />
                     <span className="text-sm">{user.email}</span>
+                    {subscription && (
+                      <Badge variant="outline" className="text-xs">
+                        {subscription.route_limit === -1 
+                          ? 'Ubegrenset' 
+                          : `${subscription.route_count}/${subscription.route_limit} ruter`
+                        }
+                      </Badge>
+                    )}
                   </div>
+                  
+                  {/* Reset Routes Button - vis bare for free users */}
+                  {subscription && subscription.route_limit !== -1 && subscription.route_count > 0 && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleResetRoutes}
+                      className="text-xs"
+                    >
+                      <Battery className="h-3 w-3 mr-1" />
+                      Nullstill ruter
+                    </Button>
+                  )}
                   
                   <Button variant="ghost" size="sm" onClick={handleSignOut}>
                     <LogOut className="h-4 w-4" />

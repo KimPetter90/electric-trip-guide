@@ -541,6 +541,14 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: boolean
       }
+      reset_route_count: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
+      reset_user_routes_by_email: {
+        Args: { target_email: string }
+        Returns: boolean
+      }
       upgrade_to_test_user: {
         Args: { target_email: string }
         Returns: boolean
