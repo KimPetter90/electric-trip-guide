@@ -193,8 +193,10 @@ const GoogleRouteMap: React.FC<{
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
               <!-- Grønn sirkel bakgrunn -->
               <circle cx="6" cy="6" r="5" fill="#10b981" stroke="#059669" stroke-width="1"/>
-              <!-- Skarpt gult lyn ikon -->
-              <path d="M7.5 2.5L5 6h1.5L4 9.5L6.5 6H5L7.5 2.5z" fill="#fbbf24" stroke="#f59e0b" stroke-width="0.3" stroke-linejoin="miter" stroke-linecap="square"/>
+              <!-- Ekstra skarpt og definert gult lyn -->
+              <path d="M7.8 2.2L4.8 6h1.7L3.8 9.8L6.2 6H4.5L7.8 2.2z" fill="#fbbf24" stroke="#d97706" stroke-width="0.5" stroke-linejoin="miter" stroke-linecap="butt"/>
+              <!-- Ekstra highlight for skarphet -->
+              <path d="M7.5 2.5L5 6h1.3L4.2 9.2L6 6H4.7L7.5 2.5z" fill="#fde047"/>
             </svg>
           `),
           scaledSize: new google.maps.Size(12, 12),
