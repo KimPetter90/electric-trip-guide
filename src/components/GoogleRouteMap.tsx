@@ -86,9 +86,9 @@ const GoogleRouteMap: React.FC<{
 
     const initializeMap = async () => {
       try {
+        console.log('🗺️ Initialiserer Google Maps...');
         onLoadingChange(true);
         onError(null);
-        console.log('🗺️ Initialiserer Google Maps...');
 
         // Get API key from Supabase function
         const { data, error } = await supabase.functions.invoke('google-maps-proxy');
@@ -1026,7 +1026,7 @@ const GoogleRouteMap: React.FC<{
   }, [calculateRoute]);
 
   return (
-    <div style={{ width: '100%', height: '500px', position: 'relative' }}>
+    <div style={{ width: '100%', height: '500px', position: 'relative', border: '1px solid hsl(var(--border))', borderRadius: '8px', overflow: 'hidden' }}>
       <div 
         ref={mapRef} 
         id="google-map-container" 
@@ -1034,9 +1034,8 @@ const GoogleRouteMap: React.FC<{
           width: '100%', 
           height: '500px',
           backgroundColor: '#f0f0f0',
-          border: '2px solid #007bff',
-          borderRadius: '8px',
-          minHeight: '500px' // Ensure minimum height
+          minHeight: '500px',
+          display: 'block'
         }} 
       />
       {/* Debug info overlay */}

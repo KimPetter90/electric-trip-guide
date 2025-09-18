@@ -1000,8 +1000,8 @@ function Index() {
                 </>
               )}
               
-              {/* Kart vises alltid når ruteplanlegging er aktivert */}
-              <div data-testid="route-map" className="relative">
+              {/* Kart vises alltid */}
+              <div data-testid="route-map" className="relative min-h-[500px] bg-card rounded-lg border">
                 {mapLoading && (
                   <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
                     <div className="text-center space-y-2">
@@ -1018,19 +1018,21 @@ function Index() {
                     </div>
                   </div>
                 )}
-                <GoogleRouteMap 
-                  key="stable-google-map"
-                  center={{ lat: 60.472, lng: 8.4689 }}
-                  zoom={6}
-                  onMapLoad={onMapLoad}
-                  chargingStations={chargingStations}
-                  routeData={routeData}
-                  selectedCar={selectedCar}
-                  routeTrigger={routeTrigger}
-                  onRouteCalculated={onRouteCalculated}
-                  onLoadingChange={onLoadingChange}
-                  onError={onError}
-                />
+                <div className="h-[500px] w-full rounded-lg overflow-hidden">
+                  <GoogleRouteMap 
+                    key="stable-google-map"
+                    center={{ lat: 60.472, lng: 8.4689 }}
+                    zoom={6}
+                    onMapLoad={onMapLoad}
+                    chargingStations={chargingStations}
+                    routeData={routeData}
+                    selectedCar={selectedCar}
+                    routeTrigger={routeTrigger}
+                    onRouteCalculated={onRouteCalculated}
+                    onLoadingChange={onLoadingChange}
+                    onError={onError}
+                  />
+                </div>
               </div>
             </div>
           </section>
