@@ -317,9 +317,44 @@ const GoogleRouteMap: React.FC<{
     });
     
     const isNear = minDistance <= 5000; // 5km grense
-    console.log(`🔌 Stasjon ${station.name}: ${(minDistance/1000).toFixed(1)}km fra ruten -> ${isNear ? 'RØD (nær)' : 'GRØNN (langt)'}`);
     return isNear;
   }, [calculatedRoute]);
+
+  // Hjelpefunksjon for å sjekke om stasjon er anbefalt for lading
+  const isRecommendedStation = useCallback((station: ChargingStation): boolean => {
+    if (!calculatedRoute || !selectedCar || !routeData) {
+      return false;
+    }
+
+    // Beregn tilgjengelig rekkevidde basert på batteriprosent
+    const currentRange = (selectedCar.range * routeData.batteryPercentage) / 100;
+    
+    // Få startposisjon fra ruten
+    const startPos = calculatedRoute.routes[0].legs[0].start_location;
+    const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
+    
+    // Beregn avstand fra start til ladestasjon
+    const distanceToStation = google.maps.geometry.spherical.computeDistanceBetween(startPos, stationPos);
+    const distanceToStationKm = distanceToStation / 1000;
+    
+    // Anbefal stasjoner som er:
+    // 1. Innenfor 80% av rekkevidden (for sikkerhet)
+    // 2. Men ikke for nær (minst 50km fra start)
+    // 3. Og nær ruten
+    const maxRecommendedDistance = currentRange * 0.8;
+    const minDistanceFromStart = 50;
+    
+    const isInRange = distanceToStationKm >= minDistanceFromStart && distanceToStationKm <= maxRecommendedDistance;
+    const isNearRoute = isStationNearRoute(station);
+    
+    const isRecommended = isInRange && isNearRoute && station.fast_charger;
+    
+    if (isRecommended) {
+      console.log(`💙 ANBEFALT: ${station.name} - ${distanceToStationKm.toFixed(1)}km fra start (rekkevidde: ${currentRange}km)`);
+    }
+    
+    return isRecommended;
+  }, [calculatedRoute, selectedCar, routeData, isStationNearRoute]);
 
   // Add charging station markers - update when route changes
   useEffect(() => {
@@ -333,12 +368,24 @@ const GoogleRouteMap: React.FC<{
     chargingStationMarkersRef.current.forEach(marker => marker.setMap(null));
     chargingStationMarkersRef.current = [];
 
-    // Add new charging station markers - eksakt som det gamle Mapbox-kartet
+    // Add new charging station markers
     chargingStations.forEach(station => {
-      // Sjekk om stasjon er nær ruten (innenfor 5km)
-      const isNearRoute = calculatedRoute && isStationNearRoute(station);
+      // Sjekk kategorier for markør-type
+      const isRecommended = isRecommendedStation(station);
+      const isNearRoute = !isRecommended && calculatedRoute && isStationNearRoute(station);
       
-      const markerIcon = isNearRoute ? {
+      
+      const markerIcon = isRecommended ? {
+        // Blå markører for anbefalte ladestasjoner (basert på batteriprosent)
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="9" fill="#0066ff" stroke="#004499" stroke-width="1"/>
+            <text x="10" y="14" text-anchor="middle" fill="white" font-size="11" font-weight="bold">⚡</text>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(20, 20),
+        anchor: new google.maps.Point(10, 10)
+      } : isNearRoute ? {
         // Røde markører for stasjoner nær ruten (som på det gamle kartet)
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
@@ -362,7 +409,7 @@ const GoogleRouteMap: React.FC<{
       const marker = new google.maps.Marker({
         position: { lat: station.latitude, lng: station.longitude },
         map: mapInstanceRef.current!,
-        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isNearRoute ? '\n🔴 NÆR RUTEN' : '\n🟢 LANGT FRA RUTEN'}`,
+        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isRecommended ? '\n💙 ANBEFALT LADESTASJON' : isNearRoute ? '\n🔴 NÆR RUTEN' : '\n🟢 LANGT FRA RUTEN'}`,
         icon: markerIcon
       });
 
@@ -370,8 +417,8 @@ const GoogleRouteMap: React.FC<{
       marker.addListener('click', () => {
         const statusColor = station.available > 0 ? 'hsl(140 100% 50%)' : 'hsl(0 84% 60%)';
         const statusText = station.available > 0 ? 'TILGJENGELIG' : 'OPPTATT';
-        const routeIndicator = isNearRoute ? 'PÅ RUTEN' : 'LADESTASJON';
-        const routeColor = isNearRoute ? 'hsl(0 84% 60%)' : 'hsl(140 100% 50%)';
+        const routeIndicator = isRecommended ? 'ANBEFALT LADESTASJON' : isNearRoute ? 'PÅ RUTEN' : 'LADESTASJON';
+        const routeColor = isRecommended ? 'hsl(240 100% 60%)' : isNearRoute ? 'hsl(0 84% 60%)' : 'hsl(140 100% 50%)';
         
         const infoWindow = new google.maps.InfoWindow({
           maxWidth: 380,
@@ -448,7 +495,7 @@ const GoogleRouteMap: React.FC<{
                   bottom: 0;
                   background: radial-gradient(circle at ${isNearRoute ? '20% 80%' : '70% 20%'}, ${isNearRoute ? 'hsl(320 100% 70% / 0.3)' : 'hsl(120 100% 70% / 0.3)'} 0%, transparent 50%);
                 "></div>
-                <h4 style="margin: 0; font-size: 18px; font-weight: 700; position: relative; z-index: 1;">${isNearRoute ? '🔴' : '⚡'} ${station.name}</h4>
+                <h4 style="margin: 0; font-size: 18px; font-weight: 700; position: relative; z-index: 1;">${isRecommended ? '💙' : isNearRoute ? '🔴' : '⚡'} ${station.name}</h4>
                 <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.8; position: relative; z-index: 1;">📍 ${station.address || station.location || 'Ukjent adresse'}</p>
                 <div style="margin-top: 8px; position: relative; z-index: 1; display: flex; gap: 8px;">
                   <span style="
@@ -533,7 +580,7 @@ const GoogleRouteMap: React.FC<{
 
       chargingStationMarkersRef.current.push(marker);
     });
-  }, [chargingStations?.length, calculatedRoute, isStationNearRoute]); // Oppdater når rute endres
+  }, [chargingStations?.length, calculatedRoute, isStationNearRoute, isRecommendedStation]); // Oppdater når rute endres
 
   // Calculate route when trigger changes - use useCallback to stabilize function reference
   const calculateRoute = useCallback(async () => {
