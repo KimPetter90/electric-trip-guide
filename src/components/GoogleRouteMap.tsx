@@ -127,8 +127,8 @@ const GoogleRouteMap: React.FC<{
         try {
           const map = new google.maps.Map(mapRef.current, {
             center: center,
-            zoom: Math.max(zoom, 12), // Enda høyere zoom for å tvinge fram stedsnavn
-            mapTypeId: google.maps.MapTypeId.ROADMAP, // ROADMAP - enkleste modus som ALLTID har navn
+            zoom: Math.max(zoom, 12), // Høy zoom for å sikre stedsnavn i HYBRID
+            mapTypeId: google.maps.MapTypeId.HYBRID, // Tilbake til HYBRID (satellitt med navn)
             mapTypeControl: true,
             zoomControl: true,
             streetViewControl: false,
