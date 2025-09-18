@@ -421,6 +421,7 @@ const GoogleRouteMap: React.FC<{
   // Hjelpefunksjon for å sjekke om stasjon er kritisk ved 10% batteri
   const checkIfCriticalStation = useCallback((station: ChargingStation): boolean => {
     if (!calculatedRoute || !selectedCar || routeData.batteryPercentage <= 10) {
+      console.log(`⚠️ checkIfCriticalStation: mangler data - route=${!!calculatedRoute}, car=${!!selectedCar}, battery=${routeData.batteryPercentage}%`);
       return false;
     }
     
@@ -428,8 +429,11 @@ const GoogleRouteMap: React.FC<{
     const batteryUsed = routeData.batteryPercentage - 10; // Prosent brukt
     const distanceAt10Percent = (batteryUsed / 100) * selectedCar.range; // km kjørt
     
+    console.log(`🔍 Sjekker stasjon ${station.name}: 10% batteri ved ${distanceAt10Percent.toFixed(0)}km`);
+    
     // Få optimalisert ladeplan
     const optimizedPlan = getOptimizedChargingPlan();
+    console.log(`📋 Optimalisert plan har ${optimizedPlan.length} stasjoner`);
     
     // Først: prøv å finne en stasjon ETTER 10% punktet (innenfor 50km)
     const stationAfter10Percent = optimizedPlan.find(plan => 
@@ -439,7 +443,7 @@ const GoogleRouteMap: React.FC<{
     );
     
     if (stationAfter10Percent) {
-      console.log(`🔵 Kritisk stasjon funnet ETTER 10%: ${station.name} ved ${stationAfter10Percent.distanceFromStart.toFixed(0)}km (10% ved ${distanceAt10Percent.toFixed(0)}km)`);
+      console.log(`🔵 KRITISK stasjon funnet ETTER 10%: ${station.name} ved ${stationAfter10Percent.distanceFromStart.toFixed(0)}km`);
       return true;
     }
     
@@ -449,6 +453,8 @@ const GoogleRouteMap: React.FC<{
       plan.distanceFromStart >= distanceAt10Percent - 100 // Max 100km før
     );
     
+    console.log(`📍 ${stationsBefore10Percent.length} stasjoner før 10% punktet`);
+    
     if (stationsBefore10Percent.length > 0) {
       // Finn den som er nærmest 10% punktet
       const lastStationBefore = stationsBefore10Percent.reduce((closest, current) => 
@@ -456,7 +462,7 @@ const GoogleRouteMap: React.FC<{
       );
       
       if (lastStationBefore.station.id === station.id) {
-        console.log(`🔵 Kritisk stasjon funnet FØR 10%: ${station.name} ved ${lastStationBefore.distanceFromStart.toFixed(0)}km (siste sjanse før 10% ved ${distanceAt10Percent.toFixed(0)}km)`);
+        console.log(`🔵 KRITISK stasjon funnet FØR 10%: ${station.name} ved ${lastStationBefore.distanceFromStart.toFixed(0)}km (siste sjanse)`);
         return true;
       }
     }
@@ -467,6 +473,7 @@ const GoogleRouteMap: React.FC<{
   // Add charging station markers - update when route changes
   useEffect(() => {
     if (!mapInstanceRef.current || !chargingStations || chargingStations.length === 0) {
+      console.log('❌ Ingen ladestasjoner å vise eller kart ikke klar');
       return;
     }
 
@@ -484,6 +491,8 @@ const GoogleRouteMap: React.FC<{
       
       // Check if this station is critical for 10% battery
       const isCriticalFor10Percent = checkIfCriticalStation(station);
+      
+      console.log(`🏪 ${station.name}: anbefalt=${isRecommended}, nær rute=${isNearRoute}, kritisk=${isCriticalFor10Percent}`);
       
       const markerIcon = isCriticalFor10Percent ? {
         // Blå markør for kritisk ladestasjon ved 10% batteri
