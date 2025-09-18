@@ -128,7 +128,7 @@ const GoogleRouteMap: React.FC<{
           const map = new google.maps.Map(mapRef.current, {
             center: center,
             zoom: zoom,
-            mapTypeId: google.maps.MapTypeId.HYBRID, // Hybrid = BEST for labels
+            mapTypeId: google.maps.MapTypeId.HYBRID,
             mapTypeControl: true,
             zoomControl: true,
             streetViewControl: false,
@@ -140,109 +140,36 @@ const GoogleRouteMap: React.FC<{
             scrollwheel: false
           });
 
-          // TVUNGEN AKTIVERING av alle mulige labels
-          setTimeout(() => {
-            map.setOptions({
-              styles: [] // TOM array = standard Google Maps labels
-            });
-            
-            // FORCE labels til å vises
-            map.data.setStyle({
-              visible: true
-            });
-          }, 1000);
-
           console.log('✅ Google Maps instance created successfully');
           mapInstanceRef.current = map;
           
-          // Skjul alle Google Maps status-meldinger og tooltips
-          const hideAllMapMessages = () => {
-            // Global CSS style
+          // BARE skjul copyright og controls som forstyrrer - IKKE labels!
+          const hideOnlyNecessaryElements = () => {
             if (!document.getElementById('hide-map-messages')) {
               const globalStyle = document.createElement('style');
               globalStyle.id = 'hide-map-messages';
               globalStyle.textContent = `
-                .gm-style .gm-style-cc,
-                .gm-style .gmnoprint[style*="position: absolute"],
-                .gm-style .gmnoprint[style*="z-index: 1000000"],
-                .gm-bundled-control[style*="position: absolute"]:not(.gm-bundled-control-on-bottom),
-                .gm-style div[jsaction*="wheel.capture"] div[style*="background"],
-                .gm-style div[style*="Use Ctrl + scroll"],
-                .gm-style div[style*="Use ⌘ + scroll"],
-                .gm-style div[style*="border-radius: 2px"][style*="background"][style*="position: absolute"],
-                .gm-style div[aria-live="polite"],
-                .gm-style div[role="status"],
-                .gm-style div[style*="position: absolute"][style*="bottom: 0px"],
-                .gm-style div[style*="position: absolute"][style*="left: 0px"][style*="bottom"],
-                .gm-style .gm-ui-hover-effect + div[style*="absolute"] {
+                .gm-style .gm-style-cc {
                   display: none !important;
-                  visibility: hidden !important;
-                  opacity: 0 !important;
-                  height: 0 !important;
-                  width: 0 !important;
-                  overflow: hidden !important;
                 }
-                .gm-style .gm-style-mtc,
-                .gm-style .gm-bundled-control {
-                  display: block !important;
-                  visibility: visible !important;
+                .gm-style div[style*="Use Ctrl + scroll"] {
+                  display: none !important;
+                }
+                .gm-style div[style*="Use ⌘ + scroll"] {
+                  display: none !important;
                 }
               `;
               document.head.appendChild(globalStyle);
             }
-            
-            // Direkte DOM-manipulering
-            const hideStatusElements = () => {
-              // Finn alle elementer som kan inneholde status-meldinger
-              const allDivs = document.querySelectorAll('#google-map-container *');
-              allDivs.forEach(el => {
-                const text = el.textContent?.toLowerCase() || '';
-                const style = (el as HTMLElement).getAttribute('style') || '';
-                
-                if (
-                  text.includes('stabilt') || 
-                  text.includes('stable') || 
-                  text.includes('status') ||
-                  (style.includes('position: absolute') && style.includes('bottom') && !style.includes('width: 100%'))
-                ) {
-                  (el as HTMLElement).style.display = 'none';
-                  (el as HTMLElement).style.visibility = 'hidden';
-                  (el as HTMLElement).style.opacity = '0';
-                  (el as HTMLElement).style.height = '0';
-                  (el as HTMLElement).style.width = '0';
-                  (el as HTMLElement).style.overflow = 'hidden';
-                }
-              });
-            };
-            
-            hideStatusElements();
           };
           
-          // Kjør umiddelbart og med intervals
-          hideAllMapMessages();
+          // Kjør den milde versjonen som ikke skjuler labels
+          hideOnlyNecessaryElements();
           
-          // Sett opp kontinuerlig overvåking
-          const hideInterval = setInterval(hideAllMapMessages, 100);
+          // FJERNET de aggressive DOM-overvåkningene som skjuler labels
+          // Bare en enkel hideOnlyNecessaryElements() kjøring
           
-          // Overvåk DOM-endringer
-          const observer = new MutationObserver(() => {
-            hideAllMapMessages();
-          });
-          observer.observe(mapRef.current, { 
-            childList: true, 
-            subtree: true,
-            attributes: true,
-            characterData: true
-          });
-          
-          // Cleanup interval når komponenten unmountes
-          const cleanup = () => {
-            clearInterval(hideInterval);
-            observer.disconnect();
-          };
-          
-          // Lagre cleanup-funksjon
-          (map as any)._cleanup = cleanup;
+          console.log('✅ Google Maps initialisert MED stedsnavn aktivert!');
           
           console.log('✅ Google Maps instance created successfully');
           mapInstanceRef.current = map;
