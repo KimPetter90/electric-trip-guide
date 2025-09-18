@@ -132,11 +132,11 @@ const GoogleRouteMap: React.FC<{
             zoomControl: true,
             streetViewControl: false,
             fullscreenControl: true,
-            gestureHandling: 'greedy',
+            gestureHandling: 'auto', // Endre til auto for å unngå instruksjoner
             keyboardShortcuts: false,
             clickableIcons: false,
             disableDoubleClickZoom: false,
-            scrollwheel: true,
+            scrollwheel: false, // Deaktiver scroll-to-zoom helt
             styles: [
               {
                 featureType: "poi",
