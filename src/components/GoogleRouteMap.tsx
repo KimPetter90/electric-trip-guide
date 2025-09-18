@@ -238,7 +238,7 @@ const GoogleRouteMap: React.FC<{
       });
     });
     
-    const isNear = minDistance <= 5000; // 5km grense for røde markører
+    const isNear = minDistance <= 20000; // 20km grense for å fange alle stasjoner langs rutekorridoren
     console.log(`🔍 Stasjon ${station.name}: minste avstand=${(minDistance/1000).toFixed(1)}km, nær rute=${isNear}`);
     
     // SPESIELL SJEKK: Debug for Tesla stasjoner som burde være på ruten
