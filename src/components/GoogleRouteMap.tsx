@@ -149,8 +149,8 @@ const GoogleRouteMap: React.FC<{
           console.log('✅ Google Maps instance created successfully');
           mapInstanceRef.current = map;
           
-          // Skjul zoom-instruksjoner og andre tooltips
-          const hideZoomInstructions = () => {
+          // Skjul zoom-instruksjoner, status-meldinger og andre tooltips
+          const hideMapMessages = () => {
             const style = document.createElement('style');
             style.textContent = `
               .gm-style .gm-style-cc,
@@ -162,9 +162,19 @@ const GoogleRouteMap: React.FC<{
               .gm-style div[style*="Use Ctrl + scroll to zoom"],
               .gm-style div[style*="Use ⌘ + scroll to zoom"],
               .gm-style div[style*="border-radius: 2px"][style*="background"],
-              .gm-style div[style*="will change"]:not([style*="width: 100%"]) {
+              .gm-style div[style*="will change"]:not([style*="width: 100%"]),
+              .gm-style-iw + div,
+              .gm-style-iw-d + div,
+              .gm-style div[aria-live],
+              .gm-style div[role="status"],
+              .gm-style div[style*="position: absolute"][style*="bottom"][style*="left"],
+              .gm-style div[style*="kart stabilt"],
+              .gm-style div[style*="map stable"],
+              .gm-style div[style*="stable"],
+              .gm-style .gm-ui-hover-effect + div[style*="position: absolute"] {
                 display: none !important;
                 visibility: hidden !important;
+                opacity: 0 !important;
               }
               .gm-style .gm-style-mtc,
               .gm-style .gm-bundled-control {
@@ -175,17 +185,30 @@ const GoogleRouteMap: React.FC<{
             document.head.appendChild(style);
           };
           
-          // Kjør med en gang og etter en liten delay
-          hideZoomInstructions();
-          setTimeout(hideZoomInstructions, 1000);
+          // Kjør med en gang og etter delays
+          hideMapMessages();
+          setTimeout(hideMapMessages, 500);
+          setTimeout(hideMapMessages, 1500);
+          setTimeout(hideMapMessages, 3000);
           
-          // Overvåk for endringer og skjul instruksjoner kontinuerlig
-          const observer = new MutationObserver(hideZoomInstructions);
+          // Overvåk for endringer og skjul meldinger kontinuerlig
+          const observer = new MutationObserver(() => {
+            hideMapMessages();
+            // Søk spesifikt etter status-meldinger og skjul dem
+            const statusElements = document.querySelectorAll(
+              '.gm-style div[aria-live], .gm-style div[role="status"], .gm-style div[style*="position: absolute"][style*="bottom"]'
+            );
+            statusElements.forEach(el => {
+              if (el.textContent?.includes('stabilt') || el.textContent?.includes('stable') || el.textContent?.includes('status')) {
+                (el as HTMLElement).style.display = 'none';
+              }
+            });
+          });
           observer.observe(document.body, { 
             childList: true, 
             subtree: true,
             attributes: true,
-            attributeFilter: ['style']
+            attributeFilter: ['style', 'aria-live', 'role']
           });
           
           console.log('✅ Google Maps instance created successfully');
