@@ -245,7 +245,6 @@ function Index() {
   }, []);
 
   const onLoadingChange = useCallback((loading: boolean) => {
-    console.log('🔄 Map loading state changed to:', loading);
     setMapLoading(loading);
   }, []);
 
@@ -641,70 +640,107 @@ function Index() {
       return;
     }
 
-    // FØRST: Sjekk grunnleggende validering UTEN å sette loading state
-    const validation = RouteOptimizer.validateRouteData(selectedCar, routeData);
-    
-    if (!validation.isValid) {
-      console.log('❌ Validering feilet:', validation.errors);
-      
-      // Vis første feil som hovedtittel og andre som beskrivelse
-      const [firstError, ...otherErrors] = validation.errors;
-      
-      toast({
-        title: firstError,
-        description: otherErrors.length > 0 ? `Andre problemer: ${otherErrors.join(', ')}` : "Fyll ut alle påkrevde felt for å planlegge ruten.",
-        variant: "destructive",
-      });
-      
-      // Ikke sett loading state hvis validering feiler
-      return;
-    }
-
-    // Sjekk autentisering FØRST
-    if (!user) {
-      toast({
-        title: "Logg inn for å planlegge ruter",
-        description: "Du må være innlogget for å bruke ruteplanleggeren.",
-        variant: "destructive",
-      });
-      if (window.location.pathname !== '/auth') {
-        navigate('/auth');
-      }
-      return;
-    }
-
-    // Øyeblikkelig visning av kart og start av ruteberegning
-    const newTrigger = Date.now();
-    console.log('🚀 Setting showRoute=true and routeTrigger=', newTrigger);
-    setShowRoute(true);
-    setRouteTrigger(newTrigger);
     setPlanningRoute(true);
-    console.log('🚀 State updated: showRoute=true, planningRoute=true, routeTrigger=', newTrigger);
     
     try {
-      console.log('🚀 Starter ruteplanlegging øyeblikkelig!');
+      // ROBUST VALIDERING med RouteOptimizer
+      const validation = RouteOptimizer.validateRouteData(selectedCar, routeData);
       
-      // Start ruteberegning med en gang - INGEN venting eller sjekker
-      // Oppdater ruteteller
-      if (user) {
-        try {
-          const { error: incrementError } = await supabase.rpc('increment_route_count', {
-            user_uuid: user.id
+      if (!validation.isValid) {
+        console.log('❌ Validering feilet:', validation.errors);
+        
+        validation.errors.forEach(error => {
+          toast({
+            title: "Ugyldig input",
+            description: error,
+            variant: "destructive",
           });
-          
-          if (incrementError) {
-            console.warn('Kunne ikke oppdatere ruteteller:', incrementError);
+        });
+        return;
+      }
+      
+      // Sjekk autentisering
+      if (!user) {
+        toast({
+          title: "Logg inn for å planlegge ruter",
+          description: "Du må være innlogget for å bruke ruteplanleggeren.",
+          variant: "destructive",
+        });
+        if (window.location.pathname !== '/auth') {
+          navigate('/auth');
+        }
+        return;
+      }
+
+      console.log('✅ Alle valideringer bestått - starter ruteplanlegging');
+      console.log('📊 selectedCar:', selectedCar);
+      console.log('📊 routeData:', routeData);
+
+      // FORCE KART SYNLIG - 150% GARANTERT!
+      console.log('🎯 FORCING showRoute to TRUE - 150% sikkert!');
+      setShowRoute(true);
+      console.log('🎯 FORCING routeTrigger update - garantert trigger!');
+      
+      // Sett routeTrigger til høy verdi for å sikre triggering
+      const newTrigger = Date.now(); // Bruk timestamp for å garantere endring
+      setRouteTrigger(newTrigger);
+      console.log(`🎯 routeTrigger satt til: ${newTrigger}`);
+      
+      // Force en re-render av hele komponenten
+      setTimeout(() => {
+        const mapElement = document.querySelector('[data-testid="route-map"]');
+        if (mapElement) {
+          console.log('✅ Kart element funnet, scroller til view');
+          mapElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          console.log('❌ Kart element IKKE funnet');
+        }
+      }, 1000); // Økt delay for å sikre rendering
+
+      // Sjekk rutegrenser - men bare hvis subscription data er tilgjengelig
+      if (subscription) {
+        if (subscription.route_limit !== -1 && subscription.route_count >= subscription.route_limit) {
+          toast({
+            title: "Rutegrense nådd",
+            description: `Du har brukt opp alle dine ${subscription.route_limit} ruter for denne måneden. Oppgrader for flere ruter.`,
+            variant: "destructive",
+          });
+          // Ikke naviger hvis vi allerede er på rett side
+          if (window.location.pathname !== '/pricing') {
+            navigate('/pricing');
           }
+          return;
+        }
+      } else {
+        // Hvis subscription data ikke er tilgjengelig, fortsett likevel men med warning
+        console.warn('⚠️ Subscription data ikke tilgjengelig, fortsetter med ruteplanlegging');
+        toast({
+          title: "Planlegger rute",
+          description: "Starter ruteplanlegging...",
+          variant: "default",
+        });
+      }
+      
+      console.log('🚀 Fortsetter med ruteplanlegging...');
+      
+      // Oppdater ruteteller - bare hvis subscription er tilgjengelig
+      if (user && subscription) {
+        try {
+          await supabase.rpc('increment_route_count', { user_uuid: user.id });
+          setTimeout(() => refreshSubscription(), 100);
         } catch (error) {
-          console.warn('Feil ved oppdatering av ruteteller:', error);
+          console.warn('⚠️ Kunne ikke oppdatere ruteteller:', error);
+          // Fortsett likevel med ruteplanlegging
         }
       }
       
-      toast({
-        title: "Starter ruteplanlegging!",
-        description: "Beregner beste rute...",
-        variant: "default",
-      });
+      // Scroll to map after a short delay to ensure it's rendered
+      setTimeout(() => {
+        const mapElement = document.querySelector('[data-testid="route-map"]');
+        if (mapElement) {
+          mapElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500);
       
       await generateRouteOptions();
       
@@ -723,8 +759,20 @@ function Index() {
         variant: "destructive",
       });
     } finally {
-      // Reset loading state
-      setPlanningRoute(false);
+      // SIKRE at loading state blir reset og at kartet forblir synlig
+      console.log('🔄 Finally blokk - resetter loading state');
+      
+      setTimeout(() => {
+        setPlanningRoute(false);
+        
+        // DOUBLE-CHECK at kartet er synlig
+        if (!showRoute) {
+          console.log('🚨 Kart er ikke synlig i finally - forcing visible!');
+          setShowRoute(true);
+        }
+        
+        console.log('✅ Loading state reset, showRoute:', showRoute);
+      }, 2000); // 2 sekunder minimum loading for sikkerhet
     }
   };
 
@@ -963,66 +1011,59 @@ function Index() {
 
           {/* Right Column - Results */}
           <section className="space-y-8" aria-label="Ruteresultater">
-            <div className="space-y-6">
-              {!showRoute && (
-                <Card className="p-8 text-center bg-card/80 backdrop-blur-sm border-border shadow-lg" role="status">
-                  <MapPin className="h-12 w-12 text-primary mx-auto mb-4 animate-glow-pulse" aria-hidden="true" />
-                  <h3 className="text-lg font-semibold mb-2 text-foreground">Klar for ruteplanlegging</h3>
-                  <p className="text-muted-foreground">
-                    Velg bil og angi rute for å se det futuristiske ladestasjonkartet
-                  </p>
-                </Card>
-              )}
-
-              {showRoute && (
-                <>
-                  <RouteSelector
-                    routes={routeOptions}
-                    selectedRoute={selectedRouteId}
-                    onRouteSelect={handleRouteSelect}
-                    isLoading={loadingRoutes}
-                  />
-                  
-                  {/* Del rute - vis bare hvis rute er valgt */}
-                  {selectedRouteId && routeOptions.length > 0 && (
-                    <Card className="p-4 bg-card/80 backdrop-blur-sm border-border shadow-lg">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold text-primary">Valgt rute</h3>
-                        <ShareRoute
-                          routeData={{
-                            from: routeData.from,
-                            to: routeData.to,
-                            distance: String(routeOptions.find(r => r.id === selectedRouteId)?.distance) || '0 km',
-                            duration: String(routeOptions.find(r => r.id === selectedRouteId)?.duration) || '0 min',
-                            chargingCost: '150 kr', // Placeholder
-                            batteryUsed: '65%' // Placeholder
-                          }}
-                        />
-                      </div>
-                    </Card>
-                  )}
-                </>
-              )}
-              
-              {/* Kart vises alltid */}
-              <div data-testid="route-map" className="relative min-h-[500px] bg-card rounded-lg border">
-              {mapLoading && (
-                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
-                  <div className="text-center space-y-2">
-                    <Zap className="h-8 w-8 text-primary animate-spin mx-auto" />
-                    <p className="text-sm text-muted-foreground">Laster kart... (Debug: {mapLoading ? 'true' : 'false'})</p>
-                  </div>
-                </div>
-              )}
-                {mapError && (
-                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
-                    <div className="flex items-center space-x-2">
-                      <AlertTriangle className="h-5 w-5 text-destructive" />
-                      <p className="text-sm text-destructive">{mapError}</p>
+            {!showRoute ? (
+              <Card className="p-8 text-center bg-card/80 backdrop-blur-sm border-border shadow-lg" role="status">
+                <MapPin className="h-12 w-12 text-primary mx-auto mb-4 animate-glow-pulse" aria-hidden="true" />
+                <h3 className="text-lg font-semibold mb-2 text-foreground">Klar for ruteplanlegging</h3>
+                <p className="text-muted-foreground">
+                  Velg bil og angi rute for å se det futuristiske ladestasjonkartet
+                </p>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                <RouteSelector
+                  routes={routeOptions}
+                  selectedRoute={selectedRouteId}
+                  onRouteSelect={handleRouteSelect}
+                  isLoading={loadingRoutes}
+                />
+                
+                {/* Del rute - vis bare hvis rute er valgt */}
+                {selectedRouteId && routeOptions.length > 0 && (
+                  <Card className="p-4 bg-card/80 backdrop-blur-sm border-border shadow-lg">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-primary">Valgt rute</h3>
+                      <ShareRoute
+                        routeData={{
+                          from: routeData.from,
+                          to: routeData.to,
+                          distance: String(routeOptions.find(r => r.id === selectedRouteId)?.distance) || '0 km',
+                          duration: String(routeOptions.find(r => r.id === selectedRouteId)?.duration) || '0 min',
+                          chargingCost: '150 kr', // Placeholder
+                          batteryUsed: '65%' // Placeholder
+                        }}
+                      />
                     </div>
-                  </div>
+                  </Card>
                 )}
-                <div className="h-[500px] w-full rounded-lg overflow-hidden">
+                
+                <div data-testid="route-map" className="relative">
+                  {mapLoading && (
+                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+                      <div className="text-center space-y-2">
+                        <Zap className="h-8 w-8 text-primary animate-spin mx-auto" />
+                        <p className="text-sm text-muted-foreground">Laster kart...</p>
+                      </div>
+                    </div>
+                  )}
+                  {mapError && (
+                    <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
+                      <div className="flex items-center space-x-2">
+                        <AlertTriangle className="h-5 w-5 text-destructive" />
+                        <p className="text-sm text-destructive">{mapError}</p>
+                      </div>
+                    </div>
+                  )}
                   <GoogleRouteMap 
                     key="stable-google-map"
                     center={{ lat: 60.472, lng: 8.4689 }}
@@ -1038,7 +1079,7 @@ function Index() {
                   />
                 </div>
               </div>
-            </div>
+            )}
           </section>
         </div>
       </main>

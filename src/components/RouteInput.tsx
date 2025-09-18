@@ -268,21 +268,6 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
     }
   };
 
-  // Valideringsfunksjoner for å vise checkmarks
-  const isValidLocation = (location: string): boolean => {
-    if (!location || location.trim().length === 0) return false;
-    const trimmedLocation = location.trim().toLowerCase();
-    return allCities.some(city => city.toLowerCase() === trimmedLocation);
-  };
-
-  const isValidBatteryPercentage = (percentage: number): boolean => {
-    return percentage > 0 && percentage <= 100;
-  };
-
-  const isValidTrailerWeight = (weight: number): boolean => {
-    return weight >= 0 && weight <= 3500;
-  };
-
   const handleInputChange = (field: keyof RouteData, value: string | number | Date) => {
     // Validering og sanitizing
     if ((field === 'from' || field === 'to' || field === 'via') && typeof value === 'string') {
@@ -396,10 +381,10 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
         </div>
 
         <div className="space-y-2">
-            <Label htmlFor="trailer" className="flex items-center gap-2">
-              <Truck className="h-3 w-3" />
-              Hengervekt (kg)
-            </Label>
+          <Label htmlFor="trailer" className="flex items-center gap-2">
+            <Truck className="h-3 w-3" />
+            Hengervekt (kg)
+          </Label>
           <Input
             id="trailer"
             type="number"
@@ -459,7 +444,6 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🚀 BUTTON CLICKED: Planlegg rute!');
             onPlanRoute();
           }}
           disabled={isPlanning}

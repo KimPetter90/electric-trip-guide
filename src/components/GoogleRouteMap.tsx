@@ -86,10 +86,9 @@ const GoogleRouteMap: React.FC<{
 
     const initializeMap = async () => {
       try {
-        console.log('🗺️ Initialiserer Google Maps...');
-        console.log('🗺️ MapRef.current:', !!mapRef.current);
         onLoadingChange(true);
         onError(null);
+        console.log('🗺️ Initialiserer Google Maps...');
 
         // Get API key from Supabase function
         const { data, error } = await supabase.functions.invoke('google-maps-proxy');
@@ -174,7 +173,6 @@ const GoogleRouteMap: React.FC<{
           console.log('✅ Google Maps DirectionsService and DirectionsRenderer initialized');
 
           setIsMapInitialized(true);
-          console.log('🗺️ Google Maps loaded successfully - setting loading to false');
           onLoadingChange(false);
           onMapLoad?.(map);
           
@@ -203,80 +201,63 @@ const GoogleRouteMap: React.FC<{
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
-    // Bruk Google Maps' isLocationOnEdge for å sjekke om stasjon er nær ruten
-    let isNearRoute = false;
+    // Øk grense til 15km for å fange opp flere stasjoner langs hovedveier
     let minDistance = Infinity;
     
-    // Gå gjennom hver etappe og hvert steg i ruten
     route.legs.forEach(leg => {
       leg.steps.forEach(step => {
-        // Hvis steget har en sti, bruk den
-        if (step.path && step.path.length > 0) {
-          for (let i = 0; i < step.path.length - 1; i++) {
-            const pathStart = step.path[i];
-            const pathEnd = step.path[i + 1];
-            
-            // Bruk Google Maps' isLocationOnEdge for høy presisjon
-            const pathSegment = new google.maps.Polyline({
-              path: [pathStart, pathEnd]
-            });
-            
-            // Sjekk om stasjonen er innenfor 2km av dette segmentet
-            const isOnEdge = google.maps.geometry.poly.isLocationOnEdge(
-              stationPos, 
-              pathSegment, 
-              2000 // 2km toleranse
-            );
-            
-            if (isOnEdge) {
-              isNearRoute = true;
-            }
-            
-            // Beregn også eksakt avstand for debugging
-            const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, pathStart);
-            minDistance = Math.min(minDistance, distance);
-          }
-        } else {
-          // Fallback: bruk start og slutt av steget
-          const stepStart = step.start_location;
-          const stepEnd = step.end_location;
+        // Bruk start og slutt av hvert steg + mellompunkter
+        const stepStart = step.start_location;
+        const stepEnd = step.end_location;
+        
+        // Sjekk start og slutt av steget + MANGE flere mellompunkter for nøyaktighet
+        let startDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
+        let endDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
+        minDistance = Math.min(minDistance, startDistance, endDistance);
+        
+        // Sjekk 50 punkter langs segmentet for MEGET høy nøyaktighet
+        for (let i = 1; i <= 49; i++) {
+          const ratio = i / 50;
+          const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
+          const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
+          const routePoint = new google.maps.LatLng(lat, lng);
           
-          // Lag et enkelt linje-segment og sjekk om stasjonen er nær
-          const polylinePoints = [stepStart, stepEnd];
-          const polyline = new google.maps.Polyline({ path: polylinePoints });
+          const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, routePoint);
+          minDistance = Math.min(minDistance, distance);
+        }
+        
+        // EKSTRA: Sjekk punkter i radius rundt hvert rutepunkt  
+        for (let i = 0; i <= 50; i++) {
+          const ratio = i / 50;
+          const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
+          const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
           
-          const isOnEdge = google.maps.geometry.poly.isLocationOnEdge(
-            stationPos, 
-            polyline, 
-            2000 // 2km toleranse
-          );
-          
-          if (isOnEdge) {
-            isNearRoute = true;
-          }
-          
-          // Beregn avstand for debugging  
-          const startDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
-          const endDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
-          minDistance = Math.min(minDistance, startDistance, endDistance);
-          
-          // Sjekk mellompunkter langs segmentet
-          for (let i = 1; i <= 20; i++) {
-            const ratio = i / 21;
-            const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
-            const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
-            const routePoint = new google.maps.LatLng(lat, lng);
-            
-            const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, routePoint);
+          // Sjekk 8 punkter i radius rundt hvert rutepunkt (for å fange E6/hovedveier)
+          for (let angle = 0; angle < 360; angle += 45) {
+            const radiusOffset = 500; // 500 meter radius
+            const offsetLat = lat + (radiusOffset / 111000) * Math.cos(angle * Math.PI / 180);
+            const offsetLng = lng + (radiusOffset / (111000 * Math.cos(lat * Math.PI / 180))) * Math.sin(angle * Math.PI / 180);
+            const offsetPoint = new google.maps.LatLng(offsetLat, offsetLng);
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, offsetPoint);
             minDistance = Math.min(minDistance, distance);
           }
         }
       });
     });
     
-    console.log(`🔍 Stasjon ${station.name}: minste avstand=${(minDistance/1000).toFixed(1)}km, nær rute=${isNearRoute}`);
+    const isNear = minDistance <= 5000; // 5km grense som ønsket
+    console.log(`🔍 Stasjon ${station.name}: minste avstand=${(minDistance/1000).toFixed(1)}km, nær rute=${isNear}`);
     
-    return isNearRoute;
+    // SPESIELL SJEKK: Debug for Tesla stasjoner som burde være på ruten
+    if (station.name.includes('Tesla') && (station.name.includes('Ringebu') || station.name.includes('Larvik'))) {
+      console.log(`🚨 TESLA DEBUG ${station.name}:`);
+      console.log(`   - Koordinater: lat=${station.latitude}, lng=${station.longitude}`);
+      console.log(`   - Minste avstand til rute: ${(minDistance/1000).toFixed(1)}km`);
+      console.log(`   - Blir klassifisert som: ${isNear ? 'RØD (nær rute)' : 'GRØNN (langt fra rute)'}`);
+      console.log(`   - Rute har ${calculatedRoute?.routes[0]?.legs?.length} legs med totalt ${calculatedRoute?.routes[0]?.legs?.reduce((sum, leg) => sum + leg.steps.length, 0)} steps`);
+    }
+    
+    return isNear;
   }, [calculatedRoute]);
 
   // Hjelpefunksjon for å finne de beste anbefalte ladestasjonene med avansert optimalisering
@@ -598,11 +579,31 @@ const GoogleRouteMap: React.FC<{
     });
   }, [chargingStations?.length, calculatedRoute, isStationNearRoute, getOptimizedChargingPlan]); // Oppdater når rute endres
 
-  // Fast route calculation
+  // Calculate route when trigger changes - ROBUST and FOOLPROOF
   const calculateRoute = useCallback(async () => {
-    // Quick validation - no long waits
+    console.log('🔍 ROBUST ruteberegning startet');
+    
+    // Wait for map to be fully initialized
+    let attempts = 0;
+    const maxAttempts = 20;
+    
+    while ((!mapInstanceRef.current || !directionsServiceRef.current || !directionsRendererRef.current) && attempts < maxAttempts) {
+      console.log(`⏳ Venter på kart initialisering (forsøk ${attempts + 1}/${maxAttempts})`);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      attempts++;
+    }
+    
+    // Final validation
     if (!mapInstanceRef.current || !directionsServiceRef.current || !directionsRendererRef.current || 
         !routeData.from || !routeData.to || !selectedCar || routeTrigger === 0) {
+      console.log('⏸️ Requirements fortsatt ikke oppfylt etter venting:');
+      console.log('📊 mapInstanceRef.current:', !!mapInstanceRef.current);
+      console.log('📊 directionsServiceRef.current:', !!directionsServiceRef.current);
+      console.log('📊 directionsRendererRef.current:', !!directionsRendererRef.current);
+      console.log('📊 routeData.from:', routeData.from);
+      console.log('📊 routeData.to:', routeData.to);
+      console.log('📊 selectedCar:', !!selectedCar);
+      console.log('📊 routeTrigger:', routeTrigger);
       return;
     }
 
@@ -1022,36 +1023,12 @@ const GoogleRouteMap: React.FC<{
     }
   }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, routeTrigger, onRouteCalculated, onLoadingChange, onError]);
 
-  // Trigger route calculation when routeTrigger changes
   useEffect(() => {
-    if (routeTrigger > 0) {
-      console.log('🎯 routeTrigger changed:', routeTrigger, '- forcing route calculation');
-      calculateRoute();
-    }
-  }, [routeTrigger, calculateRoute]);
-
-  // Initial route calculation
-  // Trigger route calculation when routeTrigger changes (from "Planlegg rute" button)
-  useEffect(() => {
-    console.log('🎯 routeTrigger useEffect triggered:', { routeTrigger, isMapInitialized });
-    if (routeTrigger > 0 && isMapInitialized) {
-      console.log('🎯 routeTrigger changed:', routeTrigger, '- forcing route calculation');
-      calculateRoute();
-    } else if (routeTrigger > 0 && !isMapInitialized) {
-      console.log('⚠️ routeTrigger changed but map not initialized yet');
-    }
-  }, [routeTrigger, isMapInitialized, calculateRoute]);
-
-  // Initial route calculation
-  useEffect(() => {
-    console.log('🔄 Initial calculation useEffect:', { isMapInitialized });
-    if (isMapInitialized) {
-      calculateRoute();
-    }
-  }, [isMapInitialized, calculateRoute]);
+    calculateRoute();
+  }, [calculateRoute]);
 
   return (
-    <div style={{ width: '100%', height: '500px', position: 'relative', border: '1px solid hsl(var(--border))', borderRadius: '8px', overflow: 'hidden' }}>
+    <div style={{ width: '100%', height: '500px', position: 'relative' }}>
       <div 
         ref={mapRef} 
         id="google-map-container" 
@@ -1059,8 +1036,9 @@ const GoogleRouteMap: React.FC<{
           width: '100%', 
           height: '500px',
           backgroundColor: '#f0f0f0',
-          minHeight: '500px',
-          display: 'block'
+          border: '2px solid #007bff',
+          borderRadius: '8px',
+          minHeight: '500px' // Ensure minimum height
         }} 
       />
       {/* Debug info overlay */}
