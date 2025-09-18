@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AutocompleteInput } from "@/components/ui/autocomplete-input";
-import { MapPin, Truck, Route, Battery, CalendarIcon } from "lucide-react";
+import { MapPin, Truck, Route, Battery, CalendarIcon, Check } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -268,6 +268,19 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
     }
   };
 
+  // Valideringsfunksjoner for å vise checkmarks
+  const isValidLocation = (location: string): boolean => {
+    return location && location.trim().length >= 2;
+  };
+
+  const isValidBatteryPercentage = (percentage: number): boolean => {
+    return percentage > 0 && percentage <= 100;
+  };
+
+  const isValidTrailerWeight = (weight: number): boolean => {
+    return weight >= 0 && weight <= 3500;
+  };
+
   const handleInputChange = (field: keyof RouteData, value: string | number | Date) => {
     // Validering og sanitizing
     if ((field === 'from' || field === 'to' || field === 'via') && typeof value === 'string') {
@@ -303,6 +316,9 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
             <Label htmlFor="from" className="flex items-center gap-2">
               <MapPin className="h-3 w-3" />
               Fra
+              {isValidLocation(routeData.from) && (
+                <Check className="h-4 w-4 text-green-500 ml-auto" />
+              )}
             </Label>
             <AutocompleteInput
               id="from"
@@ -318,6 +334,9 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
             <Label htmlFor="to" className="flex items-center gap-2">
               <MapPin className="h-3 w-3" />
               Til
+              {isValidLocation(routeData.to) && (
+                <Check className="h-4 w-4 text-green-500 ml-auto" />
+              )}
             </Label>
             <AutocompleteInput
               id="to"
@@ -333,6 +352,9 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
             <Label htmlFor="via" className="flex items-center gap-2">
               <MapPin className="h-3 w-3" />
               Via (valgfritt)
+              {routeData.via && isValidLocation(routeData.via) && (
+                <Check className="h-4 w-4 text-green-500 ml-auto" />
+              )}
             </Label>
             <AutocompleteInput
               id="via"
@@ -349,6 +371,9 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
           <Label htmlFor="battery" className="flex items-center gap-2">
             <Battery className="h-3 w-3" />
             Batteriprosent ved start
+            {isValidBatteryPercentage(routeData.batteryPercentage) && (
+              <Check className="h-4 w-4 text-green-500 ml-auto" />
+            )}
           </Label>
           <Input
             id="battery"
@@ -384,6 +409,9 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
           <Label htmlFor="trailer" className="flex items-center gap-2">
             <Truck className="h-3 w-3" />
             Hengervekt (kg)
+            {isValidTrailerWeight(routeData.trailerWeight) && (
+              <Check className="h-4 w-4 text-green-500 ml-auto" />
+            )}
           </Label>
           <Input
             id="trailer"
