@@ -188,7 +188,11 @@ serve(async (req) => {
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
       try {
-        subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        if (subscription.current_period_end && subscription.current_period_end > 0) {
+          subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        } else {
+          subscriptionEnd = null;
+        }
       } catch (error) {
         logStep("Error creating subscription end date", { error: error.message, timestamp: subscription.current_period_end });
         subscriptionEnd = null;

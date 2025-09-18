@@ -659,25 +659,25 @@ function Index() {
       return;
     }
 
+    // Sjekk autentisering FØRST
+    if (!user) {
+      toast({
+        title: "Logg inn for å planlegge ruter",
+        description: "Du må være innlogget for å bruke ruteplanleggeren.",
+        variant: "destructive",
+      });
+      if (window.location.pathname !== '/auth') {
+        navigate('/auth');
+      }
+      return;
+    }
+
     // Øyeblikkelig visning av kart og start av ruteberegning
     setShowRoute(true);
     setRouteTrigger(Date.now());
     setPlanningRoute(true);
     
     try {
-      
-      // Sjekk autentisering
-      if (!user) {
-        toast({
-          title: "Logg inn for å planlegge ruter",
-          description: "Du må være innlogget for å bruke ruteplanleggeren.",
-          variant: "destructive",
-        });
-        if (window.location.pathname !== '/auth') {
-          navigate('/auth');
-        }
-        return;
-      }
 
       // Force en re-render av hele komponenten
       setTimeout(() => {
