@@ -128,7 +128,7 @@ const GoogleRouteMap: React.FC<{
           const map = new google.maps.Map(mapRef.current, {
             center: center,
             zoom: zoom,
-            mapTypeId: google.maps.MapTypeId.HYBRID, // Hybrid = satelitt + stedsnavn
+            mapTypeId: google.maps.MapTypeId.SATELLITE, // Ren satellittvisning
             mapTypeControl: true,
             zoomControl: true,
             streetViewControl: false,
@@ -138,8 +138,19 @@ const GoogleRouteMap: React.FC<{
             clickableIcons: true,
             disableDoubleClickZoom: false,
             scrollwheel: false,
-            // Minimal styling for å sikre stedsnavn vises på satelittkartet
-            styles: []
+            // Eksplisitt styling for å vise stedsnavn på satelittkartet
+            styles: [
+              {
+                featureType: "administrative",
+                elementType: "labels.text",
+                stylers: [{ visibility: "on" }]
+              },
+              {
+                featureType: "locality",
+                elementType: "labels.text",
+                stylers: [{ visibility: "on" }]
+              }
+            ]
           });
 
           console.log('✅ Google Maps instance created successfully');
