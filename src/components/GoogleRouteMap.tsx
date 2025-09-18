@@ -141,9 +141,21 @@ const GoogleRouteMap: React.FC<{
           directionsRendererRef.current = new google.maps.DirectionsRenderer({
             suppressMarkers: false,
             polylineOptions: {
-              strokeColor: '#2563eb',
-              strokeWeight: 4,
-              strokeOpacity: 0.8
+              strokeColor: '#ff0000', // Rød farge for å være mer synlig
+              strokeWeight: 6, // Tykkere linje
+              strokeOpacity: 1.0 // Full opasitet
+            },
+            markerOptions: {
+              icon: {
+                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" fill="#ff0000" stroke="#ffffff" stroke-width="2"/>
+                    <circle cx="12" cy="12" r="4" fill="#ffffff"/>
+                  </svg>
+                `),
+                scaledSize: new google.maps.Size(24, 24),
+                anchor: new google.maps.Point(12, 12)
+              }
             }
           });
           
@@ -283,7 +295,9 @@ const GoogleRouteMap: React.FC<{
       const result = await directionsPromise;
       
       console.log('✅ Google Maps rute beregnet');
+      console.log('🗺️ Setter rute på kartet med DirectionsRenderer...');
       directionsRendererRef.current!.setDirections(result);
+      console.log('🎯 Rute er satt på kartet - skal være synlig nå!');
       
       // Extract route information
       const route = result.routes[0];
