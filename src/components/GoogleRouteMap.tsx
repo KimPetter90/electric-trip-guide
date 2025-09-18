@@ -390,16 +390,22 @@ const GoogleRouteMap: React.FC<{
       const isNearRoute = !isRecommended && calculatedRoute && isStationNearRoute(station);
       
       
+      // Finn batteriprosent for anbefalte stasjoner
+      const optimizedPlan = getOptimizedChargingPlan();
+      const stationPlan = optimizedPlan.find(plan => plan.station.id === station.id);
+      const batteryAtArrival = stationPlan ? stationPlan.batteryLevelOnArrival.toFixed(0) : null;
+      
       const markerIcon = isRecommended ? {
-        // Blå markører for anbefalte ladestasjoner (basert på batteriprosent)
+        // Blå markører for anbefalte ladestasjoner med batteriprosent
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
-            <circle cx="10" cy="10" r="9" fill="#0066ff" stroke="#004499" stroke-width="1"/>
-            <text x="10" y="14" text-anchor="middle" fill="white" font-size="11" font-weight="bold">⚡</text>
+          <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 26 26">
+            <circle cx="13" cy="13" r="12" fill="#0066ff" stroke="#004499" stroke-width="1"/>
+            <text x="13" y="11" text-anchor="middle" fill="white" font-size="10" font-weight="bold">${batteryAtArrival || '?'}%</text>
+            <text x="13" y="20" text-anchor="middle" fill="white" font-size="8" font-weight="bold">⚡</text>
           </svg>
         `),
-        scaledSize: new google.maps.Size(20, 20),
-        anchor: new google.maps.Point(10, 10)
+        scaledSize: new google.maps.Size(26, 26),
+        anchor: new google.maps.Point(13, 13)
       } : isNearRoute ? {
         // Røde markører for stasjoner nær ruten (som på det gamle kartet)
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
@@ -424,7 +430,7 @@ const GoogleRouteMap: React.FC<{
       const marker = new google.maps.Marker({
         position: { lat: station.latitude, lng: station.longitude },
         map: mapInstanceRef.current!,
-        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isRecommended ? '\n💙 ANBEFALT LADESTASJON' : isNearRoute ? '\n🔴 NÆR RUTEN' : '\n🟢 LANGT FRA RUTEN'}`,
+        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isRecommended ? `\n💙 ANBEFALT LADESTASJON\n🔋 Ca ${batteryAtArrival || '?'}% batteri igjen ved ankomst` : isNearRoute ? '\n🔴 NÆR RUTEN' : '\n🟢 LANGT FRA RUTEN'}`,
         icon: markerIcon
       });
 
