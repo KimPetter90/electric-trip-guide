@@ -101,11 +101,11 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
 
   return (
     <>
-      <div className="space-y-3">
-        <h3 className="text-lg font-semibold">Velg rute</h3>
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Rutevalg</h3>
         
-        {/* Compact route selection boxes */}
-        <div className="flex gap-3 overflow-x-auto pb-2">
+        {/* Vertical route selection cards */}
+        <div className="space-y-3">
           {routes.map((route) => {
             const isSelected = selectedRoute === route.id;
             const colorClass = getRouteTypeColor(route.routeType);
@@ -113,7 +113,7 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
             return (
               <Card
                 key={route.id}
-                className={`min-w-[160px] cursor-pointer transition-all duration-200 border-2 ${
+                className={`cursor-pointer transition-all duration-200 border-2 ${
                   isSelected 
                     ? `${colorClass} ring-2 ring-offset-2 ring-blue-500 shadow-lg` 
                     : 'border-border hover:border-primary/50 hover:shadow-md'
@@ -122,52 +122,53 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
               >
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      {getRouteTypeIcon(route.routeType)}
-                      <span className="font-medium text-sm">{getRouteTypeName(route.routeType)}</span>
+                    <div className="flex items-center gap-3">
+                      <Badge className={`flex items-center gap-1 ${
+                        route.routeType === 'fastest' ? 'bg-blue-500 text-white' :
+                        route.routeType === 'shortest' ? 'bg-green-500 text-white' :
+                        route.routeType === 'eco' ? 'bg-purple-500 text-white' :
+                        'bg-gray-500 text-white'
+                      }`}>
+                        {getRouteTypeIcon(route.routeType)}
+                        {getRouteTypeName(route.routeType)}
+                      </Badge>
+                      <h4 className="font-semibold text-foreground">{route.name}</h4>
                     </div>
-                    <button
-                      onClick={(e) => handleInfoClick(route, e)}
-                      className="p-1 hover:bg-muted rounded-full transition-colors"
-                      title="Vis detaljer"
-                    >
-                      <Info className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                    </button>
-                  </div>
-                  
-                  <div className="space-y-2 text-xs">
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Tid:</span>
-                      <span className="font-medium">{formatDuration(route.duration)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Avstand:</span>
-                      <span className="font-medium">{route.distance} km</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Stopp:</span>
-                      <span className="font-medium">{route.chargingStops}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Kostnad:</span>
-                      <span className="font-medium">{route.estimatedCost} kr</span>
-                    </div>
+                    {isSelected && (
+                      <Badge variant="default" className="animate-pulse">Valgt</Badge>
+                    )}
                   </div>
 
-                  {isSelected && (
-                    <Badge className="w-full mt-3 justify-center" variant="default">
-                      Valgt
-                    </Badge>
-                  )}
+                  <p className="text-sm text-muted-foreground mb-3">{route.description}</p>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                    <div className="flex items-center gap-1">
+                      <Route className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground font-medium">{route.distance} km</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground font-medium">{formatDuration(route.duration)}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Zap className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground font-medium">{route.chargingStops} stopp</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-foreground font-medium">{route.estimatedCost} NOK</span>
+                    </div>
+                  </div>
                 </div>
               </Card>
             );
           })}
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          Klikk på en rute for å velge den, eller på ℹ️ for detaljer
-        </p>
+        <div className="pt-3 border-t border-border">
+          <p className="text-xs text-muted-foreground text-center">
+            Velg en rute for å se den på kartet
+          </p>
+        </div>
       </div>
 
       <RouteDetailsSidebar
