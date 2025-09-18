@@ -442,7 +442,7 @@ const GoogleRouteMap: React.FC<{
       plan.station.id === station.id
     );
     
-    if (stationAfter10Percent) {
+    if (stationAfter10Percent && stationAfter10Percent.station.id === station.id) {
       console.log(`🔵 KRITISK stasjon funnet ETTER 10%: ${station.name} ved ${stationAfter10Percent.distanceFromStart.toFixed(0)}km`);
       return true;
     }
