@@ -991,14 +991,6 @@ function Index() {
             </div>
 
 
-            {selectedCar && (
-              <Card className="p-4 bg-card/80 backdrop-blur-sm border-border shadow-lg" role="complementary">
-                <h3 className="font-semibold mb-2 text-primary">Valgt bil:</h3>
-                <p className="text-sm text-muted-foreground">
-                  {selectedCar.brand} {selectedCar.model} - {selectedCar.batteryCapacity} kWh, {selectedCar.range} km rekkevidde
-                </p>
-              </Card>
-            )}
           </section>
 
           {/* Right Column - Results */}
