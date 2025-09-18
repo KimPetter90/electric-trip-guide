@@ -471,15 +471,19 @@ const GoogleRouteMap: React.FC<{
     const optimizedPlan = getOptimizedChargingPlan();
     console.log(`📋 Optimalisert plan har ${optimizedPlan.length} stasjoner`);
     
-    // Først: prøv å finne en stasjon ETTER 10% punktet (innenfor 50km)
-    const stationAfter10Percent = optimizedPlan.find(plan => 
+    // Først: prøv å finne en stasjon ETTER 10% punktet (innenfor 50km) som ER NÆR RUTEN
+    const stationsAfter10Percent = optimizedPlan.filter(plan => 
       plan.distanceFromStart >= distanceAt10Percent && 
-      plan.distanceFromStart <= distanceAt10Percent + 50 && 
-      plan.station.id === station.id
+      plan.distanceFromStart <= distanceAt10Percent + 50
     );
     
-    if (stationAfter10Percent && stationAfter10Percent.station.id === station.id) {
-      console.log(`🔵 KRITISK stasjon funnet ETTER 10%: ${station.name} ved ${stationAfter10Percent.distanceFromStart.toFixed(0)}km`);
+    // Sjekk om denne stasjonen er en av dem og er nær ruten
+    const stationAfter10Percent = stationsAfter10Percent.find(plan => 
+      plan.station.id === station.id && isStationNearRoute(station)
+    );
+    
+    if (stationAfter10Percent) {
+      console.log(`🔵 KRITISK stasjon funnet ETTER 10%: ${station.name} ved ${stationAfter10Percent.distanceFromStart.toFixed(0)}km (nær rute)`);
       return true;
     }
     
@@ -492,19 +496,24 @@ const GoogleRouteMap: React.FC<{
     console.log(`📍 ${stationsBefore10Percent.length} stasjoner før 10% punktet`);
     
     if (stationsBefore10Percent.length > 0) {
-      // Finn den som er nærmest 10% punktet
-      const lastStationBefore = stationsBefore10Percent.reduce((closest, current) => 
-        current.distanceFromStart > closest.distanceFromStart ? current : closest
-      );
+      // Finn stasjoner som ER NÆR RUTEN først
+      const stationsNearRoute = stationsBefore10Percent.filter(plan => isStationNearRoute(plan.station));
       
-      if (lastStationBefore.station.id === station.id) {
-        console.log(`🔵 KRITISK stasjon funnet FØR 10%: ${station.name} ved ${lastStationBefore.distanceFromStart.toFixed(0)}km (siste sjanse)`);
-        return true;
+      if (stationsNearRoute.length > 0) {
+        // Finn den som er nærmest 10% punktet blant de som er nær ruten
+        const lastStationBefore = stationsNearRoute.reduce((closest, current) => 
+          current.distanceFromStart > closest.distanceFromStart ? current : closest
+        );
+        
+        if (lastStationBefore.station.id === station.id) {
+          console.log(`🔵 KRITISK stasjon funnet FØR 10%: ${station.name} ved ${lastStationBefore.distanceFromStart.toFixed(0)}km (siste sjanse, nær rute)`);
+          return true;
+        }
       }
     }
     
     return false;
-  }, [calculatedRoute, selectedCar, routeData.batteryPercentage, getOptimizedChargingPlan]);
+  }, [calculatedRoute, selectedCar, routeData.batteryPercentage, getOptimizedChargingPlan, isStationNearRoute]);
 
   // Add charging station markers - update when route changes
   useEffect(() => {
