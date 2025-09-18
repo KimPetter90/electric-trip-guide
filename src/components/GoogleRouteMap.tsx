@@ -210,14 +210,14 @@ const GoogleRouteMap: React.FC<{
         const stepStart = step.start_location;
         const stepEnd = step.end_location;
         
-        // Sjekk start og slutt av steget
+        // Sjekk start og slutt av steget + flere mellompunkter
         let startDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
         let endDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
         minDistance = Math.min(minDistance, startDistance, endDistance);
         
-        // Sjekk 10 punkter langs segmentet for bedre nøyaktighet
-        for (let i = 1; i <= 9; i++) {
-          const ratio = i / 10;
+        // Sjekk 20 punkter langs segmentet for bedre nøyaktighet
+        for (let i = 1; i <= 19; i++) {
+          const ratio = i / 20;
           const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
           const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
           const routePoint = new google.maps.LatLng(lat, lng);
@@ -225,10 +225,20 @@ const GoogleRouteMap: React.FC<{
           const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, routePoint);
           minDistance = Math.min(minDistance, distance);
         }
+        
+        // EKSTRA: Sjekk også punkter rundt start og slutt
+        const offsetDistance = 100; // 100 meter offset
+        for (let angle = 0; angle < 360; angle += 45) {
+          const offsetLat = stepStart.lat() + (offsetDistance / 111000) * Math.cos(angle * Math.PI / 180);
+          const offsetLng = stepStart.lng() + (offsetDistance / 111000) * Math.sin(angle * Math.PI / 180);
+          const offsetPoint = new google.maps.LatLng(offsetLat, offsetLng);
+          const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, offsetPoint);
+          minDistance = Math.min(minDistance, distance);
+        }
       });
     });
     
-    const isNear = minDistance <= 10000; // 10km grense for røde markører langs norske hovedveier
+    const isNear = minDistance <= 5000; // 5km grense for røde markører
     console.log(`🔍 Stasjon ${station.name}: minste avstand=${(minDistance/1000).toFixed(1)}km, nær rute=${isNear}`);
     
     // SPESIELL SJEKK: Hvis dette er Tesla Supercharger Larvik, logg ekstra info
