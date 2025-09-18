@@ -1252,11 +1252,11 @@ const GoogleRouteMap: React.FC<{
         id="google-map-container" 
         style={{ 
           width: '100%', 
-          height: '500px',
+          height: '600px',
           backgroundColor: '#f0f0f0',
           border: '2px solid #007bff',
           borderRadius: '8px',
-          minHeight: '500px' // Ensure minimum height
+          minHeight: '600px' // Ensure minimum height
         }} 
       />
       {/* STATUSKARTET ER FULLSTENDIG SKJULT - INGENTING VISES! */}
