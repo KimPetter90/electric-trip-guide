@@ -128,7 +128,7 @@ const GoogleRouteMap: React.FC<{
           const map = new google.maps.Map(mapRef.current, {
             center: center,
             zoom: zoom,
-            mapTypeId: google.maps.MapTypeId.HYBRID,
+            mapTypeId: google.maps.MapTypeId.HYBRID, // HYBRID = Satelitt + Stedsnavn
             mapTypeControl: true,
             zoomControl: true,
             streetViewControl: false,
@@ -137,39 +137,16 @@ const GoogleRouteMap: React.FC<{
             keyboardShortcuts: false,
             clickableIcons: true,
             disableDoubleClickZoom: false,
-            scrollwheel: false
+            scrollwheel: false,
+            // INGEN styles - la Google Maps være helt normal
+            styles: []
           });
 
           console.log('✅ Google Maps instance created successfully');
           mapInstanceRef.current = map;
           
-          // BARE skjul copyright og controls som forstyrrer - IKKE labels!
-          const hideOnlyNecessaryElements = () => {
-            if (!document.getElementById('hide-map-messages')) {
-              const globalStyle = document.createElement('style');
-              globalStyle.id = 'hide-map-messages';
-              globalStyle.textContent = `
-                .gm-style .gm-style-cc {
-                  display: none !important;
-                }
-                .gm-style div[style*="Use Ctrl + scroll"] {
-                  display: none !important;
-                }
-                .gm-style div[style*="Use ⌘ + scroll"] {
-                  display: none !important;
-                }
-              `;
-              document.head.appendChild(globalStyle);
-            }
-          };
-          
-          // Kjør den milde versjonen som ikke skjuler labels
-          hideOnlyNecessaryElements();
-          
-          // FJERNET de aggressive DOM-overvåkningene som skjuler labels
-          // Bare en enkel hideOnlyNecessaryElements() kjøring
-          
-          console.log('✅ Google Maps initialisert MED stedsnavn aktivert!');
+          // INGEN CSS-manipulering som kan skjule stedsnavn!
+          // La Google Maps vise ALT som normalt
           
           console.log('✅ Google Maps instance created successfully');
           mapInstanceRef.current = map;
