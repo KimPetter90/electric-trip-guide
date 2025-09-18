@@ -350,11 +350,11 @@ const GoogleRouteMap: React.FC<{
       totalDistance
     );
 
-    // Filtrer bare stasjoner som er nær ruten og RETT PLASSERING
+    // Filtrer bare stasjoner som er nær ruten (men IKKE filtrer på posisjon ennå)
     const filteredPlan = optimizedPlan.filter(plan => {
       const isNearRoute = isStationNearRoute(plan.station);
-      const isCorrectPosition = plan.distanceFromStart > 30 && plan.distanceFromStart < (totalDistance - 50);
-      return isNearRoute && isCorrectPosition;
+      console.log(`🔍 Stasjon ${plan.station.name}: nær rute=${isNearRoute}, avstand=${plan.distanceFromStart.toFixed(0)}km, batteri=${plan.batteryLevelOnArrival.toFixed(1)}%`);
+      return isNearRoute; // Kun filtrer på nærhet til rute
     });
 
     console.log(`🎯 Optimal ladeplan: ${filteredPlan.length} stasjoner langs ruten`);
