@@ -210,14 +210,14 @@ const GoogleRouteMap: React.FC<{
         const stepStart = step.start_location;
         const stepEnd = step.end_location;
         
-        // Sjekk start og slutt av steget + MANGE flere mellompunkter for nøyaktighet
+        // Sjekk start og slutt av steget + MEGET mange flere mellompunkter
         let startDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
         let endDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
         minDistance = Math.min(minDistance, startDistance, endDistance);
         
-        // Sjekk 50 punkter langs segmentet for MEGET høy nøyaktighet
-        for (let i = 1; i <= 49; i++) {
-          const ratio = i / 50;
+        // Sjekk 100 punkter langs segmentet for EKSTREM høy nøyaktighet
+        for (let i = 1; i <= 99; i++) {
+          const ratio = i / 100;
           const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
           const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
           const routePoint = new google.maps.LatLng(lat, lng);
@@ -226,15 +226,15 @@ const GoogleRouteMap: React.FC<{
           minDistance = Math.min(minDistance, distance);
         }
         
-        // EKSTRA: Sjekk punkter i radius rundt hvert rutepunkt  
-        for (let i = 0; i <= 50; i++) {
-          const ratio = i / 50;
+        // EKSTRA: Sjekk punkter i STØRRE radius rundt hvert rutepunkt for E6/hovedveier  
+        for (let i = 0; i <= 100; i++) {
+          const ratio = i / 100;
           const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
           const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
           
-          // Sjekk 8 punkter i radius rundt hvert rutepunkt (for å fange E6/hovedveier)
-          for (let angle = 0; angle < 360; angle += 45) {
-            const radiusOffset = 500; // 500 meter radius
+          // Sjekk 16 punkter i større radius rundt hvert rutepunkt
+          for (let angle = 0; angle < 360; angle += 22.5) {
+            const radiusOffset = 2000; // 2km radius for å fange E6/hovedveier
             const offsetLat = lat + (radiusOffset / 111000) * Math.cos(angle * Math.PI / 180);
             const offsetLng = lng + (radiusOffset / (111000 * Math.cos(lat * Math.PI / 180))) * Math.sin(angle * Math.PI / 180);
             const offsetPoint = new google.maps.LatLng(offsetLat, offsetLng);
@@ -248,9 +248,12 @@ const GoogleRouteMap: React.FC<{
     const isNear = minDistance <= 5000; // 5km grense som ønsket
     console.log(`🔍 Stasjon ${station.name}: minste avstand=${(minDistance/1000).toFixed(1)}km, nær rute=${isNear}`);
     
-    // SPESIELL SJEKK: Debug for Tesla stasjoner som burde være på ruten
-    if (station.name.includes('Tesla') && (station.name.includes('Ringebu') || station.name.includes('Larvik'))) {
-      console.log(`🚨 TESLA DEBUG ${station.name}:`);
+    // SPESIELL SJEKK: Debug for stasjoner som burde være på E6 ruten
+    if (station.name.includes('Tesla') && (station.name.includes('Ringebu') || station.name.includes('Larvik')) ||
+        station.name.includes('Eviny') && station.name.includes('Råholt') ||
+        station.name.includes('Fortum') && station.name.includes('Hamar') ||
+        station.name.includes('Circle K') && station.name.includes('Raufoss')) {
+      console.log(`🚨 E6-STASJON DEBUG ${station.name}:`);
       console.log(`   - Koordinater: lat=${station.latitude}, lng=${station.longitude}`);
       console.log(`   - Minste avstand til rute: ${(minDistance/1000).toFixed(1)}km`);
       console.log(`   - Blir klassifisert som: ${isNear ? 'RØD (nær rute)' : 'GRØNN (langt fra rute)'}`);
