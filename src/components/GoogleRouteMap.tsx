@@ -277,8 +277,9 @@ const GoogleRouteMap: React.FC<{
     });
 
     console.log(`🎯 Optimal ladeplan: ${filteredPlan.length} stasjoner (MIDLERTIDIG: viser alle anbefalte)`);
-    filteredPlan.forEach(plan => {
-      console.log(`  📍 ${plan.station.name} - ${plan.distanceFromStart.toFixed(0)}km fra start`);
+    filteredPlan.forEach((plan, index) => {
+      console.log(`  📍 ${index + 1}. ${plan.station.name} - ${plan.distanceFromStart.toFixed(0)}km fra start`);
+      console.log(`      ID: ${plan.station.id}`);
     });
 
     return filteredPlan;
@@ -309,7 +310,14 @@ const GoogleRouteMap: React.FC<{
       const isRecommended = optimizedPlan.some(plan => plan.station.id === station.id);
       const isNearRoute = false; // Forenklet for nå - vi fokuserer bare på anbefalte stasjoner
       
-      console.log(`🔌 Sjekker stasjon: ${station.name}, isRecommended: ${isRecommended}`);
+      console.log(`🔌 Sjekker stasjon: ${station.name}`);
+      console.log(`   - Station ID: ${station.id}`);
+      console.log(`   - isRecommended: ${isRecommended}`);
+      console.log(`   - Optimized plan har ${optimizedPlan.length} stasjoner`);
+      if (optimizedPlan.length > 0) {
+        console.log(`   - Første anbefalt stasjon ID: ${optimizedPlan[0].station.id}`);
+        console.log(`   - Første anbefalt stasjon navn: ${optimizedPlan[0].station.name}`);
+      }
       
       // Forenklet markør-logikk: blå for anbefalte, røde for andre
       const markerIcon = isRecommended ? {
