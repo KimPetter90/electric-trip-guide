@@ -210,14 +210,14 @@ const GoogleRouteMap: React.FC<{
         const stepStart = step.start_location;
         const stepEnd = step.end_location;
         
-        // Sjekk start og slutt av steget + flere mellompunkter
+        // Sjekk start og slutt av steget + MANGE flere mellompunkter for nøyaktighet
         let startDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
         let endDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
         minDistance = Math.min(minDistance, startDistance, endDistance);
         
-        // Sjekk 20 punkter langs segmentet for bedre nøyaktighet
-        for (let i = 1; i <= 19; i++) {
-          const ratio = i / 20;
+        // Sjekk 50 punkter langs segmentet for MEGET høy nøyaktighet
+        for (let i = 1; i <= 49; i++) {
+          const ratio = i / 50;
           const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
           const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
           const routePoint = new google.maps.LatLng(lat, lng);
@@ -226,19 +226,26 @@ const GoogleRouteMap: React.FC<{
           minDistance = Math.min(minDistance, distance);
         }
         
-        // EKSTRA: Sjekk også punkter rundt start og slutt
-        const offsetDistance = 100; // 100 meter offset
-        for (let angle = 0; angle < 360; angle += 45) {
-          const offsetLat = stepStart.lat() + (offsetDistance / 111000) * Math.cos(angle * Math.PI / 180);
-          const offsetLng = stepStart.lng() + (offsetDistance / 111000) * Math.sin(angle * Math.PI / 180);
-          const offsetPoint = new google.maps.LatLng(offsetLat, offsetLng);
-          const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, offsetPoint);
-          minDistance = Math.min(minDistance, distance);
+        // EKSTRA: Sjekk punkter i radius rundt hvert rutepunkt  
+        for (let i = 0; i <= 50; i++) {
+          const ratio = i / 50;
+          const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
+          const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
+          
+          // Sjekk 8 punkter i radius rundt hvert rutepunkt (for å fange E6/hovedveier)
+          for (let angle = 0; angle < 360; angle += 45) {
+            const radiusOffset = 500; // 500 meter radius
+            const offsetLat = lat + (radiusOffset / 111000) * Math.cos(angle * Math.PI / 180);
+            const offsetLng = lng + (radiusOffset / (111000 * Math.cos(lat * Math.PI / 180))) * Math.sin(angle * Math.PI / 180);
+            const offsetPoint = new google.maps.LatLng(offsetLat, offsetLng);
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, offsetPoint);
+            minDistance = Math.min(minDistance, distance);
+          }
         }
       });
     });
     
-    const isNear = minDistance <= 20000; // 20km grense for å fange alle stasjoner langs rutekorridoren
+    const isNear = minDistance <= 5000; // 5km grense som ønsket
     console.log(`🔍 Stasjon ${station.name}: minste avstand=${(minDistance/1000).toFixed(1)}km, nær rute=${isNear}`);
     
     // SPESIELL SJEKK: Debug for Tesla stasjoner som burde være på ruten
