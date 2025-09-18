@@ -149,6 +149,48 @@ const GoogleRouteMap: React.FC<{
           console.log('✅ Google Maps instance created successfully');
           mapInstanceRef.current = map;
           
+          // Skjul zoom-instruksjoner og andre tooltips
+          const hideZoomInstructions = () => {
+            const style = document.createElement('style');
+            style.textContent = `
+              .gm-style .gm-style-cc,
+              .gm-style .gmnoprint[style*="position: absolute"],
+              .gm-style .gmnoprint[style*="z-index: 1000000"],
+              .gm-bundled-control[style*="position: absolute"],
+              .gm-bundled-control[data-control-width],
+              .gm-style div[jsaction*="wheel.capture"] div[style*="background"],
+              .gm-style div[style*="Use Ctrl + scroll to zoom"],
+              .gm-style div[style*="Use ⌘ + scroll to zoom"],
+              .gm-style div[style*="border-radius: 2px"][style*="background"],
+              .gm-style div[style*="will change"]:not([style*="width: 100%"]) {
+                display: none !important;
+                visibility: hidden !important;
+              }
+              .gm-style .gm-style-mtc,
+              .gm-style .gm-bundled-control {
+                display: block !important;
+                visibility: visible !important;
+              }
+            `;
+            document.head.appendChild(style);
+          };
+          
+          // Kjør med en gang og etter en liten delay
+          hideZoomInstructions();
+          setTimeout(hideZoomInstructions, 1000);
+          
+          // Overvåk for endringer og skjul instruksjoner kontinuerlig
+          const observer = new MutationObserver(hideZoomInstructions);
+          observer.observe(document.body, { 
+            childList: true, 
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style']
+          });
+          
+          console.log('✅ Google Maps instance created successfully');
+          mapInstanceRef.current = map;
+          
           // Initialize directions service and renderer
           directionsServiceRef.current = new google.maps.DirectionsService();
           directionsRendererRef.current = new google.maps.DirectionsRenderer({
