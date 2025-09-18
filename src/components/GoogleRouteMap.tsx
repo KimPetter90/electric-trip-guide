@@ -218,42 +218,116 @@ const GoogleRouteMap: React.FC<{
 
       // Legg til klikk-event for ladestasjon-markør
       marker.addListener('click', () => {
+        const statusColor = station.available > 0 ? 'hsl(140 100% 50%)' : 'hsl(0 84% 60%)';
+        const statusText = station.available > 0 ? 'TILGJENGELIG' : 'OPPTATT';
+        const routeIndicator = isNearRoute ? 'PÅ RUTEN' : 'LADESTASJON';
+        const routeColor = isNearRoute ? 'hsl(0 84% 60%)' : 'hsl(140 100% 50%)';
+        
         const infoWindow = new google.maps.InfoWindow({
           content: `
-            <div style="font-family: Inter, sans-serif; padding: 12px; line-height: 1.4; min-width: 250px;">
-              <div style="background: linear-gradient(135deg, ${isNearRoute ? '#ef4444, #dc2626' : '#22c55e, #16a34a'}); color: white; padding: 10px; margin: -12px -12px 12px -12px; border-radius: 8px;">
-                <h4 style="margin: 0; font-size: 16px; font-weight: 600;">${isNearRoute ? '🔴' : '🟢'} ${station.name}</h4>
-                <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">📍 ${station.address || station.location || 'Ikke tilgjengelig'}</p>
-                <div style="margin-top: 6px;">
-                  <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; font-size: 12px;">${isNearRoute ? 'PÅ RUTEN' : 'LADESTASJON'}</span>
+            <div style="
+              font-family: Inter, system-ui, sans-serif; 
+              padding: 0; 
+              line-height: 1.4; 
+              min-width: 320px; 
+              background: linear-gradient(135deg, hsl(225 25% 6% / 0.95) 0%, hsl(180 100% 6% / 0.9) 30%, hsl(225 25% 6% / 0.95) 100%);
+              border: 1px solid ${isNearRoute ? 'hsl(0 84% 60% / 0.4)' : 'hsl(140 100% 50% / 0.4)'};
+              border-radius: 12px;
+              box-shadow: 0 8px 32px ${isNearRoute ? 'hsl(0 84% 60% / 0.15)' : 'hsl(140 100% 50% / 0.15)'}, 0 0 0 1px ${isNearRoute ? 'hsl(0 84% 60% / 0.1)' : 'hsl(140 100% 50% / 0.1)'};
+              backdrop-filter: blur(12px);
+              overflow: hidden;
+            ">
+              <div style="
+                background: linear-gradient(135deg, ${routeColor} 0%, ${isNearRoute ? 'hsl(320 100% 60%)' : 'hsl(120 100% 60%)'} 100%);
+                color: hsl(225 25% 6%);
+                padding: 16px;
+                position: relative;
+                overflow: hidden;
+              ">
+                <div style="
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  right: 0;
+                  bottom: 0;
+                  background: radial-gradient(circle at ${isNearRoute ? '20% 80%' : '70% 20%'}, ${isNearRoute ? 'hsl(320 100% 70% / 0.3)' : 'hsl(120 100% 70% / 0.3)'} 0%, transparent 50%);
+                "></div>
+                <h4 style="margin: 0; font-size: 18px; font-weight: 700; position: relative; z-index: 1;">${isNearRoute ? '🔴' : '⚡'} ${station.name}</h4>
+                <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.8; position: relative; z-index: 1;">📍 ${station.address || station.location || 'Ukjent adresse'}</p>
+                <div style="margin-top: 8px; position: relative; z-index: 1; display: flex; gap: 8px;">
+                  <span style="
+                    background: hsl(225 25% 6% / 0.2);
+                    color: hsl(225 25% 6%);
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    border: 1px solid hsl(225 25% 6% / 0.1);
+                  ">${routeIndicator}</span>
+                  <span style="
+                    background: ${statusColor}20;
+                    color: hsl(225 25% 6%);
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    border: 1px solid ${statusColor}40;
+                  ">${statusText}</span>
                 </div>
               </div>
-              <div style="margin: 8px 0;">
-                <div style="display: flex; justify-content: space-between; margin: 4px 0;">
-                  <span style="color: #666; font-size: 13px;">🔋 Tilgjengelighet:</span>
-                  <span style="font-weight: 500; font-size: 13px; color: ${station.available > 0 ? '#22c55e' : '#ef4444'};">${station.available}/${station.total} ledige</span>
+              <div style="padding: 16px; background: hsl(225 25% 10% / 0.8);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(140 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(140 100% 50%);">
+                  <span style="color: hsl(140 100% 70%); font-size: 13px; font-weight: 500;">🔋 Tilgjengelighet</span>
+                  <span style="font-weight: 600; font-size: 13px; color: ${station.available > 0 ? 'hsl(140 100% 70%)' : 'hsl(0 84% 60%)'};">${station.available}/${station.total} ledige</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin: 4px 0;">
-                  <span style="color: #666; font-size: 13px;">⚡ Ladeeffekt:</span>
-                  <span style="font-weight: 500; font-size: 13px;">${station.power || 'Ikke oppgitt'}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(180 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(180 100% 50%);">
+                  <span style="color: hsl(180 100% 70%); font-size: 13px; font-weight: 500;">⚡ Ladeeffekt</span>
+                  <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%);">${station.power || 'Ikke oppgitt'}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin: 4px 0;">
-                  <span style="color: #666; font-size: 13px;">💰 Kostnad:</span>
-                  <span style="font-weight: 500; font-size: 13px;">${station.cost || 'Gratis'} kr/kWh</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(280 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(280 100% 50%);">
+                  <span style="color: hsl(280 100% 70%); font-size: 13px; font-weight: 500;">💰 Kostnad</span>
+                  <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%);">${station.cost || 'Gratis'} kr/kWh</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin: 4px 0;">
-                  <span style="color: #666; font-size: 13px;">🏢 Leverandør:</span>
-                  <span style="font-weight: 500; font-size: 13px;">${station.provider || 'Ukjent'}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(45 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(45 100% 50%);">
+                  <span style="color: hsl(45 100% 70%); font-size: 13px; font-weight: 500;">🏢 Leverandør</span>
+                  <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%);">${station.provider || 'Ukjent'}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin: 4px 0;">
-                  <span style="color: #666; font-size: 13px;">🚀 Hurtiglader:</span>
-                  <span style="font-weight: 500; font-size: 13px; color: ${station.fast_charger ? '#22c55e' : '#ef4444'};">${station.fast_charger ? 'Ja' : 'Nei'}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(120 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(120 100% 50%);">
+                  <span style="color: hsl(120 100% 70%); font-size: 13px; font-weight: 500;">🚀 Hurtiglader</span>
+                  <span style="font-weight: 600; font-size: 13px; color: ${station.fast_charger ? 'hsl(140 100% 70%)' : 'hsl(0 84% 60%)'};">${station.fast_charger ? 'Ja' : 'Nei'}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin: 4px 0;">
-                  <span style="color: #666; font-size: 13px;">📍 Koordinater:</span>
-                  <span style="font-weight: 500; font-size: 13px;">${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(200 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(200 100% 50%);">
+                  <span style="color: hsl(200 100% 70%); font-size: 13px; font-weight: 500;">📍 Koordinater</span>
+                  <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%); font-family: 'Courier New', monospace;">${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}</span>
                 </div>
-                ${isNearRoute ? '<div style="margin: 10px 0 0 0; padding: 8px; background: #fef2f2; border-radius: 6px; border-left: 3px solid #ef4444;"><p style="margin: 0; color: #dc2626; font-weight: 600; font-size: 13px;">⚡ Denne ladestasjonen ligger nær ruten din!</p></div>' : ''}
+                ${isNearRoute ? `
+                <div style="
+                  margin: 12px 0 0 0; 
+                  padding: 12px; 
+                  background: linear-gradient(135deg, hsl(0 84% 60% / 0.1) 0%, hsl(320 100% 50% / 0.1) 100%); 
+                  border-radius: 8px; 
+                  border: 1px solid hsl(0 84% 60% / 0.2);
+                  position: relative;
+                  overflow: hidden;
+                ">
+                  <div style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: radial-gradient(circle at 80% 20%, hsl(0 84% 60% / 0.1) 0%, transparent 70%);
+                  "></div>
+                  <p style="
+                    margin: 0; 
+                    color: hsl(0 84% 60%); 
+                    font-weight: 700; 
+                    font-size: 14px;
+                    position: relative;
+                    z-index: 1;
+                  ">⚡ Denne ladestasjonen ligger strategisk langs ruten din!</p>
+                </div>
+                ` : ''}
               </div>
             </div>
           `
@@ -380,26 +454,59 @@ const GoogleRouteMap: React.FC<{
         startMarker.addListener('click', () => {
           const infoWindow = new google.maps.InfoWindow({
             content: `
-              <div style="font-family: Inter, sans-serif; padding: 12px; line-height: 1.4; min-width: 250px;">
-                <div style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 10px; margin: -12px -12px 12px -12px; border-radius: 8px;">
-                  <h4 style="margin: 0; font-size: 16px; font-weight: 600;">🟢 STARTPUNKT</h4>
-                  <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">📍 ${routeData.from}</p>
-                  <div style="margin-top: 6px;">
-                    <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; font-size: 12px;">Start</span>
+              <div style="
+                font-family: Inter, system-ui, sans-serif; 
+                padding: 0; 
+                line-height: 1.4; 
+                min-width: 280px; 
+                background: linear-gradient(135deg, hsl(225 25% 6% / 0.95) 0%, hsl(140 100% 6% / 0.9) 30%, hsl(225 25% 6% / 0.95) 100%);
+                border: 1px solid hsl(140 100% 50% / 0.3);
+                border-radius: 12px;
+                box-shadow: 0 8px 32px hsl(140 100% 50% / 0.15), 0 0 0 1px hsl(140 100% 50% / 0.1);
+                backdrop-filter: blur(12px);
+                overflow: hidden;
+              ">
+                <div style="
+                  background: linear-gradient(135deg, hsl(140 100% 50%) 0%, hsl(120 100% 60%) 100%);
+                  color: hsl(225 25% 6%);
+                  padding: 16px;
+                  position: relative;
+                  overflow: hidden;
+                ">
+                  <div style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: radial-gradient(circle at 30% 20%, hsl(120 100% 70% / 0.3) 0%, transparent 50%);
+                  "></div>
+                  <h4 style="margin: 0; font-size: 18px; font-weight: 700; position: relative; z-index: 1;">🟢 STARTPUNKT</h4>
+                  <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.8; position: relative; z-index: 1;">📍 ${routeData.from}</p>
+                  <div style="margin-top: 8px; position: relative; z-index: 1;">
+                    <span style="
+                      background: hsl(225 25% 6% / 0.2);
+                      color: hsl(225 25% 6%);
+                      padding: 4px 8px;
+                      border-radius: 6px;
+                      font-size: 12px;
+                      font-weight: 600;
+                      border: 1px solid hsl(225 25% 6% / 0.1);
+                    ">RUTE START</span>
                   </div>
                 </div>
-                <div style="margin: 8px 0;">
-                  <div style="display: flex; justify-content: space-between; margin: 4px 0;">
-                    <span style="color: #666; font-size: 13px;">📍 Koordinater:</span>
-                    <span style="font-weight: 500; font-size: 13px;">${leg.start_location.lat().toFixed(4)}, ${leg.start_location.lng().toFixed(4)}</span>
+                <div style="padding: 16px; background: hsl(225 25% 10% / 0.8);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(140 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(140 100% 50%);">
+                    <span style="color: hsl(140 100% 70%); font-size: 13px; font-weight: 500;">📍 Koordinater</span>
+                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%); font-family: 'Courier New', monospace;">${leg.start_location.lat().toFixed(4)}, ${leg.start_location.lng().toFixed(4)}</span>
                   </div>
-                  <div style="display: flex; justify-content: space-between; margin: 4px 0;">
-                    <span style="color: #666; font-size: 13px;">📏 Total avstand:</span>
-                    <span style="font-weight: 500; font-size: 13px;">${leg.distance?.text || 'N/A'}</span>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(180 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(180 100% 50%);">
+                    <span style="color: hsl(180 100% 70%); font-size: 13px; font-weight: 500;">📏 Total avstand</span>
+                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%);">${leg.distance?.text || 'Beregner...'}</span>
                   </div>
-                  <div style="display: flex; justify-content: space-between; margin: 4px 0;">
-                    <span style="color: #666; font-size: 13px;">⏰ Estimert tid:</span>
-                    <span style="font-weight: 500; font-size: 13px;">${leg.duration?.text || 'N/A'}</span>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(280 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(280 100% 50%);">
+                    <span style="color: hsl(280 100% 70%); font-size: 13px; font-weight: 500;">⏰ Estimert tid</span>
+                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%);">${leg.duration?.text || 'Beregner...'}</span>
                   </div>
                 </div>
               </div>
@@ -429,26 +536,59 @@ const GoogleRouteMap: React.FC<{
         endMarker.addListener('click', () => {
           const infoWindow = new google.maps.InfoWindow({
             content: `
-              <div style="font-family: Inter, sans-serif; padding: 12px; line-height: 1.4; min-width: 250px;">
-                <div style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 10px; margin: -12px -12px 12px -12px; border-radius: 8px;">
-                  <h4 style="margin: 0; font-size: 16px; font-weight: 600;">🔴 MÅLPUNKT</h4>
-                  <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">📍 ${routeData.to}</p>
-                  <div style="margin-top: 6px;">
-                    <span style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; font-size: 12px;">Mål</span>
+              <div style="
+                font-family: Inter, system-ui, sans-serif; 
+                padding: 0; 
+                line-height: 1.4; 
+                min-width: 280px; 
+                background: linear-gradient(135deg, hsl(225 25% 6% / 0.95) 0%, hsl(280 100% 6% / 0.9) 30%, hsl(225 25% 6% / 0.95) 100%);
+                border: 1px solid hsl(280 100% 50% / 0.3);
+                border-radius: 12px;
+                box-shadow: 0 8px 32px hsl(280 100% 50% / 0.15), 0 0 0 1px hsl(280 100% 50% / 0.1);
+                backdrop-filter: blur(12px);
+                overflow: hidden;
+              ">
+                <div style="
+                  background: linear-gradient(135deg, hsl(280 100% 50%) 0%, hsl(320 100% 60%) 100%);
+                  color: hsl(225 25% 6%);
+                  padding: 16px;
+                  position: relative;
+                  overflow: hidden;
+                ">
+                  <div style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: radial-gradient(circle at 70% 20%, hsl(320 100% 70% / 0.3) 0%, transparent 50%);
+                  "></div>
+                  <h4 style="margin: 0; font-size: 18px; font-weight: 700; position: relative; z-index: 1;">🔴 MÅLPUNKT</h4>
+                  <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.8; position: relative; z-index: 1;">📍 ${routeData.to}</p>
+                  <div style="margin-top: 8px; position: relative; z-index: 1;">
+                    <span style="
+                      background: hsl(225 25% 6% / 0.2);
+                      color: hsl(225 25% 6%);
+                      padding: 4px 8px;
+                      border-radius: 6px;
+                      font-size: 12px;
+                      font-weight: 600;
+                      border: 1px solid hsl(225 25% 6% / 0.1);
+                    ">DESTINASJON</span>
                   </div>
                 </div>
-                <div style="margin: 8px 0;">
-                  <div style="display: flex; justify-content: space-between; margin: 4px 0;">
-                    <span style="color: #666; font-size: 13px;">📍 Koordinater:</span>
-                    <span style="font-weight: 500; font-size: 13px;">${leg.end_location.lat().toFixed(4)}, ${leg.end_location.lng().toFixed(4)}</span>
+                <div style="padding: 16px; background: hsl(225 25% 10% / 0.8);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(280 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(280 100% 50%);">
+                    <span style="color: hsl(280 100% 70%); font-size: 13px; font-weight: 500;">📍 Koordinater</span>
+                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%); font-family: 'Courier New', monospace;">${leg.end_location.lat().toFixed(4)}, ${leg.end_location.lng().toFixed(4)}</span>
                   </div>
-                  <div style="display: flex; justify-content: space-between; margin: 4px 0;">
-                    <span style="color: #666; font-size: 13px;">📏 Total avstand:</span>
-                    <span style="font-weight: 500; font-size: 13px;">${leg.distance?.text || 'N/A'}</span>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(180 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(180 100% 50%);">
+                    <span style="color: hsl(180 100% 70%); font-size: 13px; font-weight: 500;">📏 Total avstand</span>
+                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%);">${leg.distance?.text || 'Beregner...'}</span>
                   </div>
-                  <div style="display: flex; justify-content: space-between; margin: 4px 0;">
-                    <span style="color: #666; font-size: 13px;">⏰ Total tid:</span>
-                    <span style="font-weight: 500; font-size: 13px;">${leg.duration?.text || 'N/A'}</span>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(140 100% 50% / 0.05); border-radius: 6px; border-left: 3px solid hsl(140 100% 50%);">
+                    <span style="color: hsl(140 100% 70%); font-size: 13px; font-weight: 500;">⏰ Total tid</span>
+                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 92%);">${leg.duration?.text || 'Beregner...'}</span>
                   </div>
                 </div>
               </div>
