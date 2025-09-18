@@ -59,6 +59,7 @@ function Index() {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   
+  // All state declarations - MUST be unconditional
   const [selectedCar, setSelectedCar] = useState<CarModel | null>(null);
   const [routeData, setRouteData] = useState<RouteData>({
     from: "",
@@ -68,19 +69,21 @@ function Index() {
     batteryPercentage: 0,
     travelDate: undefined
   });
-  const [showRoute, setShowRoute] = useState(true); // ALWAYS show route to prevent disappearing
-  const [routeTrigger, setRouteTrigger] = useState(0); // Trigger for manual route updates
+  const [showRoute, setShowRoute] = useState(true);
+  const [routeTrigger, setRouteTrigger] = useState(0);
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
-  const [planningRoute, setPlanningRoute] = useState(false); // Ny loading state for planlegging
-  
-  // Ladestasjon state for å vise ladeknapp
+  const [planningRoute, setPlanningRoute] = useState(false);
   const [showChargingButton, setShowChargingButton] = useState(false);
   const [currentChargingStation, setCurrentChargingStation] = useState<any>(null);
   const [chargingProgress, setChargingProgress] = useState(0);
   const [routeAnalysis, setRouteAnalysis] = useState<RouteAnalysis | null>(null);
   const [optimizedStations, setOptimizedStations] = useState<any[]>([]);
+  const [tripAnalysis, setTripAnalysis] = useState<any>(null);
+  const [mapLoading, setMapLoading] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [chargingStations, setChargingStations] = useState<any[]>([]);
 
   // Handle shared route parameters
   useEffect(() => {
@@ -148,27 +151,35 @@ function Index() {
     return () => clearTimeout(timer);
   }, [routeData.from, routeData.to, routeData.via, selectedCar?.id, routeOptions.length, showRoute]);*/
   
-  // Debug logging for showRoute changes
-  useEffect(() => {
-    console.log('🎯 SHOWROUTE CHANGED:', showRoute, 'at time:', new Date().toISOString());
-  }, [showRoute]);
   
-  // Funksjon for å motta ladestasjon data fra RouteMap - memoized to prevent component remounting
+  // Stable callback functions to prevent re-renders
   const handleChargingStationUpdate = useCallback((station: any, showButton: boolean, optimizedStations?: any[]) => {
-    console.log('🔋 INDEX: Mottatt ladestasjon oppdatering:', station?.name, 'show:', showButton);
-    console.log('🔋 INDEX: Mottatt optimizedStations:', optimizedStations);
     setCurrentChargingStation(station);
     setShowChargingButton(showButton);
     if (optimizedStations) {
-      console.log('🔋 INDEX: Setter optimizedStations til:', optimizedStations);
       setOptimizedStations(optimizedStations);
     }
   }, []);
   
-  // Funksjon for å motta routeAnalysis fra RouteMap - memoized to prevent component remounting
   const handleRouteAnalysisUpdate = useCallback((analysis: RouteAnalysis | null) => {
-    console.log('📊 INDEX: Mottatt routeAnalysis:', analysis);
     setRouteAnalysis(analysis);
+  }, []);
+
+  // Google Maps callbacks - MUST be stable to prevent map reinitialization
+  const onMapLoad = useCallback((map: google.maps.Map) => {
+    console.log('🗺️ Google Maps loaded successfully');
+  }, []);
+
+  const onRouteCalculated = useCallback((analysis: any) => {
+    setTripAnalysis(analysis);
+  }, []);
+
+  const onLoadingChange = useCallback((loading: boolean) => {
+    setMapLoading(loading);
+  }, []);
+
+  const onError = useCallback((error: string | null) => {
+    setMapError(error);
   }, []);
   // Optimalisert generering av rutevalg med caching
   const generateRouteOptions = async () => {
@@ -938,27 +949,37 @@ function Index() {
                   </Card>
                 )}
                 
-                {/* Add key prop to prevent unnecessary remounting */}
-                <GoogleRouteMap 
-                  key="stable-google-map" // Stable key to prevent unnecessary remounting
-                  center={{ lat: 60.472, lng: 8.4689 }}
-                  zoom={6}
-                  onMapLoad={useCallback((map) => console.log('🗺️ Kart lastet:', map), [])}
-                  chargingStations={[]}
-                  routeData={routeData}
-                  selectedCar={selectedCar}
-                  routeTrigger={routeTrigger}
-                  onRouteCalculated={useCallback((analysis) => handleRouteAnalysisUpdate({
-                    chargingTime: analysis.totalChargingTime,
-                    co2Saved: 0,
-                    efficiency: 85,
-                    totalDistance: analysis.totalDistance,
-                    totalTime: analysis.totalTime,
-                    totalCost: analysis.totalCost
-                  }), [handleRouteAnalysisUpdate])}
-                  onLoadingChange={useCallback((loading) => console.log('🔄 Loading state:', loading), [])}
-                  onError={useCallback((error) => console.error('❌ Kartfeil:', error), [])}
-                />
+                <div data-testid="route-map" className="relative">
+                  {mapLoading && (
+                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+                      <div className="text-center space-y-2">
+                        <Zap className="h-8 w-8 text-primary animate-spin mx-auto" />
+                        <p className="text-sm text-muted-foreground">Laster kart...</p>
+                      </div>
+                    </div>
+                  )}
+                  {mapError && (
+                    <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
+                      <div className="flex items-center space-x-2">
+                        <AlertTriangle className="h-5 w-5 text-destructive" />
+                        <p className="text-sm text-destructive">{mapError}</p>
+                      </div>
+                    </div>
+                  )}
+                  <GoogleRouteMap 
+                    key="stable-google-map"
+                    center={{ lat: 60.472, lng: 8.4689 }}
+                    zoom={6}
+                    onMapLoad={onMapLoad}
+                    chargingStations={chargingStations}
+                    routeData={routeData}
+                    selectedCar={selectedCar}
+                    routeTrigger={routeTrigger}
+                    onRouteCalculated={onRouteCalculated}
+                    onLoadingChange={onLoadingChange}
+                    onError={onError}
+                  />
+                </div>
               </div>
             )}
           </section>
