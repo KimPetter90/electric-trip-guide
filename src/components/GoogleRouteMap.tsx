@@ -296,8 +296,15 @@ const GoogleRouteMap: React.FC<{
       
       console.log('✅ Google Maps rute beregnet');
       console.log('🗺️ Setter rute på kartet med DirectionsRenderer...');
-      directionsRendererRef.current!.setDirections(result);
-      console.log('🎯 Rute er satt på kartet - skal være synlig nå!');
+      
+      // Sørg for at DirectionsRenderer er koblet til kartet
+      if (directionsRendererRef.current && mapInstanceRef.current) {
+        directionsRendererRef.current.setMap(mapInstanceRef.current);
+        directionsRendererRef.current.setDirections(result);
+        console.log('🎯 Rute er satt på kartet - skal være synlig nå!');
+      } else {
+        console.error('❌ DirectionsRenderer eller kart ikke tilgjengelig');
+      }
       
       // Extract route information
       const route = result.routes[0];
@@ -336,7 +343,7 @@ const GoogleRouteMap: React.FC<{
       onRouteCalculated(analysis);
       onLoadingChange(false);
       
-      // Adjust map bounds to show entire route
+      // Adjust map bounds to show entire route - men ikke hvis det overskriver ruten
       const bounds = new google.maps.LatLngBounds();
       route.legs.forEach(leg => {
         leg.steps.forEach(step => {
@@ -344,7 +351,13 @@ const GoogleRouteMap: React.FC<{
           bounds.extend(step.end_location);
         });
       });
-      mapInstanceRef.current!.fitBounds(bounds);
+      
+      // Sett bounds med litt padding og etter en kort delay
+      setTimeout(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.fitBounds(bounds, 50);
+        }
+      }, 500);
       
       console.log('📊 Rute:', {
         distance: `${distanceKm.toFixed(0)} km`,
