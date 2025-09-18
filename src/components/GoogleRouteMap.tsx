@@ -197,15 +197,51 @@ const GoogleRouteMap: React.FC<{
     chargingStationMarkersRef.current.forEach(marker => marker.setMap(null));
     chargingStationMarkersRef.current = [];
 
-    // Funksjon for å sjekke om ladestasjon er nær ruten
-    const isStationOnRoute = (station: any): boolean => {
+    // Add new charging station markers - eksakt som det gamle Mapbox-kartet
+    chargingStations.forEach(station => {
+      // Sjekk om stasjon er nær ruten (innenfor 5km)
+      const isNearRoute = calculatedRoute && isStationNearRoute(station);
+      
+      const markerIcon = isNearRoute ? {
+        // Røde markører for stasjoner nær ruten (som på det gamle kartet)
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="7" fill="#ff4444" stroke="#cc0000" stroke-width="1"/>
+            <text x="8" y="12" text-anchor="middle" fill="white" font-size="10" font-weight="bold">⚡</text>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(16, 16),
+        anchor: new google.maps.Point(8, 8)
+      } : {
+        // Grønne markører for stasjoner langt fra ruten (små som på det gamle kartet)
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8">
+            <circle cx="4" cy="4" r="3" fill="#00ff41" stroke="#00cc33" stroke-width="1"/>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(8, 8),
+        anchor: new google.maps.Point(4, 4)
+      };
+
+      const marker = new google.maps.Marker({
+        position: { lat: station.latitude, lng: station.longitude },
+        map: mapInstanceRef.current!,
+        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isNearRoute ? '\n🔴 NÆR RUTEN' : '\n🟢 LANGT FRA RUTEN'}`,
+        icon: markerIcon
+      });
+
+      chargingStationMarkersRef.current.push(marker);
+    });
+
+    // Hjelpefunksjon for å sjekke om stasjon er nær ruten
+    function isStationNearRoute(station: any): boolean {
       if (!calculatedRoute) return false;
       
       const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
       const route = calculatedRoute.routes[0];
       
       // Sjekk om stasjonen er innenfor 5km fra rutelinjen
-      let isNearRoute = false;
+      let isNear = false;
       route.legs.forEach(leg => {
         leg.steps.forEach(step => {
           const stepStart = step.start_location;
@@ -217,85 +253,13 @@ const GoogleRouteMap: React.FC<{
           
           // Hvis stasjonen er innenfor 5km fra start eller slutt av dette segmentet
           if (distanceToStart <= 5000 || distanceToEnd <= 5000) {
-            isNearRoute = true;
+            isNear = true;
           }
         });
       });
       
-      return isNearRoute;
-    };
-
-    // Add new charging station markers
-    chargingStations.forEach(station => {
-      const isOnRoute = isStationOnRoute(station);
-      
-      const markerIcon = isOnRoute ? {
-        // Rød ladestasjon for stasjoner på ruten
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14">
-            <defs>
-              <linearGradient id="redLightning" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#fef08a;stop-opacity:1" />
-                <stop offset="50%" style="stop-color:#fbbf24;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
-              </linearGradient>
-              <filter id="redGlow">
-                <feGaussianBlur stdDeviation="0.5" result="coloredBlur"/>
-                <feMerge> 
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-            </defs>
-            <!-- Rød sirkel bakgrunn -->
-            <circle cx="7" cy="7" r="6" fill="#dc2626" stroke="#b91c1c" stroke-width="1"/>
-            <!-- Gult lyn med glød -->
-            <path d="M8.8 2.2L5.8 6h1.7L4.8 9.8L7.2 6H5.5L8.8 2.2z" fill="url(#redLightning)" filter="url(#redGlow)"/>
-            <path d="M8.5 2.5L6 6h1.3L5.2 9.2L7 6H5.7L8.5 2.5z" fill="#fef3c7"/>
-            <path d="M8.2 2.8L6.2 5.8h1L5.5 8.8L6.8 6H6L8.2 2.8z" fill="#ffffff" opacity="0.7"/>
-          </svg>
-        `),
-        scaledSize: new google.maps.Size(14, 14),
-        anchor: new google.maps.Point(7, 7)
-      } : {
-        // Grønn ladestasjon for alle andre stasjoner
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
-            <defs>
-              <linearGradient id="lightning" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#fef08a;stop-opacity:1" />
-                <stop offset="50%" style="stop-color:#fbbf24;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
-              </linearGradient>
-              <filter id="glow">
-                <feGaussianBlur stdDeviation="0.5" result="coloredBlur"/>
-                <feMerge> 
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-            </defs>
-            <!-- Grønn sirkel bakgrunn -->
-            <circle cx="6" cy="6" r="5" fill="#10b981" stroke="#059669" stroke-width="1"/>
-            <!-- Gult lyn med glød -->
-            <path d="M7.8 2.2L4.8 6h1.7L3.8 9.8L6.2 6H4.5L7.8 2.2z" fill="url(#lightning)" filter="url(#glow)"/>
-            <path d="M7.5 2.5L5 6h1.3L4.2 9.2L6 6H4.7L7.5 2.5z" fill="#fef3c7"/>
-            <path d="M7.2 2.8L5.2 5.8h1L4.5 8.8L5.8 6H5L7.2 2.8z" fill="#ffffff" opacity="0.7"/>
-          </svg>
-        `),
-        scaledSize: new google.maps.Size(12, 12),
-        anchor: new google.maps.Point(6, 6)
-      };
-
-      const marker = new google.maps.Marker({
-        position: { lat: station.latitude, lng: station.longitude },
-        map: mapInstanceRef.current!,
-        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isOnRoute ? '\n🔴 PÅ RUTEN' : ''}`,
-        icon: markerIcon
-      });
-
-      chargingStationMarkersRef.current.push(marker);
-    });
+      return isNear;
+    }
   }, [chargingStations?.length, calculatedRoute]); // Oppdater når rute endres
 
   // Calculate route when trigger changes - use useCallback to stabilize function reference
