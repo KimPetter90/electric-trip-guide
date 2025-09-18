@@ -611,6 +611,15 @@ const GoogleRouteMap: React.FC<{
 
   // Calculate route when trigger changes - use useCallback to stabilize function reference
   const calculateRoute = useCallback(async () => {
+    console.log('🔍 Sjekker requirements for ruteberegning:');
+    console.log('📊 mapInstanceRef.current:', !!mapInstanceRef.current);
+    console.log('📊 directionsServiceRef.current:', !!directionsServiceRef.current);
+    console.log('📊 directionsRendererRef.current:', !!directionsRendererRef.current);
+    console.log('📊 routeData.from:', routeData.from);
+    console.log('📊 routeData.to:', routeData.to);
+    console.log('📊 selectedCar:', !!selectedCar);
+    console.log('📊 routeTrigger:', routeTrigger);
+
     if (!mapInstanceRef.current || !directionsServiceRef.current || !directionsRendererRef.current || 
         !routeData.from || !routeData.to || !selectedCar || routeTrigger === 0) {
       console.log('⏸️ Mangler requirements for ruteberegning');
