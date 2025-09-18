@@ -432,14 +432,14 @@ const GoogleRouteMap: React.FC<{
       totalDistance
     );
 
-    // MIDLERTIDIG: Vis ALLE anbefalte stasjoner uansett avstand for debugging
-    const filteredPlan = optimizedPlan.map(plan => {
+    // FIKSET: Filtrer BARE stasjoner som er nær ruten (maks 5km)
+    const filteredPlan = optimizedPlan.filter(plan => {
       const isNearRoute = isStationNearRoute(plan.station);
       console.log(`🔍 Stasjon ${plan.station.name}: nær rute=${isNearRoute}, avstand=${plan.distanceFromStart.toFixed(0)}km, batteri=${plan.batteryLevelOnArrival.toFixed(1)}%`);
-      return plan; // Returner ALLE anbefalte stasjoner for nå
+      return isNearRoute; // RETURNER BARE DE SOM ER NÆR RUTEN
     });
 
-    console.log(`🎯 Optimal ladeplan: ${filteredPlan.length} stasjoner (MIDLERTIDIG: viser alle anbefalte)`);
+    console.log(`🎯 Optimal ladeplan: ${filteredPlan.length} stasjoner (BARE DE NÆR RUTEN)`);
     filteredPlan.forEach((plan, index) => {
       console.log(`  📍 ${index + 1}. ${plan.station.name} - ${plan.distanceFromStart.toFixed(0)}km fra start`);
       console.log(`      ID: ${plan.station.id}`);
