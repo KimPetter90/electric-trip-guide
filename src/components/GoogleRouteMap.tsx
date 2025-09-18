@@ -127,8 +127,8 @@ const GoogleRouteMap: React.FC<{
         try {
           const map = new google.maps.Map(mapRef.current, {
             center: center,
-            zoom: Math.max(zoom, 10), // Høyere zoom for å tvinge fram stedsnavn
-            mapTypeId: google.maps.MapTypeId.TERRAIN, // TERRAIN mode GARANTERT med stedsnavn
+            zoom: Math.max(zoom, 12), // Enda høyere zoom for å tvinge fram stedsnavn
+            mapTypeId: google.maps.MapTypeId.ROADMAP, // ROADMAP - enkleste modus som ALLTID har navn
             mapTypeControl: true,
             zoomControl: true,
             streetViewControl: false,
@@ -138,7 +138,15 @@ const GoogleRouteMap: React.FC<{
             clickableIcons: true,
             disableDoubleClickZoom: false,
             scrollwheel: false,
-            styles: [] // Tom styles array for å sikre at ALLE stedsnavn vises
+            restriction: {
+              latLngBounds: {
+                north: 72,
+                south: 58,
+                west: 4,
+                east: 32
+              },
+              strictBounds: false
+            }
           });
 
           console.log('✅ Google Maps instance created successfully');
