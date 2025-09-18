@@ -270,7 +270,9 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
 
   // Valideringsfunksjoner for å vise checkmarks
   const isValidLocation = (location: string): boolean => {
-    return location && location.trim().length >= 2;
+    if (!location || location.trim().length === 0) return false;
+    const trimmedLocation = location.trim().toLowerCase();
+    return allCities.some(city => city.toLowerCase() === trimmedLocation);
   };
 
   const isValidBatteryPercentage = (percentage: number): boolean => {
