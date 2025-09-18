@@ -967,20 +967,6 @@ const GoogleRouteMap: React.FC<{
 
   return (
     <div style={{ width: '100%', height: '500px', position: 'relative' }}>
-      {/* Overlay for å skjule status-meldinger i øverste venstre hjørne */}
-      <div style={{
-        position: 'absolute',
-        top: '0px',
-        left: '0px',
-        width: '250px',
-        height: '50px',
-        backgroundColor: 'transparent',
-        zIndex: 1000,
-        pointerEvents: 'none',
-        background: 'linear-gradient(135deg, hsl(225 25% 8%) 0%, transparent 100%)',
-        borderRadius: '0 0 8px 0'
-      }} />
-      
       <div 
         ref={mapRef} 
         id="google-map-container" 
@@ -990,7 +976,7 @@ const GoogleRouteMap: React.FC<{
           backgroundColor: '#f0f0f0',
           border: '2px solid #007bff',
           borderRadius: '8px',
-          minHeight: '500px'
+          minHeight: '500px' // Ensure minimum height
         }} 
       />
       {/* Debug info overlay */}
