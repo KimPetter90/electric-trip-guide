@@ -1068,9 +1068,9 @@ function Index() {
                   />
                 </div>
                 
-                {/* Route Information - 6 futuristiske bokser med spacing */}
+                {/* Separat container for route information - helt under kartet */}
                 {tripAnalysis && selectedRouteId && (
-                  <div className="mt-8 space-y-6">
+                  <div className="mt-12 space-y-6">
                     {/* 6 futuristiske statistikk-bokser */}
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                       <Card className="relative p-4 glass-card border border-blue-500/30 bg-gradient-to-br from-blue-950/20 to-blue-900/10 neon-glow hover-scale">
