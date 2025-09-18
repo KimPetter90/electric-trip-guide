@@ -66,19 +66,14 @@ const GoogleRouteMap: React.FC<{
   const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
   const allMarkersRef = useRef<google.maps.Marker[]>([]);
   const chargingStationMarkersRef = useRef<google.maps.Marker[]>([]);
-  const currentPositionMarkerRef = useRef<google.maps.Marker | null>(null);
   const [isMapInitialized, setIsMapInitialized] = useState(false);
   const [calculatedRoute, setCalculatedRoute] = useState<google.maps.DirectionsResult | null>(null);
-  const [currentBatteryLevel, setCurrentBatteryLevel] = useState(routeData.batteryPercentage);
 
   // Clear markers on unmount
   useEffect(() => {
     return () => {
       allMarkersRef.current.forEach(marker => marker.setMap(null));
       chargingStationMarkersRef.current.forEach(marker => marker.setMap(null));
-      if (currentPositionMarkerRef.current) {
-        currentPositionMarkerRef.current.setMap(null);
-      }
       if (directionsRendererRef.current) {
         directionsRendererRef.current.setMap(null);
       }
@@ -176,11 +171,6 @@ const GoogleRouteMap: React.FC<{
           
           directionsRendererRef.current.setMap(map);
           console.log('✅ Google Maps DirectionsService and DirectionsRenderer initialized');
-
-          // Add click listener for manual marker placement (optional)
-          map.addListener('click', (event: google.maps.MapMouseEvent) => {
-            console.log('🔍 Klikket på kartet - ladestasjonene vil oppdateres automatisk');
-          });
 
           setIsMapInitialized(true);
           onLoadingChange(false);
@@ -375,44 +365,6 @@ const GoogleRouteMap: React.FC<{
     return route.routes[0].legs[route.routes[0].legs.length - 1].end_location;
   }, []);
 
-  // Hjelpefunksjon for å oppdatere den blå markøren
-  const updateCurrentPositionMarker = useCallback((position: google.maps.LatLng, batteryLevel: number) => {
-    if (!mapInstanceRef.current) return;
-    
-    // Remove existing marker
-    if (currentPositionMarkerRef.current) {
-      currentPositionMarkerRef.current.setMap(null);
-    }
-    
-    const isLowBattery = batteryLevel <= 15;
-    const needsCharging = batteryLevel <= 10;
-    
-    // Create icon based on battery level
-    const iconColor = needsCharging ? '#ff0000' : isLowBattery ? '#ff9900' : '#0066ff';
-    const iconSymbol = needsCharging ? '⚡' : isLowBattery ? '⚠' : '📍';
-    
-    currentPositionMarkerRef.current = new google.maps.Marker({
-      position: position,
-      map: mapInstanceRef.current,
-      title: `Din posisjon: ${batteryLevel.toFixed(1)}% batteri ${needsCharging ? '- TRENGER LADING NÅ!' : isLowBattery ? '- Lav batteri' : ''}`,
-      icon: {
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" fill="${iconColor}" stroke="#ffffff" stroke-width="2"/>
-            <text x="12" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold">${iconSymbol}</text>
-          </svg>
-        `),
-        scaledSize: new google.maps.Size(24, 24),
-        anchor: new google.maps.Point(12, 12)
-      }
-    });
-    
-    // If needs charging, mark for later processing (after getOptimizedChargingPlan is available)
-    if (needsCharging && calculatedRoute) {
-      // This will be handled by the useEffect that watches currentBatteryLevel
-      console.log('🔋 Batteriet er lavt, nærmeste ladestasjon vil bli vist automatisk');
-    }
-  }, [calculatedRoute]);
 
 
   // Hjelpefunksjon for å finne de beste anbefalte ladestasjonene med avansert optimalisering
@@ -460,56 +412,6 @@ const GoogleRouteMap: React.FC<{
     return filteredPlan;
   }, [calculatedRoute, selectedCar, routeData, chargingStations, isStationNearRoute]);
 
-  // Automatically show next charging station when battery gets low
-  useEffect(() => {
-    if (currentBatteryLevel <= 10 && calculatedRoute && currentPositionMarkerRef.current) {
-      const currentPos = currentPositionMarkerRef.current.getPosition();
-      if (currentPos) {
-        // Get optimized plan to find nearest station
-        const optimizedPlan = getOptimizedChargingPlan();
-        
-        if (optimizedPlan.length > 0) {
-          const nearestStation = optimizedPlan[0];
-          
-          // Find the marker for this station
-          const stationMarker = chargingStationMarkersRef.current.find(marker => {
-            const markerPos = marker.getPosition();
-            const stationPos = new google.maps.LatLng(nearestStation.station.latitude, nearestStation.station.longitude);
-            return markerPos && google.maps.geometry.spherical.computeDistanceBetween(markerPos, stationPos) < 100;
-          });
-          
-          if (stationMarker && mapInstanceRef.current) {
-            const infoWindow = new google.maps.InfoWindow({
-              content: `
-                <div style="font-family: Arial, sans-serif; padding: 10px; max-width: 250px;">
-                  <h3 style="margin: 0 0 8px 0; color: #ff0000;">🚨 LADING PÅKREVD!</h3>
-                  <p style="margin: 0 0 8px 0; font-weight: bold;">${nearestStation.station.name}</p>
-                  <p style="margin: 0 0 8px 0; font-size: 14px;">${nearestStation.station.address}</p>
-                  <p style="margin: 0 0 8px 0; font-size: 14px;">
-                    <strong>Avstand:</strong> ${nearestStation.distanceFromStart.toFixed(0)} km fra start<br>
-                    <strong>Batteri ved ankomst:</strong> ${nearestStation.batteryLevelOnArrival.toFixed(1)}%<br>
-                    <strong>Effekt:</strong> ${nearestStation.station.power}<br>
-                    <strong>Pris:</strong> ${nearestStation.station.cost} kr/kWh
-                  </p>
-                  <div style="background: #ffe6e6; padding: 8px; border-radius: 4px; font-size: 12px;">
-                    <strong>⚠️ Du må lade her for å komme frem!</strong>
-                  </div>
-                </div>
-              `
-            });
-            
-            infoWindow.open(mapInstanceRef.current, stationMarker);
-            
-            // Auto-close after 10 seconds
-            setTimeout(() => {
-              infoWindow.close();
-            }, 10000);
-          }
-        }
-      }
-    }
-  }, [currentBatteryLevel, calculatedRoute, getOptimizedChargingPlan]);
-
   // Hjelpefunksjon for å sjekke om stasjon er anbefalt for lading
   const isRecommendedStation = useCallback((station: ChargingStation): boolean => {
     const optimizedPlan = getOptimizedChargingPlan();
@@ -522,20 +424,26 @@ const GoogleRouteMap: React.FC<{
       return false;
     }
     
-    // Calculate distance where battery will be at 10%
-    const distanceAt10Percent = calculateDistanceForBatteryLevel(10, routeData.batteryPercentage, selectedCar.range);
+    // Beregn avstand hvor batteriet vil være på 10%
+    const batteryUsed = routeData.batteryPercentage - 10; // Prosent brukt
+    const distanceAt10Percent = (batteryUsed / 100) * selectedCar.range; // km kjørt
     
-    // Get optimized charging plan
+    // Få optimalisert ladeplan
     const optimizedPlan = getOptimizedChargingPlan();
     
-    // Find the first recommended station that comes after the 10% point
+    // Finn første anbefalte stasjon som kommer etter 10% punktet
     const criticalStation = optimizedPlan.find(plan => 
-      plan.distanceFromStart >= distanceAt10Percent - 20 && // 20km buffer before
+      plan.distanceFromStart >= distanceAt10Percent - 10 && // 10km buffer før
+      plan.distanceFromStart <= distanceAt10Percent + 50 && // 50km buffer etter
       plan.station.id === station.id
     );
     
+    if (criticalStation) {
+      console.log(`🔵 Kritisk stasjon funnet: ${station.name} ved ${criticalStation.distanceFromStart.toFixed(0)}km (10% ved ${distanceAt10Percent.toFixed(0)}km)`);
+    }
+    
     return !!criticalStation;
-  }, [calculatedRoute, selectedCar, routeData.batteryPercentage, calculateDistanceForBatteryLevel, getOptimizedChargingPlan]);
+  }, [calculatedRoute, selectedCar, routeData.batteryPercentage, getOptimizedChargingPlan]);
 
   // Add charging station markers - update when route changes
   useEffect(() => {
@@ -1167,13 +1075,7 @@ const GoogleRouteMap: React.FC<{
         // Lagre den beregnede ruten for ladestasjon-filtrering
         setCalculatedRoute(result);
         
-        // Automatically mark the critical charging station when battery would be at 10%
-        if (selectedCar && routeData.batteryPercentage > 10) {
-          console.log('🔍 Finner kritisk ladestasjon for 10% batteri...');
-          // This will be handled by the charging station effect that updates markers
-        }
-        
-        console.log('🎯 Rute er satt på kartet - skal være synlig nå!');
+        console.log('🎯 Rute er satt på kartet - ladestasjoner vil oppdateres automatisk!');
       } else {
         console.error('❌ DirectionsRenderer eller kart ikke tilgjengelig');
       }
