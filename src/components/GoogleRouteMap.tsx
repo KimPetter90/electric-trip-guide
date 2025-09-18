@@ -433,11 +433,13 @@ const GoogleRouteMap: React.FC<{
     );
 
     // FIKSET: Filtrer BARE stasjoner som er nær ruten (maks 5km)
+    console.log(`🔧 BEFORE filtering: ${optimizedPlan.length} stasjoner i optimal plan`);
     const filteredPlan = optimizedPlan.filter(plan => {
       const isNearRoute = isStationNearRoute(plan.station);
       console.log(`🔍 Stasjon ${plan.station.name}: nær rute=${isNearRoute}, avstand=${plan.distanceFromStart.toFixed(0)}km, batteri=${plan.batteryLevelOnArrival.toFixed(1)}%`);
       return isNearRoute; // RETURNER BARE DE SOM ER NÆR RUTEN
     });
+    console.log(`🔧 AFTER filtering: ${filteredPlan.length} stasjoner er nær ruten`);
 
     console.log(`🎯 Optimal ladeplan: ${filteredPlan.length} stasjoner (BARE DE NÆR RUTEN)`);
     filteredPlan.forEach((plan, index) => {
@@ -463,6 +465,7 @@ const GoogleRouteMap: React.FC<{
     
     // VIKTIG: Stasjonen MÅ være nær ruten for å kunne være kritisk
     if (!isStationNearRoute(station)) {
+      console.log(`❌ ${station.name} IKKE nær ruten - kan ikke være kritisk`);
       return false;
     }
     
