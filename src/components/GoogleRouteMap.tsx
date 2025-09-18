@@ -191,12 +191,32 @@ const GoogleRouteMap: React.FC<{
         icon: {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+              <defs>
+                <!-- Gradient for ekstra glød -->
+                <linearGradient id="lightning" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#fef08a;stop-opacity:1" />
+                  <stop offset="50%" style="stop-color:#fbbf24;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+                </linearGradient>
+                <!-- Glød-effekt -->
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="0.5" result="coloredBlur"/>
+                  <feMerge> 
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
               <!-- Grønn sirkel bakgrunn -->
               <circle cx="6" cy="6" r="5" fill="#10b981" stroke="#059669" stroke-width="1"/>
-              <!-- Ekstra skarpt og definert gult lyn -->
-              <path d="M7.8 2.2L4.8 6h1.7L3.8 9.8L6.2 6H4.5L7.8 2.2z" fill="#fbbf24" stroke="#d97706" stroke-width="0.5" stroke-linejoin="miter" stroke-linecap="butt"/>
-              <!-- Ekstra highlight for skarphet -->
-              <path d="M7.5 2.5L5 6h1.3L4.2 9.2L6 6H4.7L7.5 2.5z" fill="#fde047"/>
+              <!-- Glød lag bak -->
+              <path d="M7.8 2.2L4.8 6h1.7L3.8 9.8L6.2 6H4.5L7.8 2.2z" fill="#fef08a" opacity="0.8" filter="url(#glow)"/>
+              <!-- Hoved lyn med gradient -->
+              <path d="M7.8 2.2L4.8 6h1.7L3.8 9.8L6.2 6H4.5L7.8 2.2z" fill="url(#lightning)" stroke="#d97706" stroke-width="0.4"/>
+              <!-- Lysende highlight -->
+              <path d="M7.5 2.5L5 6h1.3L4.2 9.2L6 6H4.7L7.5 2.5z" fill="#fef3c7" opacity="0.9"/>
+              <!-- Skarp hvit glød i midten -->
+              <path d="M7.2 2.8L5.2 5.8h1L4.5 8.8L5.8 6H5L7.2 2.8z" fill="#ffffff" opacity="0.7"/>
             </svg>
           `),
           scaledSize: new google.maps.Size(12, 12),
