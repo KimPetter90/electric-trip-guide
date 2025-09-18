@@ -350,8 +350,20 @@ const GoogleRouteMap: React.FC<{
       totalDistance
     );
 
-    return optimizedPlan;
-  }, [calculatedRoute, selectedCar, routeData, chargingStations]);
+    // Filtrer bare stasjoner som er nær ruten og RETT PLASSERING
+    const filteredPlan = optimizedPlan.filter(plan => {
+      const isNearRoute = isStationNearRoute(plan.station);
+      const isCorrectPosition = plan.distanceFromStart > 30 && plan.distanceFromStart < (totalDistance - 50);
+      return isNearRoute && isCorrectPosition;
+    });
+
+    console.log(`🎯 Optimal ladeplan: ${filteredPlan.length} stasjoner langs ruten`);
+    filteredPlan.forEach(plan => {
+      console.log(`  📍 ${plan.station.name} - ${plan.distanceFromStart.toFixed(0)}km fra start`);
+    });
+
+    return filteredPlan;
+  }, [calculatedRoute, selectedCar, routeData, chargingStations, isStationNearRoute]);
 
   // Hjelpefunksjon for å sjekke om stasjon er anbefalt for lading
   const isRecommendedStation = useCallback((station: ChargingStation): boolean => {
