@@ -959,75 +959,80 @@ function Index() {
 
           {/* Right Column - Results */}
           <section className="space-y-8" aria-label="Ruteresultater">
-            {!showRoute ? (
-              <Card className="p-8 text-center bg-card/80 backdrop-blur-sm border-border shadow-lg" role="status">
-                <MapPin className="h-12 w-12 text-primary mx-auto mb-4 animate-glow-pulse" aria-hidden="true" />
-                <h3 className="text-lg font-semibold mb-2 text-foreground">Klar for ruteplanlegging</h3>
-                <p className="text-muted-foreground">
-                  Velg bil og angi rute for å se det futuristiske ladestasjonkartet
-                </p>
-              </Card>
-            ) : (
-              <div className="space-y-6">
-                <RouteSelector
-                  routes={routeOptions}
-                  selectedRoute={selectedRouteId}
-                  onRouteSelect={handleRouteSelect}
-                  isLoading={loadingRoutes}
-                />
-                
-                {/* Del rute - vis bare hvis rute er valgt */}
-                {selectedRouteId && routeOptions.length > 0 && (
-                  <Card className="p-4 bg-card/80 backdrop-blur-sm border-border shadow-lg">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-primary">Valgt rute</h3>
-                      <ShareRoute
-                        routeData={{
-                          from: routeData.from,
-                          to: routeData.to,
-                          distance: String(routeOptions.find(r => r.id === selectedRouteId)?.distance) || '0 km',
-                          duration: String(routeOptions.find(r => r.id === selectedRouteId)?.duration) || '0 min',
-                          chargingCost: '150 kr', // Placeholder
-                          batteryUsed: '65%' // Placeholder
-                        }}
-                      />
-                    </div>
-                  </Card>
-                )}
-                
-                <div data-testid="route-map" className="relative">
-                  {mapLoading && (
-                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
-                      <div className="text-center space-y-2">
-                        <Zap className="h-8 w-8 text-primary animate-spin mx-auto" />
-                        <p className="text-sm text-muted-foreground">Laster kart...</p>
-                      </div>
-                    </div>
-                  )}
-                  {mapError && (
-                    <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
-                      <div className="flex items-center space-x-2">
-                        <AlertTriangle className="h-5 w-5 text-destructive" />
-                        <p className="text-sm text-destructive">{mapError}</p>
-                      </div>
-                    </div>
-                  )}
-                  <GoogleRouteMap 
-                    key="stable-google-map"
-                    center={{ lat: 60.472, lng: 8.4689 }}
-                    zoom={6}
-                    onMapLoad={onMapLoad}
-                    chargingStations={chargingStations}
-                    routeData={routeData}
-                    selectedCar={selectedCar}
-                    routeTrigger={routeTrigger}
-                    onRouteCalculated={onRouteCalculated}
-                    onLoadingChange={onLoadingChange}
-                    onError={onError}
+            <div className="space-y-6">
+              {!showRoute && (
+                <Card className="p-8 text-center bg-card/80 backdrop-blur-sm border-border shadow-lg" role="status">
+                  <MapPin className="h-12 w-12 text-primary mx-auto mb-4 animate-glow-pulse" aria-hidden="true" />
+                  <h3 className="text-lg font-semibold mb-2 text-foreground">Klar for ruteplanlegging</h3>
+                  <p className="text-muted-foreground">
+                    Velg bil og angi rute for å se det futuristiske ladestasjonkartet
+                  </p>
+                </Card>
+              )}
+
+              {showRoute && (
+                <>
+                  <RouteSelector
+                    routes={routeOptions}
+                    selectedRoute={selectedRouteId}
+                    onRouteSelect={handleRouteSelect}
+                    isLoading={loadingRoutes}
                   />
-                </div>
+                  
+                  {/* Del rute - vis bare hvis rute er valgt */}
+                  {selectedRouteId && routeOptions.length > 0 && (
+                    <Card className="p-4 bg-card/80 backdrop-blur-sm border-border shadow-lg">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold text-primary">Valgt rute</h3>
+                        <ShareRoute
+                          routeData={{
+                            from: routeData.from,
+                            to: routeData.to,
+                            distance: String(routeOptions.find(r => r.id === selectedRouteId)?.distance) || '0 km',
+                            duration: String(routeOptions.find(r => r.id === selectedRouteId)?.duration) || '0 min',
+                            chargingCost: '150 kr', // Placeholder
+                            batteryUsed: '65%' // Placeholder
+                          }}
+                        />
+                      </div>
+                    </Card>
+                  )}
+                </>
+              )}
+              
+              {/* Kart vises alltid når ruteplanlegging er aktivert */}
+              <div data-testid="route-map" className="relative">
+                {mapLoading && (
+                  <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+                    <div className="text-center space-y-2">
+                      <Zap className="h-8 w-8 text-primary animate-spin mx-auto" />
+                      <p className="text-sm text-muted-foreground">Laster kart...</p>
+                    </div>
+                  </div>
+                )}
+                {mapError && (
+                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
+                    <div className="flex items-center space-x-2">
+                      <AlertTriangle className="h-5 w-5 text-destructive" />
+                      <p className="text-sm text-destructive">{mapError}</p>
+                    </div>
+                  </div>
+                )}
+                <GoogleRouteMap 
+                  key="stable-google-map"
+                  center={{ lat: 60.472, lng: 8.4689 }}
+                  zoom={6}
+                  onMapLoad={onMapLoad}
+                  chargingStations={chargingStations}
+                  routeData={routeData}
+                  selectedCar={selectedCar}
+                  routeTrigger={routeTrigger}
+                  onRouteCalculated={onRouteCalculated}
+                  onLoadingChange={onLoadingChange}
+                  onError={onError}
+                />
               </div>
-            )}
+            </div>
           </section>
         </div>
       </main>
