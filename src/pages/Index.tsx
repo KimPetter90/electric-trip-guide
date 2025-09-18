@@ -16,7 +16,7 @@ import ChargingMap from "@/components/ChargingMap";
 import GoogleRouteMap from "@/components/GoogleRouteMap";
 import { ShareRoute } from "@/components/ShareRoute";
 import { FavoriteRoutes } from "@/components/FavoriteRoutes";
-import { TrialBanner } from "@/components/TrialBanner";
+
 import { Zap, Route, MapPin, Car, Battery, LogIn, User, CreditCard, LogOut, AlertTriangle, BarChart3, Building2 } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 import { type RouteOption } from "@/components/RouteSelector";
@@ -962,8 +962,6 @@ function Index() {
 
       {/* Main Content */}
       <main className="relative container mx-auto px-4 py-12" role="main">
-        {/* Trial Banner - vis kun for innloggede brukere */}
-        {user && <TrialBanner />}
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column - Input */}
