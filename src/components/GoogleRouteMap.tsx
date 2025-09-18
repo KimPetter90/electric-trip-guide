@@ -241,10 +241,13 @@ const GoogleRouteMap: React.FC<{
     const isNear = minDistance <= 5000; // 5km grense for røde markører
     console.log(`🔍 Stasjon ${station.name}: minste avstand=${(minDistance/1000).toFixed(1)}km, nær rute=${isNear}`);
     
-    // SPESIELL SJEKK: Hvis dette er Tesla Supercharger Larvik, logg ekstra info
-    if (station.name.includes('Tesla') && station.name.includes('Larvik')) {
-      console.log(`🚨 TESLA LARVIK DEBUG: lat=${station.latitude}, lng=${station.longitude}, avstand=${(minDistance/1000).toFixed(1)}km`);
-      console.log(`🚨 Rute har ${calculatedRoute?.routes[0]?.legs?.length} legs`);
+    // SPESIELL SJEKK: Debug for Tesla stasjoner som burde være på ruten
+    if (station.name.includes('Tesla') && (station.name.includes('Ringebu') || station.name.includes('Larvik'))) {
+      console.log(`🚨 TESLA DEBUG ${station.name}:`);
+      console.log(`   - Koordinater: lat=${station.latitude}, lng=${station.longitude}`);
+      console.log(`   - Minste avstand til rute: ${(minDistance/1000).toFixed(1)}km`);
+      console.log(`   - Blir klassifisert som: ${isNear ? 'RØD (nær rute)' : 'GRØNN (langt fra rute)'}`);
+      console.log(`   - Rute har ${calculatedRoute?.routes[0]?.legs?.length} legs med totalt ${calculatedRoute?.routes[0]?.legs?.reduce((sum, leg) => sum + leg.steps.length, 0)} steps`);
     }
     
     return isNear;
