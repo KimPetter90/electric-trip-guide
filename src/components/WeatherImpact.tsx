@@ -227,7 +227,7 @@ export default function WeatherImpact({ selectedCar, routeData }: WeatherImpactP
       <Card className="p-4 glass-card cyber-glow">
         <div className="space-y-4">
         {/* Header */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-2">
           <Thermometer className="h-5 w-5 text-primary" />
           <h3 className="font-orbitron font-bold text-gradient">Værpåvirkning</h3>
           <Badge variant="outline" className="text-xs">
