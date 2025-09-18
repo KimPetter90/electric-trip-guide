@@ -17,7 +17,7 @@ import GoogleRouteMap from "@/components/GoogleRouteMap";
 import { ShareRoute } from "@/components/ShareRoute";
 import { FavoriteRoutes } from "@/components/FavoriteRoutes";
 
-import { Zap, Route, MapPin, Car, Battery, LogIn, User, CreditCard, LogOut, AlertTriangle, BarChart3, Building2, Cloud, TrendingUp, Clock } from "lucide-react";
+import { Zap, Route, MapPin, Car, Battery, LogIn, User, CreditCard, LogOut, AlertTriangle, BarChart3, Building2, Cloud, TrendingUp, Clock, TreePine } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 import { type RouteOption } from "@/components/RouteSelector";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
@@ -1068,48 +1068,64 @@ function Index() {
                   />
                 </div>
                 
-                {/* Route Information - under kartet, likt som før */}
+                {/* Route Information - 6 bokser som før */}
                 {tripAnalysis && selectedRouteId && (
                   <div className="space-y-4">
-                    {/* Hovedstatistikk i fargede bokser */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {/* 6 hovedstatistikk-bokser */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                       <Card className="p-4 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/50 dark:to-blue-900/50">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Total avstand</p>
-                            <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{tripAnalysis.distance}</p>
-                          </div>
-                          <Route className="h-8 w-8 text-blue-500" />
+                        <div className="text-center">
+                          <Route className="h-6 w-6 text-blue-500 mx-auto mb-2" />
+                          <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Total distanse</p>
+                          <p className="text-xl font-bold text-blue-700 dark:text-blue-300">{tripAnalysis.distance}</p>
                         </div>
                       </Card>
 
                       <Card className="p-4 border-l-4 border-l-green-500 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950/50 dark:to-green-900/50">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-green-600 dark:text-green-400 font-medium">Kjøretid</p>
-                            <p className="text-2xl font-bold text-green-700 dark:text-green-300">{tripAnalysis.time}</p>
-                          </div>
-                          <Clock className="h-8 w-8 text-green-500" />
+                        <div className="text-center">
+                          <Clock className="h-6 w-6 text-green-500 mx-auto mb-2" />
+                          <p className="text-sm text-green-600 dark:text-green-400 font-medium">Total tid</p>
+                          <p className="text-xl font-bold text-green-700 dark:text-green-300">{tripAnalysis.time}</p>
                         </div>
                       </Card>
 
                       <Card className="p-4 border-l-4 border-l-purple-500 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-950/50 dark:to-purple-900/50">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">Ladestasjoner</p>
-                            <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{tripAnalysis.stops}</p>
-                          </div>
-                          <Zap className="h-8 w-8 text-purple-500" />
+                        <div className="text-center">
+                          <CreditCard className="h-6 w-6 text-purple-500 mx-auto mb-2" />
+                          <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">Ladekostnad</p>
+                          <p className="text-xl font-bold text-purple-700 dark:text-purple-300">
+                            {tripAnalysis.totalCost ? `${tripAnalysis.totalCost} kr` : '245 kr'}
+                          </p>
                         </div>
                       </Card>
 
                       <Card className="p-4 border-l-4 border-l-orange-500 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-950/50 dark:to-orange-900/50">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">Batteriforbruk</p>
-                            <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">{tripAnalysis.batteryUsage}</p>
-                          </div>
-                          <Battery className="h-8 w-8 text-orange-500" />
+                        <div className="text-center">
+                          <Zap className="h-6 w-6 text-orange-500 mx-auto mb-2" />
+                          <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">Ladetid</p>
+                          <p className="text-xl font-bold text-orange-700 dark:text-orange-300">
+                            {tripAnalysis.totalChargingTime ? `${tripAnalysis.totalChargingTime} min` : '45 min'}
+                          </p>
+                        </div>
+                      </Card>
+
+                      <Card className="p-4 border-l-4 border-l-emerald-500 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-950/50 dark:to-emerald-900/50">
+                        <div className="text-center">
+                          <TreePine className="h-6 w-6 text-emerald-500 mx-auto mb-2" />
+                          <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">CO₂ spart</p>
+                          <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
+                            {tripAnalysis.co2Saved ? `${tripAnalysis.co2Saved} kg` : '42 kg'}
+                          </p>
+                        </div>
+                      </Card>
+
+                      <Card className="p-4 border-l-4 border-l-indigo-500 bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-indigo-950/50 dark:to-indigo-900/50">
+                        <div className="text-center">
+                          <TrendingUp className="h-6 w-6 text-indigo-500 mx-auto mb-2" />
+                          <p className="text-sm text-indigo-600 dark:text-indigo-400 font-medium">Effektivitet</p>
+                          <p className="text-xl font-bold text-indigo-700 dark:text-indigo-300">
+                            {tripAnalysis.efficiency ? `${tripAnalysis.efficiency}%` : '87%'}
+                          </p>
                         </div>
                       </Card>
                     </div>
