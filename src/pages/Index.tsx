@@ -678,62 +678,29 @@ function Index() {
     setPlanningRoute(true);
     
     try {
-
-      // Force en re-render av hele komponenten
-      setTimeout(() => {
-        const mapElement = document.querySelector('[data-testid="route-map"]');
-        if (mapElement) {
-          console.log('✅ Kart element funnet, scroller til view');
-          mapElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } else {
-          console.log('❌ Kart element IKKE funnet');
-        }
-      }, 1000); // Økt delay for å sikre rendering
-
-      // Sjekk rutegrenser - men bare hvis subscription data er tilgjengelig
-      if (subscription) {
-        if (subscription.route_limit !== -1 && subscription.route_count >= subscription.route_limit) {
-          toast({
-            title: "Rutegrense nådd",
-            description: `Du har brukt opp alle dine ${subscription.route_limit} ruter for denne måneden. Oppgrader for flere ruter.`,
-            variant: "destructive",
-          });
-          // Ikke naviger hvis vi allerede er på rett side
-          if (window.location.pathname !== '/pricing') {
-            navigate('/pricing');
-          }
-          return;
-        }
-      } else {
-        // Hvis subscription data ikke er tilgjengelig, fortsett likevel men med warning
-        console.warn('⚠️ Subscription data ikke tilgjengelig, fortsetter med ruteplanlegging');
-        toast({
-          title: "Planlegger rute",
-          description: "Starter ruteplanlegging...",
-          variant: "default",
-        });
-      }
+      console.log('🚀 Starter ruteplanlegging øyeblikkelig!');
       
-      console.log('🚀 Fortsetter med ruteplanlegging...');
-      
-      // Oppdater ruteteller - bare hvis subscription er tilgjengelig
-      if (user && subscription) {
+      // Start ruteberegning med en gang - INGEN venting eller sjekker
+      // Oppdater ruteteller
+      if (user) {
         try {
-          await supabase.rpc('increment_route_count', { user_uuid: user.id });
-          setTimeout(() => refreshSubscription(), 100);
+          const { error: incrementError } = await supabase.rpc('increment_route_count', {
+            user_uuid: user.id
+          });
+          
+          if (incrementError) {
+            console.warn('Kunne ikke oppdatere ruteteller:', incrementError);
+          }
         } catch (error) {
-          console.warn('⚠️ Kunne ikke oppdatere ruteteller:', error);
-          // Fortsett likevel med ruteplanlegging
+          console.warn('Feil ved oppdatering av ruteteller:', error);
         }
       }
       
-      // Scroll to map after a short delay to ensure it's rendered
-      setTimeout(() => {
-        const mapElement = document.querySelector('[data-testid="route-map"]');
-        if (mapElement) {
-          mapElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 500);
+      toast({
+        title: "Starter ruteplanlegging!",
+        description: "Beregner beste rute...",
+        variant: "default",
+      });
       
       await generateRouteOptions();
       
@@ -752,20 +719,8 @@ function Index() {
         variant: "destructive",
       });
     } finally {
-      // SIKRE at loading state blir reset og at kartet forblir synlig
-      console.log('🔄 Finally blokk - resetter loading state');
-      
-      setTimeout(() => {
-        setPlanningRoute(false);
-        
-        // DOUBLE-CHECK at kartet er synlig
-        if (!showRoute) {
-          console.log('🚨 Kart er ikke synlig i finally - forcing visible!');
-          setShowRoute(true);
-        }
-        
-        console.log('✅ Loading state reset, showRoute:', showRoute);
-      }, 2000); // 2 sekunder minimum loading for sikkerhet
+      // Reset loading state
+      setPlanningRoute(false);
     }
   };
 
