@@ -842,25 +842,29 @@ const GoogleRouteMap: React.FC<{
             return {
               avoidHighways: false,
               avoidTolls: false,
-              optimizeWaypoints: false
+              avoidFerries: false,
+              provideRouteAlternatives: false
             };
           case 'shortest':
             return {
-              avoidHighways: true,
+              avoidHighways: false,
               avoidTolls: false,
-              optimizeWaypoints: true
+              avoidFerries: true, // Avoid ferries for shortest distance
+              provideRouteAlternatives: true // Get multiple route options
             };
           case 'eco':
             return {
               avoidHighways: true,
               avoidTolls: true,
-              optimizeWaypoints: true
+              avoidFerries: true, // Most restrictive for eco-friendly
+              provideRouteAlternatives: false
             };
           default:
             return {
               avoidHighways: false,
               avoidTolls: false,
-              optimizeWaypoints: false
+              avoidFerries: false,
+              provideRouteAlternatives: false
             };
         }
       };
@@ -875,7 +879,9 @@ const GoogleRouteMap: React.FC<{
         region: 'NO',
         avoidHighways: routePrefs.avoidHighways,
         avoidTolls: routePrefs.avoidTolls,
-        optimizeWaypoints: routePrefs.optimizeWaypoints,
+        avoidFerries: routePrefs.avoidFerries,
+        provideRouteAlternatives: routePrefs.provideRouteAlternatives,
+        optimizeWaypoints: false, // Remove this to let Google choose best optimization
       };
 
       if (routeData.via && routeData.via.trim()) {
@@ -907,6 +913,29 @@ const GoogleRouteMap: React.FC<{
       });
 
       const result = await directionsPromise;
+      
+      // For shortest route, select the route with minimum distance if alternatives exist
+      if (selectedRouteId === 'shortest' && result.routes.length > 1) {
+        console.log(`🛣️ Fant ${result.routes.length} alternative ruter, velger korteste`);
+        let shortestRouteIndex = 0;
+        let shortestDistance = result.routes[0].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0);
+        
+        for (let i = 1; i < result.routes.length; i++) {
+          const routeDistance = result.routes[i].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0);
+          if (routeDistance < shortestDistance) {
+            shortestDistance = routeDistance;
+            shortestRouteIndex = i;
+          }
+        }
+        
+        if (shortestRouteIndex !== 0) {
+          // Reorder routes to put shortest first
+          const shortestRoute = result.routes[shortestRouteIndex];
+          result.routes[shortestRouteIndex] = result.routes[0];
+          result.routes[0] = shortestRoute;
+          console.log(`🎯 Valgte rute ${shortestRouteIndex + 1} som korteste (${(shortestDistance/1000).toFixed(1)} km)`);
+        }
+      }
       
       console.log('✅ Google Maps rute beregnet');
       console.log('🗺️ Setter rute på kartet med DirectionsRenderer...');
