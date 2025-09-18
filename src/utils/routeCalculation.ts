@@ -95,7 +95,7 @@ export class RouteOptimizer {
     
     // Hvis ruten er lengre enn rekkevidde, finn optimal ladestasjon
     if (totalRouteDistance > safeRange) {
-      const optimalDistance = safeRange * 0.9; // Lade når vi har 10% igjen for sikkerhet
+      const optimalDistance = safeRange * 0.85; // Lade når vi har 15% igjen for sikkerhet
       
       // Finn beste stasjon rundt optimal avstand
       const nearbyStations = stations.filter(station => {
@@ -134,7 +134,7 @@ export class RouteOptimizer {
             weatherImpact: weatherImpact
           };
         })
-        .filter(plan => plan.batteryLevelOnArrival >= 8 && plan.batteryLevelOnArrival <= 15) // Ønsker 8-15% når vi ankommer
+        .filter(plan => plan.batteryLevelOnArrival >= 5 && plan.batteryLevelOnArrival <= 25) // Må ha minst 5% men helst under 25% når vi ankommer
         .sort((a, b) => {
           // Prioriter tilgjengelighet, så hurtiglading, så pris
           const availabilityA = a.station.available / a.station.total;
