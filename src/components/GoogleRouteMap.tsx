@@ -128,38 +128,18 @@ const GoogleRouteMap: React.FC<{
           const map = new google.maps.Map(mapRef.current, {
             center: center,
             zoom: zoom,
-            mapTypeId: google.maps.MapTypeId.HYBRID, // Hybrid viser både satelitt og stedsnavn
+            mapTypeId: google.maps.MapTypeId.ROADMAP, // Roadmap viser stedsnavn klarest
             mapTypeControl: true,
             zoomControl: true,
             streetViewControl: false,
             fullscreenControl: true,
             gestureHandling: 'auto',
             keyboardShortcuts: false,
-            clickableIcons: true, // Aktiver klikkbare ikoner for stedsnavn
+            clickableIcons: true,
             disableDoubleClickZoom: false,
             scrollwheel: false,
-            styles: [
-              {
-                featureType: "administrative",
-                elementType: "labels.text",
-                stylers: [{ visibility: "on" }] // Vis administrative stedsnavn
-              },
-              {
-                featureType: "locality",
-                elementType: "labels.text",
-                stylers: [{ visibility: "on" }] // Vis bynavn
-              },
-              {
-                featureType: "administrative.locality",
-                elementType: "labels.text",
-                stylers: [{ visibility: "on" }] // Vis lokale stedsnavn
-              },
-              {
-                featureType: "administrative.neighborhood",
-                elementType: "labels.text",
-                stylers: [{ visibility: "on" }] // Vis nabolagsnavn
-              }
-            ]
+            // Fjerner alle styles for å sikre at stedsnavn vises
+            styles: []
           });
 
           console.log('✅ Google Maps instance created successfully');
