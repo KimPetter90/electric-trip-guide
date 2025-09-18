@@ -320,41 +320,68 @@ const GoogleRouteMap: React.FC<{
     return isNear;
   }, [calculatedRoute]);
 
-  // Hjelpefunksjon for å sjekke om stasjon er anbefalt for lading
-  const isRecommendedStation = useCallback((station: ChargingStation): boolean => {
-    if (!calculatedRoute || !selectedCar || !routeData) {
-      return false;
+  // Hjelpefunksjon for å finne de beste anbefalte ladestasjonene
+  const getRecommendedStations = useCallback((): ChargingStation[] => {
+    if (!calculatedRoute || !selectedCar || !routeData || !chargingStations) {
+      return [];
     }
 
     // Beregn tilgjengelig rekkevidde basert på batteriprosent
     const currentRange = (selectedCar.range * routeData.batteryPercentage) / 100;
     
+    // Beregn hvor langt bilen kan kjøre før den når 10% batteri
+    const rangeAt10Percent = currentRange * 0.9; // 90% av tilgjengelig rekkevidde brukt
+    
     // Få startposisjon fra ruten
     const startPos = calculatedRoute.routes[0].legs[0].start_location;
-    const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     
-    // Beregn avstand fra start til ladestasjon
-    const distanceToStation = google.maps.geometry.spherical.computeDistanceBetween(startPos, stationPos);
-    const distanceToStationKm = distanceToStation / 1000;
-    
-    // Anbefal stasjoner som er:
-    // 1. Innenfor 80% av rekkevidden (for sikkerhet)
-    // 2. Men ikke for nær (minst 50km fra start)
-    // 3. Og nær ruten
-    const maxRecommendedDistance = currentRange * 0.8;
-    const minDistanceFromStart = 50;
-    
-    const isInRange = distanceToStationKm >= minDistanceFromStart && distanceToStationKm <= maxRecommendedDistance;
-    const isNearRoute = isStationNearRoute(station);
-    
-    const isRecommended = isInRange && isNearRoute && station.fast_charger;
-    
-    if (isRecommended) {
-      console.log(`💙 ANBEFALT: ${station.name} - ${distanceToStationKm.toFixed(1)}km fra start (rekkevidde: ${currentRange}km)`);
-    }
-    
-    return isRecommended;
-  }, [calculatedRoute, selectedCar, routeData, isStationNearRoute]);
+    // Finn stasjoner som er nær der bilen har 10% igjen
+    const candidateStations = chargingStations.filter(station => {
+      const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
+      const distanceToStation = google.maps.geometry.spherical.computeDistanceBetween(startPos, stationPos) / 1000;
+      
+      // Stasjon må være:
+      // 1. I området hvor bilen har 5-15% batteri igjen (sikkerhetsmargin)
+      const targetDistance = rangeAt10Percent;
+      const isInOptimalRange = distanceToStation >= (targetDistance - 20) && distanceToStation <= (targetDistance + 20);
+      
+      // 2. Nær ruten
+      const isNearRoute = isStationNearRoute(station);
+      
+      // 3. Ha hurtiglading
+      const hasFastCharging = station.fast_charger;
+      
+      return isInOptimalRange && isNearRoute && hasFastCharging;
+    });
+
+    // Sorter og velg de 1-2 beste stasjonene
+    const sortedStations = candidateStations
+      .sort((a, b) => {
+        // Prioriter stasjoner med høyere tilgjengelighet
+        const availabilityA = a.available / a.total;
+        const availabilityB = b.available / b.total;
+        if (availabilityB !== availabilityA) return availabilityB - availabilityA;
+        
+        // Deretter lavere kostnad
+        return a.cost - b.cost;
+      })
+      .slice(0, 2); // Maksimalt 2 stasjoner
+
+    sortedStations.forEach(station => {
+      const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
+      const distance = google.maps.geometry.spherical.computeDistanceBetween(startPos, stationPos) / 1000;
+      const remainingBattery = ((currentRange - distance) / selectedCar.range) * 100;
+      console.log(`💙 ANBEFALT: ${station.name} - ${distance.toFixed(1)}km (${remainingBattery.toFixed(1)}% batteri igjen)`);
+    });
+
+    return sortedStations;
+  }, [calculatedRoute, selectedCar, routeData, chargingStations, isStationNearRoute]);
+
+  // Hjelpefunksjon for å sjekke om stasjon er anbefalt for lading
+  const isRecommendedStation = useCallback((station: ChargingStation): boolean => {
+    const recommendedStations = getRecommendedStations();
+    return recommendedStations.some(recommended => recommended.id === station.id);
+  }, [getRecommendedStations]);
 
   // Add charging station markers - update when route changes
   useEffect(() => {
@@ -580,7 +607,7 @@ const GoogleRouteMap: React.FC<{
 
       chargingStationMarkersRef.current.push(marker);
     });
-  }, [chargingStations?.length, calculatedRoute, isStationNearRoute, isRecommendedStation]); // Oppdater når rute endres
+  }, [chargingStations?.length, calculatedRoute, isStationNearRoute, getRecommendedStations]); // Oppdater når rute endres
 
   // Calculate route when trigger changes - use useCallback to stabilize function reference
   const calculateRoute = useCallback(async () => {
