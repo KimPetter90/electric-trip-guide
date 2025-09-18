@@ -1247,10 +1247,12 @@ function Index() {
               )}
             </section>
           </div>
-          
-          {/* Route Information - separat seksjon helt under grid */}
-          {tripAnalysis && selectedRouteId && (
-            <div className="container mx-auto px-4 mt-12 space-y-6">
+        </main>
+
+        {/* Route Information - helt separat seksjon under main */}
+        {tripAnalysis && selectedRouteId && (
+          <section className="py-12 bg-muted/5" aria-label="Rutestatistikk">
+            <div className="container mx-auto px-4">
               <h2 className="text-2xl font-bold text-center mb-8">Rutestatistikk</h2>
               {/* 6 futuristiske statistikk-bokser */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -1309,8 +1311,8 @@ function Index() {
                 </Card>
               </div>
             </div>
-          )}
-      </main>
+          </section>
+        )}
 
       {/* Analytics Dashboard - kun for autoriserte brukere */}
       {hasAnalyticsAccess && (
