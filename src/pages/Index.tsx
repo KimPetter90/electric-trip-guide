@@ -292,19 +292,38 @@ function Index() {
       return Math.ceil(remainingDistance / fullChargeRange);
     };
     
-    // Generer kun raskeste rute og velg den automatisk
-    const fastestRoute: RouteOption = {
-      id: 'fastest',
-      name: 'Raskeste rute',
-      distance: Math.round(estimatedDistance * 1.02), // Litt lengre for motorveier
-      duration: Math.round((estimatedDistance * 1.02) / 90 * 60), // ~90 km/t snitt
-      chargingStops: calculateMinimumStops(estimatedDistance * 1.02, 'fastest'),
-      estimatedCost: Math.round(estimatedDistance * 0.6), // 0.6 kr per km
-      description: 'Hovedveier og motorveier. Rask fremkomst med minimum antall stopp.',
-      routeType: 'fastest'
-    };
-
-    const mockRoutes: RouteOption[] = [fastestRoute];
+    const mockRoutes: RouteOption[] = [
+      {
+        id: 'fastest',
+        name: 'Raskeste rute',
+        distance: Math.round(estimatedDistance * 1.02), // Litt lengre for motorveier
+        duration: Math.round((estimatedDistance * 1.02) / 90 * 60), // ~90 km/t snitt
+        chargingStops: calculateMinimumStops(estimatedDistance * 1.02, 'fastest'),
+        estimatedCost: Math.round(estimatedDistance * 0.6), // 0.6 kr per km
+        description: 'Hovedveier og motorveier. Rask fremkomst med minimum antall stopp.',
+        routeType: 'fastest'
+      },
+      {
+        id: 'shortest',
+        name: 'Korteste rute',
+        distance: Math.round(estimatedDistance * 0.95), // Kortere, men tregere veier
+        duration: Math.round((estimatedDistance * 0.95) / 75 * 60), // ~75 km/t snitt
+        chargingStops: calculateMinimumStops(estimatedDistance * 0.95, 'shortest'),
+        estimatedCost: Math.round(estimatedDistance * 0.55), // Billigere
+        description: 'Direkteste vei mellom destinasjonene. Minimum distanse og færrest stopp.',
+        routeType: 'shortest'
+      },
+      {
+        id: 'eco',
+        name: 'Miljøvennlig rute',
+        distance: Math.round(estimatedDistance * 1.08), // Lengre, men mer effektiv
+        duration: Math.round((estimatedDistance * 1.08) / 80 * 60), // ~80 km/t snitt
+        chargingStops: calculateMinimumStops(estimatedDistance * 1.08, 'eco'),
+        estimatedCost: Math.round(estimatedDistance * 0.42), // Billigst
+        description: 'Optimalisert for lavest energiforbruk. Kan redusere antall nødvendige stopp.',
+        routeType: 'eco'
+      }
+    ];
 
     setRouteOptions(mockRoutes);
     setSelectedRouteId('fastest');
