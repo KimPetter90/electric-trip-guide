@@ -39,9 +39,23 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
 
   // Automatisk hent værdata når rute planlegges
   useEffect(() => {
+    console.log('🌤️ RouteImpact useEffect triggered:', {
+      from: routeData.from,
+      to: routeData.to, 
+      selectedCar: !!selectedCar,
+      carBrand: selectedCar?.brand,
+      weatherData: !!weatherData
+    });
+    
     if (routeData.from && routeData.to && selectedCar) {
       console.log('🌤️ Henter værdata automatisk for rute:', routeData.from, '->', routeData.to);
       fetchWeatherData();
+    } else {
+      console.log('⚠️ Ikke alle kriterier oppfylt for værhenting:', {
+        hasFrom: !!routeData.from,
+        hasTo: !!routeData.to,
+        hasCar: !!selectedCar
+      });
     }
   }, [routeData.from, routeData.to, selectedCar]);
 
@@ -225,17 +239,30 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
         </div>
         <h3 className="text-2xl font-orbitron font-bold text-gradient animate-glow-pulse">Påvirkningsanalyse</h3>
         
-        {routeData.from && routeData.to && routeData.travelDate && (
-          <Button
-            onClick={fetchWeatherData}
-            disabled={loading}
-            size="sm"
-            variant="outline"
-            className="text-xs ml-auto"
-          >
-            {loading ? "Henter..." : "Oppdater vær"}
-          </Button>
-        )}
+        <div className="flex gap-2 ml-auto">
+          {routeData.from && routeData.to && (
+            <Button
+              onClick={fetchWeatherData}
+              disabled={loading}
+              size="sm"
+              variant="outline"
+              className="text-xs"
+            >
+              {loading ? "Henter..." : "Hent vær"}
+            </Button>
+          )}
+          {routeData.from && routeData.to && routeData.travelDate && (
+            <Button
+              onClick={fetchWeatherData}
+              disabled={loading}
+              size="sm"
+              variant="outline"
+              className="text-xs"
+            >
+              {loading ? "Henter..." : "Oppdater vær"}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-4">
