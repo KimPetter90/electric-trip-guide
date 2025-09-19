@@ -63,8 +63,8 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
     setError(null);
 
     try {
-      const startCoords = getCoordinates(routeData.from);
-      const endCoords = getCoordinates(routeData.to);
+      const startCoords = await getCoordinates(routeData.from);
+      const endCoords = await getCoordinates(routeData.to);
 
       if (!startCoords || !endCoords) {
         throw new Error('Kunne ikke finne koordinater for valgte steder');
@@ -89,8 +89,10 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
     }
   };
 
-  const getCoordinates = (cityName: string): [number, number] | null => {
+  // Utvid koordinatliste med mange flere norske steder
+  const getCoordinates = async (cityName: string): Promise<[number, number] | null> => {
     const coords: { [key: string]: [number, number] } = {
+      // Store byer
       'oslo': [59.9139, 10.7522],
       'bergen': [60.3913, 5.3221],
       'trondheim': [63.4305, 10.3951],
@@ -99,11 +101,70 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
       'ålesund': [62.4722, 6.1495],
       'tromsø': [69.6492, 18.9553],
       'bodø': [67.2804, 14.4049],
-      'drammen': [59.7439, 10.2045]
+      'drammen': [59.7439, 10.2045],
+      'fredrikstad': [59.2181, 10.9298],
+      'sarpsborg': [59.2839, 11.1097],
+      'sandefjord': [59.1289, 10.2280],
+      'tønsberg': [59.2674, 10.4078],
+      
+      // Møre og Romsdal
+      'kvalsvik': [62.3167, 6.1000], // Nerlandsøy
+      'nerlandsøy': [62.3167, 6.1000],
+      'volda': [62.1467, 6.0714],
+      'ørsta': [62.1989, 6.1297],
+      'stryn': [61.9111, 6.7164],
+      'geiranger': [62.1014, 7.2065],
+      'molde': [62.7378, 7.1597],
+      'kristiansund': [63.1115, 7.7285],
+      
+      // Vestland 
+      'florø': [61.5983, 5.0322],
+      'måløy': [61.9347, 5.1119],
+      'sogndal': [61.2308, 7.0969],
+      'førde': [61.4520, 5.8589],
+      'leirvik': [59.7739, 5.4958],
+      'haugesund': [59.4138, 5.2681],
+      
+      // Nordland
+      'narvik': [68.4384, 17.4272],
+      'mo i rana': [66.3128, 14.1420],
+      'svolvær': [68.2348, 14.5669],
+      'leknes': [68.1467, 13.6100],
+      
+      // Troms og Finnmark
+      'alta': [69.9689, 23.2717],
+      'hammerfest': [70.6634, 23.6821],
+      'kirkenes': [69.7281, 30.0450],
+      'vadsø': [70.0739, 29.7489]
     };
 
-    const cityKey = cityName.toLowerCase().split(' ')[0].split('(')[0];
-    return coords[cityKey] || null;
+    // Rens bynavnet (fjern parenteser og extra info)
+    const cleanCityName = cityName.toLowerCase().trim().split('(')[0].trim();
+    
+    // Sjekk først i vår lokale liste
+    if (coords[cleanCityName]) {
+      return coords[cleanCityName];
+    }
+    
+    // Hvis ikke funnet, prøv å bruke Mapbox geocoding API som backup
+    try {
+      const response = await fetch('/api/mapbox-geocode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ place: cityName })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.coordinates) {
+          return data.coordinates;
+        }
+      }
+    } catch (error) {
+      console.warn('Geocoding API ikke tilgjengelig, bruker kun lokale koordinater');
+    }
+    
+    return null;
   };
 
   if (!selectedCar) {
