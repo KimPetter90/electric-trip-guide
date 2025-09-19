@@ -224,26 +224,69 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
           </div>
         </div>
 
-        {/* Impact Summary */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
-          <div>
-            <p className="text-sm text-slate-300">
-              {totalReduction > 0 ? "Justert rekkevidde" : "Aktuell rekkevidde"}
-            </p>
-            <p className="text-xs text-slate-400">
-              {totalReduction > 0 ? 
-                `${totalReduction} km reduksjon (${totalReductionPercent}%)` : 
-                "Ingen påvirkningsfaktorer aktive"
-              }
-            </p>
+        {/* Impact Summary with Visual Progress */}
+        <div className="space-y-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-300">
+                {totalReduction > 0 ? "Justert rekkevidde" : "Aktuell rekkevidde"}
+              </p>
+              <p className="text-xs text-slate-400">
+                {totalReduction > 0 ? 
+                  `${totalReduction} km reduksjon (${totalReductionPercent}%)` : 
+                  "Ingen påvirkningsfaktorer aktive"
+                }
+              </p>
+            </div>
+            <div className="text-right">
+              <p className={`text-lg font-bold ${totalReduction > 0 ? 'text-orange-400' : 'text-green-400'}`}>
+                {adjustedRange} km
+              </p>
+              <p className="text-xs text-slate-400">
+                {totalReduction > 0 ? "Med påvirkning" : "Optimal"}
+              </p>
+            </div>
           </div>
-          <div className="text-right">
-            <p className={`text-lg font-bold ${totalReduction > 0 ? 'text-orange-400' : 'text-green-400'}`}>
-              {adjustedRange} km
-            </p>
-            <p className="text-xs text-slate-400">
-              {totalReduction > 0 ? "Med påvirkning" : "Optimal"}
-            </p>
+          
+          {/* Visual Energy Loss Bar */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>Energitap</span>
+              <span>{totalReductionPercent}%</span>
+            </div>
+            <div className="relative h-3 bg-slate-700 rounded-full overflow-hidden">
+              {/* Base green bar (remaining range) */}
+              <div 
+                className="absolute left-0 top-0 h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-500"
+                style={{ width: `${Math.max(100 - totalReductionPercent, 0)}%` }}
+              />
+              {/* Red bar (energy loss) */}
+              {totalReductionPercent > 0 && (
+                <div 
+                  className="absolute right-0 top-0 h-full bg-gradient-to-r from-orange-500 to-red-500 transition-all duration-500"
+                  style={{ width: `${Math.min(totalReductionPercent, 100)}%` }}
+                />
+              )}
+              {/* Progress indicator */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-xs font-bold text-white drop-shadow-md">
+                  {100 - totalReductionPercent}% effektiv
+                </span>
+              </div>
+            </div>
+            {/* Legend */}
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span className="text-slate-400">Tilgjengelig ({100 - totalReductionPercent}%)</span>
+              </div>
+              {totalReductionPercent > 0 && (
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                  <span className="text-slate-400">Tap ({totalReductionPercent}%)</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
