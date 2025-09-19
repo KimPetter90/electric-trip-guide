@@ -117,12 +117,29 @@ const GoogleRouteMap: React.FC<{
   };
 
 
-  const startGPSTracking = () => {
+  const startGPSTracking = async () => {
     console.log('🎯 Starter GPS-tracking...');
+    console.log('🔍 Sjekker GPS-støtte:', !!navigator.geolocation);
+    console.log('🔍 HTTPS aktiv:', location.protocol === 'https:');
     
     if (!navigator.geolocation) {
       toast.error('GPS er ikke tilgjengelig på denne enheten');
       return;
+    }
+
+    // Sjekk tillatelser først
+    try {
+      const permission = await navigator.permissions.query({ name: 'geolocation' });
+      console.log('🔍 GPS-tillatelse status:', permission.state);
+      
+      if (permission.state === 'denied') {
+        toast.error('GPS-tilgang er blokkert. Prøv å:\n1. Klikk på lås-ikonet ved URL-en\n2. Velg "Tilbakestill tillatelser"\n3. Last inn siden på nytt', {
+          duration: 8000
+        });
+        return;
+      }
+    } catch (error) {
+      console.log('⚠️ Kunne ikke sjekke GPS-tillatelse:', error);
     }
 
     // Sjekk ferjetider når reisen starter
@@ -163,23 +180,28 @@ const GoogleRouteMap: React.FC<{
     };
 
     const error = (error: GeolocationPositionError) => {
-      console.error('GPS-feil:', error);
+      console.error('🚨 GPS-feil:', {
+        code: error.code,
+        message: error.message,
+        timestamp: new Date().toISOString()
+      });
+      
       let errorMessage = 'Kunne ikke få GPS-posisjon';
       
       switch(error.code) {
         case error.PERMISSION_DENIED:
-          errorMessage = 'GPS-tilgang nektet! \n\n📱 Slik aktiverer du GPS:\n• Klikk på lås-ikonet ved URL-en\n• Velg "Tillat" for posisjon\n• Last inn siden på nytt';
+          errorMessage = `🚫 GPS-tilgang nektet!\n\n🔧 Løsninger:\n• Gå til nettleserinnstillinger\n• Finn denne siden under "Tillatelser"\n• Aktiver "Posisjon/Location"\n• Eller prøv inkognito-modus`;
           setGpsPermission('denied');
           break;
         case error.POSITION_UNAVAILABLE:
-          errorMessage = 'GPS-posisjon ikke tilgjengelig';
+          errorMessage = '📡 GPS-posisjon ikke tilgjengelig - prøv utendørs';
           break;
         case error.TIMEOUT:
-          errorMessage = 'GPS-forespørsel tidsavbrudd';
+          errorMessage = '⏱️ GPS-forespørsel tidsavbrudd - prøv igjen';
           break;
       }
       
-      toast.error(errorMessage);
+      toast.error(errorMessage, { duration: 10000 });
       setIsGPSActive(false);
     };
 
