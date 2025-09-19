@@ -254,8 +254,8 @@ function Index() {
 
     setLoadingRoutes(true);
 
-    // Redusert ventetid for mobile enheter
-    await new Promise(resolve => setTimeout(resolve, window.innerWidth < 768 ? 300 : 800));
+    // Redusert ventetid for bedre UX
+    await new Promise(resolve => setTimeout(resolve, 800));
 
     // Estimer avstand basert på destinasjoner (forenklet beregning)
     const estimatedDistance = calculateApproximateDistance(routeData.from, routeData.to);

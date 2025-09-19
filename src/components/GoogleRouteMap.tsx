@@ -314,8 +314,8 @@ const GoogleRouteMap: React.FC<{
         try {
           const map = new google.maps.Map(mapRef.current, {
             center: center,
-            zoom: window.innerWidth < 768 ? Math.max(zoom - 1, 5) : Math.max(zoom, 12), // Lavere zoom på mobil for ytelse
-            mapTypeId: window.innerWidth < 768 ? google.maps.MapTypeId.ROADMAP : google.maps.MapTypeId.HYBRID, // Enklere kart på mobil
+            zoom: Math.max(zoom, 12), // Høy zoom for å sikre stedsnavn i HYBRID
+            mapTypeId: google.maps.MapTypeId.HYBRID, // Tilbake til HYBRID (satellitt med navn)
             mapTypeControl: true,
             mapTypeControlOptions: {
               style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
@@ -722,11 +722,8 @@ const GoogleRouteMap: React.FC<{
     chargingStationMarkersRef.current.forEach(marker => marker.setMap(null));
     chargingStationMarkersRef.current = [];
 
-    // Add new charging station markers (limit on mobile for performance)
-    const stationsToShow = window.innerWidth < 768 ? chargingStations.slice(0, 20) : chargingStations;
-    console.log(`📱 Showing ${stationsToShow.length} stations (mobile limit applied)`);
-    
-    stationsToShow.forEach(station => {
+    // Add new charging station markers
+    chargingStations.forEach(station => {
       // Sjekk kategorier for markør-type
       const isRecommended = isRecommendedStation(station);
       const isNearRoute = !isRecommended && calculatedRoute && isStationNearRoute(station);
