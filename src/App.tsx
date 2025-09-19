@@ -20,6 +20,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import DemoEnvironment from "./pages/DemoEnvironment";
 import CaseStudies from "./pages/CaseStudies";
 import SalesDeck from "./pages/SalesDeck";
+import EnterpriseIntegrations from "./pages/EnterpriseIntegrations";
 import CookieBanner from "./components/CookieBanner";
 
 const queryClient = new QueryClient({
@@ -55,6 +56,7 @@ function App() {
                 <Route path="/demo" element={<DemoEnvironment />} />
                 <Route path="/case-studies" element={<CaseStudies />} />
                 <Route path="/sales-deck" element={<SalesDeck />} />
+                <Route path="/integrations" element={<EnterpriseIntegrations />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/test-users" element={<TestUserAdmin />} />
                 <Route path="*" element={<NotFound />} />
