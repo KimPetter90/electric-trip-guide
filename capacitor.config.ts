@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.9a7124bc51c642209c3ea9b0a99b385b',
+  appId: 'com.lovable.elroute',
   appName: 'elroute',
   webDir: 'dist',
   server: {
