@@ -401,6 +401,10 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
                       <span className="text-xs text-blue-400">
                         {Math.round(weatherData.averageConditions?.temperature || 15)}°C
                       </span>
+                      <Wind className="h-3 w-3 text-blue-400 ml-1" />
+                      <span className="text-xs text-blue-400">
+                        {Math.round(weatherData.averageConditions?.windSpeed || 0)} km/h
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

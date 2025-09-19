@@ -195,10 +195,14 @@ serve(async (req) => {
       rangeFactor *= 0.7; // Severe cold reduces range significantly
     } else if (averageConditions.temperature < 0) {
       rangeFactor *= 0.8; // Cold weather reduces range
+    } else if (averageConditions.temperature < 10) {
+      rangeFactor *= 0.85; // Cool weather reduces range
+    } else if (averageConditions.temperature < 15) {
+      rangeFactor *= 0.92; // Mild cool weather slightly reduces range
+    } else if (averageConditions.temperature >= 15 && averageConditions.temperature <= 25) {
+      rangeFactor *= 1.0; // Optimal temperature range
     } else if (averageConditions.temperature > 30) {
       rangeFactor *= 0.85; // Hot weather with AC usage
-    } else if (averageConditions.temperature >= 15 && averageConditions.temperature <= 25) {
-      rangeFactor *= 1.05; // Optimal temperature range
     }
 
     // Wind impact
