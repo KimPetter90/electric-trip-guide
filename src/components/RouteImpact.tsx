@@ -247,31 +247,6 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
           <Truck className="h-5 w-5 text-primary animate-glow-pulse" />
         </div>
         <h3 className="text-2xl font-orbitron font-bold text-gradient animate-glow-pulse">Påvirkningsanalyse</h3>
-        
-        <div className="flex gap-2 ml-auto">
-          {routeData.from && routeData.to && (
-            <Button
-              onClick={fetchWeatherData}
-              disabled={loading}
-              size="sm"
-              variant="outline"
-              className="text-xs"
-            >
-              {loading ? "Henter..." : "Hent vær"}
-            </Button>
-          )}
-          {routeData.from && routeData.to && routeData.travelDate && (
-            <Button
-              onClick={fetchWeatherData}
-              disabled={loading}
-              size="sm"
-              variant="outline"
-              className="text-xs"
-            >
-              {loading ? "Henter..." : "Oppdater vær"}
-            </Button>
-          )}
-        </div>
       </div>
 
       <div className="space-y-4">
