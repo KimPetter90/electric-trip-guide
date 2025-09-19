@@ -254,8 +254,8 @@ function Index() {
 
     setLoadingRoutes(true);
 
-    // Redusert ventetid for bedre UX
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Redusert ventetid for mobile enheter
+    await new Promise(resolve => setTimeout(resolve, window.innerWidth < 768 ? 300 : 800));
 
     // Estimer avstand basert på destinasjoner (forenklet beregning)
     const estimatedDistance = calculateApproximateDistance(routeData.from, routeData.to);
@@ -801,11 +801,26 @@ function Index() {
                 )}
                 
                 <div data-testid="route-map" className="relative mt-8">
-                  {mapLoading && (
+                  {/* Mobile-specific loading indicator */}
+                  {(mapLoading || planningRoute) && window.innerWidth < 768 && (
                     <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
                       <div className="text-center space-y-2">
                         <Zap className="h-8 w-8 text-primary animate-spin mx-auto" />
-                        <p className="text-sm text-muted-foreground">Laster kart...</p>
+                        <p className="text-sm text-muted-foreground">
+                          {planningRoute ? 'Planlegger rute...' : 'Laster kart...'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Kan ta litt tid på mobil</p>
+                      </div>
+                    </div>
+                  )}
+                  {/* Desktop loading indicator */}
+                  {(mapLoading || planningRoute) && window.innerWidth >= 768 && (
+                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+                      <div className="text-center space-y-2">
+                        <Zap className="h-8 w-8 text-primary animate-spin mx-auto" />
+                        <p className="text-sm text-muted-foreground">
+                          {planningRoute ? 'Planlegger rute...' : 'Laster kart...'}
+                        </p>
                       </div>
                     </div>
                   )}
