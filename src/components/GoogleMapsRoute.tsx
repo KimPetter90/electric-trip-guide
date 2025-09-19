@@ -3,8 +3,9 @@ import { Loader } from "@googlemaps/js-api-loader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Zap, Battery, Clock, DollarSign, AlertTriangle } from "lucide-react";
+import { Zap, Battery, Clock, DollarSign, AlertTriangle, Play, Pause, LocateFixed, Navigation } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface CarModel {
   id: string;
@@ -44,6 +45,8 @@ const [chargingStations, setChargingStations] = useState<ChargingStation[]>([]);
 
 export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: GoogleMapsRouteProps) {
   const mapRef = useRef<HTMLDivElement>(null);
+  const userLocationMarker = useRef<google.maps.Marker | null>(null);
+  const watchId = useRef<number | null>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [directionsService, setDirectionsService] = useState<google.maps.DirectionsService | null>(null);
   const [directionsRenderer, setDirectionsRenderer] = useState<google.maps.DirectionsRenderer | null>(null);
@@ -54,6 +57,9 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
   const [error, setError] = useState<string>('');
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [allMarkers, setAllMarkers] = useState<google.maps.Marker[]>([]);
+  const [isGPSActive, setIsGPSActive] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsPermission, setGpsPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
 
   console.log('🔄 GoogleMapsRoute KOMPONENT RENDERER!', { 
     isVisible, 
@@ -61,6 +67,132 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
     stationCount: chargingStations.length,
     batteryPercent: routeData.batteryPercentage 
   });
+
+  // GPS functions
+  const checkGPSPermission = async () => {
+    if (!navigator.geolocation) {
+      setGpsPermission('denied');
+      return;
+    }
+
+    try {
+      const permission = await navigator.permissions.query({ name: 'geolocation' });
+      setGpsPermission(permission.state);
+    } catch (error) {
+      console.error('Kunne ikke sjekke GPS-tillatelse:', error);
+      setGpsPermission('prompt');
+    }
+  };
+
+  const startGPSTracking = () => {
+    if (!navigator.geolocation) {
+      toast.error('GPS er ikke tilgjengelig på denne enheten');
+      return;
+    }
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 1000
+    };
+
+    const success = (position: GeolocationPosition) => {
+      const { latitude, longitude } = position.coords;
+      const newLocation = { lat: latitude, lng: longitude };
+      
+      setCurrentLocation(newLocation);
+      updateUserLocationOnMap(newLocation);
+      
+      if (!isGPSActive) {
+        setIsGPSActive(true);
+        toast.success('GPS-sporing aktivert');
+      }
+    };
+
+    const error = (error: GeolocationPositionError) => {
+      console.error('GPS-feil:', error);
+      let errorMessage = 'Kunne ikke få GPS-posisjon';
+      
+      switch(error.code) {
+        case error.PERMISSION_DENIED:
+          errorMessage = 'GPS-tilgang nektet. Aktiver stedstjenester i nettleseren.';
+          setGpsPermission('denied');
+          break;
+        case error.POSITION_UNAVAILABLE:
+          errorMessage = 'GPS-posisjon ikke tilgjengelig';
+          break;
+        case error.TIMEOUT:
+          errorMessage = 'GPS-forespørsel tidsavbrudd';
+          break;
+      }
+      
+      toast.error(errorMessage);
+      setIsGPSActive(false);
+    };
+
+    watchId.current = navigator.geolocation.watchPosition(success, error, options);
+  };
+
+  const stopGPSTracking = () => {
+    if (watchId.current !== null) {
+      navigator.geolocation.clearWatch(watchId.current);
+      watchId.current = null;
+    }
+    
+    if (userLocationMarker.current) {
+      userLocationMarker.current.setMap(null);
+      userLocationMarker.current = null;
+    }
+    
+    setIsGPSActive(false);
+    setCurrentLocation(null);
+    toast.info('GPS-sporing stoppet');
+  };
+
+  const updateUserLocationOnMap = (location: { lat: number; lng: number }) => {
+    if (!map) return;
+
+    // Opprett eller oppdater brukerens posisjon-markør
+    if (userLocationMarker.current) {
+      userLocationMarker.current.setPosition(location);
+    } else {
+      userLocationMarker.current = new google.maps.Marker({
+        position: location,
+        map: map,
+        title: 'Din posisjon',
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: '#3b82f6',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 3
+        }
+      });
+
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <div style="padding: 8px;">
+            <h4 style="margin: 0 0 4px 0; color: #3b82f6; font-weight: bold;">📍 Din posisjon</h4>
+            <p style="margin: 0; font-size: 12px;">Lat: ${location.lat.toFixed(6)}</p>
+            <p style="margin: 0; font-size: 12px;">Lng: ${location.lng.toFixed(6)}</p>
+          </div>
+        `
+      });
+
+      userLocationMarker.current.addListener('click', () => {
+        infoWindow.open(map, userLocationMarker.current);
+      });
+    }
+
+    // Sentrer kartet på brukerens posisjon i GPS-modus
+    if (isGPSActive) {
+      map.panTo(location);
+      if (map.getZoom() && map.getZoom()! < 14) {
+        map.setZoom(14);
+      }
+    }
+  };
 
   // Load charging stations from database
   useEffect(() => {
@@ -98,6 +230,7 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
     };
 
     loadChargingStations();
+    checkGPSPermission();
   }, []);
 
   // Cleanup markers when component unmounts
