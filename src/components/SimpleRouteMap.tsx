@@ -4,8 +4,10 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Navigation, Zap, Battery } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, Navigation, Zap, Battery, Play, Pause, LocateFixed } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface CarModel {
   id: string;
@@ -59,10 +61,15 @@ const basicChargingStations: ChargingStation[] = [
 export default function SimpleRouteMap({ isVisible, routeData, selectedCar }: SimpleRouteMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const userLocationMarker = useRef<mapboxgl.Marker | null>(null);
+  const watchId = useRef<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [criticalStation, setCriticalStation] = useState<any>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [isGPSActive, setIsGPSActive] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsPermission, setGpsPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
 
   const fetchMapboxToken = async () => {
     try {
@@ -175,6 +182,125 @@ export default function SimpleRouteMap({ isVisible, routeData, selectedCar }: Si
     }
   };
 
+  const checkGPSPermission = async () => {
+    if (!navigator.geolocation) {
+      setGpsPermission('denied');
+      return;
+    }
+
+    try {
+      const permission = await navigator.permissions.query({ name: 'geolocation' });
+      setGpsPermission(permission.state);
+    } catch (error) {
+      console.error('Kunne ikke sjekke GPS-tillatelse:', error);
+      setGpsPermission('prompt');
+    }
+  };
+
+  const startGPSTracking = () => {
+    if (!navigator.geolocation) {
+      toast.error('GPS er ikke tilgjengelig på denne enheten');
+      return;
+    }
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 1000
+    };
+
+    const success = (position: GeolocationPosition) => {
+      const { latitude, longitude } = position.coords;
+      const newLocation = { lat: latitude, lng: longitude };
+      
+      setCurrentLocation(newLocation);
+      updateUserLocationOnMap(newLocation);
+      
+      if (!isGPSActive) {
+        setIsGPSActive(true);
+        toast.success('GPS-sporing aktivert');
+      }
+    };
+
+    const error = (error: GeolocationPositionError) => {
+      console.error('GPS-feil:', error);
+      let errorMessage = 'Kunne ikke få GPS-posisjon';
+      
+      switch(error.code) {
+        case error.PERMISSION_DENIED:
+          errorMessage = 'GPS-tilgang nektet. Aktiver stedstjenester i nettleseren.';
+          setGpsPermission('denied');
+          break;
+        case error.POSITION_UNAVAILABLE:
+          errorMessage = 'GPS-posisjon ikke tilgjengelig';
+          break;
+        case error.TIMEOUT:
+          errorMessage = 'GPS-forespørsel tidsavbrudd';
+          break;
+      }
+      
+      toast.error(errorMessage);
+      setIsGPSActive(false);
+    };
+
+    watchId.current = navigator.geolocation.watchPosition(success, error, options);
+  };
+
+  const stopGPSTracking = () => {
+    if (watchId.current !== null) {
+      navigator.geolocation.clearWatch(watchId.current);
+      watchId.current = null;
+    }
+    
+    if (userLocationMarker.current) {
+      userLocationMarker.current.remove();
+      userLocationMarker.current = null;
+    }
+    
+    setIsGPSActive(false);
+    setCurrentLocation(null);
+    toast.info('GPS-sporing stoppet');
+  };
+
+  const updateUserLocationOnMap = (location: { lat: number; lng: number }) => {
+    if (!map.current) return;
+
+    // Opprett eller oppdater brukerens posisjon-markør
+    if (userLocationMarker.current) {
+      userLocationMarker.current.setLngLat([location.lng, location.lat]);
+    } else {
+      // Lag en custom GPS-markør
+      const el = document.createElement('div');
+      el.style.width = '20px';
+      el.style.height = '20px';
+      el.style.backgroundColor = '#3b82f6';
+      el.style.border = '3px solid #ffffff';
+      el.style.borderRadius = '50%';
+      el.style.boxShadow = '0 0 15px rgba(59, 130, 246, 0.8)';
+      el.style.animation = 'pulse 2s infinite';
+
+      userLocationMarker.current = new mapboxgl.Marker(el)
+        .setLngLat([location.lng, location.lat])
+        .setPopup(new mapboxgl.Popup().setHTML(`
+          <div class="p-2">
+            <h4 class="font-bold text-blue-600">📍 Din posisjon</h4>
+            <p class="text-sm">Lat: ${location.lat.toFixed(6)}</p>
+            <p class="text-sm">Lng: ${location.lng.toFixed(6)}</p>
+          </div>
+        `))
+        .addTo(map.current);
+    }
+
+    // Sentrer kartet på brukerens posisjon i GPS-modus
+    if (isGPSActive) {
+      map.current.easeTo({
+        center: [location.lng, location.lat],
+        zoom: Math.max(map.current.getZoom(), 14),
+        duration: 1000
+      });
+    }
+  };
+
   const initializeMap = async () => {
     if (!mapContainer.current || !mapboxToken) return;
 
@@ -284,8 +410,18 @@ export default function SimpleRouteMap({ isVisible, routeData, selectedCar }: Si
         }
       };
       init();
+      checkGPSPermission();
     }
   }, [isVisible]);
+
+  // Cleanup GPS når komponenten unmountes
+  useEffect(() => {
+    return () => {
+      if (watchId.current !== null) {
+        navigator.geolocation.clearWatch(watchId.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (mapboxToken) {
@@ -309,12 +445,43 @@ export default function SimpleRouteMap({ isVisible, routeData, selectedCar }: Si
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Navigation className="h-5 w-5 text-primary animate-glow-pulse" />
-        <h3 className="text-lg font-semibold text-foreground">Kartvisning</h3>
-        <Badge variant="secondary" className="ml-2">
-          {basicChargingStations.length} ladestasjoner
-        </Badge>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Navigation className="h-5 w-5 text-primary animate-glow-pulse" />
+          <h3 className="text-lg font-semibold text-foreground">Kartvisning</h3>
+          <Badge variant="secondary" className="ml-2">
+            {basicChargingStations.length} ladestasjoner
+          </Badge>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {currentLocation && (
+            <Badge variant="outline" className="text-blue-600 border-blue-600">
+              <LocateFixed className="h-3 w-3 mr-1" />
+              GPS aktiv
+            </Badge>
+          )}
+          
+          <Button
+            onClick={isGPSActive ? stopGPSTracking : startGPSTracking}
+            variant={isGPSActive ? "destructive" : "default"}
+            size="sm"
+            disabled={gpsPermission === 'denied'}
+            className="min-w-[120px]"
+          >
+            {isGPSActive ? (
+              <>
+                <Pause className="h-4 w-4 mr-2" />
+                Stopp reise
+              </>
+            ) : (
+              <>
+                <Play className="h-4 w-4 mr-2" />
+                Start reise
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {error && (
