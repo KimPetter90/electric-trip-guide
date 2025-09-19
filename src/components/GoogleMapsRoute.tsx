@@ -521,13 +521,44 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
   return (
     <div className="space-y-4">
       <Card className="p-4 bg-card/80 backdrop-blur-sm border-border">
-        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-          <div className="w-2 h-2 bg-gradient-electric rounded-full animate-pulse-neon"></div>
-          Google Maps Ruteplanlegger
-          <Badge variant="secondary" className="ml-auto">
-            {chargingStations.length} stasjoner
-          </Badge>
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-gradient-electric rounded-full animate-pulse-neon"></div>
+            <h3 className="text-lg font-semibold text-foreground">Google Maps Ruteplanlegger</h3>
+            <Badge variant="secondary">
+              {chargingStations.length} stasjoner
+            </Badge>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {currentLocation && (
+              <Badge variant="outline" className="text-blue-600 border-blue-600">
+                <LocateFixed className="h-3 w-3 mr-1" />
+                GPS aktiv
+              </Badge>
+            )}
+            
+            <Button
+              onClick={isGPSActive ? stopGPSTracking : startGPSTracking}
+              variant={isGPSActive ? "destructive" : "default"}
+              size="sm"
+              disabled={gpsPermission === 'denied'}
+              className="min-w-[120px]"
+            >
+              {isGPSActive ? (
+                <>
+                  <Pause className="h-4 w-4 mr-2" />
+                  Stopp reise
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4 mr-2" />
+                  Start reise
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
         
         {batteryStatus && (
           <div className={`p-3 rounded-lg mb-4 ${
