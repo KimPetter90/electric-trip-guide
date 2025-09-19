@@ -17,6 +17,9 @@ import Business from "./pages/Business";
 import NotFound from "./pages/NotFound";
 import ApiDocs from "./pages/ApiDocs";
 import AdminDashboard from "./pages/AdminDashboard";
+import DemoEnvironment from "./pages/DemoEnvironment";
+import CaseStudies from "./pages/CaseStudies";
+import SalesDeck from "./pages/SalesDeck";
 import CookieBanner from "./components/CookieBanner";
 
 const queryClient = new QueryClient({
@@ -49,6 +52,9 @@ function App() {
                 <Route path="/subscription-success" element={<SubscriptionSuccess />} />
                 <Route path="/business" element={<Business />} />
                 <Route path="/api-docs" element={<ApiDocs />} />
+                <Route path="/demo" element={<DemoEnvironment />} />
+                <Route path="/case-studies" element={<CaseStudies />} />
+                <Route path="/sales-deck" element={<SalesDeck />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/test-users" element={<TestUserAdmin />} />
                 <Route path="*" element={<NotFound />} />
