@@ -326,8 +326,12 @@ function Index() {
     ];
 
     setRouteOptions(mockRoutes);
-    setSelectedRouteId('fastest');
     setLoadingRoutes(false);
+    
+    // Automatically select the fastest route after a brief delay to ensure state is updated
+    setTimeout(() => {
+      setSelectedRouteId('fastest');
+    }, 100);
     
     // Cache resultatet
     try {
