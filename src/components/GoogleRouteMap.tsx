@@ -126,9 +126,9 @@ const GoogleRouteMap: React.FC<{
     // Sjekk ferjetider når reisen starter
     if (routeData?.from && routeData?.to) {
       setShowFerrySchedule(true);
-      toast.info(`🗺️ Reise startet`, {
-        description: 'Ferjeplan vil oppdateres basert på din posisjon',
-        duration: 3000,
+      toast.success(`🎯 Reise startet!`, {
+        description: 'GPS følger deg nå i sanntid. Rød pil viser din posisjon.',
+        duration: 4000,
       });
     }
 
@@ -147,7 +147,9 @@ const GoogleRouteMap: React.FC<{
       
       if (!isGPSActive) {
         setIsGPSActive(true);
-        toast.success('GPS-sporing aktivert');
+        toast.success('🎯 GPS-sporing aktivert!', {
+          description: 'Rød pil følger deg nå i sanntid'
+        });
       }
     };
 
@@ -198,26 +200,52 @@ const GoogleRouteMap: React.FC<{
     if (userLocationMarker.current) {
       userLocationMarker.current.setPosition(location);
     } else {
+      // Lag en mer iøynefallende stedspil/markør
       userLocationMarker.current = new google.maps.Marker({
         position: location,
         map: mapInstanceRef.current,
-        title: 'Din posisjon',
+        title: 'Din posisjon - Live GPS',
         icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: '#3b82f6',
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 12,
+          fillColor: '#FF0000',
           fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 3
-        }
+          strokeColor: '#FFFFFF',
+          strokeWeight: 3,
+          rotation: 0 // Kan oppdateres basert på retning
+        },
+        zIndex: 1000 // Høy z-index for å være på toppen
+      });
+
+      // Legg til en sirkel rundt markøren for å vise nøyaktighet
+      const accuracyCircle = new google.maps.Circle({
+        strokeColor: '#4285F4',
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: '#4285F4',
+        fillOpacity: 0.15,
+        map: mapInstanceRef.current,
+        center: location,
+        radius: 50, // 50 meter radius
       });
 
       const infoWindow = new google.maps.InfoWindow({
         content: `
-          <div style="padding: 8px;">
-            <h4 style="margin: 0 0 4px 0; color: #3b82f6; font-weight: bold;">📍 Din posisjon</h4>
-            <p style="margin: 0; font-size: 12px;">Lat: ${location.lat.toFixed(6)}</p>
-            <p style="margin: 0; font-size: 12px;">Lng: ${location.lng.toFixed(6)}</p>
+          <div style="padding: 12px; min-width: 200px;">
+            <h4 style="margin: 0 0 8px 0; color: #FF0000; font-weight: bold; display: flex; align-items: center;">
+              🎯 Din posisjon (Live)
+            </h4>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <span style="font-weight: bold;">Breddegrad:</span>
+              <span style="font-family: monospace;">${location.lat.toFixed(6)}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-weight: bold;">Lengdegrad:</span>
+              <span style="font-family: monospace;">${location.lng.toFixed(6)}</span>
+            </div>
+            <div style="font-size: 11px; color: #666; text-align: center;">
+              📡 GPS-sporing aktiv
+            </div>
           </div>
         `
       });
