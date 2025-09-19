@@ -1068,70 +1068,80 @@ function Index() {
         </div>
       </main>
 
-        {/* Route Information - helt separat seksjon under main */}
-        {tripAnalysis && selectedRouteId && (
-          <section className="py-12 bg-muted/5" aria-label="Rutestatistikk">
-            <div className="container mx-auto px-4">
-              <h2 className="text-2xl font-bold text-center mb-8">Rutestatistikk</h2>
-              {/* 6 futuristiske statistikk-bokser */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <Card className="relative p-4 glass-card border border-blue-500/30 bg-gradient-to-br from-blue-950/20 to-blue-900/10 neon-glow hover-scale">
-                  <div className="text-center">
-                    <Route className="h-6 w-6 text-blue-400 mx-auto mb-2 animate-glow-pulse" />
-                    <p className="text-xs text-blue-300 font-exo uppercase tracking-wide">Total distanse</p>
-                    <p className="text-xl font-orbitron font-bold text-blue-100">{tripAnalysis.distance}</p>
-                  </div>
-                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                </Card>
+        {/* Route Information - alltid synlig, men med 0-verdier når ingen rute er aktiv */}
+        <section className="py-12 bg-muted/5" aria-label="Rutestatistikk">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl font-bold text-center mb-8">Rutestatistikk</h2>
+            {/* 6 futuristiske statistikk-bokser */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <Card className="relative p-4 glass-card border border-blue-500/30 bg-gradient-to-br from-blue-950/20 to-blue-900/10 neon-glow hover-scale">
+                <div className="text-center">
+                  <Route className="h-6 w-6 text-blue-400 mx-auto mb-2 animate-glow-pulse" />
+                  <p className="text-xs text-blue-300 font-exo uppercase tracking-wide">Total distanse</p>
+                  <p className="text-xl font-orbitron font-bold text-blue-100">
+                    {tripAnalysis && selectedRouteId ? tripAnalysis.distance : '0 km'}
+                  </p>
+                </div>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+              </Card>
 
-                <Card className="relative p-4 glass-card border border-green-500/30 bg-gradient-to-br from-green-950/20 to-green-900/10 cyber-glow hover-scale">
-                  <div className="text-center">
-                    <Clock className="h-6 w-6 text-green-400 mx-auto mb-2 animate-glow-pulse" />
-                    <p className="text-xs text-green-300 font-exo uppercase tracking-wide">Total tid</p>
-                    <p className="text-xl font-orbitron font-bold text-green-100">{tripAnalysis.time}</p>
-                  </div>
-                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-green-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                </Card>
+              <Card className="relative p-4 glass-card border border-green-500/30 bg-gradient-to-br from-green-950/20 to-green-900/10 cyber-glow hover-scale">
+                <div className="text-center">
+                  <Clock className="h-6 w-6 text-green-400 mx-auto mb-2 animate-glow-pulse" />
+                  <p className="text-xs text-green-300 font-exo uppercase tracking-wide">Total tid</p>
+                  <p className="text-xl font-orbitron font-bold text-green-100">
+                    {tripAnalysis && selectedRouteId ? tripAnalysis.time : '0 min'}
+                  </p>
+                </div>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-green-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+              </Card>
 
-                <Card className="relative p-4 glass-card border border-purple-500/30 bg-gradient-to-br from-purple-950/20 to-purple-900/10 neon-glow hover-scale">
-                  <div className="text-center">
-                    <CreditCard className="h-6 w-6 text-purple-400 mx-auto mb-2 animate-glow-pulse" />
-                    <p className="text-xs text-purple-300 font-exo uppercase tracking-wide">Ladekostnad</p>
-                    <p className="text-xl font-orbitron font-bold text-purple-100">245 kr</p>
-                  </div>
-                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                </Card>
+              <Card className="relative p-4 glass-card border border-purple-500/30 bg-gradient-to-br from-purple-950/20 to-purple-900/10 neon-glow hover-scale">
+                <div className="text-center">
+                  <CreditCard className="h-6 w-6 text-purple-400 mx-auto mb-2 animate-glow-pulse" />
+                  <p className="text-xs text-purple-300 font-exo uppercase tracking-wide">Ladekostnad</p>
+                  <p className="text-xl font-orbitron font-bold text-purple-100">
+                    {tripAnalysis && selectedRouteId ? '245 kr' : '0 kr'}
+                  </p>
+                </div>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+              </Card>
 
-                <Card className="relative p-4 glass-card border border-orange-500/30 bg-gradient-to-br from-orange-950/20 to-orange-900/10 cyber-glow hover-scale">
-                  <div className="text-center">
-                    <Zap className="h-6 w-6 text-orange-400 mx-auto mb-2 animate-glow-pulse" />
-                    <p className="text-xs text-orange-300 font-exo uppercase tracking-wide">Ladetid</p>
-                    <p className="text-xl font-orbitron font-bold text-orange-100">45 min</p>
-                  </div>
-                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-orange-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                </Card>
+              <Card className="relative p-4 glass-card border border-orange-500/30 bg-gradient-to-br from-orange-950/20 to-orange-900/10 cyber-glow hover-shade">
+                <div className="text-center">
+                  <Zap className="h-6 w-6 text-orange-400 mx-auto mb-2 animate-glow-pulse" />
+                  <p className="text-xs text-orange-300 font-exo uppercase tracking-wide">Ladetid</p>
+                  <p className="text-xl font-orbitron font-bold text-orange-100">
+                    {tripAnalysis && selectedRouteId ? '45 min' : '0 min'}
+                  </p>
+                </div>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-orange-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+              </Card>
 
-                <Card className="relative p-4 glass-card border border-emerald-500/30 bg-gradient-to-br from-emerald-950/20 to-emerald-900/10 neon-glow hover-scale">
-                  <div className="text-center">
-                    <TreePine className="h-6 w-6 text-emerald-400 mx-auto mb-2 animate-glow-pulse" />
-                    <p className="text-xs text-emerald-300 font-exo uppercase tracking-wide">CO₂ spart</p>
-                    <p className="text-xl font-orbitron font-bold text-emerald-100">42 kg</p>
-                  </div>
-                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                </Card>
+              <Card className="relative p-4 glass-card border border-emerald-500/30 bg-gradient-to-br from-emerald-950/20 to-emerald-900/10 neon-glow hover-scale">
+                <div className="text-center">
+                  <TreePine className="h-6 w-6 text-emerald-400 mx-auto mb-2 animate-glow-pulse" />
+                  <p className="text-xs text-emerald-300 font-exo uppercase tracking-wide">CO₂ spart</p>
+                  <p className="text-xl font-orbitron font-bold text-emerald-100">
+                    {tripAnalysis && selectedRouteId ? '42 kg' : '0 kg'}
+                  </p>
+                </div>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+              </Card>
 
-                <Card className="relative p-4 glass-card border border-indigo-500/30 bg-gradient-to-br from-indigo-950/20 to-indigo-900/10 cyber-glow hover-scale">
-                  <div className="text-center">
-                    <TrendingUp className="h-6 w-6 text-indigo-400 mx-auto mb-2 animate-glow-pulse" />
-                    <p className="text-xs text-indigo-300 font-exo uppercase tracking-wide">Effektivitet</p>
-                    <p className="text-xl font-orbitron font-bold text-indigo-100">87%</p>
-                  </div>
-                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-indigo-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                </Card>
-              </div>
+              <Card className="relative p-4 glass-card border border-indigo-500/30 bg-gradient-to-br from-indigo-950/20 to-indigo-900/10 cyber-glow hover-scale">
+                <div className="text-center">
+                  <TrendingUp className="h-6 w-6 text-indigo-400 mx-auto mb-2 animate-glow-pulse" />
+                  <p className="text-xs text-indigo-300 font-exo uppercase tracking-wide">Effektivitet</p>
+                  <p className="text-xl font-orbitron font-bold text-indigo-100">
+                    {tripAnalysis && selectedRouteId ? '87%' : '0%'}
+                  </p>
+                </div>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-indigo-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+              </Card>
             </div>
-          </section>
-        )}
+          </div>
+        </section>
 
       {/* Analytics Dashboard - kun for autoriserte brukere */}
       {hasAnalyticsAccess && (
