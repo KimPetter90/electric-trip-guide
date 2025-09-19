@@ -1069,186 +1069,19 @@ function Index() {
                   />
                 </div>
                 
-                {/* Separat container for route information - helt under kartet */}
-                {tripAnalysis && selectedRouteId && (
-                  <div className="mt-12 space-y-6">
-                    {/* 6 futuristiske statistikk-bokser */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                      <Card className="relative p-4 glass-card border border-blue-500/30 bg-gradient-to-br from-blue-950/20 to-blue-900/10 neon-glow hover-scale">
-                        <div className="text-center">
-                          <Route className="h-6 w-6 text-blue-400 mx-auto mb-2 animate-glow-pulse" />
-                          <p className="text-xs text-blue-300 font-exo uppercase tracking-wide">Total distanse</p>
-                          <p className="text-xl font-orbitron font-bold text-blue-100">{tripAnalysis.distance}</p>
-                        </div>
-                        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                      </Card>
-
-                      <Card className="relative p-4 glass-card border border-green-500/30 bg-gradient-to-br from-green-950/20 to-green-900/10 cyber-glow hover-scale">
-                        <div className="text-center">
-                          <Clock className="h-6 w-6 text-green-400 mx-auto mb-2 animate-glow-pulse" />
-                          <p className="text-xs text-green-300 font-exo uppercase tracking-wide">Total tid</p>
-                          <p className="text-xl font-orbitron font-bold text-green-100">{tripAnalysis.time}</p>
-                        </div>
-                        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-green-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                      </Card>
-
-                      <Card className="relative p-4 glass-card border border-purple-500/30 bg-gradient-to-br from-purple-950/20 to-purple-900/10 neon-glow hover-scale">
-                        <div className="text-center">
-                          <CreditCard className="h-6 w-6 text-purple-400 mx-auto mb-2 animate-glow-pulse" />
-                          <p className="text-xs text-purple-300 font-exo uppercase tracking-wide">Ladekostnad</p>
-                          <p className="text-xl font-orbitron font-bold text-purple-100">
-                            {tripAnalysis.totalCost ? `${tripAnalysis.totalCost} kr` : '245 kr'}
-                          </p>
-                        </div>
-                        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                      </Card>
-
-                      <Card className="relative p-4 glass-card border border-orange-500/30 bg-gradient-to-br from-orange-950/20 to-orange-900/10 cyber-glow hover-scale">
-                        <div className="text-center">
-                          <Zap className="h-6 w-6 text-orange-400 mx-auto mb-2 animate-glow-pulse" />
-                          <p className="text-xs text-orange-300 font-exo uppercase tracking-wide">Ladetid</p>
-                          <p className="text-xl font-orbitron font-bold text-orange-100">
-                            {tripAnalysis.totalChargingTime ? `${tripAnalysis.totalChargingTime} min` : '45 min'}
-                          </p>
-                        </div>
-                        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-orange-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                      </Card>
-
-                      <Card className="relative p-4 glass-card border border-emerald-500/30 bg-gradient-to-br from-emerald-950/20 to-emerald-900/10 neon-glow hover-scale">
-                        <div className="text-center">
-                          <TreePine className="h-6 w-6 text-emerald-400 mx-auto mb-2 animate-glow-pulse" />
-                          <p className="text-xs text-emerald-300 font-exo uppercase tracking-wide">CO₂ spart</p>
-                          <p className="text-xl font-orbitron font-bold text-emerald-100">
-                            {tripAnalysis.co2Saved ? `${tripAnalysis.co2Saved} kg` : '42 kg'}
-                          </p>
-                        </div>
-                        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                      </Card>
-
-                      <Card className="relative p-4 glass-card border border-indigo-500/30 bg-gradient-to-br from-indigo-950/20 to-indigo-900/10 cyber-glow hover-scale">
-                        <div className="text-center">
-                          <TrendingUp className="h-6 w-6 text-indigo-400 mx-auto mb-2 animate-glow-pulse" />
-                          <p className="text-xs text-indigo-300 font-exo uppercase tracking-wide">Effektivitet</p>
-                          <p className="text-xl font-orbitron font-bold text-indigo-100">
-                            {tripAnalysis.efficiency ? `${tripAnalysis.efficiency}%` : '87%'}
-                          </p>
-                        </div>
-                        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-indigo-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                      </Card>
-                    </div>
-
-                    {/* Detaljert informasjon */}
-                    <Card className="p-6 bg-card/80 backdrop-blur-sm border-border shadow-lg">
-                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <BarChart3 className="h-5 w-5 text-primary" />
-                        Detaljert ruteanalyse
-                      </h3>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="space-y-3">
-                          <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Ruteinformasjon</h4>
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span className="text-sm">Fra:</span>
-                              <span className="text-sm font-medium">{routeData.from}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-sm">Til:</span>
-                              <span className="text-sm font-medium">{routeData.to}</span>
-                            </div>
-                            {routeData.via && (
-                              <div className="flex justify-between">
-                                <span className="text-sm">Via:</span>
-                                <span className="text-sm font-medium">{routeData.via}</span>
-                              </div>
-                            )}
-                            <div className="flex justify-between">
-                              <span className="text-sm">Rutetype:</span>
-                              <Badge className={
-                                selectedRouteId === 'fastest' ? 'bg-blue-500 text-white' :
-                                selectedRouteId === 'shortest' ? 'bg-green-500 text-white' :
-                                selectedRouteId === 'eco' ? 'bg-purple-500 text-white' :
-                                'bg-gray-500 text-white'
-                              }>
-                                {selectedRouteId === 'fastest' ? '⚡ Raskeste' :
-                                 selectedRouteId === 'shortest' ? '📏 Korteste' :
-                                 selectedRouteId === 'eco' ? '🌱 Miljøvennlig' : 'Standard'}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-3">
-                          <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Bil & batteri</h4>
-                          <div className="space-y-2">
-                            {selectedCar && (
-                              <>
-                                <div className="flex justify-between">
-                                  <span className="text-sm">Bil:</span>
-                                  <span className="text-sm font-medium">{selectedCar.brand} {selectedCar.model}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-sm">Rekkevidde:</span>
-                                  <span className="text-sm font-medium">{selectedCar.range} km</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-sm">Batterikapasitet:</span>
-                                  <span className="text-sm font-medium">{selectedCar.batteryCapacity} kWh</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-sm">Forbruk:</span>
-                                  <span className="text-sm font-medium">{selectedCar.consumption} kWh/100km</span>
-                                </div>
-                              </>
-                            )}
-                            <div className="flex justify-between">
-                              <span className="text-sm">Startbatteri:</span>
-                              <span className="text-sm font-medium">{routeData.batteryPercentage}%</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-3">
-                          <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Miljø & økonomi</h4>
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span className="text-sm">Værpåvirkning:</span>
-                              <span className="text-sm font-medium">{tripAnalysis.weatherImpact}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-sm">Ruteeffektivitet:</span>
-                              <span className="text-sm font-medium">{tripAnalysis.routeEfficiency}</span>
-                            </div>
-                            {routeData.trailerWeight > 0 && (
-                              <div className="flex justify-between">
-                                <span className="text-sm">Hengervekt:</span>
-                                <span className="text-sm font-medium">{routeData.trailerWeight} kg</span>
-                              </div>
-                            )}
-                            <div className="flex justify-between">
-                              <span className="text-sm">CO₂ besparelse:</span>
-                              <span className="text-sm font-medium text-green-600">~45 kg</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
-                    </div>
-                  )}
-                
-                  {/* Favoritt-ruter - liten og under ruteinformasjon */}
-                  <div className="mt-4">
-                    <div className="max-w-sm">
-                      <FavoriteRoutes
-                        onRouteSelect={handleFavoriteRouteSelect}
-                      />
-                    </div>
+                {/* Favoritt-ruter - liten og under ruteinformasjon */}
+                <div className="mt-4">
+                  <div className="max-w-sm">
+                    <FavoriteRoutes
+                      onRouteSelect={handleFavoriteRouteSelect}
+                    />
                   </div>
                 </div>
-              )}
-            </section>
-          </div>
-        </main>
+              </div>
+            )}
+          </section>
+        </div>
+      </main>
 
         {/* Route Information - helt separat seksjon under main */}
         {tripAnalysis && selectedRouteId && (
