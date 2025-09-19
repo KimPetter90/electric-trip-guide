@@ -68,6 +68,22 @@ const GoogleRouteMap: React.FC<{
   onLoadingChange: (loading: boolean) => void;
   onError: (error: string | null) => void;
 }> = ({ center, zoom, onMapLoad, chargingStations, routeData, selectedCar, selectedRouteId, routeOptions, routeTrigger, onRouteCalculated, onLoadingChange, onError }) => {
+  // Add global error handler for mobile debugging
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error('🚨 MOBILE - JavaScript Error:', {
+        message: event.message,
+        filename: event.filename,
+        line: event.lineno,
+        column: event.colno,
+        error: event.error,
+        isMobile: window.innerWidth < 768
+      });
+    };
+    
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const directionsServiceRef = useRef<google.maps.DirectionsService | null>(null);
@@ -284,6 +300,15 @@ const GoogleRouteMap: React.FC<{
         }
 
         console.log('🗺️ Creating Google Maps instance...');
+        console.log('📱 MOBILE DEBUG - Device and container info:', {
+          isMobile: window.innerWidth < 768,
+          innerWidth: window.innerWidth,
+          innerHeight: window.innerHeight,
+          userAgent: navigator.userAgent,
+          pixelRatio: window.devicePixelRatio,
+          mapContainer: !!mapRef.current,
+          containerSize: mapRef.current ? `${mapRef.current.offsetWidth}x${mapRef.current.offsetHeight}` : 'N/A'
+        });
         
         // Initialize map with explicit error handling
         try {
@@ -300,11 +325,11 @@ const GoogleRouteMap: React.FC<{
             zoomControl: true,
             streetViewControl: false,
             fullscreenControl: true,
-            gestureHandling: 'auto',
+            gestureHandling: window.innerWidth < 768 ? 'cooperative' : 'auto', // Better mobile handling
             keyboardShortcuts: false,
             clickableIcons: true,
             disableDoubleClickZoom: false,
-            scrollwheel: false,
+            scrollwheel: window.innerWidth >= 768, // Disable scroll wheel on mobile
             restriction: {
               latLngBounds: {
                 north: 72,
@@ -317,6 +342,12 @@ const GoogleRouteMap: React.FC<{
           });
 
           console.log('✅ Google Maps instance created successfully');
+          console.log('📱 MOBILE - Map properties:', {
+            center: map.getCenter()?.toString(),
+            zoom: map.getZoom(),
+            mapTypeId: map.getMapTypeId(),
+            isMobile: window.innerWidth < 768
+          });
           mapInstanceRef.current = map;
           
           // INGEN CSS-manipulering som kan skjule stedsnavn!
