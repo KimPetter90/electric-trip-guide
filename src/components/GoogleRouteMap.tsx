@@ -1096,6 +1096,14 @@ const GoogleRouteMap: React.FC<{
 
       console.log('📞 Sender Google Directions API-forespørsel for', selectedRouteId || 'default', 'rute...');
       console.log('📍 Request preferences:', routePrefs);
+      console.log('📱 MOBILE DEBUG - Full request object:', {
+        origin: request.origin,
+        destination: request.destination,
+        waypoints: request.waypoints,
+        isMobile: window.innerWidth < 768,
+        screenSize: `${window.innerWidth}x${window.innerHeight}`,
+        userAgent: navigator.userAgent
+      });
       
       // Create Promise wrapper for Directions API call with timeout
       const directionsPromise = new Promise<google.maps.DirectionsResult>((resolve, reject) => {
@@ -1109,7 +1117,18 @@ const GoogleRouteMap: React.FC<{
           console.log('🗺️ Google Directions API respons:', status);
           console.log(`📊 Antall ruter mottatt: ${result?.routes?.length || 0}`);
           
+          // Enhanced mobile debugging
+          if (window.innerWidth < 768) {
+            console.log('📱 MOBILE - API Response details:', {
+              status: status,
+              routesLength: result?.routes?.length,
+              firstRouteExists: !!result?.routes?.[0],
+              errorMessage: status !== google.maps.DirectionsStatus.OK ? status : null
+            });
+          }
+          
           if (status === google.maps.DirectionsStatus.OK && result) {
+            console.log('✅ SUCCESS - Resolving with result');
             resolve(result);
           } else {
             console.error('❌ Directions API feil:', status);
