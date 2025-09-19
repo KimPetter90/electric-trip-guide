@@ -15,7 +15,7 @@ import RouteSelector from "@/components/RouteSelector";
 import ChargingMap from "@/components/ChargingMap";
 import GoogleRouteMap from "@/components/GoogleRouteMap";
 import { ShareRoute } from "@/components/ShareRoute";
-import { FavoriteRoutes } from "@/components/FavoriteRoutes";
+
 import ComprehensiveFerrySchedule from "@/components/ComprehensiveFerrySchedule";
 
 import { Zap, Route, MapPin, Car, Battery, LogIn, User, CreditCard, LogOut, AlertTriangle, BarChart3, Building2, Cloud, TrendingUp, Clock, TreePine } from "lucide-react";
@@ -169,13 +169,6 @@ function Index() {
     }
   }, [searchParams]);
 
-  const handleFavoriteRouteSelect = (from: string, to: string) => {
-    setRouteData(prev => ({ ...prev, from, to }));
-    toast({
-      title: "Favoritt-rute valgt",
-      description: `Klar for å planlegge: ${from} → ${to}`,
-    });
-  };
 
   // Auto-select favorite car when user logs in
   useEffect(() => {
@@ -1069,14 +1062,6 @@ function Index() {
                   />
                 </div>
                 
-                {/* Favoritt-ruter - liten og under ruteinformasjon */}
-                <div className="mt-4">
-                  <div className="max-w-sm">
-                    <FavoriteRoutes
-                      onRouteSelect={handleFavoriteRouteSelect}
-                    />
-                  </div>
-                </div>
               </div>
             )}
           </section>
