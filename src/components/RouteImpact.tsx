@@ -189,6 +189,11 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
   const totalReduction = selectedCar.range - adjustedRange;
   const totalReductionPercent = Math.round((1 - combinedFactor) * 100);
 
+  // Beregn individuelle påvirkninger for visualisering
+  const trailerReductionPercent = Math.round((1 - trailerImpact.factor) * 100);
+  const weatherReductionPercent = Math.round((1 - weatherImpact) * 100);
+  const remainingPercent = 100 - totalReductionPercent;
+
   return (
     <Card className="p-6 bg-card/80 backdrop-blur-sm border-border shadow-lg">
       <div className="flex items-center gap-2 mb-4">
@@ -248,42 +253,61 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
             </div>
           </div>
           
-          {/* Visual Energy Loss Bar */}
+          {/* Visual Energy Loss Bar with Separate Colors */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span>Energitap</span>
               <span>{totalReductionPercent}%</span>
             </div>
-            <div className="relative h-3 bg-slate-700 rounded-full overflow-hidden">
-              {/* Base green bar (remaining range) */}
+            <div className="relative h-4 bg-slate-700 rounded-full overflow-hidden">
+              {/* Green bar (remaining efficiency) */}
               <div 
                 className="absolute left-0 top-0 h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-500"
-                style={{ width: `${Math.max(100 - totalReductionPercent, 0)}%` }}
+                style={{ width: `${remainingPercent}%` }}
               />
-              {/* Red bar (energy loss) */}
-              {totalReductionPercent > 0 && (
+              {/* Orange bar (trailer impact) */}
+              {trailerReductionPercent > 0 && (
                 <div 
-                  className="absolute right-0 top-0 h-full bg-gradient-to-r from-orange-500 to-red-500 transition-all duration-500"
-                  style={{ width: `${Math.min(totalReductionPercent, 100)}%` }}
+                  className="absolute top-0 h-full bg-gradient-to-r from-orange-500 to-orange-400 transition-all duration-500"
+                  style={{ 
+                    left: `${remainingPercent}%`,
+                    width: `${trailerReductionPercent}%` 
+                  }}
+                />
+              )}
+              {/* Blue bar (weather impact) */}
+              {weatherReductionPercent > 0 && (
+                <div 
+                  className="absolute top-0 h-full bg-gradient-to-r from-blue-500 to-blue-400 transition-all duration-500"
+                  style={{ 
+                    left: `${remainingPercent + trailerReductionPercent}%`,
+                    width: `${weatherReductionPercent}%` 
+                  }}
                 />
               )}
               {/* Progress indicator */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-xs font-bold text-white drop-shadow-md">
-                  {100 - totalReductionPercent}% effektiv
+                  {remainingPercent}% effektiv
                 </span>
               </div>
             </div>
-            {/* Legend */}
-            <div className="flex items-center justify-between text-xs">
+            {/* Enhanced Legend */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-slate-400">Tilgjengelig ({100 - totalReductionPercent}%)</span>
+                <span className="text-slate-400">Tilgjengelig ({remainingPercent}%)</span>
               </div>
-              {totalReductionPercent > 0 && (
+              {trailerReductionPercent > 0 && (
                 <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-red-400 rounded-full"></div>
-                  <span className="text-slate-400">Tap ({totalReductionPercent}%)</span>
+                  <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                  <span className="text-slate-400">Henger ({trailerReductionPercent}%)</span>
+                </div>
+              )}
+              {weatherReductionPercent > 0 && (
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <span className="text-slate-400">Vær ({weatherReductionPercent}%)</span>
                 </div>
               )}
             </div>
