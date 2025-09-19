@@ -168,7 +168,7 @@ const GoogleRouteMap: React.FC<{
       
       switch(error.code) {
         case error.PERMISSION_DENIED:
-          errorMessage = 'GPS-tilgang nektet. Aktiver stedstjenester i nettleseren.';
+          errorMessage = 'GPS-tilgang nektet! \n\n📱 Slik aktiverer du GPS:\n• Klikk på lås-ikonet ved URL-en\n• Velg "Tillat" for posisjon\n• Last inn siden på nytt';
           setGpsPermission('denied');
           break;
         case error.POSITION_UNAVAILABLE:
