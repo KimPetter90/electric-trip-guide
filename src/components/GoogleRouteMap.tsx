@@ -3,6 +3,10 @@ import { Loader } from '@googlemaps/js-api-loader';
 import { supabase } from '@/integrations/supabase/client';
 import { RouteOptimizer, type OptimizedChargingPlan } from '@/utils/routeCalculation';
 import { type RouteOption } from '@/components/RouteSelector';
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Play, Pause, LocateFixed, Navigation } from "lucide-react";
+import { toast } from "sonner";
 interface CarModel {
   id: string;
   brand: string;
@@ -69,8 +73,139 @@ const GoogleRouteMap: React.FC<{
   const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
   const allMarkersRef = useRef<google.maps.Marker[]>([]);
   const chargingStationMarkersRef = useRef<google.maps.Marker[]>([]);
+  const userLocationMarker = useRef<google.maps.Marker | null>(null);
+  const watchId = useRef<number | null>(null);
   const [isMapInitialized, setIsMapInitialized] = useState(false);
   const [calculatedRoute, setCalculatedRoute] = useState<google.maps.DirectionsResult | null>(null);
+  const [isGPSActive, setIsGPSActive] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsPermission, setGpsPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
+
+  // GPS functions
+  const checkGPSPermission = async () => {
+    if (!navigator.geolocation) {
+      setGpsPermission('denied');
+      return;
+    }
+
+    try {
+      const permission = await navigator.permissions.query({ name: 'geolocation' });
+      setGpsPermission(permission.state);
+    } catch (error) {
+      console.error('Kunne ikke sjekke GPS-tillatelse:', error);
+      setGpsPermission('prompt');
+    }
+  };
+
+  const startGPSTracking = () => {
+    if (!navigator.geolocation) {
+      toast.error('GPS er ikke tilgjengelig på denne enheten');
+      return;
+    }
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 1000
+    };
+
+    const success = (position: GeolocationPosition) => {
+      const { latitude, longitude } = position.coords;
+      const newLocation = { lat: latitude, lng: longitude };
+      
+      setCurrentLocation(newLocation);
+      updateUserLocationOnMap(newLocation);
+      
+      if (!isGPSActive) {
+        setIsGPSActive(true);
+        toast.success('GPS-sporing aktivert');
+      }
+    };
+
+    const error = (error: GeolocationPositionError) => {
+      console.error('GPS-feil:', error);
+      let errorMessage = 'Kunne ikke få GPS-posisjon';
+      
+      switch(error.code) {
+        case error.PERMISSION_DENIED:
+          errorMessage = 'GPS-tilgang nektet. Aktiver stedstjenester i nettleseren.';
+          setGpsPermission('denied');
+          break;
+        case error.POSITION_UNAVAILABLE:
+          errorMessage = 'GPS-posisjon ikke tilgjengelig';
+          break;
+        case error.TIMEOUT:
+          errorMessage = 'GPS-forespørsel tidsavbrudd';
+          break;
+      }
+      
+      toast.error(errorMessage);
+      setIsGPSActive(false);
+    };
+
+    watchId.current = navigator.geolocation.watchPosition(success, error, options);
+  };
+
+  const stopGPSTracking = () => {
+    if (watchId.current !== null) {
+      navigator.geolocation.clearWatch(watchId.current);
+      watchId.current = null;
+    }
+    
+    if (userLocationMarker.current) {
+      userLocationMarker.current.setMap(null);
+      userLocationMarker.current = null;
+    }
+    
+    setIsGPSActive(false);
+    setCurrentLocation(null);
+    toast.info('GPS-sporing stoppet');
+  };
+
+  const updateUserLocationOnMap = (location: { lat: number; lng: number }) => {
+    if (!mapInstanceRef.current) return;
+
+    // Opprett eller oppdater brukerens posisjon-markør
+    if (userLocationMarker.current) {
+      userLocationMarker.current.setPosition(location);
+    } else {
+      userLocationMarker.current = new google.maps.Marker({
+        position: location,
+        map: mapInstanceRef.current,
+        title: 'Din posisjon',
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: '#3b82f6',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 3
+        }
+      });
+
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <div style="padding: 8px;">
+            <h4 style="margin: 0 0 4px 0; color: #3b82f6; font-weight: bold;">📍 Din posisjon</h4>
+            <p style="margin: 0; font-size: 12px;">Lat: ${location.lat.toFixed(6)}</p>
+            <p style="margin: 0; font-size: 12px;">Lng: ${location.lng.toFixed(6)}</p>
+          </div>
+        `
+      });
+
+      userLocationMarker.current.addListener('click', () => {
+        infoWindow.open(mapInstanceRef.current, userLocationMarker.current);
+      });
+    }
+
+    // Sentrer kartet på brukerens posisjon i GPS-modus
+    if (isGPSActive) {
+      mapInstanceRef.current.panTo(location);
+      if (mapInstanceRef.current.getZoom() && mapInstanceRef.current.getZoom()! < 14) {
+        mapInstanceRef.current.setZoom(14);
+      }
+    }
+  };
 
   // Clear markers on unmount
   useEffect(() => {
@@ -80,7 +215,18 @@ const GoogleRouteMap: React.FC<{
       if (directionsRendererRef.current) {
         directionsRendererRef.current.setMap(null);
       }
+      if (userLocationMarker.current) {
+        userLocationMarker.current.setMap(null);
+      }
+      if (watchId.current !== null) {
+        navigator.geolocation.clearWatch(watchId.current);
+      }
     };
+  }, []);
+
+  // Check GPS permission on mount
+  useEffect(() => {
+    checkGPSPermission();
   }, []);
 
   // Initialize Google Maps only once
@@ -1359,6 +1505,43 @@ const GoogleRouteMap: React.FC<{
 
   return (
     <div style={{ width: '100%', height: '500px', position: 'relative' }}>
+      {/* GPS Controls */}
+      <div style={{
+        position: 'absolute',
+        top: '10px',
+        right: '10px',
+        zIndex: 1000,
+        display: 'flex',
+        gap: '8px',
+        alignItems: 'center'
+      }}>
+        {currentLocation && (
+          <Badge variant="outline" className="text-blue-600 border-blue-600">
+            <LocateFixed className="h-3 w-3 mr-1" />
+            GPS aktiv
+          </Badge>
+        )}
+        
+        <Button
+          onClick={isGPSActive ? stopGPSTracking : startGPSTracking}
+          variant={isGPSActive ? "destructive" : "default"}
+          size="sm"
+          disabled={gpsPermission === 'denied'}
+          className="min-w-[120px]"
+        >
+          {isGPSActive ? (
+            <>
+              <Pause className="h-4 w-4 mr-2" />
+              Stopp reise
+            </>
+          ) : (
+            <>
+              <Play className="h-4 w-4 mr-2" />
+              Start reise
+            </>
+          )}
+        </Button>
+      </div>
       <div 
         ref={mapRef} 
         id="google-map-container" 
