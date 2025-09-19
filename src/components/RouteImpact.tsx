@@ -37,6 +37,14 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Automatisk hent værdata når rute planlegges
+  useEffect(() => {
+    if (routeData.from && routeData.to && selectedCar) {
+      console.log('🌤️ Henter værdata automatisk for rute:', routeData.from, '->', routeData.to);
+      fetchWeatherData();
+    }
+  }, [routeData.from, routeData.to, selectedCar]);
+
   const getWeatherIcon = (condition: string) => {
     const iconClass = "h-4 w-4";
     switch (condition.toLowerCase()) {
@@ -57,8 +65,12 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
   };
 
   const fetchWeatherData = async () => {
-    if (!routeData.from || !routeData.to || !routeData.travelDate) return;
+    if (!routeData.from || !routeData.to) {
+      console.log('⚠️ Mangler fra/til data for værhenting');
+      return;
+    }
 
+    console.log('🌤️ Starter værhenting for:', routeData.from, '->', routeData.to);
     setLoading(true);
     setError(null);
 
@@ -70,19 +82,27 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
         throw new Error('Kunne ikke finne koordinater for valgte steder');
       }
 
+      console.log('📍 Koordinater funnet:', { startCoords, endCoords });
+
       const { data, error } = await supabase.functions.invoke('weather-service', {
         body: {
           startLat: startCoords[0],
           startLng: startCoords[1],
           endLat: endCoords[0],
           endLng: endCoords[1],
-          travelDate: routeData.travelDate.toISOString()
+          travelDate: routeData.travelDate?.toISOString() || new Date().toISOString()
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Weather service error:', error);
+        throw error;
+      }
+      
+      console.log('✅ Værdata hentet:', data);
       setWeatherData(data);
     } catch (err: any) {
+      console.error('❌ Feil ved henting av værdata:', err);
       setError(err.message || 'Feil ved henting av værdata');
     } finally {
       setLoading(false);
