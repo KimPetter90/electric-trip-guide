@@ -963,6 +963,13 @@ const GoogleRouteMap: React.FC<{
   // Calculate route when trigger changes - ROBUST and FOOLPROOF
   const calculateRoute = useCallback(async () => {
     console.log('🔍 ROBUST ruteberegning startet');
+    console.log('📱 Device info:', {
+      isMobile: window.innerWidth < 768,
+      userAgent: navigator.userAgent,
+      screenSize: `${window.innerWidth}x${window.innerHeight}`
+    });
+    console.log('🗺️ Route data:', routeData);
+    console.log('🚗 Selected car:', selectedCar);
     
     // Wait for map to be fully initialized
     let attempts = 0;
@@ -970,6 +977,11 @@ const GoogleRouteMap: React.FC<{
     
     while ((!mapInstanceRef.current || !directionsServiceRef.current || !directionsRendererRef.current) && attempts < maxAttempts) {
       console.log(`⏳ Venter på kart initialisering (forsøk ${attempts + 1}/${maxAttempts})`);
+      console.log('🔍 Map instances:', {
+        map: !!mapInstanceRef.current,
+        directionsService: !!directionsServiceRef.current,
+        directionsRenderer: !!directionsRendererRef.current
+      });
       await new Promise(resolve => setTimeout(resolve, 500));
       attempts++;
     }
@@ -985,7 +997,35 @@ const GoogleRouteMap: React.FC<{
       console.log('📊 routeData.to:', routeData.to);
       console.log('📊 selectedCar:', !!selectedCar);
       console.log('📊 routeTrigger:', routeTrigger);
+      console.log('❌ STOPPING: Route calculation requirements not met');
+      onLoadingChange(false);
       return;
+    }
+
+    // Validation specifically for mobile devices
+    if (window.innerWidth < 768) {
+      console.log('📱 MOBILE DEVICE DETECTED - Extra validation');
+      console.log('📱 Route data validation:', {
+        from: routeData.from.trim(),
+        to: routeData.to.trim(),
+        fromLength: routeData.from.trim().length,
+        toLength: routeData.to.trim().length,
+        batteryPercentage: routeData.batteryPercentage
+      });
+      
+      if (!routeData.from.trim() || !routeData.to.trim()) {
+        console.log('❌ MOBILE: Empty route locations detected');
+        onLoadingChange(false);
+        onError('Startsted og destinasjon må fylles ut');
+        return;
+      }
+
+      if (routeData.batteryPercentage <= 0) {
+        console.log('❌ MOBILE: Invalid battery percentage');
+        onLoadingChange(false);
+        onError('Batterinivå må være høyere enn 0%');
+        return;
+      }
     }
 
     console.log('🚀 STARTER GOOGLE MAPS RUTEPLANLEGGING');

@@ -447,10 +447,28 @@ function Index() {
 
   // Enhanced route planning with proper loading states
   const handlePlanRoute = async () => {
+    console.log('🔍 DEBUG: Planning route with:', {
+      selectedCar: selectedCar?.brand + ' ' + selectedCar?.model,
+      from: routeData.from,
+      to: routeData.to,
+      batteryPercentage: routeData.batteryPercentage
+    });
+
     if (!selectedCar || !routeData.from || !routeData.to) {
+      console.log('❌ Missing information for route planning');
       toast({
         title: "Manglende informasjon",
         description: "Vennligst velg bil og angi start- og sluttdestinasjon.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (routeData.batteryPercentage <= 0) {
+      console.log('❌ Battery percentage is 0 or less');
+      toast({
+        title: "Batterinivå påkrevd",
+        description: "Vennligst angi ditt nåværende batterinivå.",
         variant: "destructive",
       });
       return;
@@ -467,13 +485,15 @@ function Index() {
       return;
     }
 
-    console.log('🚀 Starting route planning...');
-    setPlanningRoute(true);
-    setLoadingRoutes(true);
-    
-    try {
-      // Vis kartet først
-      setShowRoute(true);
+      console.log('🚀 Starting route planning...');
+      console.log('📱 Is mobile:', window.innerWidth < 768);
+      setPlanningRoute(true);
+      setLoadingRoutes(true);
+      
+      try {
+        // Vis kartet først
+        console.log('🗺️ Setting showRoute to true');
+        setShowRoute(true);
       
       // Track route planning
       if (user && subscription) {
