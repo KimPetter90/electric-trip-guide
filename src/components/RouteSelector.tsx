@@ -28,6 +28,13 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
 }) => {
   const [expandedRoute, setExpandedRoute] = useState<string | null>(null);
 
+  // Auto-expand the fastest route when it's selected
+  React.useEffect(() => {
+    if (selectedRoute === 'fastest' && expandedRoute !== 'fastest') {
+      setExpandedRoute('fastest');
+    }
+  }, [selectedRoute, expandedRoute]);
+
   if (isLoading) {
     return (
       <div className="space-y-2">
