@@ -1509,7 +1509,7 @@ const GoogleRouteMap: React.FC<{
       <div style={{
         position: 'absolute',
         top: '10px',
-        right: '10px',
+        left: '10px',
         zIndex: 1000,
         display: 'flex',
         gap: '8px',
