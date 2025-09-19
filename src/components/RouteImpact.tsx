@@ -266,7 +266,7 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
             </div>
             <div className="text-right">
               <p className={`text-lg font-bold ${totalReduction > 0 ? 'text-orange-400' : 'text-green-400'}`}>
-                {adjustedRange} km ({selectedCar.range})
+                {adjustedRange} km <span className="text-green-400">({selectedCar.range})</span>
               </p>
               <p className="text-xs text-slate-400">
                 {totalReduction > 0 ? "Med påvirkning" : "Optimal"}
