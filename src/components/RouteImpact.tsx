@@ -250,18 +250,6 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
       </div>
 
       <div className="space-y-4">
-        {/* Base Range Display */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
-          <div>
-            <p className="text-sm text-slate-300">Grunnrekkevidde</p>
-            <p className="text-xs text-slate-400">{selectedCar.brand} {selectedCar.model}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-lg font-bold text-green-400">{selectedCar.range} km</p>
-            <p className="text-xs text-slate-400">WLTP standard</p>
-          </div>
-        </div>
-
         {/* Impact Summary with Visual Progress */}
         <div className="space-y-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
           <div className="flex items-center justify-between">
@@ -278,7 +266,7 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
             </div>
             <div className="text-right">
               <p className={`text-lg font-bold ${totalReduction > 0 ? 'text-orange-400' : 'text-green-400'}`}>
-                {adjustedRange} km
+                {adjustedRange} km ({selectedCar.range})
               </p>
               <p className="text-xs text-slate-400">
                 {totalReduction > 0 ? "Med påvirkning" : "Optimal"}
