@@ -706,8 +706,13 @@ const GoogleRouteMap: React.FC<{
 
   // Add charging station markers - update when route changes
   useEffect(() => {
+    console.log('📱 MOBILE DEBUG - Charging stations useEffect triggered');
+    console.log('📱 Map ready:', !!mapInstanceRef.current);
+    console.log('📱 Stations count:', chargingStations?.length || 0);
+    console.log('📱 First station:', chargingStations?.[0]);
+    
     if (!mapInstanceRef.current || !chargingStations || chargingStations.length === 0) {
-      console.log('❌ Ingen ladestasjoner å vise eller kart ikke klar');
+      console.log('❌ MOBILE - Ingen ladestasjoner å vise eller kart ikke klar');
       return;
     }
 
