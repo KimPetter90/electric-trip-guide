@@ -47,6 +47,8 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
 
   const getWeatherIcon = (condition: string) => {
     const iconClass = "h-4 w-4";
+    if (!condition) return <Cloud className={iconClass} />;
+    
     switch (condition.toLowerCase()) {
       case 'clear': return <Cloud className={iconClass} />;
       case 'clouds': return <Cloud className={iconClass} />;
@@ -368,9 +370,9 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
                     <Cloud className="h-4 w-4 text-blue-400" />
                     <span className="text-sm text-slate-300">Vær</span>
                     <div className="flex items-center gap-1">
-                      {getWeatherIcon(weatherData.averageConditions.condition)}
+                      {getWeatherIcon(weatherData.averageConditions?.condition || 'clear')}
                       <span className="text-xs text-blue-400">
-                        {Math.round(weatherData.averageConditions.temperature)}°C
+                        {Math.round(weatherData.averageConditions?.temperature || 15)}°C
                       </span>
                     </div>
                   </div>
