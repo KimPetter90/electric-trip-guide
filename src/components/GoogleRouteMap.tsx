@@ -118,6 +118,8 @@ const GoogleRouteMap: React.FC<{
 
 
   const startGPSTracking = () => {
+    console.log('🎯 Starter GPS-tracking...');
+    
     if (!navigator.geolocation) {
       toast.error('GPS er ikke tilgjengelig på denne enheten');
       return;
@@ -142,13 +144,20 @@ const GoogleRouteMap: React.FC<{
       const { latitude, longitude } = position.coords;
       const newLocation = { lat: latitude, lng: longitude };
       
+      console.log('🎯 GPS-posisjon mottatt:', {
+        lat: latitude,
+        lng: longitude,
+        accuracy: position.coords.accuracy,
+        timestamp: new Date(position.timestamp)
+      });
+      
       setCurrentLocation(newLocation);
       updateUserLocationOnMap(newLocation);
       
       if (!isGPSActive) {
         setIsGPSActive(true);
         toast.success('🎯 GPS-sporing aktivert!', {
-          description: 'Rød pil følger deg nå i sanntid'
+          description: `Posisjon: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
         });
       }
     };
@@ -194,12 +203,20 @@ const GoogleRouteMap: React.FC<{
   };
 
   const updateUserLocationOnMap = (location: { lat: number; lng: number }) => {
-    if (!mapInstanceRef.current) return;
+    console.log('🗺️ Oppdaterer brukerposisjon på kart:', location);
+    
+    if (!mapInstanceRef.current) {
+      console.log('❌ Kart ikke initialisert ennå');
+      return;
+    }
 
     // Opprett eller oppdater brukerens posisjon-markør
     if (userLocationMarker.current) {
+      console.log('🔄 Oppdaterer eksisterende markør');
       userLocationMarker.current.setPosition(location);
     } else {
+      console.log('🆕 Oppretter ny GPS-markør');
+      
       // Lag en mer iøynefallende stedspil/markør
       userLocationMarker.current = new google.maps.Marker({
         position: location,
@@ -207,26 +224,29 @@ const GoogleRouteMap: React.FC<{
         title: 'Din posisjon - Live GPS',
         icon: {
           path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-          scale: 12,
+          scale: 15,
           fillColor: '#FF0000',
           fillOpacity: 1,
           strokeColor: '#FFFFFF',
-          strokeWeight: 3,
-          rotation: 0 // Kan oppdateres basert på retning
+          strokeWeight: 4,
+          rotation: 0
         },
-        zIndex: 1000 // Høy z-index for å være på toppen
+        zIndex: 9999 // Meget høy z-index
       });
+
+      console.log('✅ GPS-markør opprettet:', userLocationMarker.current);
 
       // Legg til en sirkel rundt markøren for å vise nøyaktighet
       const accuracyCircle = new google.maps.Circle({
-        strokeColor: '#4285F4',
+        strokeColor: '#FF0000',
         strokeOpacity: 0.8,
         strokeWeight: 2,
-        fillColor: '#4285F4',
+        fillColor: '#FF0000',
         fillOpacity: 0.15,
         map: mapInstanceRef.current,
         center: location,
-        radius: 50, // 50 meter radius
+        radius: 25, // 25 meter radius
+        zIndex: 9998
       });
 
       const infoWindow = new google.maps.InfoWindow({
@@ -257,9 +277,10 @@ const GoogleRouteMap: React.FC<{
 
     // Sentrer kartet på brukerens posisjon i GPS-modus
     if (isGPSActive) {
+      console.log('🎯 Sentrerer kart på brukerposisjon');
       mapInstanceRef.current.panTo(location);
-      if (mapInstanceRef.current.getZoom() && mapInstanceRef.current.getZoom()! < 14) {
-        mapInstanceRef.current.setZoom(14);
+      if (mapInstanceRef.current.getZoom() && mapInstanceRef.current.getZoom()! < 16) {
+        mapInstanceRef.current.setZoom(16);
       }
     }
   };
