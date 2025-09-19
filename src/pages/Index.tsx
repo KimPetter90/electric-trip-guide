@@ -16,7 +16,7 @@ import ChargingMap from "@/components/ChargingMap";
 import GoogleRouteMap from "@/components/GoogleRouteMap";
 import { ShareRoute } from "@/components/ShareRoute";
 import { FavoriteRoutes } from "@/components/FavoriteRoutes";
-import FerrySchedule from "@/components/FerrySchedule";
+import ComprehensiveFerrySchedule from "@/components/ComprehensiveFerrySchedule";
 
 import { Zap, Route, MapPin, Car, Battery, LogIn, User, CreditCard, LogOut, AlertTriangle, BarChart3, Building2, Cloud, TrendingUp, Clock, TreePine } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";

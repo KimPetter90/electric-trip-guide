@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, Pause, LocateFixed, Navigation, Ship, Clock } from "lucide-react";
 import { toast } from "sonner";
+import ComprehensiveFerrySchedule from '@/components/ComprehensiveFerrySchedule';
 interface CarModel {
   id: string;
   brand: string;
@@ -80,12 +81,8 @@ const GoogleRouteMap: React.FC<{
   const [isGPSActive, setIsGPSActive] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsPermission, setGpsPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
-  const [ferryInfo, setFerryInfo] = useState<{
-    time: string;
-    operator: string;
-    duration: number;
-    route: string;
-  } | null>(null);
+  const [allFerryTimes, setAllFerryTimes] = useState<any[]>([]);
+  const [showFerrySchedule, setShowFerrySchedule] = useState(false);
 
   // GPS functions
   const checkGPSPermission = async () => {
@@ -103,110 +100,6 @@ const GoogleRouteMap: React.FC<{
     }
   };
 
-  // Ferjetid-logikk
-  const checkFerryTimes = (fromLocation: string, toLocation: string) => {
-    const FERRY_ROUTES = {
-      // Vestlandet
-      'stavanger-tau': {
-        operator: 'Kolumbus',
-        duration: 40,
-        times: ['06:00', '06:30', '07:00', '07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00'],
-        frequency: 'Hver 30. min'
-      },
-      'lavik-oppedal': {
-        operator: 'Fjord1',
-        duration: 20,
-        times: ['05:40', '06:20', '07:00', '07:40', '08:20', '09:00', '09:40', '10:20', '11:00', '11:40', '12:20', '13:00', '13:40', '14:20', '15:00', '15:40', '16:20', '17:00', '17:40', '18:20', '19:00', '19:40', '20:20', '21:00', '21:40', '22:20', '23:00'],
-        frequency: 'Hver 40. min'
-      },
-      'bergen-stavanger': {
-        operator: 'Fjordline',
-        duration: 270,
-        times: ['08:00', '22:30'],
-        frequency: '2 avganger daglig'
-      },
-      'hirtshals-kristiansand': {
-        operator: 'Color Line',
-        duration: 135,
-        times: ['08:30', '14:30', '20:30'],
-        frequency: '2-3 avganger daglig'
-      }
-    };
-
-    const fromLower = fromLocation.toLowerCase();
-    const toLower = toLocation.toLowerCase();
-    let ferryRoute = null;
-
-    // Sjekk om ruten krever ferje
-    for (const routeKey in FERRY_ROUTES) {
-      const [routeFrom, routeTo] = routeKey.split('-');
-      
-      if ((fromLower.includes(routeFrom) && toLower.includes(routeTo)) ||
-          (fromLower.includes(routeTo) && toLower.includes(routeFrom))) {
-        ferryRoute = routeKey;
-        break;
-      }
-      
-      // Spesielle matcher
-      if ((fromLower.includes('stavanger') && toLower.includes('tau')) ||
-          (fromLower.includes('tau') && toLower.includes('stavanger'))) {
-        ferryRoute = 'stavanger-tau';
-        break;
-      }
-      
-      if ((fromLower.includes('bergen') && toLower.includes('stavanger')) ||
-          (fromLower.includes('stavanger') && toLower.includes('bergen'))) {
-        ferryRoute = 'bergen-stavanger';
-        break;
-      }
-      
-      if ((fromLower.includes('lavik') && toLower.includes('oppedal')) ||
-          (fromLower.includes('oppedal') && toLower.includes('lavik'))) {
-        ferryRoute = 'lavik-oppedal';
-        break;
-      }
-    }
-
-    if (ferryRoute && FERRY_ROUTES[ferryRoute]) {
-      const ferryData = FERRY_ROUTES[ferryRoute];
-      const now = new Date();
-      const currentTime = now.getHours() * 60 + now.getMinutes();
-
-      // Finn neste tilgjengelige ferje
-      const nextFerry = ferryData.times.find(time => {
-        const [hours, minutes] = time.split(':').map(Number);
-        const ferryTime = hours * 60 + minutes;
-        return ferryTime > currentTime;
-      });
-
-      if (nextFerry) {
-        const [hours, minutes] = nextFerry.split(':').map(Number);
-        const ferryDate = new Date();
-        ferryDate.setHours(hours, minutes, 0, 0);
-        
-        toast.success(`🚢 Neste ferje: ${nextFerry}`, {
-          description: `${ferryData.operator} - Varighet: ${Math.round(ferryData.duration / 60)} timer`,
-          duration: 8000,
-        });
-        
-        return {
-          time: nextFerry,
-          operator: ferryData.operator,
-          duration: ferryData.duration,
-          route: ferryRoute
-        };
-      } else {
-        // Ingen flere ferjer i dag
-        const firstTomorrow = ferryData.times[0];
-        toast.warning(`⚠️ Ingen flere ferjer i dag`, {
-          description: `Første ferje i morgen: ${firstTomorrow} (${ferryData.operator})`,
-          duration: 8000,
-        });
-      }
-    }
-
-    return null;
-  };
 
   const startGPSTracking = () => {
     if (!navigator.geolocation) {
@@ -216,21 +109,11 @@ const GoogleRouteMap: React.FC<{
 
     // Sjekk ferjetider når reisen starter
     if (routeData?.from && routeData?.to) {
-      const ferryInfoResult = checkFerryTimes(routeData.from, routeData.to);
-      
-      if (ferryInfoResult) {
-        setFerryInfo(ferryInfoResult);
-        toast.info(`🗺️ Reise startet med ferje`, {
-          description: `Neste ferje: ${ferryInfoResult.time} (${ferryInfoResult.operator})`,
-          duration: 5000,
-        });
-      } else {
-        setFerryInfo(null);
-        toast.info(`🗺️ Reise startet`, {
-          description: 'GPS-sporing aktivert - ingen ferjer påkrevd',
-          duration: 3000,
-        });
-      }
+      setShowFerrySchedule(true);
+      toast.info(`🗺️ Reise startet`, {
+        description: 'Ferjeplan vil oppdateres basert på din posisjon',
+        duration: 3000,
+      });
     }
 
     const options = {
@@ -1652,10 +1535,10 @@ const GoogleRouteMap: React.FC<{
           </Badge>
         )}
         
-        {ferryInfo && (
+        {allFerryTimes.length > 0 && (
           <Badge variant="outline" className="text-blue-500 border-blue-500 bg-blue-50">
             <Ship className="h-3 w-3 mr-1" />
-            Ferje {ferryInfo.time}
+            {allFerryTimes.length} ferje{allFerryTimes.length !== 1 ? 'r' : ''}
           </Badge>
         )}
         
@@ -1729,28 +1612,16 @@ const GoogleRouteMap: React.FC<{
         </div>
       )}
       
-      {/* Ferjetid-informasjon */}
-      {ferryInfo && (
-        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <Ship className="h-5 w-5 text-blue-600" />
-            <h4 className="font-semibold text-blue-800">Ferjetider</h4>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-500" />
-              <span><strong>Neste avgang:</strong> {ferryInfo.time}</span>
-            </div>
-            <div>
-              <strong>Operator:</strong> {ferryInfo.operator}
-            </div>
-            <div>
-              <strong>Varighet:</strong> {Math.round(ferryInfo.duration / 60)} timer
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-blue-600">
-            💡 Tip: Vær ved ferjestedet 15 minutter før avgang
-          </div>
+      {/* Omfattende ferjetider */}
+      {showFerrySchedule && routeData?.from && routeData?.to && (
+        <div className="mt-4">
+          <ComprehensiveFerrySchedule
+            fromLocation={routeData.from}
+            toLocation={routeData.to}
+            currentLocation={currentLocation}
+            isGPSActive={isGPSActive}
+            onFerryUpdate={(ferries) => setAllFerryTimes(ferries)}
+          />
         </div>
       )}
     </div>
