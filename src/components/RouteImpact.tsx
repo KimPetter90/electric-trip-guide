@@ -230,6 +230,15 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
   const weatherReductionPercent = Math.round((1 - weatherImpact) * 100);
   const remainingPercent = 100 - totalReductionPercent;
 
+  // Debug logging for weather impact
+  console.log('🌤️ Weather impact debug:', {
+    weatherData: weatherData,
+    weatherImpact: weatherImpact,
+    weatherReductionPercent: weatherReductionPercent,
+    trailerReductionPercent: trailerReductionPercent,
+    totalReductionPercent: totalReductionPercent
+  });
+
   return (
     <Card className="p-6 bg-card/80 backdrop-blur-sm border-border shadow-lg">
       <div className="flex items-center gap-2 mb-4">
@@ -403,7 +412,7 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
                       </span>
                       <Wind className="h-3 w-3 text-blue-400 ml-1" />
                       <span className="text-xs text-blue-400">
-                        {Math.round(weatherData.averageConditions?.windSpeed || 0)} km/h
+                        {Math.round((weatherData.averageConditions?.windSpeed || 0) / 3.6)} m/s
                       </span>
                     </div>
                   </div>
