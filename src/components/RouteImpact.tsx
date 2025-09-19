@@ -189,8 +189,6 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
   const totalReduction = selectedCar.range - adjustedRange;
   const totalReductionPercent = Math.round((1 - combinedFactor) * 100);
 
-  const hasAnyImpact = routeData.trailerWeight > 0 || weatherData;
-
   return (
     <Card className="p-6 bg-card/80 backdrop-blur-sm border-border shadow-lg">
       <div className="flex items-center gap-2 mb-4">
@@ -213,30 +211,44 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
         )}
       </div>
 
-      {!hasAnyImpact ? (
-        <div className="text-center py-4">
-          <p className="text-sm text-slate-400 mb-2">Ingen påvirkningsfaktorer aktive</p>
-          <p className="text-xs text-slate-500">
-            Legg til hengervekt eller velg reisedato for væranalyse
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {/* Combined Impact Summary */}
-          <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
-            <div>
-              <p className="text-sm text-slate-300">Total påvirkning</p>
-              <p className="text-xs text-slate-400">
-                {totalReduction} km reduksjon ({totalReductionPercent}%)
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-lg font-bold text-slate-200">{adjustedRange} km</p>
-              <p className="text-xs text-slate-400">Justert rekkevidde</p>
-            </div>
+      <div className="space-y-4">
+        {/* Base Range Display */}
+        <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+          <div>
+            <p className="text-sm text-slate-300">Grunnrekkevidde</p>
+            <p className="text-xs text-slate-400">{selectedCar.brand} {selectedCar.model}</p>
           </div>
+          <div className="text-right">
+            <p className="text-lg font-bold text-green-400">{selectedCar.range} km</p>
+            <p className="text-xs text-slate-400">WLTP standard</p>
+          </div>
+        </div>
 
-          {/* Individual Impacts */}
+        {/* Impact Summary */}
+        <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+          <div>
+            <p className="text-sm text-slate-300">
+              {totalReduction > 0 ? "Justert rekkevidde" : "Aktuell rekkevidde"}
+            </p>
+            <p className="text-xs text-slate-400">
+              {totalReduction > 0 ? 
+                `${totalReduction} km reduksjon (${totalReductionPercent}%)` : 
+                "Ingen påvirkningsfaktorer aktive"
+              }
+            </p>
+          </div>
+          <div className="text-right">
+            <p className={`text-lg font-bold ${totalReduction > 0 ? 'text-orange-400' : 'text-green-400'}`}>
+              {adjustedRange} km
+            </p>
+            <p className="text-xs text-slate-400">
+              {totalReduction > 0 ? "Med påvirkning" : "Optimal"}
+            </p>
+          </div>
+        </div>
+
+        {/* Individual Impacts - only show when there are actual impacts */}
+        {(routeData.trailerWeight > 0 || weatherData) && (
           <div className="grid grid-cols-2 gap-3">
             {/* Trailer Impact */}
             {routeData.trailerWeight > 0 && (
@@ -289,21 +301,21 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
               </PremiumGate>
             )}
           </div>
+        )}
 
-          {/* Loading/Error States */}
-          {loading && (
-            <div className="text-center py-2">
-              <p className="text-xs text-blue-400">Henter værdata...</p>
-            </div>
-          )}
+        {/* Loading/Error States */}
+        {loading && (
+          <div className="text-center py-2">
+            <p className="text-xs text-blue-400">Henter værdata...</p>
+          </div>
+        )}
 
-          {error && (
-            <div className="text-center py-2">
-              <p className="text-xs text-red-400">{error}</p>
-            </div>
-          )}
-        </div>
-      )}
+        {error && (
+          <div className="text-center py-2">
+            <p className="text-xs text-red-400">{error}</p>
+          </div>
+        )}
+      </div>
     </Card>
   );
 };
