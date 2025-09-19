@@ -326,13 +326,11 @@ function Index() {
     ];
 
     setRouteOptions(mockRoutes);
-    setSelectedRouteId('fastest');
     setLoadingRoutes(false);
     
-    // Trigger map update for the selected route
-    setTimeout(() => {
-      setRouteTrigger(prev => prev + 1);
-    }, 200);
+    // Automatisk velg og vis raskeste rute
+    setSelectedRouteId('fastest');
+    setRouteTrigger(prev => prev + 1);
     
     // Cache resultatet
     try {

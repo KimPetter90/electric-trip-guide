@@ -1765,16 +1765,9 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
 
   // Throttled updateMapRoute for å forhindre for mange API-kall
   const updateMapRoute = async (routeType: string = 'fastest') => {
-    // Clear previous timeout
-    if (routeUpdateTimeoutRef.current) {
-      clearTimeout(routeUpdateTimeoutRef.current);
+    if (!map.current || !accessToken || !routeData.from || !routeData.to || loading) {
+      return;
     }
-
-    // Redusert debounce fra 500ms til 100ms for raskere respons
-    routeUpdateTimeoutRef.current = setTimeout(async () => {
-      if (!map.current || !accessToken || !routeData.from || !routeData.to || loading) {
-        return;
-      }
 
     setLoading(true);
     setError(null);
@@ -3014,7 +3007,6 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       setLoading(false); // Sett loading til false også ved feil
       // IKKE reset andre state-verdier ved feil - la brukeren fortsette
     }
-    }, 100); // Redusert til 100ms for raskere respons
   };
 
   // FJERNET - Bruker nå calculateAllCriticalPoints istedet
@@ -3151,40 +3143,26 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
       isLoading: loading
     });
 
-    // Simplified logic: if we have all requirements and a trigger, plan the route
-    const shouldUpdateRoute = (routeTrigger > 0 || selectedRouteId) && 
-                              map.current && 
+    // Optimalisert logikk: automatisk vis valgt rute
+    const shouldUpdateRoute = map.current && 
                               routeData.from && 
                               routeData.to && 
                               selectedCar && 
                               accessToken && 
-                              !loading;
+                              !loading &&
+                              (routeTrigger > 0 || selectedRouteId === 'fastest');
 
     if (shouldUpdateRoute) {
       console.log('🚀 STARTER RUTEPLANLEGGING:', selectedRouteId || 'fastest');
-      console.log('🗺️ Kart tilstand - map:', !!map.current, 'token:', !!accessToken, 'loading:', loading);
-      console.log('📍 Rute data - from:', routeData.from, 'to:', routeData.to);
-      console.log('🚗 Bil valgt:', selectedCar?.brand, selectedCar?.model);
-      console.log('🔌 Ladestasjoner loaded:', chargingStations.length);
-      
       const routeType = selectedRouteId || 'fastest';
       
-      // Sjekk om ruten faktisk vises på kartet - hvis ikke, kjør beregning på nytt
-      const currentRouteKey = `${routeData.from}-${routeData.to}-${routeType}-${routeData.batteryPercentage}`;
-      const lastRouteKey = sessionStorage.getItem('lastRouteKey');
-      const hasVisibleRoute = currentRoute && currentRoute.distance > 0;
-      
-      if (currentRouteKey !== lastRouteKey || !hasVisibleRoute) {
-        console.log('🆕 Ny rute eller ingen synlig rute, starter beregning...');
-        sessionStorage.setItem('lastRouteKey', currentRouteKey);
-        updateMapRoute(routeType);
-      } else {
-        console.log('♻️ Samme rute allerede beregnet og synlig, hopper over');
-      }
+      // Fjern cache for å sikre ruten alltid oppdateres
+      console.log('🆕 Oppdaterer rute for:', routeType);
+      updateMapRoute(routeType);
     } else {
-      console.log('⏸️ Venter på requirements eller allerede laster...');
+      console.log('⏸️ Venter på requirements...');
     }
-  }, [routeTrigger, selectedRouteId]); // BARE disse dependencies for å unngå loops
+  }, [routeTrigger, selectedRouteId, accessToken, routeData.from, routeData.to, selectedCar, loading]);
 
   if (!isVisible) {
     console.log('🚫 RouteMap ikke synlig - isVisible:', isVisible);
