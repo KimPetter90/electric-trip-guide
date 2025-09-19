@@ -1071,7 +1071,10 @@ function Index() {
         {/* Route Information - alltid synlig, men med 0-verdier når ingen rute er aktiv */}
         <section className="py-12 bg-muted/5" aria-label="Rutestatistikk">
           <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-bold text-center mb-8">Rutestatistikk</h2>
+            <div className="flex items-center justify-center gap-2 mb-8">
+              <BarChart3 className="h-5 w-5 text-primary animate-glow-pulse" />
+              <h2 className="text-2xl font-orbitron font-bold text-gradient animate-glow-pulse">Rutestatistikk</h2>
+            </div>
             {/* 6 futuristiske statistikk-bokser */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <Card className="relative p-4 glass-card border border-blue-500/30 bg-gradient-to-br from-blue-950/20 to-blue-900/10 neon-glow hover-scale">

@@ -108,15 +108,15 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
 
   if (!selectedCar) {
     return (
-      <Card className="p-4 glass-card border border-slate-500/30 bg-gradient-to-br from-slate-950/20 to-slate-900/10">
-        <div className="flex items-center gap-3 mb-3">
+      <Card className="p-6 bg-card/80 backdrop-blur-sm border-border shadow-lg">
+        <div className="flex items-center gap-2 mb-4">
           <div className="flex gap-2">
-            <Cloud className="h-5 w-5 text-slate-400" />
-            <Truck className="h-5 w-5 text-slate-400" />
+            <Cloud className="h-5 w-5 text-primary animate-glow-pulse" />
+            <Truck className="h-5 w-5 text-primary animate-glow-pulse" />
           </div>
-          <h3 className="text-base font-semibold text-slate-300">Påvirkningsanalyse</h3>
+          <h3 className="text-2xl font-orbitron font-bold text-gradient animate-glow-pulse">Påvirkningsanalyse</h3>
         </div>
-        <p className="text-sm text-slate-400">Velg bil for å se påvirkning på rekkevidde</p>
+        <p className="text-muted-foreground">Velg bil for å se påvirkning på rekkevidde</p>
       </Card>
     );
   }
@@ -131,15 +131,13 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
   const hasAnyImpact = routeData.trailerWeight > 0 || weatherData;
 
   return (
-    <Card className="p-4 glass-card border border-slate-500/30 bg-gradient-to-br from-slate-950/20 to-slate-900/10">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="flex gap-2">
-            <Cloud className="h-5 w-5 text-blue-400" />
-            <Truck className="h-5 w-5 text-orange-400" />
-          </div>
-          <h3 className="text-base font-semibold text-slate-200">Påvirkningsanalyse</h3>
+    <Card className="p-6 bg-card/80 backdrop-blur-sm border-border shadow-lg">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="flex gap-2">
+          <Cloud className="h-5 w-5 text-primary animate-glow-pulse" />
+          <Truck className="h-5 w-5 text-primary animate-glow-pulse" />
         </div>
+        <h3 className="text-2xl font-orbitron font-bold text-gradient animate-glow-pulse">Påvirkningsanalyse</h3>
         
         {routeData.from && routeData.to && routeData.travelDate && (
           <Button
@@ -147,7 +145,7 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
             disabled={loading}
             size="sm"
             variant="outline"
-            className="text-xs"
+            className="text-xs ml-auto"
           >
             {loading ? "Henter..." : "Oppdater vær"}
           </Button>
