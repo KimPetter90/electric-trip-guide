@@ -916,7 +916,7 @@ function Index() {
                 </div>
                 
                 {/* Route Impact Section - Påvirkningsanalyse - UNDER kartet */}
-                <div className="mt-8">
+                <div className="mt-16 pt-8">
                   <RouteImpact 
                     selectedCar={selectedCar}
                     routeData={routeData}
