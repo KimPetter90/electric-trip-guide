@@ -22,6 +22,14 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [showBrands, setShowBrands] = useState<boolean>(false);
   const { carModels, loading } = useCarModels();
+  
+  console.log('🚗 CarSelector Debug:', { 
+    carModelsLength: carModels.length, 
+    loading, 
+    selectedCar: !!selectedCar,
+    selectedBrand,
+    showBrands 
+  });
 
   // Group cars by brand
   const carsByBrand = carModels.reduce((acc, car) => {
@@ -90,8 +98,8 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
         )}
       </div>
 
-      {!showBrands && !selectedCar ? (
-        /* Vis bare knappen for å velge bilmerke */
+  {!showBrands && !selectedCar ? (
+        /* Vis bare knappen for å velge bilmerke når ingen bil er valgt */
         <Card className="p-6 glass-card cyber-glow text-center">
           <Car className="h-16 w-16 mx-auto mb-4 text-primary animate-glow-pulse" />
           <h4 className="text-xl font-orbitron font-bold text-gradient mb-2">Ingen bil valgt</h4>
@@ -104,9 +112,10 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
           </p>
           <Button 
             onClick={handleShowBrands}
+            disabled={loading}
             className="bg-gradient-electric text-primary-foreground hover:shadow-neon transition-all duration-300 font-orbitron font-bold"
           >
-            Se tilgjengelige biler
+            {loading ? "Laster..." : "Se tilgjengelige biler"}
           </Button>
         </Card>
       ) : selectedCar ? (
@@ -149,10 +158,19 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
             </div>
           </div>
         </Card>
-      ) : !selectedBrand ? (
+      ) : (showBrands && !selectedBrand) ? (
         /* Brand selection - vertical list */
         <div className="space-y-2">
-          {brands.map((brand) => (
+          {loading ? (
+            <Card className="p-6 glass-card text-center">
+              <p className="text-muted-foreground">Laster bilmerker...</p>
+            </Card>
+          ) : brands.length === 0 ? (
+            <Card className="p-6 glass-card text-center">
+              <p className="text-muted-foreground">Ingen bilmerker funnet</p>
+            </Card>
+          ) : (
+            brands.map((brand) => (
             <Card
               key={brand.name}
               className="p-4 cursor-pointer transition-all duration-300 glass-card border-border hover:cyber-glow hover:border-primary/30 hover:shadow-md"
@@ -172,12 +190,12 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
                 <ArrowLeft className="h-5 w-5 text-primary animate-glow-pulse rotate-180" />
               </div>
             </Card>
-          ))}
+          )))}
         </div>
-      ) : (
+      ) : (showBrands && selectedBrand) ? (
         /* Model selection for selected brand - vertical list */
         <div className="space-y-3">
-          {carsByBrand[selectedBrand].map((car, index) => (
+          {carsByBrand[selectedBrand]?.map((car, index) => (
             <Card
               key={car.id}
               className={`p-4 cursor-pointer transition-all duration-300 ${
@@ -252,9 +270,9 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
                 </div>
               </div>
             </Card>
-          ))}
+          )) || []}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
