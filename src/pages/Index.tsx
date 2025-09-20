@@ -27,6 +27,7 @@ import { Zap, Route, MapPin, Car, Battery, LogIn, User, CreditCard, LogOut, Aler
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 import { type RouteOption } from "@/components/RouteSelector";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
+import SimpleAnalytics from "@/components/SimpleAnalytics";
 
 interface CarModel {
   id: string;
