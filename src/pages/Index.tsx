@@ -824,13 +824,6 @@ function Index() {
               />
             </div>
 
-            {/* Route Impact Section */}
-            <div>
-              <RouteImpact 
-                selectedCar={selectedCar}
-                routeData={routeData}
-              />
-            </div>
           </section>
 
           {/* Right Column - Results */}
@@ -870,6 +863,13 @@ function Index() {
                     </div>
                   </Card>
                 )}
+                
+                {/* Route Impact Section - Påvirkningsanalyse */}
+                <RouteImpact 
+                  selectedCar={selectedCar}
+                  routeData={routeData}
+                />
+                
                 
                 <div data-testid="route-map" className="relative mt-8">
                   {/* Mobile-specific loading indicator */}
