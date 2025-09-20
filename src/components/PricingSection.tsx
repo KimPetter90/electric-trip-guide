@@ -230,6 +230,34 @@ export const PricingSection: React.FC = () => {
     }
   };
 
+  const handleResetSubscription = async () => {
+    if (!user) return;
+    
+    setPortalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('reset-subscription');
+
+      if (error) throw error;
+      
+      toast({
+        title: "Suksess",
+        description: "Abonnement tilbakestilt til gratis nivå",
+      });
+      
+      // Refresh subscription status
+      await refreshSubscription();
+    } catch (error: any) {
+      console.error('Error resetting subscription:', error);
+      toast({
+        title: "Feil",
+        description: "Kunne ikke tilbakestille abonnement. Prøv igjen senere.",
+        variant: "destructive",
+      });
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
   return (
     <section className="py-20 relative overflow-hidden">
       {/* Bakgrunnseffekter */}
@@ -410,21 +438,35 @@ export const PricingSection: React.FC = () => {
           <div className="text-center mt-12 animate-fade-in">
             <Card className="glass-card p-6 max-w-md mx-auto">
               <h3 className="text-lg font-semibold mb-4">Har du allerede et abonnement?</h3>
-              <Button
-                onClick={handleManageSubscription}
-                disabled={portalLoading}
-                variant="outline"
-                className="w-full"
-              >
-                {portalLoading ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <>
-                    <Shield className="h-4 w-4 mr-2" />
-                    Administrer abonnement
-                  </>
-                )}
-              </Button>
+              <div className="space-y-3">
+                <Button
+                  onClick={handleManageSubscription}
+                  disabled={portalLoading}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {portalLoading ? (
+                    <LoadingSpinner size="sm" />
+                  ) : (
+                    <>
+                      <Shield className="h-4 w-4 mr-2" />
+                      Administrer abonnement
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={handleResetSubscription}
+                  disabled={portalLoading}
+                  variant="destructive"
+                  className="w-full"
+                >
+                  {portalLoading ? (
+                    <LoadingSpinner size="sm" />
+                  ) : (
+                    "Kanseller abonnement"
+                  )}
+                </Button>
+              </div>
             </Card>
           </div>
         )}
