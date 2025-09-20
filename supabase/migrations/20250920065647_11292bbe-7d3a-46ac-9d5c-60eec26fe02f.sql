@@ -1,0 +1,3 @@
+UPDATE user_settings 
+SET plan_type = 'premium', subscription_status = 'premium' 
+WHERE user_id = 'c4480d22-5352-4f92-a936-5504a7e2d78e';
