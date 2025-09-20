@@ -914,16 +914,20 @@ function Index() {
                     onError={onError}
                   />
                 </div>
-                
-                {/* Route Impact Section - Påvirkningsanalyse - UNDER kartet */}
-                <RouteImpact 
-                  selectedCar={selectedCar}
-                  routeData={routeData}
-                />
               </div>
             )}
           </section>
         </div>
+        
+        {/* Påvirkningsanalyse - HELT SEPARAT SEKSJON */}
+        {selectedCar && routeData.from && routeData.to && (
+          <section className="container mx-auto px-4 py-8">
+            <RouteImpact 
+              selectedCar={selectedCar}
+              routeData={routeData}
+            />
+          </section>
+        )}
       </main>
 
       {/* Route Statistics - always visible, positioned below main content */}
