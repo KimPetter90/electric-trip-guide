@@ -630,11 +630,7 @@ function Index() {
     } catch (error: any) {
       console.error('❌ Route planning failed:', error);
       setShowRoute(false);
-      toast({
-        title: "Feil ved ruteplanlegging",
-        description: error.message || "Kunne ikke generere ruter. Prøv igjen.",
-        variant: "destructive",
-      });
+      // Toast fjernet
     } finally {
       // Gradvis loading reset for bedre UX
       setTimeout(() => {

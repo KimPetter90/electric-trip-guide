@@ -244,16 +244,10 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
                         e.stopPropagation();
                         if (favoriteCar?.car_id === car.id) {
                           removeFavoriteCar();
-                          toast({
-                            title: "Favoritt fjernet",
-                            description: "Bilen er ikke lenger din favoritt",
-                          });
+                          // Toast fjernet
                         } else {
                           saveFavoriteCar(car);
-                          toast({
-                            title: "Favoritt lagret",
-                            description: `${car.brand} ${car.model} er nå din favorittbil`,
-                          });
+                          // Toast fjernet
                         }
                       }}
                     >
