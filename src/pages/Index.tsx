@@ -199,10 +199,24 @@ function Index() {
 
   // CONDITIONAL RETURNS CAN ONLY HAPPEN AFTER ALL HOOKS
   // Debug admin status
-  console.log('🔍 Admin debug:', { isAdmin, roleLoading, user: !!user });
+  console.log('🔍 Admin debug:', { isAdmin, roleLoading, user: !!user, authLoading: loading });
   
-  // Vis loading først
+  // Vis auth loading først
+  if (loading) {
+    console.log('⏳ Showing auth loading spinner');
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-hero">
+        <div className="text-center space-y-4">
+          <Zap className="h-12 w-12 text-primary animate-spin mx-auto" />
+          <p className="text-lg text-muted-foreground">Laster ElRoute...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Vis role loading deretter
   if (roleLoading) {
+    console.log('⏳ Showing role loading spinner');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -211,27 +225,12 @@ function Index() {
   }
   
   // Vis "coming soon" for alle som ikke er admin
-  if (!isAdmin && !roleLoading) {
+  if (!isAdmin) {
     console.log('🚫 Showing ComingSoon - not admin');
     return <ComingSoon />;
   }
   
   console.log('✅ Showing full app - user is admin');
-
-
-  // CONDITIONAL RETURNS CAN ONLY HAPPEN AFTER ALL HOOKS
-  // Vis "coming soon" for alle som ikke er admin
-  if (!isAdmin && !roleLoading) {
-    return <ComingSoon />;
-  }
-  
-  if (roleLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   // Handle route reset function
   const handleResetRoutes = async () => {
@@ -622,16 +621,6 @@ function Index() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-hero">
-        <div className="text-center space-y-4">
-          <Zap className="h-12 w-12 text-primary animate-spin mx-auto" />
-          <p className="text-lg text-muted-foreground">Laster ElRoute...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-hero relative overflow-hidden">
