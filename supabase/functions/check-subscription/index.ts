@@ -149,8 +149,8 @@ serve(async (req) => {
                 trialEndDate = settings.trial_end_date;
                 daysLeftInTrial = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 3600 * 24)));
                 routeLimit = -1; // Unlimited during trial
-                // Set subscription status to the trial plan type
-                subscriptionStatus = settings.plan_type || 'premium';
+                // Set subscription status to premium during trial
+                subscriptionStatus = 'premium';
               }
             } else {
               logStep("Invalid trial_end_date timestamp, treating as no trial", { trial_end_date: settings.trial_end_date });
