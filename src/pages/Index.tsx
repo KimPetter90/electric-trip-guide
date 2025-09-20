@@ -65,24 +65,11 @@ function Index() {
   const { user, subscription, favoriteCar, signOut, loading, refreshSubscription } = useAuth();
   const { isAdmin, loading: roleLoading } = useAdminRole();
   
-  // Track page view - MUST be before any conditional returns
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   useAnalytics();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  
-  // Vis "coming soon" for alle som ikke er admin
-  if (!isAdmin && !roleLoading) {
-    return <ComingSoon />;
-  }
-  
-  if (roleLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
   
   // All state declarations - MUST be unconditional
   const [selectedCar, setSelectedCar] = useState<CarModel | null>(null);
@@ -108,7 +95,115 @@ function Index() {
   const [tripAnalysis, setTripAnalysis] = useState<any>(null);
   const [mapLoading, setMapLoading] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [chargingStations, setChargingStations] = useState<any[]>([]);
+
+  // Stable callback functions to prevent re-renders
+  const handleChargingStationUpdate = useCallback((station: any, showButton: boolean, optimizedStations?: any[]) => {
+    setCurrentChargingStation(station);
+    setShowChargingButton(showButton);
+    if (optimizedStations) {
+      setOptimizedStations(optimizedStations);
+    }
+  }, []);
   
+  const handleRouteAnalysisUpdate = useCallback((analysis: RouteAnalysis | null) => {
+    setRouteAnalysis(analysis);
+  }, []);
+
+  // Google Maps callbacks - MUST be stable to prevent map reinitialization
+  const onMapLoad = useCallback((map: google.maps.Map) => {
+    console.log('🗺️ Google Maps loaded successfully');
+  }, []);
+
+  const onRouteCalculated = useCallback((analysis: any) => {
+    setTripAnalysis(analysis);
+  }, []);
+
+  const onLoadingChange = useCallback((loading: boolean) => {
+    setMapLoading(loading);
+  }, []);
+
+  const onError = useCallback((error: string | null) => {
+    setMapError(error);
+  }, []);
+
+  // Load charging stations on component mount
+  useEffect(() => {
+    const loadChargingStations = async () => {
+      console.log('📱 MOBILE DEBUG - Loading charging stations...');
+      console.log('📱 Device info:', {
+        isMobile: window.innerWidth < 768,
+        userAgent: navigator.userAgent
+      });
+      
+      try {
+        const { data, error } = await supabase
+          .from('charging_stations')
+          .select('*');
+        
+        if (error) {
+          console.error('❌ MOBILE - Feil ved lasting av ladestasjoner:', error);
+          return;
+        }
+        
+        console.log('✅ MOBILE - Lastet inn', data?.length || 0, 'ladestasjoner');
+        console.log('📱 MOBILE - First station:', data?.[0]);
+        setChargingStations(data || []);
+      } catch (error) {
+        console.error('Feil ved lasting av ladestasjoner:', error);
+      }
+    };
+
+    loadChargingStations();
+  }, []);
+
+  // Handle shared route parameters
+  useEffect(() => {
+    const fromParam = searchParams.get('from');
+    const toParam = searchParams.get('to');
+    
+    if (fromParam) {
+      setRouteData(prev => ({ ...prev, from: decodeURIComponent(fromParam) }));
+    }
+    if (toParam) {
+      setRouteData(prev => ({ ...prev, to: decodeURIComponent(toParam) }));
+    }
+  }, [searchParams]);
+
+  // Auto-select favorite car when user logs in
+  useEffect(() => {
+    if (user && favoriteCar && !selectedCar) {
+      const favoriteCarModel: CarModel = {
+        id: favoriteCar.car_id,
+        brand: favoriteCar.car_brand,
+        model: favoriteCar.car_model,
+        batteryCapacity: favoriteCar.battery_capacity,
+        range: favoriteCar.range_km,
+        consumption: favoriteCar.consumption,
+        image: favoriteCar.car_image || '/placeholder.svg'
+      };
+      setSelectedCar(favoriteCarModel);
+      toast({
+        title: "Favorittbil lastet",
+        description: `${favoriteCar.car_brand} ${favoriteCar.car_model} er valgt automatisk`,
+      });
+    }
+  }, [user, favoriteCar, selectedCar, toast]);
+
+  // CONDITIONAL RETURNS CAN ONLY HAPPEN AFTER ALL HOOKS
+  // Vis "coming soon" for alle som ikke er admin
+  if (!isAdmin && !roleLoading) {
+    return <ComingSoon />;
+  }
+  
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   // Handle route reset function
   const handleResetRoutes = async () => {
     if (!user) {
@@ -154,104 +249,6 @@ function Index() {
       });
     }
   };
-
-  const [chargingStations, setChargingStations] = useState<any[]>([]);
-
-  // Load charging stations on component mount
-  useEffect(() => {
-    const loadChargingStations = async () => {
-      console.log('📱 MOBILE DEBUG - Loading charging stations...');
-      console.log('📱 Device info:', {
-        isMobile: window.innerWidth < 768,
-        userAgent: navigator.userAgent
-      });
-      
-      try {
-        const { data, error } = await supabase
-          .from('charging_stations')
-          .select('*');
-        
-        if (error) {
-          console.error('❌ MOBILE - Feil ved lasting av ladestasjoner:', error);
-          return;
-        }
-        
-        console.log('✅ MOBILE - Lastet inn', data?.length || 0, 'ladestasjoner');
-        console.log('📱 MOBILE - First station:', data?.[0]);
-        setChargingStations(data || []);
-      } catch (error) {
-        console.error('Feil ved lasting av ladestasjoner:', error);
-      }
-    };
-
-    loadChargingStations();
-  }, []);
-
-  // Handle shared route parameters
-  useEffect(() => {
-    const fromParam = searchParams.get('from');
-    const toParam = searchParams.get('to');
-    
-    if (fromParam) {
-      setRouteData(prev => ({ ...prev, from: decodeURIComponent(fromParam) }));
-    }
-    if (toParam) {
-      setRouteData(prev => ({ ...prev, to: decodeURIComponent(toParam) }));
-    }
-  }, [searchParams]);
-
-
-  // Auto-select favorite car when user logs in
-  useEffect(() => {
-    if (user && favoriteCar && !selectedCar) {
-      const favoriteCarModel: CarModel = {
-        id: favoriteCar.car_id,
-        brand: favoriteCar.car_brand,
-        model: favoriteCar.car_model,
-        batteryCapacity: favoriteCar.battery_capacity,
-        range: favoriteCar.range_km,
-        consumption: favoriteCar.consumption,
-        image: favoriteCar.car_image || '/placeholder.svg'
-      };
-      setSelectedCar(favoriteCarModel);
-      toast({
-        title: "Favorittbil lastet",
-        description: `${favoriteCar.car_brand} ${favoriteCar.car_model} er valgt automatisk`,
-      });
-    }
-  }, [user, favoriteCar, selectedCar, toast]);
-
-  // Stable callback functions to prevent re-renders
-  
-  // Stable callback functions to prevent re-renders
-  const handleChargingStationUpdate = useCallback((station: any, showButton: boolean, optimizedStations?: any[]) => {
-    setCurrentChargingStation(station);
-    setShowChargingButton(showButton);
-    if (optimizedStations) {
-      setOptimizedStations(optimizedStations);
-    }
-  }, []);
-  
-  const handleRouteAnalysisUpdate = useCallback((analysis: RouteAnalysis | null) => {
-    setRouteAnalysis(analysis);
-  }, []);
-
-  // Google Maps callbacks - MUST be stable to prevent map reinitialization
-  const onMapLoad = useCallback((map: google.maps.Map) => {
-    console.log('🗺️ Google Maps loaded successfully');
-  }, []);
-
-  const onRouteCalculated = useCallback((analysis: any) => {
-    setTripAnalysis(analysis);
-  }, []);
-
-  const onLoadingChange = useCallback((loading: boolean) => {
-    setMapLoading(loading);
-  }, []);
-
-  const onError = useCallback((error: string | null) => {
-    setMapError(error);
-  }, []);
 
   // Optimalisert generering av rutevalg med caching
   const generateRouteOptions = async () => {
