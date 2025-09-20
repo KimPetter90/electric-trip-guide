@@ -198,17 +198,22 @@ function Index() {
   }, [user, favoriteCar, selectedCar, toast]);
 
   // CONDITIONAL RETURNS CAN ONLY HAPPEN AFTER ALL HOOKS
-  // Sjekk om vi er på produksjon (elroute.no)
+  // Sjekk om vi er i Lovable editor (ikke preview) 
+  const isLovableEditor = window.parent !== window; // iframe = editor
   const isProduction = window.location.hostname === 'elroute.no' || window.location.hostname === 'www.elroute.no';
+  const isLovablePreview = window.location.hostname.includes('lovableproject.com');
   
   // Debug admin status
-  console.log('🔍 Admin debug:', { 
+  console.log('🔍 Environment debug:', { 
     isAdmin, 
     roleLoading, 
     user: !!user, 
     authLoading: loading,
     hostname: window.location.hostname,
-    isProduction 
+    isProduction,
+    isLovablePreview,
+    isLovableEditor,
+    isInFrame: window.parent !== window
   });
   
   // Vis auth loading først
@@ -234,19 +239,19 @@ function Index() {
     );
   }
   
-  // Vis "coming soon" på produksjon for alle
-  if (isProduction) {
-    console.log('🚫 Showing ComingSoon - production environment');
+  // Vis "coming soon" på produksjon og preview (kun full app i Lovable editor)
+  if (isProduction || (isLovablePreview && !isLovableEditor)) {
+    console.log('🚫 Showing ComingSoon - production or external access');
     return <ComingSoon />;
   }
   
-  // På Lovable: Vis "coming soon" for alle som ikke er admin
-  if (!isAdmin) {
-    console.log('🚫 Showing ComingSoon - not admin on dev');
+  // I Lovable editor: Vis "coming soon" for alle som ikke er admin
+  if (!isAdmin && isLovableEditor) {
+    console.log('🚫 Showing ComingSoon - not admin in editor');
     return <ComingSoon />;
   }
   
-  console.log('✅ Showing full app - admin on development');
+  console.log('✅ Showing full app - admin in development editor');
 
   // Handle route reset function
   const handleResetRoutes = async () => {
