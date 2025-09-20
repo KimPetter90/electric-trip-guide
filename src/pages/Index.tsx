@@ -931,7 +931,7 @@ function Index() {
       {hasAnalyticsAccess && (
         <section className="py-12 bg-muted/30" aria-label="Analytics dashboard">
           <div className="container mx-auto px-4">
-            <AnalyticsDashboard />
+            <SimpleAnalytics />
           </div>
         </section>
       )}
