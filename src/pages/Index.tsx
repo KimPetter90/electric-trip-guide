@@ -198,37 +198,52 @@ function Index() {
   }, [user, favoriteCar, selectedCar, toast]);
 
   // CONDITIONAL RETURNS CAN ONLY HAPPEN AFTER ALL HOOKS
-  // Sjekk om vi er på produksjon - dette må være første sjekk!
-  const isProduction = window.location.hostname === 'elroute.no' || 
-                      window.location.hostname === 'www.elroute.no' ||
-                      window.location.href.includes('elroute.no');
   
-  // PRODUKSJON: Vis alltid "coming soon" uansett admin-status
-  if (isProduction) {
-    console.log('🚫 PRODUCTION: Showing ComingSoon - on elroute.no domain');
+  // 🔒 SUPER AGGRESSIV PRODUKSJONSBESKYTTELSE
+  const currentHost = window.location.hostname.toLowerCase();
+  const currentHref = window.location.href.toLowerCase();
+  
+  // ALLE mulige produksjonsdomener
+  const productionDomains = [
+    'elroute.no',
+    'www.elroute.no', 
+    'elroute.com',
+    'www.elroute.com'
+  ];
+  
+  // Sjekk om vi er på produksjon på NOEN måte
+  const isProduction = productionDomains.some(domain => 
+    currentHost === domain || 
+    currentHost.includes(domain) ||
+    currentHref.includes(domain)
+  );
+  
+  // EKSTRA SIKKERHET: Hvis ikke Lovable utviklingsmiljø
+  const isLovableDev = currentHost.includes('lovableproject.com') && window.parent !== window;
+  
+  // PRODUKSJON eller UKJENT miljø: ALLTID "Coming Soon"
+  if (isProduction || !isLovableDev) {
+    console.log('🔒 BLOCKING ACCESS:', { 
+      currentHost, 
+      isProduction, 
+      isLovableDev,
+      reason: isProduction ? 'PRODUCTION_DOMAIN' : 'NOT_LOVABLE_DEV'
+    });
     return <ComingSoon />;
   }
   
-  // Sjekk om vi er i Lovable editor (ikke preview) 
-  const isLovableEditor = window.parent !== window; // iframe = editor
-  const isLovablePreview = window.location.hostname.includes('lovableproject.com');
-  
-  // Debug admin status (kun for development)
-  console.log('🔍 Environment debug:', { 
+  // DEBUG kun for Lovable dev miljø
+  console.log('🔍 DEV Environment debug:', { 
     isAdmin, 
     roleLoading, 
     user: !!user, 
     authLoading: loading,
-    hostname: window.location.hostname,
-    isProduction,
-    isLovablePreview,
-    isLovableEditor,
-    isInFrame: window.parent !== window
+    hostname: currentHost,
+    isLovableDev
   });
   
-  // Vis auth loading først
+  // Vis auth loading
   if (loading) {
-    console.log('⏳ Showing auth loading spinner');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-hero">
         <div className="text-center space-y-4">
@@ -239,9 +254,8 @@ function Index() {
     );
   }
   
-  // Vis role loading deretter
+  // Vis role loading
   if (roleLoading) {
-    console.log('⏳ Showing role loading spinner');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -249,19 +263,13 @@ function Index() {
     );
   }
   
-  // Vis "coming soon" på Lovable preview (eksternt tilgang)
-  if (isLovablePreview && !isLovableEditor) {
-    console.log('🚫 Showing ComingSoon - external Lovable preview');
+  // I Lovable dev: Kun admin får tilgang
+  if (!isAdmin) {
+    console.log('🚫 DEV: Not admin user');
     return <ComingSoon />;
   }
   
-  // I Lovable editor: Vis "coming soon" for alle som ikke er admin
-  if (!isAdmin && isLovableEditor) {
-    console.log('🚫 Showing ComingSoon - not admin in editor');
-    return <ComingSoon />;
-  }
-  
-  console.log('✅ Showing full app - admin in development editor');
+  console.log('✅ DEV: Admin access granted');
 
   // Handle route reset function
   const handleResetRoutes = async () => {
