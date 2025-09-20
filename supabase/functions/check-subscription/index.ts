@@ -310,21 +310,17 @@ serve(async (req) => {
       }
     }
 
-    // For paying customers, override trial status
-    if (hasActiveSub) {
+    // For paying customers, check if they also have an active trial running
+    // This allows users with subscriptions to still have trial access if they activated it
+    if (hasActiveSub && !isTrialActive) {
+      // Only disable trial if no trial is currently active
       isTrialActive = false;
       trialEndDate = null;
       daysLeftInTrial = 0;
-      
-      // Update user settings to disable trial for paying customers
-      await supabaseClient
-        .from('user_settings')
-        .update({ is_trial_active: false })
-        .eq('user_id', user.id);
     }
-    // Adjust route limits for trial users (only if no active subscription)
-    else if (isTrialActive && !hasActiveSub) {
-      routeLimit = -1; // Unlimited routes during trial
+    // Adjust route limits for trial users or subscription users
+    else if (isTrialActive || hasActiveSub) {
+      routeLimit = -1; // Unlimited routes during trial or subscription
     }
 
     return new Response(JSON.stringify({
