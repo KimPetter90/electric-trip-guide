@@ -7,10 +7,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useCarModels, type CarModel } from "@/hooks/useCarModels";
 
-// CarModel importeres nå fra useCarModels hook
-
-// Bilmodeller lastes nå fra database
-
 interface CarSelectorProps {
   selectedCar: CarModel | null;
   onCarSelect: (car: CarModel) => void;
@@ -43,11 +39,11 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
 
   // Get unique brands with their representative images, sorted alphabetically
   const brands = Object.keys(carsByBrand)
-    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())) // Sort brands alphabetically, case-insensitive
+    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
     .map(brand => ({
       name: brand,
       count: carsByBrand[brand].length,
-      image: carsByBrand[brand][0].image // Use first car's image as brand representative
+      image: carsByBrand[brand][0].image
     }));
 
   console.log('🚗 Component rendering with:', {
@@ -61,7 +57,6 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
 
   const handleBrandSelect = (brandName: string) => {
     setSelectedBrand(brandName);
-    // Scroll til toppen av siden når merke er valgt - prøv flere metoder
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       document.documentElement.scrollTop = 0;
@@ -74,27 +69,28 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
   };
 
   const handleShowBrands = () => {
-    setShowBrands(true); // Vis bilmerker når brukeren trykker
+    setShowBrands(true);
   };
 
   const handleDeselectCar = () => {
-    onCarSelect(null as any); // Deselect the car
-    setSelectedBrand(null); // Reset brand selection
-    setShowBrands(false); // Skjul bilmerker igjen
+    onCarSelect(null as any);
+    setSelectedBrand(null);
+    setShowBrands(false);
   };
 
   const handleSelectDifferentCar = () => {
     console.log('🔥 BYTT BIL CLICKED!');
     console.log('🔥 Before state change:', { selectedBrand, showBrands });
-    setSelectedBrand(null); // Reset brand selection
-    setShowBrands(true); // Show brands to select a different car
+    setSelectedBrand(null);
+    setShowBrands(true);
     console.log('🔥 After state change called');
     
-    // Force a small delay to see state change
     setTimeout(() => {
       console.log('🔥 State after timeout:', { selectedBrand, showBrands });
     }, 100);
   };
+
+  console.log('🚗 CarSelector RENDERING!', Date.now());
 
   return (
     <div className="space-y-4">
@@ -116,7 +112,7 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
         )}
       </div>
 
-      {/* Debug info - Uncomment to debug */}
+      {/* Debug info */}
       <div className="text-xs text-muted-foreground mb-4 p-2 bg-muted/20 rounded">
         Debug: selectedCar={!!selectedCar ? 'YES' : 'NO'}, showBrands={showBrands ? 'YES' : 'NO'}, selectedBrand={selectedBrand || 'null'}, loading={loading ? 'YES' : 'NO'}, carModels={carModels.length}
         <br/>
@@ -129,51 +125,56 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
         </div>
       )}
 
+      {/* FIXED LOGIC: selectedCar takes priority over everything else */}
       {selectedCar ? (
-        /* Show the selected car with option to change */
-        <Card className="p-4 glass-card neon-glow border-primary/30 shadow-lg">
-          <div className="flex items-center space-x-4">
-            <span className="text-2xl">{selectedCar.image}</span>
-            
-            <div className="flex-1">
-              <h4 className="text-lg font-orbitron font-bold text-gradient">
-                {selectedCar.brand} {selectedCar.model}
-              </h4>
+        <>
+          <div className="mb-2 p-2 bg-red-500/20 text-red-400 text-sm rounded">
+            🔥 RENDERING SELECTED CAR SECTION - SHOULD SHOW BYTT BIL BUTTON
+          </div>
+          <Card className="p-4 glass-card neon-glow border-primary/30 shadow-lg">
+            <div className="flex items-center space-x-4">
+              <span className="text-2xl">{selectedCar.image}</span>
               
-              <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                <div className="flex items-center gap-1">
-                  <Battery className="h-3 w-3" />
-                  <span className="font-orbitron">{selectedCar.batteryCapacity} kWh</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Zap className="h-3 w-3" />
-                  <span className="font-orbitron">{selectedCar.range} km</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Car className="h-3 w-3" />
-                  <span className="font-orbitron">{selectedCar.consumption} kWh/100km</span>
+              <div className="flex-1">
+                <h4 className="text-lg font-orbitron font-bold text-gradient">
+                  {selectedCar.brand} {selectedCar.model}
+                </h4>
+                
+                <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                  <div className="flex items-center gap-1">
+                    <Battery className="h-3 w-3" />
+                    <span className="font-orbitron">{selectedCar.batteryCapacity} kWh</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Zap className="h-3 w-3" />
+                    <span className="font-orbitron">{selectedCar.range} km</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Car className="h-3 w-3" />
+                    <span className="font-orbitron">{selectedCar.consumption} kWh/100km</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex items-center gap-2">
-              <Badge variant="default" className="text-xs animate-pulse-neon font-orbitron">Valgt</Badge>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  console.log('🔥 Button clicked!', e);
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleSelectDifferentCar();
-                }}
-                className="h-8 px-3 text-xs font-orbitron glass-card hover:neon-glow"
-              >
-                Bytt bil
-              </Button>
+              <div className="flex items-center gap-2">
+                <Badge variant="default" className="text-xs animate-pulse-neon font-orbitron">Valgt</Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    console.log('🔥 Button clicked!', e);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSelectDifferentCar();
+                  }}
+                  className="h-8 px-3 text-xs font-orbitron glass-card hover:neon-glow"
+                >
+                  Bytt bil
+                </Button>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </>
       ) : !showBrands ? (
         /* Show initial button to start car selection */
         <Card className="p-6 glass-card cyber-glow text-center">
@@ -248,7 +249,6 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
                 onCarSelect(car);
                 setSelectedBrand(null);
                 setShowBrands(false);
-                // Scroll til toppen av siden når bil er valgt
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
             >
@@ -317,4 +317,4 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
   );
 }
 
-// CarModel type nå eksportert fra useCarModels hook
+export type { CarModel };
