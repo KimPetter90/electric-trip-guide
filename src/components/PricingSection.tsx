@@ -18,12 +18,12 @@ import {
   Rocket
 } from "lucide-react";
 
-// Pris-konfigurering (fra Stripe)
+// Pris-konfigurering (fra Stripe) - OPTIMALISERT FOR SUKSESS
 const PRICING_PLANS = {
   premium: {
     name: "ElRoute Premium",
     price: 199,
-    priceId: "price_1S9JMqDgjF2NREPhOy9s16kw", // Ny price med trial support
+    priceId: "price_1S9U5rDgjF2NREPhuG6Kvd1Q", // Optimalisert månedlig pris
     description: "Perfekt for private brukere",
     features: [
       "100 ruter per måned",
@@ -34,12 +34,14 @@ const PRICING_PLANS = {
       "E-post support"
     ],
     icon: Star,
-    popular: true
+    popular: true,
+    yearlyPriceId: "price_1S9U6eDgjF2NREPhAgggcpu0", // 15% årlig rabatt
+    studentPriceId: "price_1S9U6yDgjF2NREPhZchK8E4m" // 25% studentrabatt
   },
   pro: {
     name: "ElRoute Pro", 
-    price: 399,
-    priceId: "price_1S9JN2DgjF2NREPhiV6kkPrP", // Ny price med trial support
+    price: 299, // REDUSERT fra 399 NOK!
+    priceId: "price_1S9U6RDgjF2NREPhxe8pPOqz", // Ny optimalisert pris
     description: "For power-brukere og bedrifter",
     features: [
       "Ubegrensede ruter",
@@ -49,10 +51,12 @@ const PRICING_PLANS = {
       "API-tilgang",
       "Ferjeintegrasjon",
       "Eksport til GPX/KML",
-      "Business analytics"
+      "Business analytics",
+      "Rapporter og analytics"
     ],
-    icon: Crown,
-    popular: false
+    icon: Rocket,
+    popular: false,
+    yearlyPriceId: "price_1S9U6oDgjF2NREPhkyi7IeoS" // 15% årlig rabatt
   }
 };
 

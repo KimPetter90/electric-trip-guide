@@ -224,19 +224,31 @@ serve(async (req) => {
       
       logStep("Subscription details", { priceId, priceAmount, productName });
       
-      // Exact price ID mapping first (most reliable)
-      if (priceId === 'price_1S9JN2DgjF2NREPhiV6kkPrP') {
-        // Current Pro plan
+      // Exact price ID mapping first (most reliable) - OPTIMALISERTE PRISER
+      if (priceId === 'price_1S9U6RDgjF2NREPhxe8pPOqz' || priceId === 'price_1S9U6oDgjF2NREPhkyi7IeoS') {
+        // NEW Optimalized Pro plans (monthly & yearly)
         newSubscriptionStatus = 'pro';
         newPlanType = 'pro';
         routeLimit = -1;
-        logStep("Exact PRO price ID match", { priceId });
-      } else if (priceId === 'price_1S9JMqDgjF2NREPhOy9s16kw') {
-        // Current Premium plan
+        logStep("NEW OPTIMALIZED PRO price ID match", { priceId });
+      } else if (priceId === 'price_1S9U5rDgjF2NREPhuG6Kvd1Q' || priceId === 'price_1S9U6eDgjF2NREPhAgggcpu0' || priceId === 'price_1S9U6yDgjF2NREPhZchK8E4m') {
+        // NEW Optimalized Premium plans (monthly, yearly, student)
         newSubscriptionStatus = 'premium';
         newPlanType = 'premium';
         routeLimit = 100;
-        logStep("Exact PREMIUM price ID match", { priceId });
+        logStep("NEW OPTIMALIZED PREMIUM price ID match", { priceId });
+      } else if (priceId === 'price_1S9JN2DgjF2NREPhiV6kkPrP') {
+        // Legacy Pro plan
+        newSubscriptionStatus = 'pro';
+        newPlanType = 'pro';
+        routeLimit = -1;
+        logStep("LEGACY PRO price ID match", { priceId });
+      } else if (priceId === 'price_1S9JMqDgjF2NREPhOy9s16kw') {
+        // Legacy Premium plan
+        newSubscriptionStatus = 'premium';
+        newPlanType = 'premium';
+        routeLimit = 100;
+        logStep("LEGACY PREMIUM price ID match", { priceId });
       }
       // Fallback to price amount or product name
       else if (priceAmount >= 3900 || productName.toLowerCase().includes('pro') || priceId.includes('JN2')) {
