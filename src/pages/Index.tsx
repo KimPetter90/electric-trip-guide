@@ -597,51 +597,10 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-gradient-hero relative overflow-hidden">
-      {/* Header with Auth */}
-      <header className="relative z-50 border-b border-border/20 bg-background/80 backdrop-blur-sm" role="banner">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Zap className="h-6 w-6 text-primary animate-glow-pulse" aria-hidden="true" />
-              <h1 className="text-xl font-orbitron font-bold text-gradient">ElRoute</h1>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              {user ? (
-                <>
-                  <Button variant="outline" size="sm" onClick={() => navigate('/pricing')}>
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    {subscription?.subscription_status === 'free' ? 'Oppgrader' : 'Abonnement'}
-                  </Button>
-                  
-                  <div className="flex items-center space-x-2">
-                    <User className="h-4 w-4" />
-                    <span className="text-sm">{user.email}</span>
-                  </div>
-                  
-                  <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button variant="outline" size="sm" onClick={() => navigate('/business')}>
-                    <Building2 className="h-4 w-4 mr-2" />
-                    Business
-                  </Button>
-                </>
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <Button onClick={() => navigate('/auth')} size="sm">
-                    <LogIn className="h-4 w-4 mr-2" />
-                    Logg inn
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => navigate('/business')}>
-                    <Building2 className="h-4 w-4 mr-2" />
-                    Business
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
+      {/* Enhanced Header */}
+      <header className="relative z-50" role="banner">
+        <div className="container mx-auto px-4 py-6">
+          <EnhancedHeader chargingStationsCount={chargingStations.length} />
         </div>
       </header>
 
