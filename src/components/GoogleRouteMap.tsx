@@ -96,12 +96,12 @@ const GoogleRouteMap: React.FC<{
         // Get API key from Supabase function
         const { data: tokenData, error: tokenError } = await supabase.functions.invoke('google-maps-proxy');
         
-        if (tokenError || !tokenData?.token) {
+        if (tokenError || !tokenData?.apiKey) {
           throw new Error('Kunne ikke hente Google Maps API-nøkkel');
         }
 
         const loader = new Loader({
-          apiKey: tokenData.token,
+          apiKey: tokenData.apiKey,
           version: 'weekly',
           libraries: ['places', 'geometry']
         });
