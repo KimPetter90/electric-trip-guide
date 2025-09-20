@@ -199,47 +199,58 @@ function Index() {
 
   // CONDITIONAL RETURNS CAN ONLY HAPPEN AFTER ALL HOOKS
   
-  // 🔒 SUPER AGGRESSIV PRODUKSJONSBESKYTTELSE
+  // 🔒 ABSOLUTT PRODUKSJONSBESKYTTELSE
   const currentHost = window.location.hostname.toLowerCase();
   const currentHref = window.location.href.toLowerCase();
   
-  // ALLE mulige produksjonsdomener
+  console.log('🌍 FULL URL DEBUG:', {
+    href: window.location.href,
+    hostname: window.location.hostname,
+    host: window.location.host,
+    origin: window.location.origin
+  });
+  
+  // ALLE mulige produksjonsdomener - MER AGGRESSIV
   const productionDomains = [
     'elroute.no',
     'www.elroute.no', 
     'elroute.com',
-    'www.elroute.com'
+    'www.elroute.com',
+    'elroute.npo', // i tilfelle typo
+    'www.elroute.npo'
   ];
   
-  // Sjekk om vi er på produksjon på NOEN måte
+  // Sjekk om vi er på produksjon på NOEN måte - STRENGERE
   const isProduction = productionDomains.some(domain => 
     currentHost === domain || 
-    currentHost.includes(domain) ||
+    currentHost.endsWith(domain) ||
     currentHref.includes(domain)
   );
   
-  // EKSTRA SIKKERHET: Hvis ikke Lovable utviklingsmiljø
-  const isLovableDev = currentHost.includes('lovableproject.com') && window.parent !== window;
+  // KUN Lovable editor får tilgang (ikke preview)
+  const isLovableEditor = currentHost.includes('lovableproject.com') && window.parent !== window;
   
-  // PRODUKSJON eller UKJENT miljø: ALLTID "Coming Soon"
-  if (isProduction || !isLovableDev) {
-    console.log('🔒 BLOCKING ACCESS:', { 
+  // TOTAL BLOKKERING: Alt annet enn Lovable editor
+  if (isProduction || !isLovableEditor) {
+    console.log('🚫 TOTAL BLOCK - INGEN TILGANG:', { 
       currentHost, 
+      currentHref,
       isProduction, 
-      isLovableDev,
-      reason: isProduction ? 'PRODUCTION_DOMAIN' : 'NOT_LOVABLE_DEV'
+      isLovableEditor,
+      productionDomains,
+      reason: isProduction ? 'PRODUCTION_DOMAIN_DETECTED' : 'NOT_LOVABLE_EDITOR'
     });
     return <ComingSoon />;
   }
   
-  // DEBUG kun for Lovable dev miljø
-  console.log('🔍 DEV Environment debug:', { 
+  // DEBUG kun for Lovable editor
+  console.log('🔍 EDITOR Environment debug:', { 
     isAdmin, 
     roleLoading, 
     user: !!user, 
     authLoading: loading,
     hostname: currentHost,
-    isLovableDev
+    isLovableEditor
   });
   
   // Vis auth loading
