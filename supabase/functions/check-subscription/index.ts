@@ -198,6 +198,16 @@ serve(async (req) => {
       productId = subscription.items.data[0].price.product as string;
       const priceId = subscription.items.data[0].price.id;
       
+      // CRITICAL DEBUG: Log everything about the subscription to find the mapping issue
+      logStep("🔍 FULL STRIPE SUBSCRIPTION DEBUG", {
+        subscriptionId: subscription.id,
+        priceId: priceId,
+        productId: productId,
+        fullPrice: subscription.items.data[0].price,
+        subscriptionItems: subscription.items.data,
+        status: subscription.status
+      });
+      
       // Map price IDs and amounts to subscription tiers
       const priceAmount = subscription.items.data[0].price.unit_amount;
       const productName = subscription.items.data[0].price.nickname || 

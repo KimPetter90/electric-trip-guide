@@ -55,7 +55,7 @@ export const EnhancedHeader: React.FC<EnhancedHeaderProps> = ({ chargingStations
       {/* Enhanced Auth/User section */}
       <div className="flex flex-col items-end gap-4 shrink-0 animate-fade-in">
         {/* Premium Status Indicators */}
-        {user && subscription && (console.log('🔥 EnhancedHeader subscription DEBUG:', JSON.stringify(subscription, null, 2)), true) && (
+        {user && subscription && (console.log('🔥 EnhancedHeader subscription DEBUG:', JSON.stringify(subscription, null, 2)), console.log('🔥 Badge should show?', subscription.subscribed || subscription.is_trial_active || subscription.subscription_status !== 'free'), true) && (
           <div className="flex flex-wrap gap-2 justify-end">
             {(subscription.subscribed || subscription.is_trial_active || subscription.subscription_status !== 'free') && (
               <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold animate-pulse">
@@ -67,7 +67,17 @@ export const EnhancedHeader: React.FC<EnhancedHeaderProps> = ({ chargingStations
               {subscription.route_count}/{subscription.route_limit === -1 ? '∞' : subscription.route_limit} ruter
             </Badge>
           </div>
-        )}
+          )}
+          {/* DEBUG BUTTON - temporary */}
+          <button 
+            onClick={() => {
+              console.log('🔍 Current subscription object:', subscription);
+              console.log('🔍 User object:', user);
+            }}
+            className="px-2 py-1 text-xs bg-red-500 text-white rounded"
+          >
+            DEBUG
+          </button>
 
         {loading ? (
           <div className="loading-shimmer rounded-lg p-4 w-32 h-12" />
