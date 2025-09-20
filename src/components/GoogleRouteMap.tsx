@@ -192,11 +192,18 @@ const GoogleRouteMap: React.FC<{
       .sort((a, b) => {
         const availabilityA = a.available / a.total;
         const availabilityB = b.available / b.total;
-        return availabilityB - availabilityA; // Highest availability first
+        
+        // Prioritize stations with >50% availability
+        if (availabilityA >= 0.5 && availabilityB < 0.5) return -1;
+        if (availabilityB >= 0.5 && availabilityA < 0.5) return 1;
+        
+        // Then sort by highest availability
+        return availabilityB - availabilityA;
       })[0];
     
     if (bestStation) {
-      console.log(`🎯 BESTE STASJON LANGS RUTEN: ${bestStation.name}`);
+      const availability = Math.round((bestStation.available / bestStation.total) * 100);
+      console.log(`🎯 BESTE STASJON LANGS RUTEN: ${bestStation.name} (${availability}% tilgjengelig)`);
     }
     
     return bestStation || stationsNearRoute[0]; // Fallback to first station along route
@@ -255,7 +262,7 @@ const GoogleRouteMap: React.FC<{
         position: { lat: station.latitude, lng: station.longitude },
         map: mapInstanceRef.current!,
         icon: markerIcon,
-        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isRecommendedAlongRoute ? '\n⭐ ANBEFALT LANGS RUTEN' : ''}`,
+        title: `${station.name}\n${station.available}/${station.total} tilgjengelig (${Math.round((station.available / station.total) * 100)}%)\n${station.cost} kr/kWh${isRecommendedAlongRoute ? '\n⭐ ANBEFALT LANGS RUTEN' : ''}`,
         zIndex: isRecommendedAlongRoute ? 1000 : (isNearRoute ? 100 : 10)
       });
 
@@ -263,7 +270,7 @@ const GoogleRouteMap: React.FC<{
         content: `
           <div style="padding: 10px; max-width: 250px;">
             <h3 style="margin: 0 0 10px 0; color: #333;">${station.name}</h3>
-            <p><strong>Tilgjengelig:</strong> ${station.available}/${station.total}</p>
+            <p><strong>Tilgjengelig:</strong> ${station.available}/${station.total} (${Math.round((station.available / station.total) * 100)}%)</p>
             <p><strong>Effekt:</strong> ${station.power}</p>
             <p><strong>Pris:</strong> ${station.cost} kr/kWh</p>
             <p><strong>Leverandør:</strong> ${station.provider}</p>
