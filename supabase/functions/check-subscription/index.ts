@@ -310,8 +310,20 @@ serve(async (req) => {
       }
     }
 
-    // Adjust route limits for trial users
-    if (isTrialActive && !hasActiveSub) {
+    // For paying customers, override trial status
+    if (hasActiveSub) {
+      isTrialActive = false;
+      trialEndDate = null;
+      daysLeftInTrial = 0;
+      
+      // Update user settings to disable trial for paying customers
+      await supabaseClient
+        .from('user_settings')
+        .update({ is_trial_active: false })
+        .eq('user_id', user.id);
+    }
+    // Adjust route limits for trial users (only if no active subscription)
+    else if (isTrialActive && !hasActiveSub) {
       routeLimit = -1; // Unlimited routes during trial
     }
 
