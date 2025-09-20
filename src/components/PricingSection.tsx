@@ -135,8 +135,26 @@ export const PricingSection: React.FC = () => {
 
       if (data?.url) {
         console.log('🔗 Opening portal URL:', data.url);
-        // Force navigation to portal URL
-        window.open(data.url, '_self');
+        
+        // Show success message first
+        toast({
+          title: "Åpner portal...",
+          description: "Du blir omdirigert til Stripe Customer Portal.",
+        });
+        
+        // Try immediate redirect
+        try {
+          window.location.replace(data.url);
+        } catch (e) {
+          console.error('Failed to redirect:', e);
+          // Fallback - create a temporary link and click it
+          const link = document.createElement('a');
+          link.href = data.url;
+          link.target = '_self';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
       } else {
         console.error('❌ No URL received in response');
         throw new Error('Ingen portal-URL mottatt');
