@@ -75,22 +75,9 @@ export const PricingSection: React.FC = () => {
     const plan = PRICING_PLANS[planKey];
     setLoading(plan.priceId);
 
-    // Temporary working solution - simulate successful subscription
-    toast({
-      title: "Test: Abonnement aktivert! 🎉",
-      description: `Du har startet ${plan.name} med 14 dagers gratis prøveperiode!`,
-    });
-    
-    // Simulate going to success page
-    setTimeout(() => {
-      window.location.href = '/subscription-success?session_id=test_session_123';
-    }, 2000);
-    
-    setLoading(null);
-
-    /* 
-    // Original Stripe code - will re-enable when Stripe is fixed
     try {
+      console.log(`🚀 Starting subscription for ${plan.name}...`);
+      
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: {
           priceId: plan.priceId,
@@ -98,15 +85,38 @@ export const PricingSection: React.FC = () => {
         }
       });
 
+      console.log('📋 Checkout response:', { data, error });
+
       if (error) throw error;
 
       if (data?.url) {
-        console.log("Stripe URL received:", data.url);
-        alert(`Debug: About to open Stripe URL: ${data.url.substring(0, 50)}...`);
-        window.location.href = data.url;
+        console.log('🔗 Opening checkout URL:', data.url);
+        
+        // Open Stripe checkout in new tab
+        const checkoutWindow = window.open(data.url, '_blank', 'noopener,noreferrer');
+        
+        if (checkoutWindow) {
+          toast({
+            title: "Stripe Checkout åpnet",
+            description: `${plan.name} checkout ble åpnet i en ny fane.`,
+          });
+        } else {
+          // If popup blocked, copy URL
+          try {
+            await navigator.clipboard.writeText(data.url);
+            toast({
+              title: "Lenke kopiert!",
+              description: "Checkout-lenken er kopiert. Lim inn i en ny fane.",
+            });
+          } catch {
+            toast({
+              title: "Popup blokkert",
+              description: `Checkout URL: ${data.url}`,
+            });
+          }
+        }
       } else {
-        console.log("No URL in response:", data);
-        alert("ERROR: No URL received from Stripe!");
+        throw new Error('Ingen checkout-URL mottatt');
       }
     } catch (error: any) {
       console.error('Subscription error:', error);
@@ -118,7 +128,6 @@ export const PricingSection: React.FC = () => {
     } finally {
       setLoading(null);
     }
-    */
   };
 
   const handleManageSubscription = async () => {
