@@ -65,6 +65,12 @@ function Index() {
   const { user, subscription, favoriteCar, signOut, loading, refreshSubscription } = useAuth();
   const { isAdmin, loading: roleLoading } = useAdminRole();
   
+  // Track page view - MUST be before any conditional returns
+  useAnalytics();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  
   // Vis "coming soon" for alle som ikke er admin
   if (!isAdmin && !roleLoading) {
     return <ComingSoon />;
@@ -77,12 +83,6 @@ function Index() {
       </div>
     );
   }
-  
-  // Track page view
-  useAnalytics();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [searchParams] = useSearchParams();
   
   // All state declarations - MUST be unconditional
   const [selectedCar, setSelectedCar] = useState<CarModel | null>(null);
