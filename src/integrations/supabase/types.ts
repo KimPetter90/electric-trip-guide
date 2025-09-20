@@ -186,6 +186,7 @@ export type Database = {
           car_id: string
           car_image: string | null
           car_model: string
+          car_model_id: string | null
           consumption: number
           created_at: string
           id: string
@@ -199,6 +200,7 @@ export type Database = {
           car_id: string
           car_image?: string | null
           car_model: string
+          car_model_id?: string | null
           consumption: number
           created_at?: string
           id?: string
@@ -212,6 +214,7 @@ export type Database = {
           car_id?: string
           car_image?: string | null
           car_model?: string
+          car_model_id?: string | null
           consumption?: number
           created_at?: string
           id?: string
@@ -219,7 +222,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "favorite_car_car_model_id_fkey"
+            columns: ["car_model_id"]
+            isOneToOne: false
+            referencedRelation: "car_models"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       favorite_routes: {
         Row: {
