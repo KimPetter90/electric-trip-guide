@@ -808,7 +808,7 @@ const GoogleRouteMap: React.FC<{
       // Check if this station is critical for 10% battery
       const isCriticalFor10Percent = checkIfCriticalStation(station);
       
-      console.log(`🏪 ${station.name}: anbefalt=${isRecommended}, nær rute=${isNearRoute}, kritisk=${isCriticalFor10Percent}`);
+      // Redusert logging for ytelse
       
       const markerIcon = isCriticalFor10Percent ? {
         // Helt blå markør med gult lyn for kritisk ladestasjon ved 10% batteri

@@ -99,16 +99,10 @@ export class RouteOptimizer {
       
       console.log(`🎯 Leter etter ladestasjon rundt ${optimalDistance.toFixed(1)} km fra start`);
       
-      // Finn beste stasjon rundt optimal avstand - utvidet søkeområde
+      // Finn beste stasjon rundt optimal avstand - tilbake til mindre søkeområde for ytelse
       const nearbyStations = stations.filter(station => {
         const distance = this.estimateDistanceFromStart(station, routeData.from);
-        const isInRange = distance >= (optimalDistance - 100) && distance <= (optimalDistance + 100);
-        
-        if (isInRange) {
-          console.log(`📍 Funnet stasjon: ${station.name} på ${distance.toFixed(1)} km`);
-        }
-        
-        return isInRange;
+        return distance >= (optimalDistance - 50) && distance <= (optimalDistance + 50);
       });
 
       // Sorter etter kvalitet (tilgjengelighet, hurtiglading, pris)
@@ -163,48 +157,29 @@ export class RouteOptimizer {
       if (rankedStations.length > 0) {
         optimalStations.push(rankedStations[0]);
         console.log(`💙 Anbefaler ladestasjon: ${rankedStations[0].station.name}`);
-        console.log(`📍 Avstand fra start: ${rankedStations[0].distanceFromStart.toFixed(1)} km`);
-        console.log(`🔋 Batteri ved ankomst: ${rankedStations[0].batteryLevelOnArrival.toFixed(1)}%`);
-        console.log(`⚡ Energi å lade: ${rankedStations[0].energyNeeded.toFixed(1)} kWh`);
-        console.log(`⏰ Ladetid: ${rankedStations[0].chargingTime} min`);
-        console.log(`💰 Kostnad: ${rankedStations[0].cost.toFixed(0)} kr`);
       } else {
-        // Fallback: Finn nærmeste hurtigladestasjon hvis ingen optimale funnet
-        console.log(`⚠️ Ingen optimale stasjoner funnet, bruker fallback`);
-        const fallbackStations = stations
-          .filter(station => station.fast_charger)
-          .map(station => {
-            const distance = this.estimateDistanceFromStart(station, routeData.from);
-            return { station, distance };
-          })
-          .sort((a, b) => a.distance - b.distance)
-          .slice(0, 1);
+        // Forenklet fallback: Velg en nærliggende hurtigladestasjon
+        const fallbackStation = stations
+          .filter(s => s.fast_charger && this.estimateDistanceFromStart(s, routeData.from) < totalRouteDistance * 0.7)
+          .sort((a, b) => a.cost - b.cost)[0]; // Billigste først
           
-        if (fallbackStations.length > 0) {
-          const fallbackStation = fallbackStations[0].station;
-          const distanceFromStart = fallbackStations[0].distance;
-          
+        if (fallbackStation) {
+          const distance = this.estimateDistanceFromStart(fallbackStation, routeData.from);
           optimalStations.push({
             station: fallbackStation,
-            distanceFromStart,
-            batteryLevelOnArrival: this.calculateBatteryLevelAtDistance(
-              startBatteryKwh,
-              car.batteryCapacity,
-              distanceFromStart,
-              adjustedConsumption
-            ),
-            chargingTime: 30, // Standard ladetid
-            energyNeeded: car.batteryCapacity * 0.5, // Lade til 50%
+            distanceFromStart: distance,
+            batteryLevelOnArrival: 20, // Estimert
+            chargingTime: 30,
+            energyNeeded: car.batteryCapacity * 0.5,
             cost: car.batteryCapacity * 0.5 * fallbackStation.cost,
             isOptimal: false,
             weatherImpact: weatherImpact
           });
-          
-          console.log(`🔧 Fallback ladestasjon: ${fallbackStation.name} på ${distanceFromStart.toFixed(1)} km`);
+          console.log(`🔧 Fallback: ${fallbackStation.name}`);
         }
       }
     } else {
-      console.log(`✅ Ruten (${totalRouteDistance.toFixed(1)} km) kan kjøres uten lading`);
+      console.log(`✅ Kan kjøres uten lading (${totalRouteDistance.toFixed(1)} km)`);
     }
 
     return optimalStations;
