@@ -27,8 +27,9 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
     carModelsLength: carModels.length, 
     loading, 
     selectedCar: !!selectedCar,
+    selectedCarDetails: selectedCar ? { id: selectedCar.id, brand: selectedCar.brand, model: selectedCar.model } : null,
     selectedBrand,
-    showBrands 
+    showBrands
   });
 
   // Group cars by brand
@@ -48,6 +49,15 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
       count: carsByBrand[brand].length,
       image: carsByBrand[brand][0].image // Use first car's image as brand representative
     }));
+
+  console.log('🚗 Component rendering with:', {
+    'selectedCar exists': !!selectedCar,
+    'will show selected car': !!selectedCar,
+    'will show initial button': !selectedCar && !showBrands,
+    'will show brands': !selectedCar && showBrands && !selectedBrand,
+    'will show models': !selectedCar && showBrands && !!selectedBrand,
+    'brandsLength': brands.length
+  });
 
   const handleBrandSelect = (brandName: string) => {
     setSelectedBrand(brandName);
@@ -98,10 +108,18 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
         )}
       </div>
 
-      {/* Debug info */}
-      {/* <div className="text-xs text-muted-foreground mb-4">
-        Debug: selectedCar={!!selectedCar}, showBrands={showBrands}, selectedBrand={selectedBrand}, loading={loading}
-      </div> */}
+      {/* Debug info - Uncomment to debug */}
+      <div className="text-xs text-muted-foreground mb-4 p-2 bg-muted/20 rounded">
+        Debug: selectedCar={!!selectedCar ? 'YES' : 'NO'}, showBrands={showBrands ? 'YES' : 'NO'}, selectedBrand={selectedBrand || 'null'}, loading={loading ? 'YES' : 'NO'}, carModels={carModels.length}
+        <br/>
+        Selected car: {selectedCar ? `${selectedCar.brand} ${selectedCar.model}` : 'NONE'}
+      </div>
+
+      {selectedCar && (
+        <div className="mb-4 p-2 bg-green-500/10 text-green-400 text-sm rounded">
+          🚗 SHOULD SHOW SELECTED CAR: {selectedCar.brand} {selectedCar.model}
+        </div>
+      )}
 
       {selectedCar ? (
         /* Show the selected car with option to change */
