@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { useUserRole } from "@/hooks/useUserRole";
 import CarSelector from "@/components/CarSelector";
 import RouteImpact from "@/components/RouteImpact";
 import RouteInput from "@/components/RouteInput";
@@ -60,6 +61,7 @@ interface RouteAnalysis {
 
 function Index() {
   const { user, subscription, favoriteCar, signOut, loading, refreshSubscription } = useAuth();
+  const { isAdmin, loading: roleLoading } = useUserRole();
   
   // Track page view
   useAnalytics();
@@ -204,8 +206,7 @@ function Index() {
     }
   }, [user, favoriteCar, selectedCar, toast]);
 
-  // Sjekk om brukeren har tilgang til analytics
-  const hasAnalyticsAccess = user?.email === 'kpkopperstad@gmail.com';
+  // Stable callback functions to prevent re-renders
   
   // Stable callback functions to prevent re-renders
   const handleChargingStationUpdate = useCallback((station: any, showButton: boolean, optimizedStations?: any[]) => {
@@ -928,8 +929,8 @@ function Index() {
         </div>
       </section>
 
-      {/* Analytics Dashboard - kun for autoriserte brukere */}
-      {hasAnalyticsAccess && (
+      {/* Analytics Dashboard - kun for admin brukere */}
+      {isAdmin() && !roleLoading && (
         <section className="py-12 bg-muted/30" aria-label="Analytics dashboard">
           <div className="container mx-auto px-4">
             <SimpleAnalytics />
@@ -937,8 +938,8 @@ function Index() {
         </section>
       )}
 
-      {/* Performance & Security Dashboard - Only show for admin */}
-      {user?.email === 'kpkopperstad@gmail.com' && (
+      {/* Performance & Security Dashboard - kun for admin */}
+      {isAdmin() && !roleLoading && (
         <section className="py-20 px-6 bg-gradient-to-b from-background to-muted/20">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">

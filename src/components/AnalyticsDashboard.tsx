@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BarChart3, Users, Eye, TrendingUp, Calendar, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import ApiMonitoring from './ApiMonitoring';
 
@@ -25,12 +26,13 @@ interface AnalyticsDashboardProps {
 
 export default function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
   const { user } = useAuth();
+  const { isAdmin, loading: roleLoading } = useUserRole();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  // Sjekk om brukeren har tilgang (kun for din email)
-  const hasAccess = user?.email === 'kpkopperstad@gmail.com';
+  // Sjekk om brukeren har tilgang (kun admin)
+  const hasAccess = isAdmin() && !roleLoading;
 
   const fetchAnalytics = async (days: number = 30) => {
     if (!hasAccess) return;
