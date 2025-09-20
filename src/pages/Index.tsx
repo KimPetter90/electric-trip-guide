@@ -922,7 +922,7 @@ function Index() {
       
       {/* Påvirkningsanalyse - OVER rutestatistikk */}
       {selectedCar && routeData.from && routeData.to && (
-        <section className="py-8 bg-muted/5" aria-label="Påvirkningsanalyse">
+        <section className="py-12 mt-8 bg-muted/5" aria-label="Påvirkningsanalyse">
           <div className="container mx-auto px-4">
             <RouteImpact 
               selectedCar={selectedCar}
