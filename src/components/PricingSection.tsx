@@ -135,8 +135,8 @@ export const PricingSection: React.FC = () => {
 
       if (data?.url) {
         console.log('🔗 Opening portal URL:', data.url);
-        // Open in same tab to avoid popup blockers
-        window.location.href = data.url;
+        // Force navigation to portal URL
+        window.open(data.url, '_self');
       } else {
         console.error('❌ No URL received in response');
         throw new Error('Ingen portal-URL mottatt');
