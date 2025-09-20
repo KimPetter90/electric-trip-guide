@@ -845,12 +845,6 @@ function Index() {
                   isLoading={loadingRoutes}
                 />
                 
-                {/* Route Impact Section - Påvirkningsanalyse */}
-                <RouteImpact 
-                  selectedCar={selectedCar}
-                  routeData={routeData}
-                />
-                
                 
                 {/* Del rute - vis bare hvis rute er valgt */}
                 {selectedRouteId && routeOptions.length > 0 && (
@@ -919,6 +913,13 @@ function Index() {
                     onLoadingChange={onLoadingChange}
                     onError={onError}
                   />
+                  
+                  {/* Route Impact Section - Påvirkningsanalyse - UNDER kartet */}
+                  <RouteImpact 
+                    selectedCar={selectedCar}
+                    routeData={routeData}
+                  />
+                
                 </div>
               </div>
             )}
