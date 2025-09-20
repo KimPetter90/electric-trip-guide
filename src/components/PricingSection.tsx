@@ -86,8 +86,13 @@ export const PricingSection: React.FC = () => {
       if (error) throw error;
 
       if (data?.url) {
+        console.log("Stripe URL received:", data.url);
+        alert(`Debug: About to open Stripe URL: ${data.url.substring(0, 50)}...`);
         // Åpne Stripe Checkout 
         window.location.href = data.url;
+      } else {
+        console.log("No URL in response:", data);
+        alert("ERROR: No URL received from Stripe!");
       }
     } catch (error: any) {
       console.error('Subscription error:', error);
