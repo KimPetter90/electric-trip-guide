@@ -1,79 +1,103 @@
-import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
-import { CheckCircle, Zap } from 'lucide-react';
+import React, { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { Check, Crown, ArrowRight, Home } from "lucide-react";
 
 export default function SubscriptionSuccess() {
-  const { refreshSubscription } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+  const { user, refreshSubscription } = useAuth();
   const sessionId = searchParams.get('session_id');
 
   useEffect(() => {
-    // Refresh subscription status when landing on success page
-    const timer = setTimeout(() => {
-      refreshSubscription();
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [refreshSubscription]);
+    if (sessionId) {
+      // Refresh subscription status after successful payment
+      setTimeout(() => {
+        refreshSubscription();
+        toast({
+          title: "🎉 Velkommen til Premium!",
+          description: "Ditt abonnement er nå aktivt. Du har tilgang til alle premium-funksjoner.",
+          duration: 5000,
+        });
+      }, 2000);
+    }
+  }, [sessionId, refreshSubscription, toast]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[url('/src/assets/futuristic-ev-bg.jpg')] bg-cover bg-center opacity-10"></div>
+    <div className="min-h-screen hero-gradient relative overflow-hidden flex items-center justify-center">
+      {/* Background effects */}
+      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10 animate-circuit" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
       
-      <Card className="w-full max-w-md relative backdrop-blur-sm border-green-200">
-        <CardHeader className="text-center space-y-4">
-          <div className="flex justify-center">
-            <CheckCircle className="h-16 w-16 text-green-500" />
+      <div className="container mx-auto px-4 relative z-10">
+        <Card className="max-w-2xl mx-auto glass-card p-8 text-center animate-scale-in border-2 border-primary/20">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="p-4 bg-green-500/10 rounded-full border-2 border-green-500/20">
+              <Check className="h-12 w-12 text-green-500 animate-pulse-neon" />
+            </div>
+            <Crown className="h-8 w-8 text-primary animate-float" />
           </div>
-          <div className="flex items-center justify-center space-x-2">
-            <Zap className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-              ElRoute
-            </span>
+          
+          <h1 className="text-4xl font-bold text-gradient font-orbitron mb-4">
+            Betaling vellykket!
+          </h1>
+          
+          <p className="text-xl text-muted-foreground mb-8 max-w-lg mx-auto">
+            Takk for at du oppgraderer til Premium! Du har nå tilgang til alle avanserte funksjoner.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-lg border border-primary/20">
+              <Check className="h-5 w-5 text-green-500" />
+              <span className="text-sm font-medium">Ubegrensede ruter</span>
+            </div>
+            <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-lg border border-primary/20">
+              <Check className="h-5 w-5 text-green-500" />
+              <span className="text-sm font-medium">Værintegrasjon</span>
+            </div>
+            <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-lg border border-primary/20">
+              <Check className="h-5 w-5 text-green-500" />
+              <span className="text-sm font-medium">AI-optimalisering</span>
+            </div>
+            <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-lg border border-primary/20">
+              <Check className="h-5 w-5 text-green-500" />
+              <span className="text-sm font-medium">Prioritert support</span>
+            </div>
           </div>
-          <CardTitle className="text-2xl text-green-700">Abonnement aktivert!</CardTitle>
-          <CardDescription className="text-green-600">
-            Takk for at du oppgraderte til ElRoute Premium/Pro. 
-            Ditt abonnement er nå aktivt og du har tilgang til alle funksjonene.
-            {sessionId && (
-              <span className="block text-xs mt-2 text-muted-foreground">
-                Transaksjon: {sessionId.slice(-8)}
-              </span>
-            )}
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-            <h3 className="font-semibold text-green-800 mb-2">Hva skjer nå?</h3>
-            <ul className="text-sm text-green-700 space-y-1">
-              <li>• Din abonnementsstatus oppdateres automatisk</li>
-              <li>• Du har nå tilgang til alle premium-funksjoner</li>
-              <li>• Du får en bekreftelse på e-post fra Stripe</li>
-            </ul>
-          </div>
-
-          <div className="space-y-2">
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={() => navigate('/')} 
-              className="w-full"
+              onClick={() => navigate('/')}
+              variant="premium"
+              size="lg"
+              className="font-semibold"
             >
-              Gå til ruteplanlegger
+              <ArrowRight className="h-5 w-5 mr-2" />
+              Start planlegging ruter
             </Button>
+            
             <Button 
-              onClick={() => navigate('/pricing')} 
+              onClick={() => navigate('/pricing')}
               variant="outline"
-              className="w-full"
+              size="lg"
+              className="glass-card"
             >
-              Se abonnementsstatus
+              <Home className="h-5 w-5 mr-2" />
+              Se abonnement
             </Button>
           </div>
-        </CardContent>
-      </Card>
+          
+          {sessionId && (
+            <p className="text-xs text-muted-foreground mt-6">
+              Session ID: {sessionId}
+            </p>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }

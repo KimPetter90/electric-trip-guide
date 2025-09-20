@@ -18,6 +18,7 @@ import { ShareRoute } from "@/components/ShareRoute";
 import { EnhancedHeader } from "@/components/EnhancedHeader";
 import { EnhancedRouteInput } from "@/components/EnhancedRouteInput";
 import { EnhancedMapSection } from "@/components/EnhancedMapSection";
+import { PricingSection } from "@/components/PricingSection";
 
 import ComprehensiveFerrySchedule from "@/components/ComprehensiveFerrySchedule";
 
@@ -945,6 +946,11 @@ function Index() {
           </div>
         </section>
       )}
+
+      {/* Pricing Section */}
+      <section className="py-12" aria-label="Abonnement og priser">
+        <PricingSection />
+      </section>
 
       {/* Footer */}
       <footer className="relative bg-card/60 backdrop-blur-sm border-t border-border py-8 mt-16">
