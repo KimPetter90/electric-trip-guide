@@ -66,6 +66,7 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
   };
 
   const handleSelectDifferentCar = () => {
+    setSelectedBrand(null); // Reset brand selection
     setShowBrands(true); // Show brands to select a different car
   };
 
