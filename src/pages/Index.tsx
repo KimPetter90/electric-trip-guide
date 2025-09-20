@@ -198,8 +198,18 @@ function Index() {
   }, [user, favoriteCar, selectedCar, toast]);
 
   // CONDITIONAL RETURNS CAN ONLY HAPPEN AFTER ALL HOOKS
+  // Sjekk om vi er på produksjon (elroute.no)
+  const isProduction = window.location.hostname === 'elroute.no' || window.location.hostname === 'www.elroute.no';
+  
   // Debug admin status
-  console.log('🔍 Admin debug:', { isAdmin, roleLoading, user: !!user, authLoading: loading });
+  console.log('🔍 Admin debug:', { 
+    isAdmin, 
+    roleLoading, 
+    user: !!user, 
+    authLoading: loading,
+    hostname: window.location.hostname,
+    isProduction 
+  });
   
   // Vis auth loading først
   if (loading) {
@@ -224,13 +234,19 @@ function Index() {
     );
   }
   
-  // Vis "coming soon" for alle som ikke er admin
-  if (!isAdmin) {
-    console.log('🚫 Showing ComingSoon - not admin');
+  // Vis "coming soon" på produksjon for alle
+  if (isProduction) {
+    console.log('🚫 Showing ComingSoon - production environment');
     return <ComingSoon />;
   }
   
-  console.log('✅ Showing full app - user is admin');
+  // På Lovable: Vis "coming soon" for alle som ikke er admin
+  if (!isAdmin) {
+    console.log('🚫 Showing ComingSoon - not admin on dev');
+    return <ComingSoon />;
+  }
+  
+  console.log('✅ Showing full app - admin on development');
 
   // Handle route reset function
   const handleResetRoutes = async () => {
