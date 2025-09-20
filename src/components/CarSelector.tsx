@@ -65,6 +65,10 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
     setShowBrands(false); // Skjul bilmerker igjen
   };
 
+  const handleSelectDifferentCar = () => {
+    setShowBrands(true); // Show brands to select a different car
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
@@ -106,10 +110,7 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
         </Card>
       ) : selectedCar ? (
         /* Show only the selected car */
-        <Card 
-          className="p-4 glass-card neon-glow border-primary/30 shadow-lg cursor-pointer hover:bg-primary/15 transition-all duration-300"
-          onClick={handleDeselectCar}
-        >
+        <Card className="p-4 glass-card neon-glow border-primary/30 shadow-lg">
           <div className="flex items-center space-x-4">
             <span className="text-2xl">{selectedCar.image}</span>
             
@@ -134,7 +135,17 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
               </div>
             </div>
 
-            <Badge variant="default" className="text-xs animate-pulse-neon font-orbitron">Valgt</Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="default" className="text-xs animate-pulse-neon font-orbitron">Valgt</Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSelectDifferentCar}
+                className="h-8 px-3 text-xs font-orbitron glass-card hover:neon-glow"
+              >
+                Bytt bil
+              </Button>
+            </div>
           </div>
         </Card>
       ) : !selectedBrand ? (
