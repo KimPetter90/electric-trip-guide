@@ -81,7 +81,7 @@ serve(async (req) => {
       ],
       mode: 'subscription',
       allow_promotion_codes: true,
-      success_url: `${req.headers.get("origin")}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${req.headers.get("origin")}/subscription-success?session_id={CHECKOUT_SESSION_ID}&plan=${priceId.includes('JN2') ? 'pro' : 'premium'}`,
       cancel_url: `${req.headers.get("origin")}/pricing`,
     });
 

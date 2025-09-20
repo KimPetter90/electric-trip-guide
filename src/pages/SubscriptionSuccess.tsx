@@ -12,6 +12,11 @@ export default function SubscriptionSuccess() {
   const { toast } = useToast();
   const { user, refreshSubscription } = useAuth();
   const sessionId = searchParams.get('session_id');
+  
+  // Determine plan type from session or URL
+  const isPro = searchParams.get('plan') === 'pro' || sessionId?.includes('pro') || 
+                window.location.href.includes('pro');
+  const planName = isPro ? 'Pro' : 'Premium';
 
   useEffect(() => {
     if (sessionId) {
@@ -19,13 +24,13 @@ export default function SubscriptionSuccess() {
       setTimeout(() => {
         refreshSubscription();
         toast({
-          title: "🎉 Velkommen til Premium!",
-          description: "Ditt abonnement er nå aktivt. Du har tilgang til alle premium-funksjoner.",
+          title: `🎉 Velkommen til ${planName}!`,
+          description: `Ditt ${planName} abonnement er nå aktivt. Du har tilgang til alle ${planName.toLowerCase()}-funksjoner.`,
           duration: 5000,
         });
       }, 2000);
     }
-  }, [sessionId, refreshSubscription, toast]);
+  }, [sessionId, refreshSubscription, toast, planName]);
 
   return (
     <div className="min-h-screen hero-gradient relative overflow-hidden flex items-center justify-center">
@@ -47,7 +52,7 @@ export default function SubscriptionSuccess() {
           </h1>
           
           <p className="text-xl text-muted-foreground mb-8 max-w-lg mx-auto">
-            Takk for at du oppgraderer til Premium! Du har nå tilgang til alle avanserte funksjoner.
+            Takk for at du oppgraderer til {planName}! Du har nå tilgang til alle avanserte funksjoner.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -71,7 +76,15 @@ export default function SubscriptionSuccess() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={() => navigate('/')}
+              onClick={() => {
+                // Ensure user state is preserved
+                if (user) {
+                  navigate('/');
+                } else {
+                  // If user is somehow lost, wait a bit for auth to sync
+                  setTimeout(() => navigate('/'), 500);
+                }
+              }}
               variant="premium"
               size="lg"
               className="font-semibold"
