@@ -914,15 +914,13 @@ function Index() {
                     onError={onError}
                   />
                 </div>
-                
-                {/* Route Impact Section - Påvirkningsanalyse - UNDER kartet */}
-                <div className="mt-16 pt-8">
-                  <RouteImpact 
-                    selectedCar={selectedCar}
-                    routeData={routeData}
-                  />
-                </div>
               </div>
+              
+              {/* Route Impact Section - Påvirkningsanalyse - HELT UTENFOR map container */}
+              <RouteImpact 
+                selectedCar={selectedCar}
+                routeData={routeData}
+              />
             )}
           </section>
         </div>
