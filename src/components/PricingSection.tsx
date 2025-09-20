@@ -126,12 +126,24 @@ export const PricingSection: React.FC = () => {
 
     setPortalLoading(true);
     try {
+      console.log('🚀 Calling customer-portal function...');
       const { data, error } = await supabase.functions.invoke('customer-portal');
+
+      console.log('📋 Portal response:', { data, error });
 
       if (error) throw error;
 
       if (data?.url) {
-        window.open(data.url, '_blank');
+        console.log('🔗 Opening portal URL:', data.url);
+        const opened = window.open(data.url, '_blank');
+        console.log('✅ Window opened:', !!opened);
+        
+        if (!opened) {
+          console.warn('⚠️ Popup may be blocked. Trying current window...');
+          window.location.href = data.url;
+        }
+      } else {
+        console.error('❌ No URL received in response');
       }
     } catch (error: any) {
       console.error('Portal error:', error);
