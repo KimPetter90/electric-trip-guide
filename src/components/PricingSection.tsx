@@ -57,10 +57,56 @@ const PRICING_PLANS = {
 };
 
 export const PricingSection: React.FC = () => {
-  const { user } = useAuth();
+  const { user, refreshSubscription } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
+
+  const handleTrialStart = async (planType: string) => {
+    if (!user) {
+      toast({
+        title: "Logg inn påkrevd",
+        description: "Du må være innlogget for å starte gratis prøveperiode.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(planType);
+
+    try {
+      console.log(`🎯 Starting ${planType} trial...`);
+      
+      const { data, error } = await supabase.functions.invoke('activate-trial', {
+        body: { planType }
+      });
+
+      console.log('📋 Trial activation response:', { data, error });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast({
+          title: "🎉 Prøveperiode aktivert!",
+          description: `${planType.charAt(0).toUpperCase() + planType.slice(1)} prøveperiode er nå aktiv i 30 dager.`,
+        });
+        
+        // Refresh subscription status to show the trial
+        await refreshSubscription();
+      } else {
+        throw new Error(data?.error || 'Kunne ikke aktivere prøveperiode');
+      }
+    } catch (error: any) {
+      console.error('Trial activation error:', error);
+      toast({
+        title: "Feil ved aktivering",
+        description: error.message || "Kunne ikke aktivere prøveperiode. Prøv igjen.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(null);
+    }
+  };
 
   const handleSubscribe = async (planKey: keyof typeof PRICING_PLANS) => {
     if (!user) {
@@ -295,22 +341,59 @@ export const PricingSection: React.FC = () => {
                   ))}
                 </ul>
 
-                <Button
-                  onClick={() => handleSubscribe(key as keyof typeof PRICING_PLANS)}
-                  disabled={isLoading}
-                  variant={plan.popular ? "premium" : "outline"}
-                  size="lg"
-                  className="w-full font-semibold"
-                >
-                  {isLoading ? (
-                    <LoadingSpinner variant="neon" size="sm" />
-                  ) : (
-                    <>
-                      <Rocket className="h-5 w-5 mr-2" />
-                      Start {plan.popular ? 'Gratis prøveperiode' : 'Abonnement'}
-                    </>
-                  )}
-                </Button>
+                {plan.popular ? (
+                  <div className="space-y-2">
+                    <Button
+                      onClick={() => handleTrialStart(key)}
+                      disabled={isLoading}
+                      variant="premium"
+                      size="lg"
+                      className="w-full font-semibold"
+                    >
+                      {isLoading ? (
+                        <LoadingSpinner variant="neon" size="sm" />
+                      ) : (
+                        <>
+                          <Zap className="h-5 w-5 mr-2" />
+                          Start Gratis prøveperiode
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={() => handleSubscribe(key as keyof typeof PRICING_PLANS)}
+                      disabled={isLoading}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                    >
+                      {isLoading ? (
+                        <LoadingSpinner size="sm" />
+                      ) : (
+                        <>
+                          <Crown className="h-4 w-4 mr-2" />
+                          Kjøp direkte
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={() => handleSubscribe(key as keyof typeof PRICING_PLANS)}
+                    disabled={isLoading}
+                    variant="outline"
+                    size="lg"
+                    className="w-full font-semibold"
+                  >
+                    {isLoading ? (
+                      <LoadingSpinner size="sm" />
+                    ) : (
+                      <>
+                        <Rocket className="h-5 w-5 mr-2" />
+                        Start Abonnement
+                      </>
+                    )}
+                  </Button>
+                )}
 
                 {plan.popular && (
                   <p className="text-xs text-center text-muted-foreground mt-3">
