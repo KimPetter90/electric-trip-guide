@@ -98,28 +98,13 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
         )}
       </div>
 
-  {!showBrands && !selectedCar ? (
-        /* Vis bare knappen for å velge bilmerke når ingen bil er valgt */
-        <Card className="p-6 glass-card cyber-glow text-center">
-          <Car className="h-16 w-16 mx-auto mb-4 text-primary animate-glow-pulse" />
-          <h4 className="text-xl font-orbitron font-bold text-gradient mb-2">Ingen bil valgt</h4>
-          <p className="text-muted-foreground mb-4">
-            {loading ? (
-              "Laster bilmodeller..."
-            ) : (
-              `Velg blant over ${carModels.length} el-bil modeller fra ${brands.length} forskjellige merker`
-            )}
-          </p>
-          <Button 
-            onClick={handleShowBrands}
-            disabled={loading}
-            className="bg-gradient-electric text-primary-foreground hover:shadow-neon transition-all duration-300 font-orbitron font-bold"
-          >
-            {loading ? "Laster..." : "Se tilgjengelige biler"}
-          </Button>
-        </Card>
-      ) : selectedCar ? (
-        /* Show only the selected car */
+      {/* Debug info */}
+      {/* <div className="text-xs text-muted-foreground mb-4">
+        Debug: selectedCar={!!selectedCar}, showBrands={showBrands}, selectedBrand={selectedBrand}, loading={loading}
+      </div> */}
+
+      {selectedCar ? (
+        /* Show the selected car with option to change */
         <Card className="p-4 glass-card neon-glow border-primary/30 shadow-lg">
           <div className="flex items-center space-x-4">
             <span className="text-2xl">{selectedCar.image}</span>
@@ -158,8 +143,28 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
             </div>
           </div>
         </Card>
-      ) : (showBrands && !selectedBrand) ? (
-        /* Brand selection - vertical list */
+      ) : !showBrands ? (
+        /* Show initial button to start car selection */
+        <Card className="p-6 glass-card cyber-glow text-center">
+          <Car className="h-16 w-16 mx-auto mb-4 text-primary animate-glow-pulse" />
+          <h4 className="text-xl font-orbitron font-bold text-gradient mb-2">Ingen bil valgt</h4>
+          <p className="text-muted-foreground mb-4">
+            {loading ? (
+              "Laster bilmodeller..."
+            ) : (
+              `Velg blant over ${carModels.length} el-bil modeller fra ${brands.length} forskjellige merker`
+            )}
+          </p>
+          <Button 
+            onClick={handleShowBrands}
+            disabled={loading}
+            className="bg-gradient-electric text-primary-foreground hover:shadow-neon transition-all duration-300 font-orbitron font-bold"
+          >
+            {loading ? "Laster..." : "Se tilgjengelige biler"}
+          </Button>
+        </Card>
+      ) : !selectedBrand ? (
+        /* Brand selection list */
         <div className="space-y-2">
           {loading ? (
             <Card className="p-6 glass-card text-center">
@@ -171,29 +176,31 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
             </Card>
           ) : (
             brands.map((brand) => (
-            <Card
-              key={brand.name}
-              className="p-4 cursor-pointer transition-all duration-300 glass-card border-border hover:cyber-glow hover:border-primary/30 hover:shadow-md"
-            >
-              <div className="flex items-center space-x-4" onClick={() => handleBrandSelect(brand.name)}>
-                <span className="text-2xl">{brand.image}</span>
-                
-                <div className="flex-1">
-                  <h5 className="text-lg font-orbitron font-bold text-gradient">
-                    {brand.name}
-                  </h5>
-                  <p className="text-sm font-orbitron text-muted-foreground">
-                    {brand.count} modell{brand.count !== 1 ? 'er' : ''}
-                  </p>
+              <Card
+                key={brand.name}
+                className="p-4 cursor-pointer transition-all duration-300 glass-card border-border hover:cyber-glow hover:border-primary/30 hover:shadow-md"
+                onClick={() => handleBrandSelect(brand.name)}
+              >
+                <div className="flex items-center space-x-4">
+                  <span className="text-2xl">{brand.image}</span>
+                  
+                  <div className="flex-1">
+                    <h5 className="text-lg font-orbitron font-bold text-gradient">
+                      {brand.name}
+                    </h5>
+                    <p className="text-sm font-orbitron text-muted-foreground">
+                      {brand.count} modell{brand.count !== 1 ? 'er' : ''}
+                    </p>
+                  </div>
+                  
+                  <ArrowLeft className="h-5 w-5 text-primary animate-glow-pulse rotate-180" />
                 </div>
-                
-                <ArrowLeft className="h-5 w-5 text-primary animate-glow-pulse rotate-180" />
-              </div>
-            </Card>
-          )))}
+              </Card>
+            ))
+          )}
         </div>
-      ) : (showBrands && selectedBrand) ? (
-        /* Model selection for selected brand - vertical list */
+      ) : (
+        /* Model selection for selected brand */
         <div className="space-y-3">
           {carsByBrand[selectedBrand]?.map((car, index) => (
             <Card
@@ -208,6 +215,8 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
               } : {}}
               onClick={() => {
                 onCarSelect(car);
+                setSelectedBrand(null);
+                setShowBrands(false);
                 // Scroll til toppen av siden når bil er valgt
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
@@ -272,7 +281,7 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
             </Card>
           )) || []}
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
