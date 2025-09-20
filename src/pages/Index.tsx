@@ -933,7 +933,7 @@ function Index() {
       )}
 
       {/* Route Statistics - always visible, positioned below main content */}
-      <section className="py-8 mt-4 bg-muted/5" aria-label="Rutestatistikk">
+      <section className="py-8 mt-2 bg-muted/5" aria-label="Rutestatistikk">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-start gap-2 mb-6">
             <BarChart3 className="h-5 w-5 text-primary animate-glow-pulse" />
