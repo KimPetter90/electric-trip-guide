@@ -14,6 +14,8 @@ export const EnhancedHeader: React.FC<EnhancedHeaderProps> = ({ chargingStations
   const { user, subscription, signOut, loading } = useAuth();
   const navigate = useNavigate();
 
+  console.log('🔥 EnhancedHeader debug:', { user: !!user, subscription: !!subscription, subscriptionData: subscription });
+
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
       <div className="flex-1 animate-fade-in">
