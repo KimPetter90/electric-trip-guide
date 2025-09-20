@@ -139,11 +139,33 @@ export const PricingSection: React.FC = () => {
         console.log('✅ Window opened:', !!opened);
         
         if (!opened) {
-          console.warn('⚠️ Popup may be blocked. Trying current window...');
-          window.location.href = data.url;
+          // Show user-friendly message instead of automatic fallback
+          toast({
+            title: "Popup blokkert",
+            description: "Vennligst tillat popup-vinduer eller kopier lenken manuelt.",
+            variant: "destructive",
+          });
+          
+          // Copy URL to clipboard as backup
+          try {
+            await navigator.clipboard.writeText(data.url);
+            toast({
+              title: "Lenke kopiert",
+              description: "Portal-lenken er kopiert til utklippstavlen din.",
+            });
+          } catch (clipboardError) {
+            console.log('Clipboard not available, showing URL in console');
+            console.log('Portal URL:', data.url);
+          }
+        } else {
+          toast({
+            title: "Portal åpnet",
+            description: "Customer Portal ble åpnet i en ny fane.",
+          });
         }
       } else {
         console.error('❌ No URL received in response');
+        throw new Error('Ingen portal-URL mottatt');
       }
     } catch (error: any) {
       console.error('Portal error:', error);
