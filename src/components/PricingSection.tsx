@@ -23,7 +23,7 @@ const PRICING_PLANS = {
   premium: {
     name: "ElRoute Premium",
     price: 199,
-    priceId: "price_1S80tCDgjF2NREPhFod9JnwM", // ElRoute Premium - 199 NOK/mnd
+    priceId: "price_1S9JMqDgjF2NREPhOy9s16kw", // Ny price med trial support
     description: "Perfekt for private brukere",
     features: [
       "100 ruter per måned",
@@ -39,7 +39,7 @@ const PRICING_PLANS = {
   pro: {
     name: "ElRoute Pro", 
     price: 399,
-    priceId: "price_1S80tNDgjF2NREPhc16tZZVw", // ElRoute Pro - 399 NOK/mnd
+    priceId: "price_1S9JN2DgjF2NREPhiV6kkPrP", // Ny price med trial support
     description: "For power-brukere og bedrifter",
     features: [
       "Ubegrensede ruter",
