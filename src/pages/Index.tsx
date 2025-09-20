@@ -619,16 +619,22 @@ function Index() {
                       variant="outline" 
                       size="sm" 
                       onClick={() => navigate('/pricing')}
-                      className="relative bg-gradient-to-r from-background/50 to-background/80 backdrop-blur-sm border-primary/30 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/20"
+                      className={`relative transition-all duration-300 hover:shadow-lg ${
+                        subscription?.is_trial_active 
+                          ? 'bg-gradient-to-r from-orange-500/10 to-orange-600/10 border-orange-400/50 hover:border-orange-400/70 hover:shadow-orange-500/20' 
+                          : 'bg-gradient-to-r from-background/50 to-background/80 backdrop-blur-sm border-primary/30 hover:border-primary/50 hover:shadow-primary/20'
+                      }`}
                     >
-                      <CreditCard className="h-4 w-4 mr-2 text-primary" />
+                      <CreditCard className={`h-4 w-4 mr-2 ${subscription?.is_trial_active ? 'text-orange-500' : 'text-primary'}`} />
                       <span className="font-medium">
                         {subscription?.subscription_status === 'free' ? 'Oppgrader' : 'Abonnement'}
                       </span>
                       {subscription?.is_trial_active && subscription?.days_left_in_trial !== undefined && (
-                        <Badge className="ml-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 text-xs px-2 py-1 shadow-md animate-glow-pulse">
-                          {subscription.days_left_in_trial}d
-                        </Badge>
+                        <div className="ml-2 flex items-center">
+                          <Badge className="bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 px-3 py-1 shadow-lg animate-glow-pulse font-semibold">
+                            ⭐ PREMIUM {subscription.days_left_in_trial}d
+                          </Badge>
+                        </div>
                       )}
                     </Button>
                     
