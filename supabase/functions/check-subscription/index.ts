@@ -205,25 +205,57 @@ serve(async (req) => {
       
       logStep("Subscription details", { priceId, priceAmount, productName });
       
-      // Determine tier based on price amount or product name
-      if (priceAmount >= 3900 || productName.toLowerCase().includes('pro') || priceId.includes('JN2')) {
+      // Exact price ID mapping first (most reliable)
+      if (priceId === 'price_1S9JN2DgjF2NREPhiV6kkPrP') {
+        // Current Pro plan
         newSubscriptionStatus = 'pro';
         newPlanType = 'pro';
-        routeLimit = -1; // Unlimited
-      } else if (priceAmount >= 1900 || productName.toLowerCase().includes('premium') || priceId.includes('JMq')) {
+        routeLimit = -1;
+        logStep("Exact PRO price ID match", { priceId });
+      } else if (priceId === 'price_1S9JMqDgjF2NREPhOy9s16kw') {
+        // Current Premium plan
         newSubscriptionStatus = 'premium';
         newPlanType = 'premium';
         routeLimit = 100;
+        logStep("Exact PREMIUM price ID match", { priceId });
+      }
+      // Fallback to price amount or product name
+      else if (priceAmount >= 3900 || productName.toLowerCase().includes('pro') || priceId.includes('JN2')) {
+        newSubscriptionStatus = 'pro';
+        newPlanType = 'pro';
+        routeLimit = -1; // Unlimited
+        logStep("Mapped to PRO tier via fallback", { priceAmount, productName, priceId });
+      } 
+      // Premium tier: 1900-3899 (19-38.99 NOK)
+      else if (priceAmount >= 1900 || productName.toLowerCase().includes('premium') || priceId.includes('JMq')) {
+        newSubscriptionStatus = 'premium';
+        newPlanType = 'premium';
+        routeLimit = 100;
+        logStep("Mapped to PREMIUM tier via fallback", { priceAmount, productName, priceId });
       } else {
         // Legacy price ID mappings for existing customers
         if (priceId === 'price_1S80tCDgjF2NREPhFod9JnwM') {
           newSubscriptionStatus = 'premium';
           newPlanType = 'premium';
           routeLimit = 100;
+          logStep("Legacy PREMIUM mapping", { priceId });
         } else if (priceId === 'price_1S80tNDgjF2NREPhc16tZZVw') {
           newSubscriptionStatus = 'pro';
           newPlanType = 'pro';
           routeLimit = -1;
+          logStep("Legacy PRO mapping", { priceId });
+        } else {
+          // Default fallback - check price amount again
+          logStep("No tier match found, using price amount fallback", { priceAmount, priceId, productName });
+          if (priceAmount && priceAmount >= 3900) {
+            newSubscriptionStatus = 'pro';
+            newPlanType = 'pro';
+            routeLimit = -1;
+          } else {
+            newSubscriptionStatus = 'premium';
+            newPlanType = 'premium';
+            routeLimit = 100;
+          }
         }
       }
       
