@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import ComingSoon from "@/components/ComingSoon";
 import { useToast } from "@/hooks/use-toast";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -63,6 +64,19 @@ interface RouteAnalysis {
 function Index() {
   const { user, subscription, favoriteCar, signOut, loading, refreshSubscription } = useAuth();
   const { isAdmin, loading: roleLoading } = useAdminRole();
+  
+  // Vis "coming soon" for alle som ikke er admin
+  if (!isAdmin && !roleLoading) {
+    return <ComingSoon />;
+  }
+  
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
   
   // Track page view
   useAnalytics();
