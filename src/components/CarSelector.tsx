@@ -127,11 +127,8 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
 
       {/* FIXED LOGIC: selectedCar takes priority over everything else */}
       {selectedCar ? (
-        <>
-          <div className="mb-2 p-2 bg-red-500/20 text-red-400 text-sm rounded">
-            🔥 RENDERING SELECTED CAR SECTION - SHOULD SHOW BYTT BIL BUTTON
-          </div>
-          <Card className="p-4 glass-card neon-glow border-primary/30 shadow-lg">
+        <Card className="p-4 glass-card neon-glow border-primary/30 shadow-lg">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <span className="text-2xl">{selectedCar.image}</span>
               
@@ -155,29 +152,20 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
                   </div>
                 </div>
               </div>
-
-              <div className="flex items-center gap-2">
-                <Badge variant="default" className="text-xs animate-pulse-neon font-orbitron">Valgt</Badge>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    console.log('🔥 CRITICAL: Button clicked!', e);
-                    console.log('🔥 CRITICAL: Event target:', e.target);
-                    console.log('🔥 CRITICAL: Current target:', e.currentTarget);
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleSelectDifferentCar();
-                  }}
-                  className="h-8 px-3 text-xs font-orbitron glass-card hover:neon-glow relative z-50 cursor-pointer"
-                  style={{ pointerEvents: 'auto' }}
-                >
-                  Bytt bil
-                </Button>
-              </div>
             </div>
-          </Card>
-        </>
+            
+            <button
+              onClick={() => {
+                console.log('🔥 NATIVE BUTTON CLICKED!');
+                setSelectedBrand(null);
+                setShowBrands(true);
+              }}
+              className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/80 text-sm font-medium shrink-0"
+            >
+              Bytt bil
+            </button>
+          </div>
+        </Card>
       ) : !showBrands ? (
         /* Show initial button to start car selection */
         <Card className="p-6 glass-card cyber-glow text-center">
