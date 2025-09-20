@@ -113,16 +113,19 @@ const GoogleRouteMap: React.FC<{
         const map = new google.maps.Map(mapRef.current, {
           center: center,
           zoom: zoom,
-          mapTypeId: google.maps.MapTypeId.ROADMAP,
-          styles: [
-            {
-              featureType: 'poi',
-              elementType: 'labels',
-              stylers: [{ visibility: 'off' }]
-            }
-          ],
+          mapTypeId: google.maps.MapTypeId.HYBRID,
           zoomControl: true,
-          mapTypeControl: false,
+          mapTypeControl: true,
+          mapTypeControlOptions: {
+            style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+            position: google.maps.ControlPosition.TOP_CENTER,
+            mapTypeIds: [
+              google.maps.MapTypeId.ROADMAP,
+              google.maps.MapTypeId.SATELLITE,
+              google.maps.MapTypeId.HYBRID,
+              google.maps.MapTypeId.TERRAIN
+            ]
+          },
           scaleControl: true,
           streetViewControl: false,
           rotateControl: false,
