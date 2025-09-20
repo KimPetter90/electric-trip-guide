@@ -606,33 +606,35 @@ function Index() {
               <h1 className="text-xl font-orbitron font-bold text-gradient">ElRoute</h1>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               {user ? (
                 <>
                   {subscription?.is_trial_active && subscription?.days_left_in_trial !== undefined && (
-                    <Badge variant="default" className="bg-gradient-to-r from-primary/90 to-accent text-white animate-glow-pulse">
-                      Premium prøveperiode: {subscription.days_left_in_trial} dager igjen
+                    <Badge className="bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 animate-glow-pulse">
+                      Premium: {subscription.days_left_in_trial} dager igjen
                     </Badge>
                   )}
                   
-                  <Button variant="outline" size="sm" onClick={() => navigate('/pricing')}>
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    {subscription?.subscription_status === 'free' ? 'Oppgrader' : 'Abonnement'}
-                  </Button>
-                  
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                     <User className="h-4 w-4" />
-                    <span className="text-sm">{user.email}</span>
+                    <span className="max-w-32 truncate">{user.email}</span>
                   </div>
                   
-                  <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button variant="outline" size="sm" onClick={() => navigate('/business')}>
-                    <Building2 className="h-4 w-4 mr-2" />
-                    Business
-                  </Button>
+                  <div className="flex items-center space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => navigate('/pricing')}>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      {subscription?.subscription_status === 'free' ? 'Oppgrader' : 'Abonnement'}
+                    </Button>
+                    
+                    <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                      <LogOut className="h-4 w-4" />
+                    </Button>
+                    
+                    <Button variant="outline" size="sm" onClick={() => navigate('/business')}>
+                      <Building2 className="h-4 w-4 mr-2" />
+                      Business
+                    </Button>
+                  </div>
                 </>
               ) : (
                 <div className="flex items-center space-x-2">
