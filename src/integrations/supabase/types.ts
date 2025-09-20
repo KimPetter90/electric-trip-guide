@@ -41,6 +41,93 @@ export type Database = {
         }
         Relationships: []
       }
+      car_models: {
+        Row: {
+          acceleration_0_100_kmh: number | null
+          available_in_norway: boolean | null
+          battery_capacity_kwh: number
+          brand: string
+          brand_logo_url: string | null
+          car_id: string
+          car_image_url: string | null
+          consumption_kwh_per_100km: number
+          created_at: string
+          height_mm: number | null
+          id: string
+          image_emoji: string | null
+          is_active: boolean | null
+          length_mm: number | null
+          max_charging_speed_kw: number | null
+          model: string
+          range_km: number
+          seats: number | null
+          starting_price_nok: number | null
+          top_speed_kmh: number | null
+          trunk_space_liters: number | null
+          updated_at: string
+          variant: string | null
+          weight_kg: number | null
+          width_mm: number | null
+          year: number | null
+        }
+        Insert: {
+          acceleration_0_100_kmh?: number | null
+          available_in_norway?: boolean | null
+          battery_capacity_kwh: number
+          brand: string
+          brand_logo_url?: string | null
+          car_id: string
+          car_image_url?: string | null
+          consumption_kwh_per_100km: number
+          created_at?: string
+          height_mm?: number | null
+          id?: string
+          image_emoji?: string | null
+          is_active?: boolean | null
+          length_mm?: number | null
+          max_charging_speed_kw?: number | null
+          model: string
+          range_km: number
+          seats?: number | null
+          starting_price_nok?: number | null
+          top_speed_kmh?: number | null
+          trunk_space_liters?: number | null
+          updated_at?: string
+          variant?: string | null
+          weight_kg?: number | null
+          width_mm?: number | null
+          year?: number | null
+        }
+        Update: {
+          acceleration_0_100_kmh?: number | null
+          available_in_norway?: boolean | null
+          battery_capacity_kwh?: number
+          brand?: string
+          brand_logo_url?: string | null
+          car_id?: string
+          car_image_url?: string | null
+          consumption_kwh_per_100km?: number
+          created_at?: string
+          height_mm?: number | null
+          id?: string
+          image_emoji?: string | null
+          is_active?: boolean | null
+          length_mm?: number | null
+          max_charging_speed_kw?: number | null
+          model?: string
+          range_km?: number
+          seats?: number | null
+          starting_price_nok?: number | null
+          top_speed_kmh?: number | null
+          trunk_space_liters?: number | null
+          updated_at?: string
+          variant?: string | null
+          weight_kg?: number | null
+          width_mm?: number | null
+          year?: number | null
+        }
+        Relationships: []
+      }
       charging_stations: {
         Row: {
           address: string | null
