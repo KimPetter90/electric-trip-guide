@@ -625,10 +625,7 @@ function Index() {
       console.log('📱 MOBILE DEBUG - Calling generateRouteOptions');
       await generateRouteOptions();
       
-      toast({
-        title: "✅ Ruter generert!",
-        description: "Rutevalg er klar. Velg din foretrukne rute.",
-      });
+      // Toast-melding fjernet på brukerens ønske
       
     } catch (error: any) {
       console.error('❌ Route planning failed:', error);
