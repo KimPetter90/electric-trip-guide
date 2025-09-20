@@ -58,14 +58,24 @@ serve(async (req) => {
       logStep("Creating new customer");
     }
 
-    // Create checkout session with the actual price ID from frontend
+    // Create checkout session - use price_data for reliable test mode
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: priceId, // Use the actual price ID from frontend
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: priceId.includes('JN2') ? 'ElRoute Pro' : 'ElRoute Premium',
+              description: priceId.includes('JN2') ? 'For power-brukere og bedrifter' : 'Perfekt for private brukere'
+            },
+            unit_amount: priceId.includes('JN2') ? 3990 : 1990, // Pro: $39.90, Premium: $19.90
+            recurring: {
+              interval: 'month',
+            },
+          },
           quantity: 1,
         },
       ],
