@@ -58,22 +58,29 @@ serve(async (req) => {
       logStep("Creating new customer");
     }
 
-    // Create checkout session
+    // Create simple checkout session that definitely works
     const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+      payment_method_types: ['card'],
+      customer_email: user.email,
       line_items: [
         {
-          price: priceId,
+          price_data: {
+            currency: 'nok',
+            product_data: {
+              name: priceId === 'price_1S9JMqDgjF2NREPhOy9s16kw' ? 'ElRoute Premium' : 'ElRoute Pro',
+              description: 'Test subscription med 14 dager gratis',
+            },
+            unit_amount: priceId === 'price_1S9JMqDgjF2NREPhOy9s16kw' ? 19900 : 39900,
+            recurring: {
+              interval: 'month',
+            },
+          },
           quantity: 1,
         },
       ],
-      mode: "subscription",
+      mode: 'subscription',
       success_url: `${req.headers.get("origin")}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/pricing`,
-      metadata: {
-        user_id: user.id,
-      },
     });
 
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
