@@ -86,8 +86,8 @@ export const PricingSection: React.FC = () => {
       if (error) throw error;
 
       if (data?.url) {
-        // Åpne Stripe Checkout i ny fane
-        window.open(data.url, '_blank');
+        // Åpne Stripe Checkout 
+        window.location.href = data.url;
       }
     } catch (error: any) {
       console.error('Subscription error:', error);
