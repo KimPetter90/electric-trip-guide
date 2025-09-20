@@ -913,14 +913,13 @@ function Index() {
                     onLoadingChange={onLoadingChange}
                     onError={onError}
                   />
-                  
-                  {/* Route Impact Section - Påvirkningsanalyse - UNDER kartet */}
-                  <RouteImpact 
-                    selectedCar={selectedCar}
-                    routeData={routeData}
-                  />
-                
                 </div>
+                
+                {/* Route Impact Section - Påvirkningsanalyse - UNDER kartet */}
+                <RouteImpact 
+                  selectedCar={selectedCar}
+                  routeData={routeData}
+                />
               </div>
             )}
           </section>
