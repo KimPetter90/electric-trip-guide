@@ -51,7 +51,22 @@ export const EnhancedHeader: React.FC<EnhancedHeaderProps> = ({ chargingStations
       </div>
 
       {/* Enhanced Auth/User section */}
-      <div className="flex items-center gap-4 shrink-0 animate-fade-in">
+      <div className="flex flex-col items-end gap-4 shrink-0 animate-fade-in">
+        {/* Premium Status Indicators */}
+        {user && subscription && (
+          <div className="flex flex-wrap gap-2 justify-end">
+            {subscription.subscribed && (
+              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold animate-pulse">
+                ⭐ {subscription.subscription_status.toUpperCase()}
+                {subscription.is_trial_active && ` TRIAL (${subscription.days_left_in_trial} dager)`}
+              </Badge>
+            )}
+            <Badge variant="outline" className="glass-card">
+              {subscription.route_count}/{subscription.route_limit === -1 ? '∞' : subscription.route_limit} ruter
+            </Badge>
+          </div>
+        )}
+
         {loading ? (
           <div className="loading-shimmer rounded-lg p-4 w-32 h-12" />
         ) : user ? (
@@ -67,6 +82,9 @@ export const EnhancedHeader: React.FC<EnhancedHeaderProps> = ({ chargingStations
                 )}
               </div>
             </div>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/pricing')} className="hover:bg-primary/10">
+              <CreditCard className="h-4 w-4" />
+            </Button>
             <Button variant="ghost" size="sm" onClick={signOut} className="hover:bg-destructive/10">
               <LogOut className="h-4 w-4" />
             </Button>
