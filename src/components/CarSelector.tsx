@@ -157,6 +157,7 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
             <button
               onClick={() => {
                 console.log('🔥 NATIVE BUTTON CLICKED!');
+                onCarSelect(null as any); // Clear the selected car
                 setSelectedBrand(null);
                 setShowBrands(true);
               }}
