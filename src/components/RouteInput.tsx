@@ -360,11 +360,11 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
               if (value === '') {
                 handleInputChange('batteryPercentage', 0);
               } else {
-                const numValue = parseInt(value);
+                const numValue = parseFloat(value);
                 if (isNaN(numValue)) {
                   handleInputChange('batteryPercentage', 0);
                 } else {
-                  const finalValue = Math.max(0, Math.min(100, numValue));
+                  const finalValue = Math.max(1, Math.min(100, Math.round(numValue)));
                   handleInputChange('batteryPercentage', finalValue);
                 }
               }
