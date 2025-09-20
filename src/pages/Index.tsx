@@ -177,9 +177,9 @@ function Index() {
     }
   }, [searchParams]);
 
-  // Auto-select favorite car when user logs in
+  // Auto-select favorite car when user logs in (only once)
   useEffect(() => {
-    if (user && favoriteCar && !selectedCar) {
+    if (user && favoriteCar && selectedCar === null) {
       const favoriteCarModel: CarModel = {
         id: favoriteCar.car_id,
         brand: favoriteCar.car_brand,
@@ -195,7 +195,7 @@ function Index() {
         description: `${favoriteCar.car_brand} ${favoriteCar.car_model} er valgt automatisk`,
       });
     }
-  }, [user, favoriteCar, selectedCar, toast]);
+  }, [user, favoriteCar, toast]); // Removed selectedCar from dependencies!
 
   // CONDITIONAL RETURNS CAN ONLY HAPPEN AFTER ALL HOOKS
   
