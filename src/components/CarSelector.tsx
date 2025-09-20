@@ -19,14 +19,6 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
   const [showBrands, setShowBrands] = useState<boolean>(false);
   const { carModels, loading } = useCarModels();
   
-  console.log('🚗 CarSelector Debug:', { 
-    carModelsLength: carModels.length, 
-    loading, 
-    selectedCar: !!selectedCar,
-    selectedCarDetails: selectedCar ? { id: selectedCar.id, brand: selectedCar.brand, model: selectedCar.model } : null,
-    selectedBrand,
-    showBrands
-  });
 
   // Group cars by brand
   const carsByBrand = carModels.reduce((acc, car) => {
@@ -46,14 +38,6 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
       image: carsByBrand[brand][0].image
     }));
 
-  console.log('🚗 Component rendering with:', {
-    'selectedCar exists': !!selectedCar,
-    'will show selected car': !!selectedCar,
-    'will show initial button': !selectedCar && !showBrands,
-    'will show brands': !selectedCar && showBrands && !selectedBrand,
-    'will show models': !selectedCar && showBrands && !!selectedBrand,
-    'brandsLength': brands.length
-  });
 
   const handleBrandSelect = (brandName: string) => {
     setSelectedBrand(brandName);
@@ -79,18 +63,11 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
   };
 
   const handleSelectDifferentCar = () => {
-    console.log('🔥 BYTT BIL CLICKED!');
-    console.log('🔥 Before state change:', { selectedBrand, showBrands });
     setSelectedBrand(null);
     setShowBrands(true);
-    console.log('🔥 After state change called');
-    
-    setTimeout(() => {
-      console.log('🔥 State after timeout:', { selectedBrand, showBrands });
-    }, 100);
   };
 
-  console.log('🚗 CarSelector RENDERING!', Date.now());
+  
 
   return (
     <div className="space-y-4">
@@ -112,20 +89,6 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
         )}
       </div>
 
-      {/* Debug info */}
-      <div className="text-xs text-muted-foreground mb-4 p-2 bg-muted/20 rounded">
-        Debug: selectedCar={!!selectedCar ? 'YES' : 'NO'}, showBrands={showBrands ? 'YES' : 'NO'}, selectedBrand={selectedBrand || 'null'}, loading={loading ? 'YES' : 'NO'}, carModels={carModels.length}
-        <br/>
-        Selected car: {selectedCar ? `${selectedCar.brand} ${selectedCar.model}` : 'NONE'}
-      </div>
-
-      {selectedCar && (
-        <div className="mb-4 p-2 bg-green-500/10 text-green-400 text-sm rounded">
-          🚗 SHOULD SHOW SELECTED CAR: {selectedCar.brand} {selectedCar.model}
-        </div>
-      )}
-
-      {/* FIXED LOGIC: selectedCar takes priority over everything else */}
       {selectedCar ? (
         <Card className="p-4 glass-card neon-glow border-primary/30 shadow-lg">
           <div className="flex items-center justify-between">
@@ -156,7 +119,6 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
             
             <button
               onClick={() => {
-                console.log('🔥 NATIVE BUTTON CLICKED!');
                 onCarSelect(null as any); // Clear the selected car
                 setSelectedBrand(null);
                 setShowBrands(true);

@@ -230,14 +230,6 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
   const weatherReductionPercent = Math.round((1 - weatherImpact) * 100);
   const remainingPercent = 100 - totalReductionPercent;
 
-  // Debug logging for weather impact
-  console.log('🌤️ Weather impact debug:', {
-    weatherData: weatherData,
-    weatherImpact: weatherImpact,
-    weatherReductionPercent: weatherReductionPercent,
-    trailerReductionPercent: trailerReductionPercent,
-    totalReductionPercent: totalReductionPercent
-  });
 
   return (
     <Card className="p-6 bg-card/80 backdrop-blur-sm border-border shadow-lg">
