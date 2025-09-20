@@ -198,12 +198,22 @@ function Index() {
   }, [user, favoriteCar, selectedCar, toast]);
 
   // CONDITIONAL RETURNS CAN ONLY HAPPEN AFTER ALL HOOKS
+  // Sjekk om vi er på produksjon - dette må være første sjekk!
+  const isProduction = window.location.hostname === 'elroute.no' || 
+                      window.location.hostname === 'www.elroute.no' ||
+                      window.location.href.includes('elroute.no');
+  
+  // PRODUKSJON: Vis alltid "coming soon" uansett admin-status
+  if (isProduction) {
+    console.log('🚫 PRODUCTION: Showing ComingSoon - on elroute.no domain');
+    return <ComingSoon />;
+  }
+  
   // Sjekk om vi er i Lovable editor (ikke preview) 
   const isLovableEditor = window.parent !== window; // iframe = editor
-  const isProduction = window.location.hostname === 'elroute.no' || window.location.hostname === 'www.elroute.no';
   const isLovablePreview = window.location.hostname.includes('lovableproject.com');
   
-  // Debug admin status
+  // Debug admin status (kun for development)
   console.log('🔍 Environment debug:', { 
     isAdmin, 
     roleLoading, 
@@ -239,9 +249,9 @@ function Index() {
     );
   }
   
-  // Vis "coming soon" på produksjon og preview (kun full app i Lovable editor)
-  if (isProduction || (isLovablePreview && !isLovableEditor)) {
-    console.log('🚫 Showing ComingSoon - production or external access');
+  // Vis "coming soon" på Lovable preview (eksternt tilgang)
+  if (isLovablePreview && !isLovableEditor) {
+    console.log('🚫 Showing ComingSoon - external Lovable preview');
     return <ComingSoon />;
   }
   
