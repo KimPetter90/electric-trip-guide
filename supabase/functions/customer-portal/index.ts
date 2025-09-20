@@ -49,8 +49,18 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
 
-    const origin = req.headers.get("origin") || req.headers.get("referer") || "https://9a7124bc-51c6-4220-9c3e-a9b0a99b385b.lovableproject.com";
-    logStep("Detected origin", { origin });
+    let origin = req.headers.get("origin") || req.headers.get("referer") || "https://9a7124bc-51c6-4220-9c3e-a9b0a99b385b.lovableproject.com";
+    
+    // Handle cases where origin is "null" string
+    if (origin === "null" || !origin) {
+      origin = "https://9a7124bc-51c6-4220-9c3e-a9b0a99b385b.lovableproject.com";
+    }
+    
+    logStep("Detected origin", { 
+      originalOrigin: req.headers.get("origin"), 
+      originalReferer: req.headers.get("referer"), 
+      finalOrigin: origin 
+    });
     
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
