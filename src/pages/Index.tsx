@@ -198,11 +198,10 @@ function Index() {
   }, [user, favoriteCar, selectedCar, toast]);
 
   // CONDITIONAL RETURNS CAN ONLY HAPPEN AFTER ALL HOOKS
-  // Vis "coming soon" for alle som ikke er admin
-  if (!isAdmin && !roleLoading) {
-    return <ComingSoon />;
-  }
+  // Debug admin status
+  console.log('🔍 Admin debug:', { isAdmin, roleLoading, user: !!user });
   
+  // Vis loading først
   if (roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -210,6 +209,14 @@ function Index() {
       </div>
     );
   }
+  
+  // Vis "coming soon" for alle som ikke er admin
+  if (!isAdmin && !roleLoading) {
+    console.log('🚫 Showing ComingSoon - not admin');
+    return <ComingSoon />;
+  }
+  
+  console.log('✅ Showing full app - user is admin');
 
 
   // CONDITIONAL RETURNS CAN ONLY HAPPEN AFTER ALL HOOKS
