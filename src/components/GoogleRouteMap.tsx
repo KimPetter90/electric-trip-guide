@@ -696,8 +696,14 @@ const GoogleRouteMap: React.FC<{
       totalDistance
     );
 
-    // FIKSET: Ta alltid anbefalte stasjoner fra RouteOptimizer, uavhengig av avstand til rute
+    // FORBEDRET: Ta alltid anbefalte stasjoner fra RouteOptimizer og vis tydelig feedback
     console.log(`🔧 Bruker ${optimizedPlan.length} anbefalte stasjoner fra RouteOptimizer`);
+    
+    if (optimizedPlan.length > 0) {
+      console.log(`💙 ANBEFALT LADESTASJON FUNNET:`, optimizedPlan[0].station.name);
+    } else {
+      console.log(`⚠️ INGEN ANBEFALTE STASJONER - sjekk batterinivå og rutedistanse`);
+    }
     
     optimizedPlan.forEach((plan, index) => {
       const isNearRoute = isStationNearRoute(plan.station);
