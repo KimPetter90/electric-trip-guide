@@ -621,7 +621,7 @@ function Index() {
                       onClick={() => navigate('/pricing')}
                       className={`relative transition-all duration-300 hover:shadow-lg ${
                         subscription?.is_trial_active 
-                          ? 'bg-gradient-to-r from-orange-500/10 to-orange-600/10 border-orange-400/50 hover:border-orange-400/70 hover:shadow-orange-500/20 animate-pulse' 
+                          ? 'bg-gradient-to-r from-orange-500/10 to-orange-600/10 border-orange-400/50 hover:border-orange-400/70 hover:shadow-orange-500/20' 
                           : 'bg-gradient-to-r from-background/50 to-background/80 backdrop-blur-sm border-primary/30 hover:border-primary/50 hover:shadow-primary/20'
                       }`}
                     >
@@ -630,17 +630,9 @@ function Index() {
                         {subscription?.subscription_status === 'free' ? 'Oppgrader' : 'Abonnement'}
                       </span>
                       {subscription?.is_trial_active && subscription?.days_left_in_trial !== undefined && (
-                        <div className="ml-2 flex items-center">
-                          <Badge className="relative bg-gradient-to-r from-orange-500 via-orange-400 to-orange-600 text-white border-0 px-3 py-1 shadow-lg font-semibold text-sm animate-[pulse_1.5s_ease-in-out_infinite] before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:animate-[slide-in-right_2s_ease-in-out_infinite] before:rounded-full overflow-hidden">
-                            <span className="relative z-10 flex items-center gap-1">
-                              <span className="animate-[pulse_0.8s_ease-in-out_infinite]">⚡</span>
-                              PREMIUM 
-                              <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs font-bold">
-                                {subscription.days_left_in_trial}d
-                              </span>
-                            </span>
-                          </Badge>
-                        </div>
+                        <Badge className="ml-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 px-2.5 py-1 shadow-md font-medium text-xs">
+                          PREMIUM {subscription.days_left_in_trial}d
+                        </Badge>
                       )}
                     </Button>
                     
