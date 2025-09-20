@@ -77,7 +77,9 @@ export const EnhancedMapSection: React.FC<EnhancedMapSectionProps> = ({
               <Zap className="h-4 w-4 mr-2" />
               Oppdater kart
             </Button>
-            <ShareRoute routeData={routeData} />
+            <div className="glass-card p-2 rounded-lg">
+              <span className="text-sm text-muted-foreground">Kart placeholder</span>
+            </div>
           </div>
         </div>
 

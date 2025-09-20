@@ -64,8 +64,8 @@ export const EnhancedRouteInput: React.FC<EnhancedRouteInputProps> = ({
         <RouteInput 
           routeData={routeData}
           onRouteChange={setRouteData}
-          onGenerateRoute={generateRouteOptions}
-          selectedCar={selectedCar}
+          onPlanRoute={generateRouteOptions}
+          isPlanning={false}
         />
       </Card>
     </div>
