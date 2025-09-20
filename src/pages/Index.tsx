@@ -636,19 +636,6 @@ function Index() {
                     )}
                   </div>
                   
-                  {/* Reset Routes Button - vis bare for free users */}
-                  {subscription && subscription.route_limit !== -1 && subscription.route_count > 0 && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handleResetRoutes}
-                      className="text-xs"
-                    >
-                      <Battery className="h-3 w-3 mr-1" />
-                      Nullstill ruter
-                    </Button>
-                  )}
-                  
                   <Button variant="ghost" size="sm" onClick={handleSignOut}>
                     <LogOut className="h-4 w-4" />
                   </Button>
