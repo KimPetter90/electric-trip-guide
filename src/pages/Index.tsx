@@ -845,6 +845,13 @@ function Index() {
                   isLoading={loadingRoutes}
                 />
                 
+                {/* Route Impact Section - Påvirkningsanalyse */}
+                <RouteImpact 
+                  selectedCar={selectedCar}
+                  routeData={routeData}
+                />
+                
+                
                 {/* Del rute - vis bare hvis rute er valgt */}
                 {selectedRouteId && routeOptions.length > 0 && (
                   <Card className="p-4 bg-card/80 backdrop-blur-sm border-border shadow-lg">
@@ -863,12 +870,6 @@ function Index() {
                     </div>
                   </Card>
                 )}
-                
-                {/* Route Impact Section - Påvirkningsanalyse */}
-                <RouteImpact 
-                  selectedCar={selectedCar}
-                  routeData={routeData}
-                />
                 
                 
                 <div data-testid="route-map" className="relative mt-8">
