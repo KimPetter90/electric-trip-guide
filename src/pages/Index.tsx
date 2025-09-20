@@ -631,7 +631,7 @@ function Index() {
                       </span>
                       {subscription?.is_trial_active && subscription?.days_left_in_trial !== undefined && (
                         <Badge className="ml-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 px-2.5 py-1 shadow-md font-medium text-xs">
-                          PREMIUM {subscription.days_left_in_trial}d
+                          {subscription.subscription_status.toUpperCase()} {subscription.days_left_in_trial}d
                         </Badge>
                       )}
                     </Button>

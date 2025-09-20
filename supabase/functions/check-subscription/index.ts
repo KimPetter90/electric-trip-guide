@@ -198,18 +198,36 @@ serve(async (req) => {
       productId = subscription.items.data[0].price.product as string;
       const priceId = subscription.items.data[0].price.id;
       
-      // Map price IDs to subscription tiers
-      if (priceId === 'price_1S80tCDgjF2NREPhFod9JnwM') {
-        newSubscriptionStatus = 'premium';
-        newPlanType = 'premium';
-        routeLimit = 100;
-      } else if (priceId === 'price_1S80tNDgjF2NREPhc16tZZVw') {
+      // Map price IDs and amounts to subscription tiers
+      const priceAmount = subscription.items.data[0].price.unit_amount;
+      const productName = subscription.items.data[0].price.nickname || 
+                         subscription.items.data[0].price.product?.name || '';
+      
+      logStep("Subscription details", { priceId, priceAmount, productName });
+      
+      // Determine tier based on price amount or product name
+      if (priceAmount >= 3900 || productName.toLowerCase().includes('pro') || priceId.includes('JN2')) {
         newSubscriptionStatus = 'pro';
         newPlanType = 'pro';
         routeLimit = -1; // Unlimited
+      } else if (priceAmount >= 1900 || productName.toLowerCase().includes('premium') || priceId.includes('JMq')) {
+        newSubscriptionStatus = 'premium';
+        newPlanType = 'premium';
+        routeLimit = 100;
+      } else {
+        // Legacy price ID mappings for existing customers
+        if (priceId === 'price_1S80tCDgjF2NREPhFod9JnwM') {
+          newSubscriptionStatus = 'premium';
+          newPlanType = 'premium';
+          routeLimit = 100;
+        } else if (priceId === 'price_1S80tNDgjF2NREPhc16tZZVw') {
+          newSubscriptionStatus = 'pro';
+          newPlanType = 'pro';
+          routeLimit = -1;
+        }
       }
       
-      logStep("Determined subscription tier", { productId, priceId, newSubscriptionStatus, routeLimit });
+      logStep("Determined subscription tier", { productId, priceId, priceAmount, newSubscriptionStatus, routeLimit });
       
       // Update user settings with subscription info
       await supabaseClient
