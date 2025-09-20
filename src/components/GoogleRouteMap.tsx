@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Play, Pause, LocateFixed, Navigation, Ship, Clock } from "lucide-react";
 import { toast } from "sonner";
 import ComprehensiveFerrySchedule from '@/components/ComprehensiveFerrySchedule';
+
 interface CarModel {
   id: string;
   brand: string;
@@ -44,9 +45,7 @@ interface ChargingStation {
 
 interface TripAnalysis {
   totalDistance: number;
-  totalTime: number;
-  totalChargingTime: number;
-  totalCost: number;
+  estimatedTime: number;
   batteryUsage: number;
   requiredStops: number;
   weatherImpact: string;
@@ -68,246 +67,287 @@ const GoogleRouteMap: React.FC<{
   onLoadingChange: (loading: boolean) => void;
   onError: (error: string | null) => void;
 }> = ({ center, zoom, onMapLoad, chargingStations, routeData, selectedCar, selectedRouteId, routeOptions, routeTrigger, onRouteCalculated, onLoadingChange, onError }) => {
-  // Add global error handler for mobile debugging
-  useEffect(() => {
-    const handleError = (event: ErrorEvent) => {
-      console.error('🚨 MOBILE - JavaScript Error:', {
-        message: event.message,
-        filename: event.filename,
-        line: event.lineno,
-        column: event.colno,
-        error: event.error,
-        isMobile: window.innerWidth < 768
-      });
-    };
-    
-    window.addEventListener('error', handleError);
-    return () => window.removeEventListener('error', handleError);
-  }, []);
+  
+  // Refs and state
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
-  const directionsServiceRef = useRef<google.maps.DirectionsService | null>(null);
   const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
   const allMarkersRef = useRef<google.maps.Marker[]>([]);
   const chargingStationMarkersRef = useRef<google.maps.Marker[]>([]);
   const userLocationMarker = useRef<google.maps.Marker | null>(null);
   const watchId = useRef<number | null>(null);
+  
   const [isMapInitialized, setIsMapInitialized] = useState(false);
   const [calculatedRoute, setCalculatedRoute] = useState<google.maps.DirectionsResult | null>(null);
-  const [isGPSActive, setIsGPSActive] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsPermission, setGpsPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
   const [allFerryTimes, setAllFerryTimes] = useState<any[]>([]);
-  const [showFerrySchedule, setShowFerrySchedule] = useState(false);
 
-  // GPS functions
-  const checkGPSPermission = async () => {
-    if (!navigator.geolocation) {
-      setGpsPermission('denied');
-      return;
-    }
+  // Initialize Google Maps only once
+  useEffect(() => {
+    if (typeof window === 'undefined' || isMapInitialized) return;
 
-    try {
-      const permission = await navigator.permissions.query({ name: 'geolocation' });
-      setGpsPermission(permission.state);
-    } catch (error) {
-      console.error('Kunne ikke sjekke GPS-tillatelse:', error);
-      setGpsPermission('prompt');
-    }
-  };
+    const initializeMap = async () => {
+      try {
+        onLoadingChange(true);
+        onError(null);
+        console.log('🗺️ Initialiserer Google Maps...');
 
+        // Get API key from Supabase function
+        const { data: tokenData, error: tokenError } = await supabase.functions.invoke('google-maps-proxy');
+        
+        if (tokenError || !tokenData?.token) {
+          throw new Error('Kunne ikke hente Google Maps API-nøkkel');
+        }
 
-  const startGPSTracking = async () => {
-    console.log('🎯 Starter GPS-tracking...');
-    console.log('🔍 Sjekker GPS-støtte:', !!navigator.geolocation);
-    console.log('🔍 HTTPS aktiv:', location.protocol === 'https:');
-    
-    if (!navigator.geolocation) {
-      toast.error('GPS er ikke tilgjengelig på denne enheten');
-      return;
-    }
-
-    // Sjekk tillatelser først
-    try {
-      const permission = await navigator.permissions.query({ name: 'geolocation' });
-      console.log('🔍 GPS-tillatelse status:', permission.state);
-      
-      if (permission.state === 'denied') {
-        toast.error('GPS-tilgang er blokkert. Prøv å:\n1. Klikk på lås-ikonet ved URL-en\n2. Velg "Tilbakestill tillatelser"\n3. Last inn siden på nytt', {
-          duration: 8000
+        const loader = new Loader({
+          apiKey: tokenData.token,
+          version: 'weekly',
+          libraries: ['places', 'geometry']
         });
-        return;
-      }
-    } catch (error) {
-      console.log('⚠️ Kunne ikke sjekke GPS-tillatelse:', error);
-    }
 
-    // Sjekk ferjetider når reisen starter
-    if (routeData?.from && routeData?.to) {
-      setShowFerrySchedule(true);
-      toast.success(`🎯 Reise startet!`, {
-        description: 'GPS følger deg nå i sanntid. Rød pil viser din posisjon.',
-        duration: 4000,
-      });
-    }
+        await loader.load();
+        
+        if (!mapRef.current) return;
 
-    const options = {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 1000
-    };
-
-    const success = (position: GeolocationPosition) => {
-      const { latitude, longitude } = position.coords;
-      const newLocation = { lat: latitude, lng: longitude };
-      
-      console.log('🎯 GPS-posisjon mottatt:', {
-        lat: latitude,
-        lng: longitude,
-        accuracy: position.coords.accuracy,
-        timestamp: new Date(position.timestamp)
-      });
-      
-      setCurrentLocation(newLocation);
-      updateUserLocationOnMap(newLocation);
-      
-      if (!isGPSActive) {
-        setIsGPSActive(true);
-        toast.success('🎯 GPS-sporing aktivert!', {
-          description: `Posisjon: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+        const map = new google.maps.Map(mapRef.current, {
+          center: center,
+          zoom: zoom,
+          mapTypeId: google.maps.MapTypeId.ROADMAP,
+          styles: [
+            {
+              featureType: 'poi',
+              elementType: 'labels',
+              stylers: [{ visibility: 'off' }]
+            }
+          ],
+          zoomControl: true,
+          mapTypeControl: false,
+          scaleControl: true,
+          streetViewControl: false,
+          rotateControl: false,
+          fullscreenControl: true
         });
+
+        mapInstanceRef.current = map;
+        setIsMapInitialized(true);
+
+        if (onMapLoad) {
+          onMapLoad(map);
+        }
+
+        console.log('✅ Google Maps initialisert');
+        onLoadingChange(false);
+
+      } catch (error: any) {
+        console.error('❌ Google Maps initialization failed:', error);
+        onError(`Google Maps kunne ikke lastes: ${error.message}`);
+        onLoadingChange(false);
       }
     };
 
-    const error = (error: GeolocationPositionError) => {
-      console.error('🚨 GPS-feil:', {
-        code: error.code,
-        message: error.message,
-        timestamp: new Date().toISOString()
-      });
-      
-      let errorMessage = 'Kunne ikke få GPS-posisjon';
-      
-      switch(error.code) {
-        case error.PERMISSION_DENIED:
-          errorMessage = `🚫 GPS-tilgang nektet!\n\n🔧 Løsninger:\n• Gå til nettleserinnstillinger\n• Finn denne siden under "Tillatelser"\n• Aktiver "Posisjon/Location"\n• Eller prøv inkognito-modus`;
-          setGpsPermission('denied');
-          break;
-        case error.POSITION_UNAVAILABLE:
-          errorMessage = '📡 GPS-posisjon ikke tilgjengelig - prøv utendørs';
-          break;
-        case error.TIMEOUT:
-          errorMessage = '⏱️ GPS-forespørsel tidsavbrudd - prøv igjen';
-          break;
+    initializeMap();
+  }, []);
+
+  // Check if station is near route
+  const isStationNearRoute = useCallback((station: ChargingStation): boolean => {
+    if (!calculatedRoute || !window.google?.maps?.geometry) {
+      return false;
+    }
+    
+    const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
+    const route = calculatedRoute.routes[0];
+    
+    for (const leg of route.legs) {
+      for (const step of leg.steps) {
+        const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+          stationPos,
+          step.start_location
+        );
+        
+        if (distance <= 10000) { // 10km radius
+          return true;
+        }
       }
-      
-      toast.error(errorMessage, { duration: 10000 });
-      setIsGPSActive(false);
-    };
-
-    watchId.current = navigator.geolocation.watchPosition(success, error, options);
-  };
-
-  const stopGPSTracking = () => {
-    if (watchId.current !== null) {
-      navigator.geolocation.clearWatch(watchId.current);
-      watchId.current = null;
     }
     
-    if (userLocationMarker.current) {
-      userLocationMarker.current.setMap(null);
-      userLocationMarker.current = null;
+    return false;
+  }, [calculatedRoute]);
+
+  // Find best station along route
+  const getBestStationAlongRoute = useCallback((): ChargingStation | null => {
+    if (!calculatedRoute || !chargingStations.length) return null;
+    
+    // Find all stations near the route
+    const stationsNearRoute = chargingStations.filter(station => isStationNearRoute(station));
+    
+    if (stationsNearRoute.length === 0) return null;
+    
+    // Choose best station based on availability and fast charging
+    const bestStation = stationsNearRoute
+      .filter(s => s.fast_charger) // Only fast charging
+      .sort((a, b) => {
+        const availabilityA = a.available / a.total;
+        const availabilityB = b.available / b.total;
+        return availabilityB - availabilityA; // Highest availability first
+      })[0];
+    
+    if (bestStation) {
+      console.log(`🎯 BESTE STASJON LANGS RUTEN: ${bestStation.name}`);
     }
     
-    setIsGPSActive(false);
-    setCurrentLocation(null);
-    toast.info('GPS-sporing stoppet');
-  };
+    return bestStation || stationsNearRoute[0]; // Fallback to first station along route
+  }, [calculatedRoute, chargingStations, isStationNearRoute]);
 
-  const updateUserLocationOnMap = (location: { lat: number; lng: number }) => {
-    console.log('🗺️ Oppdaterer brukerposisjon på kart:', location);
-    
-    if (!mapInstanceRef.current) {
-      console.log('❌ Kart ikke initialisert ennå');
+  // Add charging station markers
+  useEffect(() => {
+    if (!mapInstanceRef.current || !chargingStations || chargingStations.length === 0) {
       return;
     }
 
-    // Opprett eller oppdater brukerens posisjon-markør
-    if (userLocationMarker.current) {
-      console.log('🔄 Oppdaterer eksisterende markør');
-      userLocationMarker.current.setPosition(location);
-    } else {
-      console.log('🆕 Oppretter ny GPS-markør');
+    console.log(`🔌 Legger til ${chargingStations.length} ladestasjoner på kartet`);
+
+    // Clear existing charging station markers
+    chargingStationMarkersRef.current.forEach(marker => marker.setMap(null));
+    chargingStationMarkersRef.current = [];
+
+    // Find best station along route
+    const bestStationAlongRoute = getBestStationAlongRoute();
+
+    // Add new charging station markers
+    chargingStations.forEach(station => {
+      const isRecommendedAlongRoute = bestStationAlongRoute && station.id === bestStationAlongRoute.id;
+      const isNearRoute = calculatedRoute && isStationNearRoute(station);
       
-      // Lag en mer iøynefallende stedspil/markør
-      userLocationMarker.current = new google.maps.Marker({
-        position: location,
-        map: mapInstanceRef.current,
-        title: 'Din posisjon - Live GPS',
-        icon: {
-          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-          scale: 15,
-          fillColor: '#FF0000',
-          fillOpacity: 1,
-          strokeColor: '#FFFFFF',
-          strokeWeight: 4,
-          rotation: 0
-        },
-        zIndex: 9999 // Meget høy z-index
-      });
+      // Choose marker icon
+      const markerIcon = isRecommendedAlongRoute ? {
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="11" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
+            <text x="12" y="16" text-anchor="middle" fill="#000000" font-size="14" font-weight="bold">★</text>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(24, 24),
+        anchor: new google.maps.Point(12, 12)
+      } : isNearRoute ? {
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="7" fill="#ff4444" stroke="#cc0000" stroke-width="1"/>
+            <text x="8" y="12" text-anchor="middle" fill="white" font-size="10" font-weight="bold">⚡</text>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(16, 16),
+        anchor: new google.maps.Point(8, 8)
+      } : {
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8">
+            <circle cx="4" cy="4" r="3" fill="#00ff41" stroke="#00cc33" stroke-width="1"/>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(8, 8),
+        anchor: new google.maps.Point(4, 4)
+      };
 
-      console.log('✅ GPS-markør opprettet:', userLocationMarker.current);
-
-      // Legg til en sirkel rundt markøren for å vise nøyaktighet
-      const accuracyCircle = new google.maps.Circle({
-        strokeColor: '#FF0000',
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        fillColor: '#FF0000',
-        fillOpacity: 0.15,
-        map: mapInstanceRef.current,
-        center: location,
-        radius: 25, // 25 meter radius
-        zIndex: 9998
+      const marker = new google.maps.Marker({
+        position: { lat: station.latitude, lng: station.longitude },
+        map: mapInstanceRef.current!,
+        icon: markerIcon,
+        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isRecommendedAlongRoute ? '\n⭐ ANBEFALT LANGS RUTEN' : ''}`,
+        zIndex: isRecommendedAlongRoute ? 1000 : (isNearRoute ? 100 : 10)
       });
 
       const infoWindow = new google.maps.InfoWindow({
         content: `
-          <div style="padding: 12px; min-width: 200px;">
-            <h4 style="margin: 0 0 8px 0; color: #FF0000; font-weight: bold; display: flex; align-items: center;">
-              🎯 Din posisjon (Live)
-            </h4>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-              <span style="font-weight: bold;">Breddegrad:</span>
-              <span style="font-family: monospace;">${location.lat.toFixed(6)}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-              <span style="font-weight: bold;">Lengdegrad:</span>
-              <span style="font-family: monospace;">${location.lng.toFixed(6)}</span>
-            </div>
-            <div style="font-size: 11px; color: #666; text-align: center;">
-              📡 GPS-sporing aktiv
-            </div>
+          <div style="padding: 10px; max-width: 250px;">
+            <h3 style="margin: 0 0 10px 0; color: #333;">${station.name}</h3>
+            <p><strong>Tilgjengelig:</strong> ${station.available}/${station.total}</p>
+            <p><strong>Effekt:</strong> ${station.power}</p>
+            <p><strong>Pris:</strong> ${station.cost} kr/kWh</p>
+            <p><strong>Leverandør:</strong> ${station.provider}</p>
+            <p style="font-size: 12px; color: #666;">${station.address}</p>
+            ${isRecommendedAlongRoute ? '<div style="padding: 5px; background: #FFD700; border-radius: 3px; text-align: center; font-weight: bold;">⭐ ANBEFALT LANGS RUTEN</div>' : ''}
           </div>
         `
       });
 
-      userLocationMarker.current.addListener('click', () => {
-        infoWindow.open(mapInstanceRef.current, userLocationMarker.current);
+      marker.addListener('click', () => {
+        infoWindow.open(mapInstanceRef.current, marker);
       });
+
+      chargingStationMarkersRef.current.push(marker);
+    });
+  }, [chargingStations, calculatedRoute, getBestStationAlongRoute]);
+
+  // Calculate route when trigger changes
+  const calculateRoute = useCallback(async () => {
+    if (!mapInstanceRef.current || !routeData.from || !routeData.to) {
+      return;
     }
 
-    // Sentrer kartet på brukerens posisjon i GPS-modus
-    if (isGPSActive) {
-      console.log('🎯 Sentrerer kart på brukerposisjon');
-      mapInstanceRef.current.panTo(location);
-      if (mapInstanceRef.current.getZoom() && mapInstanceRef.current.getZoom()! < 16) {
-        mapInstanceRef.current.setZoom(16);
+    try {
+      onLoadingChange(true);
+      onError(null);
+
+      const directionsService = new google.maps.DirectionsService();
+      
+      const waypoints = routeData.via ? [{ location: routeData.via, stopover: true }] : [];
+      
+      const request: google.maps.DirectionsRequest = {
+        origin: routeData.from,
+        destination: routeData.to,
+        waypoints: waypoints,
+        travelMode: google.maps.TravelMode.DRIVING,
+        unitSystem: google.maps.UnitSystem.METRIC,
+        optimizeWaypoints: true,
+        avoidHighways: false,
+        avoidTolls: false
+      };
+
+      const result = await directionsService.route(request);
+      
+      if (!directionsRendererRef.current) {
+        directionsRendererRef.current = new google.maps.DirectionsRenderer({
+          suppressMarkers: false,
+          polylineOptions: {
+            strokeColor: '#2563eb',
+            strokeWeight: 4,
+            strokeOpacity: 0.8
+          }
+        });
+        directionsRendererRef.current.setMap(mapInstanceRef.current);
       }
-    }
-  };
 
-  // Clear markers on unmount
+      directionsRendererRef.current.setDirections(result);
+      setCalculatedRoute(result);
+
+      // Calculate trip analysis
+      const totalDistance = result.routes[0].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0) / 1000;
+      const totalTime = result.routes[0].legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0) / 60;
+      
+      const analysis: TripAnalysis = {
+        totalDistance,
+        estimatedTime: totalTime,
+        batteryUsage: selectedCar ? (totalDistance / selectedCar.range) * 100 : 0,
+        requiredStops: selectedCar ? Math.max(0, Math.ceil((totalDistance / selectedCar.range) - (routeData.batteryPercentage / 100))) : 0,
+        weatherImpact: 'Moderat',
+        routeEfficiency: 'God'
+      };
+
+      onRouteCalculated(analysis);
+
+    } catch (error: any) {
+      console.error('❌ Route calculation failed:', error);
+      onError(`Ruteberegning feilet: ${error.message}`);
+    } finally {
+      onLoadingChange(false);
+    }
+  }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, onRouteCalculated, onLoadingChange, onError]);
+
+  useEffect(() => {
+    calculateRoute();
+  }, [calculateRoute, routeTrigger]);
+
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       allMarkersRef.current.forEach(marker => marker.setMap(null));
@@ -324,1538 +364,9 @@ const GoogleRouteMap: React.FC<{
     };
   }, []);
 
-  // Check GPS permission on mount
-  useEffect(() => {
-    checkGPSPermission();
-  }, []);
-
-  // Initialize Google Maps only once
-  useEffect(() => {
-    if (typeof window === 'undefined' || isMapInitialized) return;
-
-    const initializeMap = async () => {
-      try {
-        onLoadingChange(true);
-        onError(null);
-        console.log('🗺️ Initialiserer Google Maps...');
-
-        // Get API key from Supabase function
-        const { data, error } = await supabase.functions.invoke('google-maps-proxy');
-        
-        if (error || !data?.apiKey) {
-          console.error('❌ Feil ved henting av API-nøkkel:', error);
-          onError('Kunne ikke laste Google Maps. Prøv igjen senere.');
-          onLoadingChange(false);
-          return;
-        }
-
-        console.log('✅ API-nøkkel mottatt, laster Google Maps...');
-
-        const loader = new Loader({
-          apiKey: data.apiKey,
-          version: 'weekly',
-          libraries: ['places', 'geometry'],
-          region: 'NO', // Norge
-          language: 'no' // Norsk for å sikre norske stedsnavn
-        });
-
-        console.log('🔧 Loading Google Maps JavaScript API...');
-        const google = await loader.load();
-        console.log('✅ Google Maps JavaScript API loaded successfully');
-
-        if (!mapRef.current) {
-          console.error('❌ Map container element not found');
-          onError('Kartcontainer ikke tilgjengelig');
-          onLoadingChange(false);
-          return;
-        }
-
-        console.log('🗺️ Creating Google Maps instance...');
-        console.log('📱 MOBILE DEBUG - Device and container info:', {
-          isMobile: window.innerWidth < 768,
-          innerWidth: window.innerWidth,
-          innerHeight: window.innerHeight,
-          userAgent: navigator.userAgent,
-          pixelRatio: window.devicePixelRatio,
-          mapContainer: !!mapRef.current,
-          containerSize: mapRef.current ? `${mapRef.current.offsetWidth}x${mapRef.current.offsetHeight}` : 'N/A'
-        });
-        
-        // Initialize map with explicit error handling
-        try {
-          const map = new google.maps.Map(mapRef.current, {
-            center: center,
-            zoom: Math.max(zoom, 12), // Høy zoom for å sikre stedsnavn i HYBRID
-            mapTypeId: google.maps.MapTypeId.HYBRID, // Tilbake til HYBRID (satellitt med navn)
-            mapTypeControl: true,
-            mapTypeControlOptions: {
-              style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-              position: google.maps.ControlPosition.TOP_RIGHT,
-              mapTypeIds: [google.maps.MapTypeId.ROADMAP, google.maps.MapTypeId.SATELLITE]
-            },
-            zoomControl: true,
-            streetViewControl: false,
-            fullscreenControl: true,
-            gestureHandling: window.innerWidth < 768 ? 'cooperative' : 'auto', // Better mobile handling
-            keyboardShortcuts: false,
-            clickableIcons: true,
-            disableDoubleClickZoom: false,
-            scrollwheel: window.innerWidth >= 768, // Disable scroll wheel on mobile
-            restriction: {
-              latLngBounds: {
-                north: 72,
-                south: 58,
-                west: 4,
-                east: 32
-              },
-              strictBounds: false
-            }
-          });
-
-          console.log('✅ Google Maps instance created successfully');
-          console.log('📱 MOBILE - Map properties:', {
-            center: map.getCenter()?.toString(),
-            zoom: map.getZoom(),
-            mapTypeId: map.getMapTypeId(),
-            isMobile: window.innerWidth < 768
-          });
-          mapInstanceRef.current = map;
-          
-          // INGEN CSS-manipulering som kan skjule stedsnavn!
-          // La Google Maps vise ALT som normalt
-          
-          console.log('✅ Google Maps instance created successfully');
-          mapInstanceRef.current = map;
-          
-          // Initialize directions service and renderer - Vil bli oppdatert i calculateRoute
-          directionsServiceRef.current = new google.maps.DirectionsService();
-          directionsRendererRef.current = new google.maps.DirectionsRenderer({
-            suppressMarkers: true, // Vi lager egne start/slutt-markører
-            polylineOptions: {
-              strokeColor: '#3b82f6', // Default farge, oppdateres i calculateRoute
-              strokeWeight: 6,
-              strokeOpacity: 0.8
-            }
-          });
-          
-          directionsRendererRef.current.setMap(map);
-          console.log('✅ Google Maps DirectionsService and DirectionsRenderer initialized');
-
-          setIsMapInitialized(true);
-          onLoadingChange(false);
-          onMapLoad?.(map);
-          
-          // Reduser størrelsen på kart/satellitt knappene med CSS
-          const observer = new MutationObserver(() => {
-            const mapTypeButtons = document.querySelectorAll('.gm-style .gm-style-mtc > div');
-            mapTypeButtons.forEach((button: any) => {
-              if (button) {
-                button.style.fontSize = '10px';
-                button.style.padding = '2px 4px';
-                button.style.minWidth = '30px';
-                button.style.height = '20px';
-                button.style.lineHeight = '16px';
-              }
-            });
-          });
-          
-          // Start observing for changes
-          observer.observe(mapRef.current, { childList: true, subtree: true });
-          
-          // Initial styling
-          setTimeout(() => {
-            const mapTypeButtons = document.querySelectorAll('.gm-style .gm-style-mtc > div');
-            mapTypeButtons.forEach((button: any) => {
-              if (button) {
-                button.style.fontSize = '10px';
-                button.style.padding = '2px 4px';
-                button.style.minWidth = '30px';
-                button.style.height = '20px';
-                button.style.lineHeight = '16px';
-              }
-            });
-          }, 500);
-          
-        } catch (mapInitError: any) {
-          console.error('❌ Error creating Google Maps instance:', mapInitError);
-          onError(`Kunne ikke initialisere Google Maps: ${mapInitError.message}`);
-          onLoadingChange(false);
-        }
-
-      } catch (err) {
-        console.error('❌ Feil ved initialisering av Google Maps:', err);
-        onError('Kunne ikke laste Google Maps. Sjekk internetforbindelsen.');
-        onLoadingChange(false);
-      }
-    };
-
-    initializeMap();
-  }, []);
-
-  // Hjelpefunksjon for å sjekke om stasjon er nær ruten
-  const isStationNearRoute = useCallback((station: ChargingStation): boolean => {
-    if (!calculatedRoute || !window.google?.maps?.geometry) {
-      return false;
-    }
-    
-    const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
-    const route = calculatedRoute.routes[0];
-    
-    // Øk grense til 15km for å fange opp flere stasjoner langs hovedveier
-    let minDistance = Infinity;
-    
-    route.legs.forEach(leg => {
-      leg.steps.forEach(step => {
-        // Bruk start og slutt av hvert steg + mellompunkter
-        const stepStart = step.start_location;
-        const stepEnd = step.end_location;
-        
-        // Sjekk start og slutt av steget + MANGE flere mellompunkter for nøyaktighet
-        let startDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
-        let endDistance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
-        minDistance = Math.min(minDistance, startDistance, endDistance);
-        
-        // Sjekk 50 punkter langs segmentet for MEGET høy nøyaktighet
-        for (let i = 1; i <= 49; i++) {
-          const ratio = i / 50;
-          const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
-          const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
-          const routePoint = new google.maps.LatLng(lat, lng);
-          
-          const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, routePoint);
-          minDistance = Math.min(minDistance, distance);
-        }
-        
-        // EKSTRA: Sjekk punkter i radius rundt hvert rutepunkt  
-        for (let i = 0; i <= 50; i++) {
-          const ratio = i / 50;
-          const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
-          const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
-          
-          // Sjekk 8 punkter i radius rundt hvert rutepunkt (for å fange E6/hovedveier)
-          for (let angle = 0; angle < 360; angle += 45) {
-            const radiusOffset = 500; // 500 meter radius
-            const offsetLat = lat + (radiusOffset / 111000) * Math.cos(angle * Math.PI / 180);
-            const offsetLng = lng + (radiusOffset / (111000 * Math.cos(lat * Math.PI / 180))) * Math.sin(angle * Math.PI / 180);
-            const offsetPoint = new google.maps.LatLng(offsetLat, offsetLng);
-            const distance = google.maps.geometry.spherical.computeDistanceBetween(stationPos, offsetPoint);
-            minDistance = Math.min(minDistance, distance);
-          }
-        }
-      });
-    });
-    
-    const isNear = minDistance <= 5000; // 5km grense som ønsket
-    console.log(`🔍 Stasjon ${station.name}: minste avstand=${(minDistance/1000).toFixed(1)}km, nær rute=${isNear}`);
-    
-    // SPESIELL SJEKK: Debug for Tesla stasjoner som burde være på ruten
-    if (station.name.includes('Tesla') && (station.name.includes('Ringebu') || station.name.includes('Larvik'))) {
-      console.log(`🚨 TESLA DEBUG ${station.name}:`);
-      console.log(`   - Koordinater: lat=${station.latitude}, lng=${station.longitude}`);
-      console.log(`   - Minste avstand til rute: ${(minDistance/1000).toFixed(1)}km`);
-      console.log(`   - Blir klassifisert som: ${isNear ? 'RØD (nær rute)' : 'GRØNN (langt fra rute)'}`);
-      console.log(`   - Rute har ${calculatedRoute?.routes[0]?.legs?.length} legs med totalt ${calculatedRoute?.routes[0]?.legs?.reduce((sum, leg) => sum + leg.steps.length, 0)} steps`);
-    }
-    
-    return isNear;
-  }, [calculatedRoute]);
-
-  // Hjelpefunksjon for å finne nærmeste punkt på ruten
-  const findNearestPointOnRoute = useCallback((clickedPos: google.maps.LatLng, route: google.maps.DirectionsResult): google.maps.LatLng => {
-    if (!window.google?.maps?.geometry) {
-      return clickedPos;
-    }
-    
-    let minDistance = Infinity;
-    let nearestPoint = clickedPos;
-    
-    route.routes[0].legs.forEach(leg => {
-      leg.steps.forEach(step => {
-        // Check multiple points along each step for high accuracy
-        const stepStart = step.start_location;
-        const stepEnd = step.end_location;
-        
-        // Check 20 points along this step
-        for (let i = 0; i <= 20; i++) {
-          const ratio = i / 20;
-          const lat = stepStart.lat() + (stepEnd.lat() - stepStart.lat()) * ratio;
-          const lng = stepStart.lng() + (stepEnd.lng() - stepStart.lng()) * ratio;
-          const routePoint = new google.maps.LatLng(lat, lng);
-          
-          const distance = google.maps.geometry.spherical.computeDistanceBetween(clickedPos, routePoint);
-          if (distance < minDistance) {
-            minDistance = distance;
-            nearestPoint = routePoint;
-          }
-        }
-      });
-    });
-    
-    console.log(`🎯 Snappet til ruten, avstand: ${minDistance.toFixed(0)}m`);
-    return nearestPoint;
-  }, []);
-
-  // Hjelpefunksjon for å beregne avstand til en posisjon på ruten
-  const calculateDistanceToPosition = useCallback((position: google.maps.LatLng, route: google.maps.DirectionsResult): number => {
-    if (!route || !selectedCar) return 0;
-    
-    let totalDistance = 0;
-    let found = false;
-    
-    route.routes[0].legs.forEach(leg => {
-      if (!found) {
-        leg.steps.forEach(step => {
-          if (!found) {
-            // Check if position is close to this step
-            const distanceToStep = google.maps.geometry.spherical.computeDistanceBetween(
-              position, 
-              step.start_location
-            );
-            
-            if (distanceToStep < 100) { // Within 100 meters
-              found = true;
-              return;
-            }
-            
-            totalDistance += (step.distance?.value || 0);
-          }
-        });
-      }
-    });
-    
-    return totalDistance / 1000; // Return in kilometers
-  }, [selectedCar]);
-
-  // Hjelpefunksjon for å beregne avstand for et gitt batterinivå
-  const calculateDistanceForBatteryLevel = useCallback((targetBatteryLevel: number, startBatteryLevel: number, carRange: number): number => {
-    const batteryUsed = startBatteryLevel - targetBatteryLevel;
-    const distanceForBatteryUsed = (batteryUsed / 100) * carRange;
-    return distanceForBatteryUsed;
-  }, []);
-
-  // Hjelpefunksjon for å finne posisjon på gitt avstand på ruten
-  const findPositionAtDistance = useCallback((targetDistance: number, route: google.maps.DirectionsResult): google.maps.LatLng | null => {
-    if (!route || targetDistance <= 0) return null;
-    
-    let accumulatedDistance = 0;
-    
-    for (const leg of route.routes[0].legs) {
-      for (const step of leg.steps) {
-        const stepDistance = (step.distance?.value || 0) / 1000;
-        
-        if (accumulatedDistance + stepDistance >= targetDistance) {
-          const remainingDistance = targetDistance - accumulatedDistance;
-          const ratio = remainingDistance / stepDistance;
-          
-          const startLat = step.start_location.lat();
-          const startLng = step.start_location.lng();
-          const endLat = step.end_location.lat();
-          const endLng = step.end_location.lng();
-          
-          const targetLat = startLat + (endLat - startLat) * ratio;
-          const targetLng = startLng + (endLng - startLng) * ratio;
-          
-          return new google.maps.LatLng(targetLat, targetLng);
-        }
-        
-        accumulatedDistance += stepDistance;
-      }
-    }
-    
-    return route.routes[0].legs[route.routes[0].legs.length - 1].end_location;
-  }, []);
-
-
-
-  // Hjelpefunksjon for å finne de beste anbefalte ladestasjonene med avansert optimalisering
-  const getOptimizedChargingPlan = useCallback((): OptimizedChargingPlan[] => {
-    if (!calculatedRoute || !selectedCar || !routeData || !chargingStations) {
-      return [];
-    }
-
-    // Få total rutedistanse fra Google Maps
-    const totalDistance = calculatedRoute.routes[0].legs.reduce((sum, leg) => {
-      return sum + (leg.distance?.value || 0);
-    }, 0) / 1000; // Konverter til km
-
-    // Hent værdata (kan utvides senere med faktisk API-kall)
-    const mockWeatherData = {
-      temperature: 5, // 5°C
-      windSpeed: 8, // 8 m/s
-      precipitation: 0, // Ingen nedbør
-      humidity: 70,
-      conditions: 'cloudy'
-    };
-
-    // Bruk RouteOptimizer for avansert beregning
-    const optimizedPlan = RouteOptimizer.calculateOptimalChargingPlan(
-      selectedCar,
-      routeData,
-      chargingStations,
-      mockWeatherData,
-      totalDistance
-    );
-
-    // FORBEDRET: Ta alltid anbefalte stasjoner fra RouteOptimizer og vis tydelig feedback
-    console.log(`🔧 Bruker ${optimizedPlan.length} anbefalte stasjoner fra RouteOptimizer`);
-    
-    if (optimizedPlan.length > 0) {
-      console.log(`💙 ANBEFALT LADESTASJON FUNNET:`, optimizedPlan[0].station.name);
-    } else {
-      console.log(`⚠️ INGEN ANBEFALTE STASJONER - sjekk batterinivå og rutedistanse`);
-    }
-    
-    optimizedPlan.forEach((plan, index) => {
-      const isNearRoute = isStationNearRoute(plan.station);
-      console.log(`🔍 Stasjon ${plan.station.name}: nær rute=${isNearRoute}, avstand=${plan.distanceFromStart.toFixed(0)}km, batteri=${plan.batteryLevelOnArrival.toFixed(1)}%`);
-    });
-
-    const finalPlan = optimizedPlan; // Bruk ALLE anbefalte stasjoner
-    console.log(`🎯 Bruker ${finalPlan.length} anbefalte stasjoner`);
-    
-    finalPlan.forEach((plan, index) => {
-      console.log(`🔄 Anbefalt: ${plan.station.name} - ${plan.distanceFromStart.toFixed(0)}km fra start`);
-    });
-
-    finalPlan.forEach((plan, index) => {
-      console.log(`  📍 ${index + 1}. ${plan.station.name} - ${plan.distanceFromStart.toFixed(0)}km fra start`);
-      console.log(`      ID: ${plan.station.id}`);
-    });
-
-    return finalPlan;
-  }, [calculatedRoute, selectedCar, routeData, chargingStations, isStationNearRoute]);
-
-  // Forbedret funksjon for å finne beste stasjon langs ruten
-  const getBestStationAlongRoute = useCallback((): ChargingStation | null => {
-    if (!calculatedRoute || !chargingStations.length) return null;
-    
-    // Finn alle stasjoner som er nær ruten
-    const stationsNearRoute = chargingStations.filter(station => isStationNearRoute(station));
-    
-    if (stationsNearRoute.length === 0) return null;
-    
-    // Velg beste stasjon basert på tilgjengelighet og hurtiglading
-    const bestStation = stationsNearRoute
-      .filter(s => s.fast_charger) // Kun hurtiglading
-      .sort((a, b) => {
-        const availabilityA = a.available / a.total;
-        const availabilityB = b.available / b.total;
-        return availabilityB - availabilityA; // Høyest tilgjengelighet først
-      })[0];
-    
-    if (bestStation) {
-      console.log(`🎯 BESTE STASJON LANGS RUTEN: ${bestStation.name}`);
-    }
-    
-    return bestStation || stationsNearRoute[0]; // Fallback til første stasjon langs ruten
-  }, [calculatedRoute, chargingStations, isStationNearRoute]);
-
-  // Hjelpefunksjon for å sjekke om stasjon er kritisk ved 10% batteri
-  const checkIfCriticalStation = useCallback((station: ChargingStation): boolean => {
-    if (!calculatedRoute || !selectedCar || routeData.batteryPercentage <= 10) {
-      console.log(`⚠️ checkIfCriticalStation: mangler data - route=${!!calculatedRoute}, car=${!!selectedCar}, battery=${routeData.batteryPercentage}%`);
-      return false;
-    }
-    
-    // Få optimalisert ladeplan først
-    const optimizedPlan = getOptimizedChargingPlan();
-    console.log(`📋 Optimalisert plan har ${optimizedPlan.length} stasjoner`);
-    
-    // Hvis ingen anbefalte stasjoner er nær ruten, bruk de anbefalte uansett
-    if (optimizedPlan.length === 0) {
-      console.log(`⚠️ Ingen anbefalte stasjoner nær ruten - bruker alternativ logikk`);
-      return false; // Ingen stasjoner å velge fra
-    }
-    
-    // Beregn avstand hvor batteriet vil være på 10%
-    const batteryUsed = routeData.batteryPercentage - 10; // Prosent brukt
-    const distanceAt10Percent = (batteryUsed / 100) * selectedCar.range; // km kjørt
-    
-    console.log(`🔍 Sjekker stasjon ${station.name}: 10% batteri ved ${distanceAt10Percent.toFixed(0)}km`);
-    
-    // Sjekk om denne stasjonen er i den anbefalte listen
-    const stationPlan = optimizedPlan.find(plan => plan.station.id === station.id);
-    
-    if (!stationPlan) {
-      console.log(`❌ ${station.name} er ikke i anbefalte liste`);
-      return false; // Stasjonen er ikke anbefalt
-    }
-    
-    console.log(`✅ ${station.name} ER anbefalt - sjekker avstand til 10% punkt`);
-    
-    // Sjekk om stasjonen er nær 10% punktet (±50km)
-    const distanceFromCritical = Math.abs(stationPlan.distanceFromStart - distanceAt10Percent);
-    
-    if (distanceFromCritical <= 50) {
-      console.log(`🔵 KRITISK stasjon funnet: ${station.name} ved ${stationPlan.distanceFromStart.toFixed(0)}km (${distanceFromCritical.toFixed(0)}km fra 10% punkt)`);
-      return true;
-    }
-    
-    return false;
-  }, [calculatedRoute, selectedCar, routeData.batteryPercentage, getOptimizedChargingPlan, isStationNearRoute]);
-  
-
-  // Add charging station markers - update when route changes
-  useEffect(() => {
-    console.log('📱 MOBILE DEBUG - Charging stations useEffect triggered');
-    console.log('📱 Map ready:', !!mapInstanceRef.current);
-    console.log('📱 Stations count:', chargingStations?.length || 0);
-    console.log('📱 First station:', chargingStations?.[0]);
-    
-    if (!mapInstanceRef.current || !chargingStations || chargingStations.length === 0) {
-      console.log('❌ MOBILE - Ingen ladestasjoner å vise eller kart ikke klar');
-      return;
-    }
-
-    console.log(`🔌 Legger til ${chargingStations.length} ladestasjoner på kartet`);
-
-    // Clear existing charging station markers
-    chargingStationMarkersRef.current.forEach(marker => marker.setMap(null));
-    chargingStationMarkersRef.current = [];
-
-    // Add new charging station markers med forbedret logikk
-    const bestStationAlongRoute = getBestStationAlongRoute();
-    
-    chargingStations.forEach(station => {
-      // Sjekk om dette er den anbefalte stasjonen langs ruten
-      const isRecommendedAlongRoute = bestStationAlongRoute && station.id === bestStationAlongRoute.id;
-      const isNearRoute = calculatedRoute && isStationNearRoute(station);
-      
-      // Spesiell markør for anbefalt stasjon langs ruten
-      const markerIcon = isRecommendedAlongRoute ? {
-        // Gul stjerne-markør for anbefalt stasjon langs ruten
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="11" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
-            <text x="12" y="16" text-anchor="middle" fill="#000000" font-size="14" font-weight="bold">★</text>
-          </svg>
-        `),
-        scaledSize: new google.maps.Size(24, 24),
-        anchor: new google.maps.Point(12, 12)
-      } : isNearRoute ? {
-        // Helt blå markør med gult lyn for kritisk ladestasjon ved 10% batteri
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="11" fill="#0066ff" stroke="#ffffff" stroke-width="2"/>
-            <text x="12" y="16" text-anchor="middle" fill="#ffff00" font-size="12" font-weight="bold">⚡</text>
-          </svg>
-        `),
-        scaledSize: new google.maps.Size(24, 24),
-        anchor: new google.maps.Point(12, 12)
-      } : isRecommended ? {
-        // Vanlige anbefalte ladestasjoner (mindre blå)
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
-            <circle cx="10" cy="10" r="9" fill="#0066ff" stroke="#004499" stroke-width="1"/>
-            <text x="10" y="14" text-anchor="middle" fill="white" font-size="11" font-weight="bold">⚡</text>
-          </svg>
-        `),
-        scaledSize: new google.maps.Size(20, 20),
-        anchor: new google.maps.Point(10, 10)
-      } : isNearRoute ? {
-        // Røde markører for stasjoner nær ruten
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-            <circle cx="8" cy="8" r="7" fill="#ff4444" stroke="#cc0000" stroke-width="1"/>
-            <text x="8" y="12" text-anchor="middle" fill="white" font-size="10" font-weight="bold">⚡</text>
-          </svg>
-        `),
-        scaledSize: new google.maps.Size(16, 16),
-        anchor: new google.maps.Point(8, 8)
-      } : {
-        // Grønne markører for stasjoner langt fra ruten
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8">
-            <circle cx="4" cy="4" r="3" fill="#00ff41" stroke="#00cc33" stroke-width="1"/>
-          </svg>
-        `),
-        scaledSize: new google.maps.Size(8, 8),
-        anchor: new google.maps.Point(4, 4)
-      };
-
-      const marker = new google.maps.Marker({
-        position: { lat: station.latitude, lng: station.longitude },
-        map: mapInstanceRef.current!,
-        icon: markerIcon,
-        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isRecommendedAlongRoute ? '\n⭐ ANBEFALT LANGS RUTEN' : isNearRoute ? '\n🔴 NÆR RUTEN' : '\n🟢 LANGT FRA RUTEN'}`,
-        zIndex: isRecommendedAlongRoute ? 1000 : (isNearRoute ? 100 : 10)
-      });
-
-      // Info window for each station
-      const infoWindow = new google.maps.InfoWindow({
-        content: `
-          <div style="padding: 10px; max-width: 250px;">
-            <h3 style="margin: 0 0 10px 0; color: #333;">${station.name}</h3>
-            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
-              <span><strong>Tilgjengelig:</strong></span>
-              <span>${station.available}/${station.total}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
-              <span><strong>Effekt:</strong></span>
-              <span>${station.power}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
-              <span><strong>Pris:</strong></span>
-              <span>${station.cost} kr/kWh</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
-              <span><strong>Leverandør:</strong></span>
-              <span>${station.provider}</span>
-            </div>
-            <div style="margin-top: 10px; font-size: 12px; color: #666;">
-              ${station.address}
-            </div>
-            ${isRecommendedAlongRoute ? '<div style="margin-top: 10px; padding: 5px; background: #FFD700; border-radius: 3px; text-align: center; font-weight: bold;">⭐ ANBEFALT LANGS RUTEN</div>' : ''}
-          </div>
-        `
-      });
-
-      marker.addListener('click', () => {
-        infoWindow.open(mapInstanceRef.current, marker);
-      });
-
-      chargingStationMarkersRef.current.push(marker);
-        icon: markerIcon
-      });
-
-
-      // Legg til klikk-event for ladestasjon-markør
-      marker.addListener('click', () => {
-        // Finn batteriprosent for anbefalte stasjoner
-        const optimizedPlan = getOptimizedChargingPlan();
-        const stationPlan = optimizedPlan.find(plan => plan.station.id === station.id);
-        const batteryAtArrival = stationPlan ? stationPlan.batteryLevelOnArrival.toFixed(1) : null;
-        
-        const statusColor = station.available > 0 ? 'hsl(140 100% 50%)' : 'hsl(0 84% 60%)';
-        const statusText = station.available > 0 ? 'TILGJENGELIG' : 'OPPTATT';
-        const routeIndicator = isRecommended ? 'ANBEFALT LADESTASJON' : isNearRoute ? 'PÅ RUTEN' : 'LADESTASJON';
-        const routeColor = isRecommended ? 'hsl(240 100% 60%)' : isNearRoute ? 'hsl(0 84% 60%)' : 'hsl(140 100% 50%)';
-        
-        const infoWindow = new google.maps.InfoWindow({
-          maxWidth: 200,
-          disableAutoPan: false,
-          pixelOffset: new google.maps.Size(0, -10),
-          zIndex: 10000,
-          content: `
-            <style>
-              .gm-style .gm-style-iw-c {
-                background: transparent !important;
-                z-index: 10000 !important;
-                border: none !important;
-                border-radius: 0 !important;
-                box-shadow: none !important;
-                padding: 0 !important;
-                overflow: visible !important;
-                max-height: none !important;
-              }
-              .gm-style .gm-style-iw-d {
-                overflow: visible !important;
-                max-height: none !important;
-                scrollbar-width: none !important;
-                -ms-overflow-style: none !important;
-              }
-              .gm-style .gm-style-iw-d::-webkit-scrollbar {
-                display: none !important;
-              }
-              .gm-style .gm-style-iw-tc {
-                display: none !important;
-              }
-            </style>
-            <div style="
-              font-family: Inter, system-ui, sans-serif; 
-              padding: 0; 
-              line-height: 1.4; 
-              width: 360px; 
-              max-height: none;
-              overflow: visible;
-              background: linear-gradient(135deg, hsl(225 25% 8% / 0.98) 0%, hsl(180 100% 8% / 0.95) 30%, hsl(225 25% 8% / 0.98) 100%);
-              border: 1px solid ${isNearRoute ? 'hsl(0 84% 60% / 0.5)' : 'hsl(140 100% 50% / 0.5)'};
-              border-radius: 12px;
-              box-shadow: 0 8px 32px ${isNearRoute ? 'hsl(0 84% 60% / 0.2)' : 'hsl(140 100% 50% / 0.2)'}, 0 0 0 1px ${isNearRoute ? 'hsl(0 84% 60% / 0.15)' : 'hsl(140 100% 50% / 0.15)'};
-              backdrop-filter: blur(16px);
-            ">
-              <div style="
-                background: linear-gradient(135deg, ${routeColor} 0%, ${isNearRoute ? 'hsl(320 100% 60%)' : 'hsl(120 100% 60%)'} 100%);
-                color: hsl(225 25% 6%);
-                padding: 16px;
-                position: relative;
-                overflow: hidden;
-              ">
-                <button onclick="this.closest('.gm-style-iw').parentNode.querySelector('.gm-ui-hover-effect').click()" style="
-                  position: absolute;
-                  top: 8px;
-                  right: 8px;
-                  background: hsl(225 25% 6% / 0.3);
-                  border: 1px solid hsl(225 25% 6% / 0.2);
-                  border-radius: 50%;
-                  width: 24px;
-                  height: 24px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  cursor: pointer;
-                  font-size: 14px;
-                  font-weight: 700;
-                  color: hsl(225 25% 6%);
-                  z-index: 10;
-                  transition: all 0.2s ease;
-                " onmouseover="this.style.background='hsl(225 25% 6% / 0.5)'" onmouseout="this.style.background='hsl(225 25% 6% / 0.3)'">×</button>
-                <div style="
-                  position: absolute;
-                  top: 0;
-                  left: 0;
-                  right: 0;
-                  bottom: 0;
-                  background: radial-gradient(circle at ${isNearRoute ? '20% 80%' : '70% 20%'}, ${isNearRoute ? 'hsl(320 100% 70% / 0.3)' : 'hsl(120 100% 70% / 0.3)'} 0%, transparent 50%);
-                "></div>
-                <h4 style="margin: 0; font-size: 18px; font-weight: 700; position: relative; z-index: 1;">${isRecommended ? '💙' : isNearRoute ? '🔴' : '⚡'} ${station.name}</h4>
-                <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.8; position: relative; z-index: 1;">📍 ${station.address || station.location || 'Ukjent adresse'}</p>
-                <div style="margin-top: 8px; position: relative; z-index: 1; display: flex; gap: 8px;">
-                  <span style="
-                    background: hsl(225 25% 6% / 0.2);
-                    color: hsl(225 25% 6%);
-                    padding: 4px 8px;
-                    border-radius: 6px;
-                    font-size: 12px;
-                    font-weight: 600;
-                    border: 1px solid hsl(225 25% 6% / 0.1);
-                  ">${routeIndicator}</span>
-                  <span style="
-                    background: ${statusColor}20;
-                    color: hsl(225 25% 6%);
-                    padding: 4px 8px;
-                    border-radius: 6px;
-                    font-size: 12px;
-                    font-weight: 600;
-                    border: 1px solid ${statusColor}40;
-                  ">${statusText}</span>
-                </div>
-              </div>
-              <div style="padding: 16px; background: transparent;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0; padding: 8px; background: hsl(140 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(140 100% 50%);">
-                  <span style="color: hsl(140 100% 80%); font-size: 13px; font-weight: 500;">🔋 Tilgjengelighet</span>
-                  <span style="font-weight: 600; font-size: 13px; color: ${station.available > 0 ? 'hsl(140 100% 80%)' : 'hsl(0 84% 70%)'};">${station.available}/${station.total} ledige</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0; padding: 8px; background: hsl(180 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(180 100% 50%);">
-                  <span style="color: hsl(180 100% 80%); font-size: 13px; font-weight: 500;">⚡ Ladeeffekt</span>
-                  <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%);">${station.power || 'Ikke oppgitt'}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0; padding: 8px; background: hsl(280 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(280 100% 50%);">
-                  <span style="color: hsl(280 100% 80%); font-size: 13px; font-weight: 500;">💰 Kostnad</span>
-                  <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%);">${station.cost || 'Gratis'} kr/kWh</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0; padding: 8px; background: hsl(45 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(45 100% 50%);">
-                  <span style="color: hsl(45 100% 80%); font-size: 13px; font-weight: 500;">🏢 Leverandør</span>
-                  <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%);">${station.provider || 'Ukjent'}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0; padding: 8px; background: hsl(120 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(120 100% 50%);">
-                  <span style="color: hsl(120 100% 80%); font-size: 13px; font-weight: 500;">🚀 Hurtiglader</span>
-                  <span style="font-weight: 600; font-size: 13px; color: ${station.fast_charger ? 'hsl(140 100% 80%)' : 'hsl(0 84% 70%)'};">${station.fast_charger ? 'Ja' : 'Nei'}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0; padding: 8px; background: hsl(200 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(200 100% 50%);">
-                  <span style="color: hsl(200 100% 80%); font-size: 13px; font-weight: 500;">📍 Koordinater</span>
-                  <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%); font-family: 'Courier New', monospace;">${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}</span>
-                </div>
-                ${isRecommended && batteryAtArrival ? `
-                <div style="
-                  margin: 12px 0 0 0; 
-                  padding: 12px; 
-                  background: linear-gradient(135deg, hsl(240 100% 60% / 0.15) 0%, hsl(260 100% 50% / 0.15) 100%); 
-                  border-radius: 8px; 
-                  border: 1px solid hsl(240 100% 60% / 0.3);
-                  position: relative;
-                  overflow: hidden;
-                ">
-                  <div style="
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: radial-gradient(circle at 80% 20%, hsl(240 100% 60% / 0.1) 0%, transparent 70%);
-                  "></div>
-                  <div style="position: relative; z-index: 1;">
-                    <p style="
-                      margin: 0 0 8px 0; 
-                      color: hsl(240 100% 70%); 
-                      font-weight: 700; 
-                      font-size: 14px;
-                    ">💙 OPTIMAL LADESTOPPUNKT</p>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin: 4px 0;">
-                      <span style="color: hsl(240 100% 80%); font-size: 13px; font-weight: 500;">🔋 Batteri ved ankomst</span>
-                      <span style="font-weight: 700; font-size: 15px; color: hsl(240 100% 80%);">${batteryAtArrival}%</span>
-                    </div>
-                    <p style="
-                      margin: 6px 0 0 0; 
-                      color: hsl(240 100% 85%); 
-                      font-size: 12px;
-                      opacity: 0.9;
-                    ">Beregnet med værforhold og hengerlast</p>
-                  </div>
-                </div>
-                ` : ''}
-                ${isNearRoute ? `
-                <div style="
-                  margin: 12px 0 0 0; 
-                  padding: 12px; 
-                  background: linear-gradient(135deg, hsl(0 84% 60% / 0.15) 0%, hsl(320 100% 50% / 0.15) 100%); 
-                  border-radius: 8px; 
-                  border: 1px solid hsl(0 84% 60% / 0.3);
-                  position: relative;
-                  overflow: hidden;
-                ">
-                  <div style="
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: radial-gradient(circle at 80% 20%, hsl(0 84% 60% / 0.1) 0%, transparent 70%);
-                  "></div>
-                  <p style="
-                    margin: 0; 
-                    color: hsl(0 84% 70%); 
-                    font-weight: 700; 
-                    font-size: 14px;
-                    position: relative;
-                    z-index: 1;
-                  ">⚡ Denne ladestasjonen ligger strategisk langs ruten din!</p>
-                </div>
-                ` : ''}
-              </div>
-            </div>
-          `
-        });
-        infoWindow.open(mapInstanceRef.current, marker);
-      });
-
-      chargingStationMarkersRef.current.push(marker);
-    });
-  }, [chargingStations, calculatedRoute, isStationNearRoute]); // Oppdater når rute endres
-
-  // Calculate route when trigger changes - ROBUST and FOOLPROOF
-  const calculateRoute = useCallback(async () => {
-    console.log('🔍 ROBUST ruteberegning startet');
-    console.log('📱 Device info:', {
-      isMobile: window.innerWidth < 768,
-      userAgent: navigator.userAgent,
-      screenSize: `${window.innerWidth}x${window.innerHeight}`
-    });
-    console.log('🗺️ Route data:', routeData);
-    console.log('🚗 Selected car:', selectedCar);
-    
-    // Wait for map to be fully initialized
-    let attempts = 0;
-    const maxAttempts = 20;
-    
-    while ((!mapInstanceRef.current || !directionsServiceRef.current || !directionsRendererRef.current) && attempts < maxAttempts) {
-      console.log(`⏳ Venter på kart initialisering (forsøk ${attempts + 1}/${maxAttempts})`);
-      console.log('🔍 Map instances:', {
-        map: !!mapInstanceRef.current,
-        directionsService: !!directionsServiceRef.current,
-        directionsRenderer: !!directionsRendererRef.current
-      });
-      await new Promise(resolve => setTimeout(resolve, 500));
-      attempts++;
-    }
-    
-    // Final validation
-    if (!mapInstanceRef.current || !directionsServiceRef.current || !directionsRendererRef.current || 
-        !routeData.from || !routeData.to || !selectedCar || routeTrigger === 0) {
-      console.log('⏸️ Requirements fortsatt ikke oppfylt etter venting:');
-      console.log('📊 mapInstanceRef.current:', !!mapInstanceRef.current);
-      console.log('📊 directionsServiceRef.current:', !!directionsServiceRef.current);
-      console.log('📊 directionsRendererRef.current:', !!directionsRendererRef.current);
-      console.log('📊 routeData.from:', routeData.from);
-      console.log('📊 routeData.to:', routeData.to);
-      console.log('📊 selectedCar:', !!selectedCar);
-      console.log('📊 routeTrigger:', routeTrigger);
-      console.log('❌ STOPPING: Route calculation requirements not met');
-      onLoadingChange(false);
-      return;
-    }
-
-    // Validation specifically for mobile devices
-    if (window.innerWidth < 768) {
-      console.log('📱 MOBILE DEVICE DETECTED - Extra validation');
-      console.log('📱 Route data validation:', {
-        from: routeData.from.trim(),
-        to: routeData.to.trim(),
-        fromLength: routeData.from.trim().length,
-        toLength: routeData.to.trim().length,
-        batteryPercentage: routeData.batteryPercentage
-      });
-      
-      if (!routeData.from.trim() || !routeData.to.trim()) {
-        console.log('❌ MOBILE: Empty route locations detected');
-        onLoadingChange(false);
-        onError('Startsted og destinasjon må fylles ut');
-        return;
-      }
-
-      if (routeData.batteryPercentage <= 0) {
-        console.log('❌ MOBILE: Invalid battery percentage');
-        onLoadingChange(false);
-        onError('Batterinivå må være høyere enn 0%');
-        return;
-      }
-    }
-
-    console.log('🚀 STARTER GOOGLE MAPS RUTEPLANLEGGING');
-    console.log('📍 Fra:', routeData.from, 'Til:', routeData.to);
-    onLoadingChange(true);
-    onError(null);
-
-    try {
-      // Get route preferences based on selected route - Made more distinct
-      const getRoutePreferences = (routeId: string | null) => {
-        console.log(`🛣️ Setter rutepreferanser for: ${routeId}`);
-        switch (routeId) {
-          case 'fastest':
-            console.log('⚡ Fastest: Tillater alt for raskeste rute');
-            return {
-              avoidHighways: false,
-              avoidTolls: false,
-              avoidFerries: false,
-              provideRouteAlternatives: true // Try to get alternatives for fastest too
-            };
-          case 'shortest':
-            console.log('📏 Shortest: Forcerer alternative ruter og velger korteste');
-            return {
-              avoidHighways: false,
-              avoidTolls: true, // Avoid tolls to potentially get different route
-              avoidFerries: false,
-              provideRouteAlternatives: true
-            };
-          case 'eco':
-            console.log('🌱 Eco: Unngår hovedveier og bomveier');
-            return {
-              avoidHighways: true, // This should give a very different route
-              avoidTolls: true,
-              avoidFerries: true,
-              provideRouteAlternatives: false
-            };
-          default:
-            return {
-              avoidHighways: false,
-              avoidTolls: false,
-              avoidFerries: false,
-              provideRouteAlternatives: false
-            };
-        }
-      };
-
-      const routePrefs = getRoutePreferences(selectedRouteId);
-      
-      const request: google.maps.DirectionsRequest = {
-        origin: routeData.from + ', Norge',
-        destination: routeData.to + ', Norge',
-        travelMode: google.maps.TravelMode.DRIVING,
-        unitSystem: google.maps.UnitSystem.METRIC,
-        region: 'NO',
-        avoidHighways: routePrefs.avoidHighways,
-        avoidTolls: routePrefs.avoidTolls,
-        avoidFerries: routePrefs.avoidFerries,
-        provideRouteAlternatives: routePrefs.provideRouteAlternatives,
-        optimizeWaypoints: false, // Remove this to let Google choose best optimization
-      };
-
-      if (routeData.via && routeData.via.trim()) {
-        request.waypoints = [{
-          location: routeData.via + ', Norge',
-          stopover: true
-        }];
-      }
-
-      console.log('📞 Sender Google Directions API-forespørsel for', selectedRouteId || 'default', 'rute...');
-      console.log('📍 Request preferences:', routePrefs);
-      console.log('📱 MOBILE DEBUG - Full request object:', {
-        origin: request.origin,
-        destination: request.destination,
-        waypoints: request.waypoints,
-        isMobile: window.innerWidth < 768,
-        screenSize: `${window.innerWidth}x${window.innerHeight}`,
-        userAgent: navigator.userAgent
-      });
-      
-      // Create Promise wrapper for Directions API call with timeout
-      const directionsPromise = new Promise<google.maps.DirectionsResult>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          console.error('💥 Google Directions API TIMEOUT etter 30 sekunder');
-          reject(new Error('API_TIMEOUT'));
-        }, 30000); // Increased timeout for better route alternatives
-
-        directionsServiceRef.current!.route(request, (result, status) => {
-          clearTimeout(timeout);
-          console.log('🗺️ Google Directions API respons:', status);
-          console.log(`📊 Antall ruter mottatt: ${result?.routes?.length || 0}`);
-          
-          // Enhanced mobile debugging
-          if (window.innerWidth < 768) {
-            console.log('📱 MOBILE - API Response details:', {
-              status: status,
-              routesLength: result?.routes?.length,
-              firstRouteExists: !!result?.routes?.[0],
-              errorMessage: status !== google.maps.DirectionsStatus.OK ? status : null
-            });
-          }
-          
-          if (status === google.maps.DirectionsStatus.OK && result) {
-            console.log('✅ SUCCESS - Resolving with result');
-            resolve(result);
-          } else {
-            console.error('❌ Directions API feil:', status);
-            reject(new Error(status));
-          }
-        });
-      });
-
-      const result = await directionsPromise;
-      
-      // For shortest route, select the route with minimum distance if alternatives exist
-      if (selectedRouteId === 'shortest' && result.routes.length > 1) {
-        console.log(`🛣️ Fant ${result.routes.length} alternative ruter for korteste`);
-        
-        let shortestRouteIndex = 0;
-        let shortestDistance = result.routes[0].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0);
-        
-        // Log all routes with their distances
-        result.routes.forEach((route, index) => {
-          const distance = route.legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0);
-          const duration = route.legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0);
-          console.log(`   Rute ${index + 1}: ${(distance/1000).toFixed(1)} km, ${Math.round(duration/60)} min`);
-        });
-        
-        for (let i = 1; i < result.routes.length; i++) {
-          const routeDistance = result.routes[i].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0);
-          if (routeDistance < shortestDistance) {
-            shortestDistance = routeDistance;
-            shortestRouteIndex = i;
-          }
-        }
-        
-        if (shortestRouteIndex !== 0) {
-          // Reorder routes to put shortest first
-          const shortestRoute = result.routes[shortestRouteIndex];
-          result.routes[shortestRouteIndex] = result.routes[0];
-          result.routes[0] = shortestRoute;
-          console.log(`🎯 Byttet til rute ${shortestRouteIndex + 1} som er korteste (${(shortestDistance/1000).toFixed(1)} km)`);
-        } else {
-          console.log(`🎯 Standard rute er allerede korteste (${(shortestDistance/1000).toFixed(1)} km)`);
-        }
-      }
-      
-      console.log('✅ Google Maps rute beregnet');
-      console.log('🗺️ Setter rute på kartet med DirectionsRenderer...');
-      
-      // Sørg for at DirectionsRenderer er koblet til kartet
-      if (directionsRendererRef.current && mapInstanceRef.current) {
-        // Get route color based on selected route type
-        const getRouteColor = (routeId: string | null) => {
-          switch (routeId) {
-            case 'fastest':
-              return '#3b82f6'; // Blå for raskeste
-            case 'shortest':
-              return '#22c55e'; // Grønn for korteste  
-            case 'eco':
-              return '#8b5cf6'; // Lilla for miljøvennlig
-            default:
-              return '#3b82f6'; // Default blå
-          }
-        };
-
-        // Update polyline color
-        const routeColor = getRouteColor(selectedRouteId);
-        directionsRendererRef.current.setOptions({
-          suppressMarkers: true,
-          polylineOptions: {
-            strokeColor: routeColor,
-            strokeWeight: 6,
-            strokeOpacity: 0.8
-          }
-        });
-
-        directionsRendererRef.current.setMap(mapInstanceRef.current);
-        directionsRendererRef.current.setDirections(result);
-        
-        // Lag egne start og slutt-markører som på det gamle kartet
-        const route = result.routes[0];
-        const leg = route.legs[0];
-        
-        // Start-markør (grønn som på det gamle kartet)
-        const startMarker = new google.maps.Marker({
-          position: leg.start_location,
-          map: mapInstanceRef.current,
-          title: `Start: ${routeData.from}`,
-          icon: {
-            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" fill="#22c55e" stroke="#ffffff" stroke-width="2"/>
-                <text x="12" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold">S</text>
-              </svg>
-            `),
-            scaledSize: new google.maps.Size(24, 24),
-            anchor: new google.maps.Point(12, 12)
-          }
-        });
-        
-        // Legg til klikk-event for start-markør
-        startMarker.addListener('click', () => {
-          const infoWindow = new google.maps.InfoWindow({
-            maxWidth: 250,
-            disableAutoPan: false,
-            pixelOffset: new google.maps.Size(0, -10),
-            zIndex: 10000,
-            content: `
-              <style>
-                .gm-style .gm-style-iw-c {
-                  background: transparent !important;
-                  z-index: 10000 !important;
-                  border: none !important;
-                  border-radius: 0 !important;
-                  box-shadow: none !important;
-                  padding: 0 !important;
-                  overflow: visible !important;
-                  max-height: none !important;
-                }
-                .gm-style .gm-style-iw-d {
-                  overflow: visible !important;
-                  max-height: none !important;
-                  scrollbar-width: none !important;
-                  -ms-overflow-style: none !important;
-                }
-                .gm-style .gm-style-iw-d::-webkit-scrollbar {
-                  display: none !important;
-                }
-                .gm-style .gm-style-iw-tc {
-                  display: none !important;
-                }
-              </style>
-              <div style="
-                font-family: Inter, system-ui, sans-serif; 
-                padding: 0; 
-                line-height: 1.4; 
-                width: 320px; 
-                max-height: none;
-                overflow: visible;
-                background: linear-gradient(135deg, hsl(225 25% 8% / 0.98) 0%, hsl(140 100% 8% / 0.95) 30%, hsl(225 25% 8% / 0.98) 100%);
-                border: 1px solid hsl(140 100% 50% / 0.4);
-                border-radius: 12px;
-                box-shadow: 0 8px 32px hsl(140 100% 50% / 0.2), 0 0 0 1px hsl(140 100% 50% / 0.15);
-                backdrop-filter: blur(16px);
-              ">
-                <div style="
-                  background: linear-gradient(135deg, hsl(140 100% 50%) 0%, hsl(120 100% 60%) 100%);
-                  color: hsl(225 25% 6%);
-                  padding: 16px;
-                  position: relative;
-                  overflow: hidden;
-                ">
-                  <button onclick="this.closest('.gm-style-iw').parentNode.querySelector('.gm-ui-hover-effect').click()" style="
-                    position: absolute;
-                    top: 8px;
-                    right: 8px;
-                    background: hsl(225 25% 6% / 0.3);
-                    border: 1px solid hsl(225 25% 6% / 0.2);
-                    border-radius: 50%;
-                    width: 24px;
-                    height: 24px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    font-size: 14px;
-                    font-weight: 700;
-                    color: hsl(225 25% 6%);
-                    z-index: 10;
-                    transition: all 0.2s ease;
-                  " onmouseover="this.style.background='hsl(225 25% 6% / 0.5)'" onmouseout="this.style.background='hsl(225 25% 6% / 0.3)'">×</button>
-                  <div style="
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: radial-gradient(circle at 30% 20%, hsl(120 100% 70% / 0.3) 0%, transparent 50%);
-                  "></div>
-                  <h4 style="margin: 0; font-size: 18px; font-weight: 700; position: relative; z-index: 1;">🟢 STARTPUNKT</h4>
-                  <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.8; position: relative; z-index: 1;">📍 ${routeData.from}</p>
-                  <div style="margin-top: 8px; position: relative; z-index: 1;">
-                    <span style="
-                      background: hsl(225 25% 6% / 0.2);
-                      color: hsl(225 25% 6%);
-                      padding: 4px 8px;
-                      border-radius: 6px;
-                      font-size: 12px;
-                      font-weight: 600;
-                      border: 1px solid hsl(225 25% 6% / 0.1);
-                    ">RUTE START</span>
-                  </div>
-                </div>
-                <div style="padding: 16px; background: transparent;">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(140 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(140 100% 50%);">
-                    <span style="color: hsl(140 100% 80%); font-size: 13px; font-weight: 500;">📍 Koordinater</span>
-                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%); font-family: 'Courier New', monospace;">${leg.start_location.lat().toFixed(4)}, ${leg.start_location.lng().toFixed(4)}</span>
-                  </div>
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(180 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(180 100% 50%);">
-                    <span style="color: hsl(180 100% 80%); font-size: 13px; font-weight: 500;">📏 Total avstand</span>
-                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%);">${leg.distance?.text || 'Beregner...'}</span>
-                  </div>
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(280 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(280 100% 50%);">
-                    <span style="color: hsl(280 100% 80%); font-size: 13px; font-weight: 500;">⏰ Estimert tid</span>
-                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%);">${leg.duration?.text || 'Beregner...'}</span>
-                  </div>
-                </div>
-              </div>
-            `
-          });
-          infoWindow.open(mapInstanceRef.current, startMarker);
-        });
-        
-        // Slutt-markør (rød som på det gamle kartet)
-        const endMarker = new google.maps.Marker({
-          position: leg.end_location,
-          map: mapInstanceRef.current,
-          title: `Slutt: ${routeData.to}`,
-          icon: {
-            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
-                <text x="12" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold">M</text>
-              </svg>
-            `),
-            scaledSize: new google.maps.Size(24, 24),
-            anchor: new google.maps.Point(12, 12)
-          }
-        });
-        
-        // Legg til klikk-event for slutt-markør
-        endMarker.addListener('click', () => {
-          const infoWindow = new google.maps.InfoWindow({
-            maxWidth: 250,
-            disableAutoPan: false,
-            pixelOffset: new google.maps.Size(0, -10),
-            zIndex: 10000,
-            content: `
-              <style>
-                .gm-style .gm-style-iw-c {
-                  background: transparent !important;
-                  z-index: 10000 !important;
-                  border: none !important;
-                  border-radius: 0 !important;
-                  box-shadow: none !important;
-                  padding: 0 !important;
-                  overflow: visible !important;
-                  max-height: none !important;
-                }
-                .gm-style .gm-style-iw-d {
-                  overflow: visible !important;
-                  max-height: none !important;
-                  scrollbar-width: none !important;
-                  -ms-overflow-style: none !important;
-                }
-                .gm-style .gm-style-iw-d::-webkit-scrollbar {
-                  display: none !important;
-                }
-                .gm-style .gm-style-iw-tc {
-                  display: none !important;
-                }
-              </style>
-              <div style="
-                font-family: Inter, system-ui, sans-serif; 
-                padding: 0; 
-                line-height: 1.4; 
-                width: 320px; 
-                max-height: none;
-                overflow: visible;
-                background: linear-gradient(135deg, hsl(225 25% 8% / 0.98) 0%, hsl(280 100% 8% / 0.95) 30%, hsl(225 25% 8% / 0.98) 100%);
-                border: 1px solid hsl(280 100% 50% / 0.4);
-                border-radius: 12px;
-                box-shadow: 0 8px 32px hsl(280 100% 50% / 0.2), 0 0 0 1px hsl(280 100% 50% / 0.15);
-                backdrop-filter: blur(16px);
-              ">
-                <div style="
-                  background: linear-gradient(135deg, hsl(280 100% 50%) 0%, hsl(320 100% 60%) 100%);
-                  color: hsl(225 25% 6%);
-                  padding: 16px;
-                  position: relative;
-                  overflow: hidden;
-                ">
-                  <button onclick="this.closest('.gm-style-iw').parentNode.querySelector('.gm-ui-hover-effect').click()" style="
-                    position: absolute;
-                    top: 8px;
-                    right: 8px;
-                    background: hsl(225 25% 6% / 0.3);
-                    border: 1px solid hsl(225 25% 6% / 0.2);
-                    border-radius: 50%;
-                    width: 24px;
-                    height: 24px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    font-size: 14px;
-                    font-weight: 700;
-                    color: hsl(225 25% 6%);
-                    z-index: 10;
-                    transition: all 0.2s ease;
-                  " onmouseover="this.style.background='hsl(225 25% 6% / 0.5)'" onmouseout="this.style.background='hsl(225 25% 6% / 0.3)'">×</button>
-                  <div style="
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: radial-gradient(circle at 70% 20%, hsl(320 100% 70% / 0.3) 0%, transparent 50%);
-                  "></div>
-                  <h4 style="margin: 0; font-size: 18px; font-weight: 700; position: relative; z-index: 1;">🔴 MÅLPUNKT</h4>
-                  <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.8; position: relative; z-index: 1;">📍 ${routeData.to}</p>
-                  <div style="margin-top: 8px; position: relative; z-index: 1;">
-                    <span style="
-                      background: hsl(225 25% 6% / 0.2);
-                      color: hsl(225 25% 6%);
-                      padding: 4px 8px;
-                      border-radius: 6px;
-                      font-size: 12px;
-                      font-weight: 600;
-                      border: 1px solid hsl(225 25% 6% / 0.1);
-                    ">DESTINASJON</span>
-                  </div>
-                </div>
-                <div style="padding: 16px; background: transparent;">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(280 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(280 100% 50%);">
-                    <span style="color: hsl(280 100% 80%); font-size: 13px; font-weight: 500;">📍 Koordinater</span>
-                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%); font-family: 'Courier New', monospace;">${leg.end_location.lat().toFixed(4)}, ${leg.end_location.lng().toFixed(4)}</span>
-                  </div>
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(180 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(180 100% 50%);">
-                    <span style="color: hsl(180 100% 80%); font-size: 13px; font-weight: 500;">📏 Total avstand</span>
-                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%);">${leg.distance?.text || 'Beregner...'}</span>
-                  </div>
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: hsl(140 100% 50% / 0.1); border-radius: 6px; border-left: 3px solid hsl(140 100% 50%);">
-                    <span style="color: hsl(140 100% 80%); font-size: 13px; font-weight: 500;">⏰ Total tid</span>
-                    <span style="font-weight: 600; font-size: 13px; color: hsl(210 15% 95%);">${leg.duration?.text || 'Beregner...'}</span>
-                  </div>
-                </div>
-              </div>
-            `
-          });
-          infoWindow.open(mapInstanceRef.current, endMarker);
-        });
-        
-        // Lagre markørene for cleanup
-        allMarkersRef.current.push(startMarker, endMarker);
-        
-        // Lagre den beregnede ruten for ladestasjon-filtrering
-        setCalculatedRoute(result);
-        
-        console.log('🎯 Rute er satt på kartet - ladestasjoner vil oppdateres automatisk!');
-      } else {
-        console.error('❌ DirectionsRenderer eller kart ikke tilgjengelig');
-      }
-      
-      // Extract route information
-      const route = result.routes[0];
-      let totalDistance = 0;
-      let totalTime = 0;
-      
-      route.legs.forEach(leg => {
-        totalDistance += leg.distance?.value || 0;
-        totalTime += leg.duration?.value || 0;
-      });
-      
-      // Convert to appropriate units
-      const distanceKm = totalDistance / 1000;
-      const timeMinutes = totalTime / 60;
-      
-      // Calculate battery usage based on car and distance
-      const batteryUsagePercent = Math.min(100, (distanceKm / selectedCar.range) * 100);
-      const remainingBattery = Math.max(0, routeData.batteryPercentage - batteryUsagePercent);
-      
-      // Estimate charging needs
-      const needsCharging = remainingBattery < 20;
-      const requiredStops = needsCharging ? Math.ceil(batteryUsagePercent / 60) : 0;
-      
-      // Create trip analysis
-      const analysis: TripAnalysis = {
-        totalDistance: distanceKm,
-        totalTime: timeMinutes,
-        totalChargingTime: requiredStops * 30,
-        totalCost: requiredStops * 150,
-        batteryUsage: batteryUsagePercent,
-        requiredStops: requiredStops,
-        weatherImpact: 'Normalt',
-        routeEfficiency: distanceKm > 300 ? 'God' : 'Meget god',
-      };
-
-      onRouteCalculated(analysis);
-      onLoadingChange(false);
-      
-      // Adjust map bounds to show entire route - men ikke hvis det overskriver ruten
-      const bounds = new google.maps.LatLngBounds();
-      route.legs.forEach(leg => {
-        leg.steps.forEach(step => {
-          bounds.extend(step.start_location);
-          bounds.extend(step.end_location);
-        });
-      });
-      
-      // Sett bounds med litt padding og etter en kort delay
-      setTimeout(() => {
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.fitBounds(bounds, 50);
-        }
-      }, 500);
-      
-      console.log('📊 Rute:', {
-        distance: `${distanceKm.toFixed(0)} km`,
-        time: `${Math.round(timeMinutes)} min`,
-        batteryUsage: `${batteryUsagePercent.toFixed(0)}%`,
-        stops: requiredStops
-      });
-
-    } catch (error: any) {
-      console.error('❌ GOOGLE DIRECTIONS FEIL:', error);
-      onLoadingChange(false);
-      
-      let errorMessage = 'Kunne ikke beregne rute';
-      
-      if (error.message === 'API_TIMEOUT') {
-        errorMessage = 'Ruteberegning tok for lang tid. Google Maps svarer ikke.';
-      } else {
-        switch (error.message) {
-          case google.maps.DirectionsStatus.NOT_FOUND:
-            errorMessage = 'Fant ikke rute mellom destinasjonene';
-            break;
-          case google.maps.DirectionsStatus.ZERO_RESULTS:
-            errorMessage = 'Ingen rute funnet. Sjekk destinasjonene.';
-            break;
-          case google.maps.DirectionsStatus.REQUEST_DENIED:
-            errorMessage = 'API-nøkkelen mangler tilgang til Directions API.';
-            break;
-          case google.maps.DirectionsStatus.OVER_QUERY_LIMIT:
-            errorMessage = 'For mange forespørsler til Google Maps. Vent litt.';
-            break;
-          default:
-            errorMessage = `Rutefeil: ${error.message}`;
-        }
-      }
-      
-      onError(errorMessage);
-    }
-  }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, selectedRouteId, routeTrigger, onRouteCalculated, onLoadingChange, onError]);
-
-  useEffect(() => {
-    calculateRoute();
-  }, [calculateRoute]);
-
   return (
     <div style={{ width: '100%', height: '500px', position: 'relative' }}>
-      {/* GPS Controls */}
-      <div style={{
-        position: 'absolute',
-        top: '10px',
-        left: '10px',
-        zIndex: 1000,
-        display: 'flex',
-        gap: '8px',
-        alignItems: 'center'
-      }}>
-        {currentLocation && (
-          <Badge variant="outline" className="text-blue-600 border-blue-600">
-            <LocateFixed className="h-3 w-3 mr-1" />
-            GPS aktiv
-          </Badge>
-        )}
-        
-        {allFerryTimes.length > 0 && (
-          <Badge variant="outline" className="text-blue-500 border-blue-500 bg-blue-50">
-            <Ship className="h-3 w-3 mr-1" />
-            {allFerryTimes.length} ferje{allFerryTimes.length !== 1 ? 'r' : ''}
-          </Badge>
-        )}
-        
-        <Button
-          onClick={isGPSActive ? stopGPSTracking : startGPSTracking}
-          variant={isGPSActive ? "destructive" : "default"}
-          size="sm"
-          disabled={gpsPermission === 'denied'}
-          className="min-w-[120px]"
-        >
-          {isGPSActive ? (
-            <>
-              <Pause className="h-4 w-4 mr-2" />
-              Stopp reise
-            </>
-          ) : (
-            <>
-              <Play className="h-4 w-4 mr-2" />
-              Start reise
-            </>
-          )}
-        </Button>
-      </div>
-      <div 
-        ref={mapRef} 
-        id="google-map-container" 
-        style={{ 
-          width: '100%', 
-          height: '600px',
-          backgroundColor: '#f0f0f0',
-          border: '2px solid #007bff',
-          borderRadius: '8px',
-          minHeight: '600px' // Ensure minimum height
-        }} 
-      />
-      {/* STATUSKARTET ER FULLSTENDIG SKJULT - INGENTING VISES! */}
-      <div style={{
-        display: 'none',
-        visibility: 'hidden',
-        opacity: 0,
-        height: 0,
-        width: 0,
-        overflow: 'hidden',
-        position: 'absolute',
-        left: -9999,
-        top: -9999,
-        zIndex: -1000
-      } as React.CSSProperties}>
-        SKJULT
-      </div>
-      
-      {/* Loading overlay */}
-      {!isMapInitialized && (
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(240, 240, 240, 0.9)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '18px',
-          fontWeight: 'bold',
-          color: '#666',
-          borderRadius: '8px',
-          zIndex: 999
-        }}>
-          🔄 Laster Google Maps...
-        </div>
-      )}
-      
-      {/* Omfattende ferjetider */}
-      {showFerrySchedule && routeData?.from && routeData?.to && (
-        <div className="mt-4">
-          <ComprehensiveFerrySchedule
-            fromLocation={routeData.from}
-            toLocation={routeData.to}
-            currentLocation={currentLocation}
-            isGPSActive={isGPSActive}
-            onFerryUpdate={(ferries) => setAllFerryTimes(ferries)}
-          />
-        </div>
-      )}
+      <div ref={mapRef} style={{ width: '100%', height: '100%', borderRadius: '8px' }} />
     </div>
   );
 };
