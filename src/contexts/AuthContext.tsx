@@ -63,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
       
+      console.log('🔥 Subscription data received:', data);
       setSubscription(data);
     } catch (error) {
       console.error('Error checking subscription:', error);

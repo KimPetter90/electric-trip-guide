@@ -53,7 +53,7 @@ export const EnhancedHeader: React.FC<EnhancedHeaderProps> = ({ chargingStations
       {/* Enhanced Auth/User section */}
       <div className="flex flex-col items-end gap-4 shrink-0 animate-fade-in">
         {/* Premium Status Indicators */}
-        {user && subscription && (
+        {user && subscription && (console.log('🔥 EnhancedHeader subscription:', subscription), true) && (
           <div className="flex flex-wrap gap-2 justify-end">
             {(subscription.subscribed || subscription.is_trial_active || subscription.subscription_status !== 'free') && (
               <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold animate-pulse">
