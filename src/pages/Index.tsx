@@ -227,30 +227,29 @@ function Index() {
     currentHref.includes(domain)
   );
   
-  // KUN Lovable editor får tilgang (ikke preview)
-  const isLovableEditor = currentHost.includes('lovableproject.com') && window.parent !== window;
+  // Tillat både Lovable editor og preview for testing
+  const isLovableEnvironment = currentHost.includes('lovableproject.com') || currentHost.includes('lovable.app');
   
-  // TOTAL BLOKKERING: Alt annet enn Lovable editor
-  if (isProduction || !isLovableEditor) {
-    console.log('🚫 TOTAL BLOCK - INGEN TILGANG:', { 
+  // BLOKKERING: Kun produksjon er blokkert, Lovable miljøer er OK
+  if (isProduction) {
+    console.log('🚫 PRODUCTION BLOCK:', { 
       currentHost, 
       currentHref,
       isProduction, 
-      isLovableEditor,
       productionDomains,
-      reason: isProduction ? 'PRODUCTION_DOMAIN_DETECTED' : 'NOT_LOVABLE_EDITOR'
+      reason: 'PRODUCTION_DOMAIN_DETECTED'
     });
     return <ComingSoon />;
   }
   
-  // DEBUG kun for Lovable editor
-  console.log('🔍 EDITOR Environment debug:', { 
+  // DEBUG kun for Lovable miljø
+  console.log('🔍 Environment debug:', { 
     isAdmin, 
     roleLoading, 
     user: !!user, 
     authLoading: loading,
     hostname: currentHost,
-    isLovableEditor
+    isLovableEnvironment
   });
   
   // Vis auth loading
