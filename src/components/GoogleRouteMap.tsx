@@ -725,16 +725,30 @@ const GoogleRouteMap: React.FC<{
     return finalPlan;
   }, [calculatedRoute, selectedCar, routeData, chargingStations, isStationNearRoute]);
 
-  // Hjelpefunksjon for å sjekke om stasjon er anbefalt for lading
-  const isRecommendedStation = useCallback((station: ChargingStation): boolean => {
-    const optimizedPlan = getOptimizedChargingPlan();
-    const isRecommended = optimizedPlan.some(plan => plan.station.id === station.id);
-    console.log(`🔍 ${station.name}: i optimal plan=${isRecommended}, plan har ${optimizedPlan.length} stasjoner`);
-    if (isRecommended) {
-      console.log(`✅ ${station.name} SKAL få blå markør!`);
+  // Forbedret funksjon for å finne beste stasjon langs ruten
+  const getBestStationAlongRoute = useCallback((): ChargingStation | null => {
+    if (!calculatedRoute || !chargingStations.length) return null;
+    
+    // Finn alle stasjoner som er nær ruten
+    const stationsNearRoute = chargingStations.filter(station => isStationNearRoute(station));
+    
+    if (stationsNearRoute.length === 0) return null;
+    
+    // Velg beste stasjon basert på tilgjengelighet og hurtiglading
+    const bestStation = stationsNearRoute
+      .filter(s => s.fast_charger) // Kun hurtiglading
+      .sort((a, b) => {
+        const availabilityA = a.available / a.total;
+        const availabilityB = b.available / b.total;
+        return availabilityB - availabilityA; // Høyest tilgjengelighet først
+      })[0];
+    
+    if (bestStation) {
+      console.log(`🎯 BESTE STASJON LANGS RUTEN: ${bestStation.name}`);
     }
-    return isRecommended;
-  }, [getOptimizedChargingPlan]);
+    
+    return bestStation || stationsNearRoute[0]; // Fallback til første stasjon langs ruten
+  }, [calculatedRoute, chargingStations, isStationNearRoute]);
 
   // Hjelpefunksjon for å sjekke om stasjon er kritisk ved 10% batteri
   const checkIfCriticalStation = useCallback((station: ChargingStation): boolean => {
@@ -799,18 +813,26 @@ const GoogleRouteMap: React.FC<{
     chargingStationMarkersRef.current.forEach(marker => marker.setMap(null));
     chargingStationMarkersRef.current = [];
 
-    // Add new charging station markers
+    // Add new charging station markers med forbedret logikk
+    const bestStationAlongRoute = getBestStationAlongRoute();
+    
     chargingStations.forEach(station => {
-      // Sjekk kategorier for markør-type
-      const isRecommended = isRecommendedStation(station);
-      const isNearRoute = !isRecommended && calculatedRoute && isStationNearRoute(station);
+      // Sjekk om dette er den anbefalte stasjonen langs ruten
+      const isRecommendedAlongRoute = bestStationAlongRoute && station.id === bestStationAlongRoute.id;
+      const isNearRoute = calculatedRoute && isStationNearRoute(station);
       
-      // Check if this station is critical for 10% battery
-      const isCriticalFor10Percent = checkIfCriticalStation(station);
-      
-      // Redusert logging for ytelse
-      
-      const markerIcon = isCriticalFor10Percent ? {
+      // Spesiell markør for anbefalt stasjon langs ruten
+      const markerIcon = isRecommendedAlongRoute ? {
+        // Gul stjerne-markør for anbefalt stasjon langs ruten
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="11" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
+            <text x="12" y="16" text-anchor="middle" fill="#000000" font-size="14" font-weight="bold">★</text>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(24, 24),
+        anchor: new google.maps.Point(12, 12)
+      } : isNearRoute ? {
         // Helt blå markør med gult lyn for kritisk ladestasjon ved 10% batteri
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
@@ -854,7 +876,45 @@ const GoogleRouteMap: React.FC<{
       const marker = new google.maps.Marker({
         position: { lat: station.latitude, lng: station.longitude },
         map: mapInstanceRef.current!,
-        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isCriticalFor10Percent ? '\n🚨 KRITISK - SISTE SJANSE FØR/VED 10%!' : isRecommended ? '\n💙 ANBEFALT LADESTASJON' : isNearRoute ? '\n🔴 NÆR RUTEN' : '\n🟢 LANGT FRA RUTEN'}`,
+        icon: markerIcon,
+        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isRecommendedAlongRoute ? '\n⭐ ANBEFALT LANGS RUTEN' : isNearRoute ? '\n🔴 NÆR RUTEN' : '\n🟢 LANGT FRA RUTEN'}`,
+        zIndex: isRecommendedAlongRoute ? 1000 : (isNearRoute ? 100 : 10)
+      });
+
+      // Info window for each station
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <div style="padding: 10px; max-width: 250px;">
+            <h3 style="margin: 0 0 10px 0; color: #333;">${station.name}</h3>
+            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+              <span><strong>Tilgjengelig:</strong></span>
+              <span>${station.available}/${station.total}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+              <span><strong>Effekt:</strong></span>
+              <span>${station.power}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+              <span><strong>Pris:</strong></span>
+              <span>${station.cost} kr/kWh</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+              <span><strong>Leverandør:</strong></span>
+              <span>${station.provider}</span>
+            </div>
+            <div style="margin-top: 10px; font-size: 12px; color: #666;">
+              ${station.address}
+            </div>
+            ${isRecommendedAlongRoute ? '<div style="margin-top: 10px; padding: 5px; background: #FFD700; border-radius: 3px; text-align: center; font-weight: bold;">⭐ ANBEFALT LANGS RUTEN</div>' : ''}
+          </div>
+        `
+      });
+
+      marker.addListener('click', () => {
+        infoWindow.open(mapInstanceRef.current, marker);
+      });
+
+      chargingStationMarkersRef.current.push(marker);
         icon: markerIcon
       });
 
@@ -1071,7 +1131,7 @@ const GoogleRouteMap: React.FC<{
 
       chargingStationMarkersRef.current.push(marker);
     });
-  }, [chargingStations?.length, calculatedRoute, isStationNearRoute, getOptimizedChargingPlan]); // Oppdater når rute endres
+  }, [chargingStations, calculatedRoute, isStationNearRoute]); // Oppdater når rute endres
 
   // Calculate route when trigger changes - ROBUST and FOOLPROOF
   const calculateRoute = useCallback(async () => {
