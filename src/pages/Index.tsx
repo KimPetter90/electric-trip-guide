@@ -609,21 +609,25 @@ function Index() {
             <div className="flex items-center space-x-3">
               {user ? (
                 <>
-                  {subscription?.is_trial_active && subscription?.days_left_in_trial !== undefined && (
-                    <Badge className="bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 animate-glow-pulse">
-                      Premium: {subscription.days_left_in_trial} dager igjen
-                    </Badge>
-                  )}
-                  
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                     <User className="h-4 w-4" />
                     <span className="max-w-32 truncate">{user.email}</span>
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => navigate('/pricing')}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => navigate('/pricing')}
+                      className="relative"
+                    >
                       <CreditCard className="h-4 w-4 mr-2" />
                       {subscription?.subscription_status === 'free' ? 'Oppgrader' : 'Abonnement'}
+                      {subscription?.is_trial_active && subscription?.days_left_in_trial !== undefined && (
+                        <Badge className="ml-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 text-xs px-1.5 py-0.5">
+                          {subscription.days_left_in_trial}d
+                        </Badge>
+                      )}
                     </Button>
                     
                     <Button variant="ghost" size="sm" onClick={handleSignOut}>
