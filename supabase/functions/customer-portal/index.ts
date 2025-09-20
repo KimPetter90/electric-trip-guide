@@ -49,18 +49,32 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
 
-    let origin = req.headers.get("origin") || req.headers.get("referer") || "https://9a7124bc-51c6-4220-9c3e-a9b0a99b385b.lovableproject.com";
+    // Få origin med robuste fallbacks
+    const rawOrigin = req.headers.get("origin");
+    const rawReferer = req.headers.get("referer");
     
-    // Handle cases where origin is "null" string
-    if (origin === "null" || !origin) {
-      origin = "https://9a7124bc-51c6-4220-9c3e-a9b0a99b385b.lovableproject.com";
+    logStep("Raw headers", { rawOrigin, rawReferer });
+    
+    // Standard fallback URL
+    const fallbackUrl = "https://9a7124bc-51c6-4220-9c3e-a9b0a99b385b.lovableproject.com";
+    
+    let origin = fallbackUrl;
+    
+    // Prøv å bruke origin header først
+    if (rawOrigin && rawOrigin !== "null" && rawOrigin.startsWith("http")) {
+      origin = rawOrigin;
+    }
+    // Hvis origin ikke fungerer, prøv referer
+    else if (rawReferer && rawReferer !== "null" && rawReferer.startsWith("http")) {
+      try {
+        const refererUrl = new URL(rawReferer);
+        origin = `${refererUrl.protocol}//${refererUrl.host}`;
+      } catch {
+        origin = fallbackUrl;
+      }
     }
     
-    logStep("Detected origin", { 
-      originalOrigin: req.headers.get("origin"), 
-      originalReferer: req.headers.get("referer"), 
-      finalOrigin: origin 
-    });
+    logStep("Final origin determined", { finalOrigin: origin });
     
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
