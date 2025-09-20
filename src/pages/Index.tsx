@@ -918,16 +918,6 @@ function Index() {
             )}
           </section>
         </div>
-        
-        {/* Påvirkningsanalyse - HELT SEPARAT SEKSJON */}
-        {selectedCar && routeData.from && routeData.to && (
-          <section className="container mx-auto px-4 py-8">
-            <RouteImpact 
-              selectedCar={selectedCar}
-              routeData={routeData}
-            />
-          </section>
-        )}
       </main>
 
       {/* Route Statistics - always visible, positioned below main content */}
@@ -1105,6 +1095,18 @@ function Index() {
           </div>
         </div>
       </footer>
+      
+      {/* Påvirkningsanalyse - HELT NEDERST PÅ SIDEN */}
+      {selectedCar && routeData.from && routeData.to && (
+        <section className="py-12 bg-muted/10" aria-label="Påvirkningsanalyse">
+          <div className="container mx-auto px-4">
+            <RouteImpact 
+              selectedCar={selectedCar}
+              routeData={routeData}
+            />
+          </div>
+        </section>
+      )}
     </div>
   );
 }
