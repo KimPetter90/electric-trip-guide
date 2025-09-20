@@ -87,6 +87,7 @@ export default {
         'glass': 'var(--glass-shadow)',
       },
       keyframes: {
+        // Enhanced neon effects
         "pulse-neon": {
           "0%, 100%": { 
             boxShadow: "0 0 5px hsl(140 100% 55%), 0 0 10px hsl(140 100% 55%), 0 0 15px hsl(140 100% 55%)",
@@ -97,10 +98,19 @@ export default {
             opacity: "0.8"
           }
         },
+        
+        // Improved float animations
         "float": {
           "0%, 100%": { transform: "translateY(0px)" },
           "50%": { transform: "translateY(-10px)" }
         },
+        "float-delayed": {
+          "0%, 100%": { transform: "translateY(0px) rotate(0deg)" },
+          "33%": { transform: "translateY(-8px) rotate(1deg)" },
+          "66%": { transform: "translateY(-3px) rotate(-1deg)" }
+        },
+        
+        // Enhanced glow effects
         "glow-pulse": {
           "0%, 100%": { 
             filter: "brightness(1) drop-shadow(0 0 10px hsl(140 100% 45%))"
@@ -109,6 +119,16 @@ export default {
             filter: "brightness(1.2) drop-shadow(0 0 20px hsl(140 100% 45%))"
           }
         },
+        "cyber-pulse": {
+          "0%, 100%": { 
+            boxShadow: "0 0 10px hsl(180 100% 50%), 0 0 20px hsl(280 100% 50%)"
+          },
+          "50%": { 
+            boxShadow: "0 0 20px hsl(180 100% 50%), 0 0 40px hsl(280 100% 50%)"
+          }
+        },
+        
+        // Circuit and energy animations
         "circuit": {
           "0%": { 
             backgroundPosition: "0% 0%",
@@ -123,6 +143,12 @@ export default {
             opacity: "0.3"
           }
         },
+        "energy-flow": {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(200%)" }
+        },
+        
+        // Smooth entrance animations
         "fade-in": {
           "0%": {
             opacity: "0",
@@ -133,6 +159,38 @@ export default {
             transform: "translateY(0)"
           }
         },
+        "fade-in-up": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(30px) scale(0.95)"
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0) scale(1)"
+          }
+        },
+        "slide-in-right": {
+          "0%": {
+            opacity: "0",
+            transform: "translateX(30px)"
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateX(0)"
+          }
+        },
+        "slide-in-left": {
+          "0%": {
+            opacity: "0",
+            transform: "translateX(-30px)"
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateX(0)"
+          }
+        },
+        
+        // Scale and zoom effects
         "scale-in": {
           "0%": {
             opacity: "0",
@@ -142,15 +200,77 @@ export default {
             opacity: "1",
             transform: "scale(1)"
           }
+        },
+        "zoom-in": {
+          "0%": {
+            opacity: "0",
+            transform: "scale(0.8) rotate(-5deg)"
+          },
+          "100%": {
+            opacity: "1",
+            transform: "scale(1) rotate(0deg)"
+          }
+        },
+        
+        // Interactive hover animations
+        "bounce-soft": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-5px)" }
+        },
+        "wiggle": {
+          "0%, 100%": { transform: "rotate(0deg)" },
+          "25%": { transform: "rotate(3deg)" },
+          "75%": { transform: "rotate(-3deg)" }
+        },
+        
+        // Progress and loading animations
+        "progress-fill": {
+          "0%": { width: "0%" },
+          "100%": { width: "100%" }
+        },
+        "spinner": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" }
+        },
+        
+        // Card reveal animations
+        "card-reveal": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(40px) rotateX(20deg)"
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0) rotateX(0deg)"
+          }
         }
       },
       animation: {
+        // Basic animations
         "pulse-neon": "pulse-neon 2s ease-in-out infinite",
-        "float": "float 3s ease-in-out infinite",
+        "float": "float 4s ease-in-out infinite",
+        "float-delayed": "float-delayed 5s ease-in-out infinite",
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+        "cyber-pulse": "cyber-pulse 3s ease-in-out infinite",
         "circuit": "circuit 8s linear infinite",
+        "energy-flow": "energy-flow 2s linear infinite",
+        
+        // Entrance animations  
         "fade-in": "fade-in 0.6s ease-out",
+        "fade-in-up": "fade-in-up 0.8s ease-out",
+        "slide-in-right": "slide-in-right 0.5s ease-out",
+        "slide-in-left": "slide-in-left 0.5s ease-out",
         "scale-in": "scale-in 0.4s ease-out",
+        "zoom-in": "zoom-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        "card-reveal": "card-reveal 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        
+        // Interactive animations
+        "bounce-soft": "bounce-soft 0.6s ease-in-out",
+        "wiggle": "wiggle 0.5s ease-in-out",
+        
+        // Utility animations
+        "progress-fill": "progress-fill 2s ease-out",
+        "spinner": "spinner 1s linear infinite",
       },
       borderRadius: {
         lg: "var(--radius)",

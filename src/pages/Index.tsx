@@ -15,6 +15,9 @@ import RouteSelector from "@/components/RouteSelector";
 import ChargingMap from "@/components/ChargingMap";
 import GoogleRouteMap from "@/components/GoogleRouteMap";
 import { ShareRoute } from "@/components/ShareRoute";
+import { EnhancedHeader } from "@/components/EnhancedHeader";
+import { EnhancedRouteInput } from "@/components/EnhancedRouteInput";
+import { EnhancedMapSection } from "@/components/EnhancedMapSection";
 
 import ComprehensiveFerrySchedule from "@/components/ComprehensiveFerrySchedule";
 
