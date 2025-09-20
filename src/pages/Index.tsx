@@ -609,6 +609,12 @@ function Index() {
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
+                  {subscription?.is_trial_active && subscription?.days_left_in_trial !== undefined && (
+                    <Badge variant="default" className="bg-gradient-to-r from-primary/90 to-accent text-white animate-glow-pulse">
+                      Premium prøveperiode: {subscription.days_left_in_trial} dager igjen
+                    </Badge>
+                  )}
+                  
                   <Button variant="outline" size="sm" onClick={() => navigate('/pricing')}>
                     <CreditCard className="h-4 w-4 mr-2" />
                     {subscription?.subscription_status === 'free' ? 'Oppgrader' : 'Abonnement'}
