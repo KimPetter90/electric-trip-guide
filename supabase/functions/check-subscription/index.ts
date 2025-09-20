@@ -94,6 +94,13 @@ serve(async (req) => {
       
       subscriptionStatus = settings.subscription_status || 'free';
       planType = settings.plan_type || 'free';
+      
+      logStep("User settings from database", { 
+        subscription_status: settings.subscription_status, 
+        plan_type: settings.plan_type,
+        is_trial_active: settings.is_trial_active,
+        trial_end_date: settings.trial_end_date
+      });
     } else {
       // Create user settings if they don't exist
       await supabaseClient
