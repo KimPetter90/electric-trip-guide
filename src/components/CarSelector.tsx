@@ -84,8 +84,16 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
   };
 
   const handleSelectDifferentCar = () => {
+    console.log('🔥 BYTT BIL CLICKED!');
+    console.log('🔥 Before state change:', { selectedBrand, showBrands });
     setSelectedBrand(null); // Reset brand selection
     setShowBrands(true); // Show brands to select a different car
+    console.log('🔥 After state change called');
+    
+    // Force a small delay to see state change
+    setTimeout(() => {
+      console.log('🔥 State after timeout:', { selectedBrand, showBrands });
+    }, 100);
   };
 
   return (
@@ -153,7 +161,12 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleSelectDifferentCar}
+                onClick={(e) => {
+                  console.log('🔥 Button clicked!', e);
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSelectDifferentCar();
+                }}
                 className="h-8 px-3 text-xs font-orbitron glass-card hover:neon-glow"
               >
                 Bytt bil
