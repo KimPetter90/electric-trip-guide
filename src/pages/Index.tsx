@@ -614,26 +614,9 @@ function Index() {
                     {subscription?.subscription_status === 'free' ? 'Oppgrader' : 'Abonnement'}
                   </Button>
                   
-                  {subscription && (
-                    <Badge variant={subscription.subscription_status === 'free' ? 'secondary' : 'default'}>
-                      {subscription.subscription_status === 'free' && (
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                      )}
-                      {subscription.route_count} / {subscription.route_limit === -1 ? '∞' : subscription.route_limit} ruter
-                    </Badge>
-                  )}
-                  
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4" />
                     <span className="text-sm">{user.email}</span>
-                    {subscription && (
-                      <Badge variant="outline" className="text-xs">
-                        {subscription.route_limit === -1 
-                          ? 'Ubegrenset' 
-                          : `${subscription.route_count}/${subscription.route_limit} ruter`
-                        }
-                      </Badge>
-                    )}
                   </div>
                   
                   <Button variant="ghost" size="sm" onClick={handleSignOut}>

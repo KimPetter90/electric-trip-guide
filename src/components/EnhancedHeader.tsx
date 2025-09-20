@@ -55,7 +55,7 @@ export const EnhancedHeader: React.FC<EnhancedHeaderProps> = ({ chargingStations
         {/* Premium Status Indicators */}
         {user && subscription && (
           <div className="flex flex-wrap gap-2 justify-end">
-            {subscription.subscribed && (
+            {(subscription.subscribed || subscription.subscription_status !== 'free') && (
               <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold animate-pulse">
                 ⭐ {subscription.subscription_status.toUpperCase()}
                 {subscription.is_trial_active && ` TRIAL (${subscription.days_left_in_trial} dager)`}
