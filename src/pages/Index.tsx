@@ -350,8 +350,7 @@ function Index() {
 
     setLoadingRoutes(true);
 
-    // Redusert ventetid for bedre UX
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Fjernet delay for raskere respons
 
     // Estimer avstand basert på destinasjoner (forenklet beregning)
     const estimatedDistance = calculateApproximateDistance(routeData.from, routeData.to);
@@ -632,7 +631,7 @@ function Index() {
       setShowRoute(false);
       // Toast fjernet
     } finally {
-      // Gradvis loading reset for bedre UX
+      // Rask loading reset for bedre respons
       setTimeout(() => {
         setPlanningRoute(false);
         console.log('✅ Planning state reset');
@@ -644,7 +643,7 @@ function Index() {
         }
         
         console.log('✅ Loading state reset, showRoute:', showRoute);
-      }, 2000); // 2 sekunder minimum loading for sikkerhet
+      }, 300); // Redusert fra 2000ms til 300ms for kjappere respons
     }
   };
 
