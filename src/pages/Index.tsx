@@ -619,12 +619,14 @@ function Index() {
                       variant="outline" 
                       size="sm" 
                       onClick={() => navigate('/pricing')}
-                      className="relative"
+                      className="relative bg-gradient-to-r from-background/50 to-background/80 backdrop-blur-sm border-primary/30 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/20"
                     >
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      {subscription?.subscription_status === 'free' ? 'Oppgrader' : 'Abonnement'}
+                      <CreditCard className="h-4 w-4 mr-2 text-primary" />
+                      <span className="font-medium">
+                        {subscription?.subscription_status === 'free' ? 'Oppgrader' : 'Abonnement'}
+                      </span>
                       {subscription?.is_trial_active && subscription?.days_left_in_trial !== undefined && (
-                        <Badge className="ml-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 text-xs px-1.5 py-0.5">
+                        <Badge className="ml-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0 text-xs px-2 py-1 shadow-md animate-glow-pulse">
                           {subscription.days_left_in_trial}d
                         </Badge>
                       )}
