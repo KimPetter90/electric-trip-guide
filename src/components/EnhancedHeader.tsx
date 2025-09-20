@@ -4,15 +4,42 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useAuth } from "@/contexts/AuthContext";
-import { Zap, Battery, MapPin, TreePine, Cloud, User, CreditCard, LogIn, LogOut } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Zap, Battery, MapPin, TreePine, Cloud, User, CreditCard, LogIn, LogOut, RotateCcw } from "lucide-react";
 
 interface EnhancedHeaderProps {
   chargingStationsCount: number;
 }
 
 export const EnhancedHeader: React.FC<EnhancedHeaderProps> = ({ chargingStationsCount }) => {
-  const { user, subscription, signOut, loading } = useAuth();
+  const { user, subscription, signOut, loading, refreshSubscription } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleResetRoutes = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('reset-routes');
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Ruter nullstilt! 🔄",
+        description: "Din månedlige rutetelling har blitt nullstilt.",
+      });
+      
+      // Refresh subscription to update route count
+      await refreshSubscription();
+    } catch (error: any) {
+      toast({
+        title: "Feil ved nullstilling",
+        description: error.message || "Kunne ikke nullstille ruter.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
@@ -61,7 +88,13 @@ export const EnhancedHeader: React.FC<EnhancedHeaderProps> = ({ chargingStations
                 {subscription.is_trial_active && ` TRIAL (${subscription.days_left_in_trial} dager)`}
               </Badge>
             )}
-            <Badge variant="outline" className="glass-card">
+            <Badge 
+              variant="outline" 
+              className="glass-card cursor-pointer hover:bg-primary/10" 
+              onClick={handleResetRoutes}
+              title="Klikk for å nullstille ruter"
+            >
+              <RotateCcw className="h-3 w-3 mr-1" />
               {subscription.route_count}/{subscription.route_limit === -1 ? '∞' : subscription.route_limit} ruter
             </Badge>
           </div>
