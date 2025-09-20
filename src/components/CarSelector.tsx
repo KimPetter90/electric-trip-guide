@@ -162,12 +162,15 @@ export default function CarSelector({ selectedCar, onCarSelect }: CarSelectorPro
                   variant="outline"
                   size="sm"
                   onClick={(e) => {
-                    console.log('🔥 Button clicked!', e);
+                    console.log('🔥 CRITICAL: Button clicked!', e);
+                    console.log('🔥 CRITICAL: Event target:', e.target);
+                    console.log('🔥 CRITICAL: Current target:', e.currentTarget);
                     e.preventDefault();
                     e.stopPropagation();
                     handleSelectDifferentCar();
                   }}
-                  className="h-8 px-3 text-xs font-orbitron glass-card hover:neon-glow"
+                  className="h-8 px-3 text-xs font-orbitron glass-card hover:neon-glow relative z-50 cursor-pointer"
+                  style={{ pointerEvents: 'auto' }}
                 >
                   Bytt bil
                 </Button>
