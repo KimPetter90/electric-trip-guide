@@ -206,7 +206,7 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
   if (!selectedCar) {
     return (
       <Card className="p-6 bg-card/80 backdrop-blur-sm border-border shadow-lg">
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center justify-center gap-2 mb-4">
           <div className="flex gap-2">
             <Cloud className="h-5 w-5 text-primary animate-glow-pulse" />
             <Truck className="h-5 w-5 text-primary animate-glow-pulse" />
@@ -233,7 +233,7 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
 
   return (
     <Card className="p-6 bg-card/80 backdrop-blur-sm border-border shadow-lg">
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center justify-center gap-2 mb-4">
         <div className="flex gap-2">
           <Cloud className="h-5 w-5 text-primary animate-glow-pulse" />
           <Truck className="h-5 w-5 text-primary animate-glow-pulse" />
