@@ -914,13 +914,13 @@ function Index() {
                     onError={onError}
                   />
                 </div>
+                
+                {/* Route Impact Section - Påvirkningsanalyse - UNDER kartet */}
+                <RouteImpact 
+                  selectedCar={selectedCar}
+                  routeData={routeData}
+                />
               </div>
-              
-              {/* Route Impact Section - Påvirkningsanalyse - HELT UTENFOR map container */}
-              <RouteImpact 
-                selectedCar={selectedCar}
-                routeData={routeData}
-              />
             )}
           </section>
         </div>
