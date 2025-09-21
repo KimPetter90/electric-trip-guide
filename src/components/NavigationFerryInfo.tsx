@@ -189,8 +189,10 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
       return 15; // Lav sannsynlighet
     } else if (timeUntilDeparture <= timeNeeded + 15) {
       return 65; // Middels sannsynlighet
-    } else {
+    } else if (timeUntilDeparture <= timeNeeded + 30) {
       return 95; // Høy sannsynlighet
+    } else {
+      return 100; // Perfekt - masse tid
     }
   };
 
