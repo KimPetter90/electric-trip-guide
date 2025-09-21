@@ -176,7 +176,7 @@ const GoogleRouteMap: React.FC<{
         const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
           stationPos, pathPoint
         );
-        if (distance <= 2000) {
+        if (distance <= 3000) { // Increased to 3km
           return true;
         }
       }
@@ -196,7 +196,7 @@ const GoogleRouteMap: React.FC<{
               const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
                 stationPos, pathPoint
               );
-              if (distance <= 2000) {
+              if (distance <= 3000) { // Increased to 3km
                 return true;
               }
             }
@@ -208,7 +208,7 @@ const GoogleRouteMap: React.FC<{
             const endDist = window.google.maps.geometry.spherical.computeDistanceBetween(
               stationPos, step.end_location
             );
-            if (startDist <= 2000 || endDist <= 2000) {
+            if (startDist <= 3000 || endDist <= 3000) { // Increased to 3km
               return true;
             }
           }
