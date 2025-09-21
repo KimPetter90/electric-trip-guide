@@ -150,9 +150,9 @@ function calculateStationScore(
 ): number {
   let score = 0;
   
-  // Tilgjengelighet (40% av score)
+  // Tilgjengelighet (30% av score - redusert for å gi plass til avstand)
   const availability = station.available / station.total;
-  score += availability * 40;
+  score += availability * 30;
   
   // Hurtiglading bonus (25% av score)
   if (station.fast_charger) {
@@ -166,8 +166,8 @@ function calculateStationScore(
   const costScore = Math.max(0, 15 - (station.cost - 3) * 3);
   score += costScore;
   
-  // Avstand langs rute (20% av score)
-  const distanceScore = Math.max(0, 20 - (distanceToStation / 1000) * 5);
+  // Avstand langs rute (30% av score - økt vekt for å forhindre fjerntliggende stasjoner)
+  const distanceScore = Math.max(0, 30 - (distanceToStation / 1000) * 2);
   score += distanceScore;
   
   // Kritisk stasjon bonus hvis batteri er lavt
@@ -223,12 +223,13 @@ serve(async (req) => {
     
     // Beregn score for hver stasjon
     const stationsWithScores = stations.map(station => {
-      // Bruk en konsistent avstand basert på stasjonens ID for å unngå tilfeldige resultater
-      const stationHash = station.id.split('').reduce((a, b) => {
-        a = ((a << 5) - a) + b.charCodeAt(0);
-        return a & a;
-      }, 0);
-      const distanceToStation = Math.abs(stationHash % 5000) + 1000; // 1-6 km fra rute
+      // Beregn faktisk avstand basert på koordinater (forenklet)
+      const routeStartLat = parseFloat(routeData.from.split(',')[0]) || 59.9139;
+      const routeStartLon = parseFloat(routeData.from.split(',')[1]) || 10.7522;
+      
+      const deltaLat = station.latitude - routeStartLat;
+      const deltaLon = station.longitude - routeStartLon;
+      const distanceToStation = Math.sqrt(deltaLat * deltaLat + deltaLon * deltaLon) * 111000; // Omtrentlig avstand i meter
       
       const score = calculateStationScore(
         station,
