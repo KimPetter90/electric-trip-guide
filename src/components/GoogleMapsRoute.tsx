@@ -281,7 +281,7 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
         const loader = new Loader({
           apiKey: data.apiKey,
           version: "weekly",
-          libraries: ["geometry"]
+          libraries: ["places", "geometry"]
         });
 
         await loader.load();
