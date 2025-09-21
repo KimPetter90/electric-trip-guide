@@ -24,6 +24,7 @@ import { EnhancedMapSection } from "@/components/EnhancedMapSection";
 import { PricingSection } from "@/components/PricingSection";
 import PerformanceOptimizer from "@/components/PerformanceOptimizer";
 import { NavigationOverlay } from "@/components/NavigationOverlay";
+import { CarNavigationInterface } from "@/components/CarNavigationInterface";
 
 import ComprehensiveFerrySchedule from "@/components/ComprehensiveFerrySchedule";
 
@@ -79,8 +80,19 @@ function Index() {
       setShowNavigationTracker(true);
     };
     
+    const handleStartCarNavigation = (event: CustomEvent) => {
+      setShowCarNavigation(true);
+      setNavigationMode(true);
+      // Start GPS tracking and update route trigger
+      setRouteTrigger(prev => prev + 10);
+    };
+    
     window.addEventListener('showNavigationTracker', handleShowNavigationTracker);
-    return () => window.removeEventListener('showNavigationTracker', handleShowNavigationTracker);
+    window.addEventListener('startCarNavigation', handleStartCarNavigation as EventListener);
+    return () => {
+      window.removeEventListener('showNavigationTracker', handleShowNavigationTracker);
+      window.removeEventListener('startCarNavigation', handleStartCarNavigation as EventListener);
+    };
   }, []);
   
   // All state declarations - MUST be unconditional
@@ -114,6 +126,7 @@ function Index() {
   const [navigationZoom, setNavigationZoom] = useState(6); // Ny state for navigasjonszoom
   const [navigationCenter, setNavigationCenter] = useState({ lat: 60.472, lng: 8.4689 }); // Ny state for navigasjonssenter
   const [navigationMode, setNavigationMode] = useState(false); // Ny state for 2D-modus
+  const [showCarNavigation, setShowCarNavigation] = useState(false);
 
   // Debug car selection changes
   const handleCarSelect = useCallback((car: CarModel | null) => {
@@ -1169,6 +1182,21 @@ function Index() {
           </div>
         </div>
       </footer>
+
+      {/* Car Navigation Interface */}
+      <CarNavigationInterface
+        isActive={showCarNavigation}
+        currentLocation={userLocation}
+        destination={routeData.to}
+        remainingDistance={tripAnalysis?.totalDistance}
+        remainingTime={tripAnalysis?.estimatedTime}
+        batteryPercentage={routeData.batteryPercentage}
+        onEndNavigation={() => {
+          setShowCarNavigation(false);
+          setNavigationMode(false);
+          setRouteTrigger(0);
+        }}
+      />
     </div>
   );
 }

@@ -119,8 +119,13 @@ export const EnhancedMapSection: React.FC<EnhancedMapSectionProps> = ({
           {/* Start reise knapp - øvre venstre hjørne */}
           <Button
             onClick={() => {
-              // Find the parent window to trigger navigation tracker
-              const event = new CustomEvent('showNavigationTracker');
+              // Trigger car navigation interface
+              const event = new CustomEvent('startCarNavigation', {
+                detail: {
+                  destination: routeData.to,
+                  batteryPercentage: routeData.batteryPercentage
+                }
+              });
               window.dispatchEvent(event);
             }}
             className="absolute top-3 left-3 z-20 bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
