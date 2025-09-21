@@ -140,11 +140,6 @@ const GoogleRouteMap: React.FC<{
 
         onLoadingChange(false);
 
-        // Trigger initial route calculation if we have route data
-        if (routeData.from && routeData.to) {
-          setTimeout(() => calculateRoute(), 100);
-        }
-
       } catch (error: any) {
         console.error('❌ Google Maps initialization failed:', error);
         onError(`Google Maps kunne ikke lastes: ${error.message}`);
