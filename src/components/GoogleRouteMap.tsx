@@ -176,12 +176,12 @@ const GoogleRouteMap: React.FC<{
       let distance = window.google.maps.geometry.spherical.computeDistanceBetween(
         stationPos, leg.start_location
       );
-      if (distance <= 2000) return true;
+      if (distance <= 10000) return true; // 10km for testing
       
       distance = window.google.maps.geometry.spherical.computeDistanceBetween(
         stationPos, leg.end_location
       );
-      if (distance <= 2000) return true;
+      if (distance <= 10000) return true; // 10km for testing
       
       // Check ALL steps without skipping any
       for (let j = 0; j < leg.steps.length; j++) {
@@ -191,12 +191,12 @@ const GoogleRouteMap: React.FC<{
         distance = window.google.maps.geometry.spherical.computeDistanceBetween(
           stationPos, step.start_location
         );
-        if (distance <= 2000) return true;
+        if (distance <= 10000) return true; // 10km for testing
         
         distance = window.google.maps.geometry.spherical.computeDistanceBetween(
           stationPos, step.end_location
         );
-        if (distance <= 2000) return true;
+        if (distance <= 10000) return true; // 10km for testing
       }
     }
     
