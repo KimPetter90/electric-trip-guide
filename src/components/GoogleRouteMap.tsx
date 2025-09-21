@@ -672,32 +672,40 @@ const GoogleRouteMap: React.FC<{
             directionsRendererRef.current = new google.maps.DirectionsRenderer({
               suppressMarkers: false,
               polylineOptions: {
-                strokeColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
-                strokeWeight: 10,
-                strokeOpacity: 0.9,
-                zIndex: 99999 // Ekstra høy z-index
+                strokeColor: '#FF0000', // Rød farge for maksimal synlighet
+                strokeWeight: 15, // Ekstra tykk linje
+                strokeOpacity: 1.0,
+                zIndex: 999999
               },
               markerOptions: {
                 visible: true,
-                zIndex: 99999
+                zIndex: 999999
               },
-              preserveViewport: false // Alltid false for å sikre synlighet
+              preserveViewport: false,
+              draggable: false
             });
+            console.log('🔧 Created DirectionsRenderer with red route');
           } else {
-            // Update line color and style for existing renderer
-            directionsRendererRef.current.setOptions({
+            // Force recreate renderer for visibility
+            if (directionsRendererRef.current) {
+              directionsRendererRef.current.setMap(null);
+            }
+            directionsRendererRef.current = new google.maps.DirectionsRenderer({
+              suppressMarkers: false,
               polylineOptions: {
-                strokeColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
-                strokeWeight: 10,
-                strokeOpacity: 0.9,
-                zIndex: 99999
+                strokeColor: '#FF0000', // Rød for synlighet
+                strokeWeight: 15,
+                strokeOpacity: 1.0,
+                zIndex: 999999
               },
               markerOptions: {
                 visible: true,
-                zIndex: 99999
+                zIndex: 999999
               },
-              preserveViewport: false
+              preserveViewport: false,
+              draggable: false
             });
+            console.log('🔧 Recreated DirectionsRenderer with red route');
           }
 
           // ALWAYS set map again to ensure it's attached
