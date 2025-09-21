@@ -411,13 +411,9 @@ const GoogleRouteMap: React.FC<{
     }
   }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, selectedRouteId, onRouteCalculated, onLoadingChange, onError]);
 
-  // Only calculate route when user explicitly triggers it
   useEffect(() => {
-    // Only run if routeTrigger is greater than 1 (initial is 1, user clicks increment it)
-    if (routeTrigger > 1) {
-      console.log('🎯 Route trigger changed to:', routeTrigger, 'for route:', selectedRouteId);
-      calculateRoute();
-    }
+    console.log('🎯 Route trigger changed to:', routeTrigger, 'for route:', selectedRouteId);
+    calculateRoute();
   }, [calculateRoute, routeTrigger, selectedRouteId]);
 
   // Cleanup on unmount
