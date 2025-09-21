@@ -205,83 +205,42 @@ const GoogleRouteMap: React.FC<{
 
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
-    let minDistance = Infinity;
-
     
-    // Get ALL points from the encoded polyline overview path
+    // Quick check using overview path only (much faster)
     const overviewPath = route.overview_path;
     if (overviewPath && overviewPath.length > 0) {
-      // Check distance to every point in the overview path
-      for (let i = 0; i < overviewPath.length; i++) {
+      let minDistance = Infinity;
+      
+      // Sample every 5th point instead of every point for performance
+      for (let i = 0; i < overviewPath.length; i += 5) {
         const pathPoint = overviewPath[i];
         const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
           stationPos, pathPoint
         );
         minDistance = Math.min(minDistance, distance);
         
-        
-        // Add interpolation between consecutive points
-        if (i < overviewPath.length - 1) {
-          const nextPoint = overviewPath[i + 1];
-          // Add 5 interpolated points between current and next
-          for (let j = 1; j < 5; j++) {
-            const ratio = j / 5;
-            const interpLat = pathPoint.lat() + (nextPoint.lat() - pathPoint.lat()) * ratio;
-            const interpLng = pathPoint.lng() + (nextPoint.lng() - pathPoint.lng()) * ratio;
-            const interpPoint = new google.maps.LatLng(interpLat, interpLng);
-            const interpDistance = window.google.maps.geometry.spherical.computeDistanceBetween(
-              stationPos, interpPoint
-            );
-            minDistance = Math.min(minDistance, interpDistance);
-            
-          }
-        }
+        // Early exit if we find a close station
+        if (minDistance <= 3000) return true;
       }
     }
     
-    // Also check each step's encoded polyline for more detail
-    for (let i = 0; i < route.legs.length; i++) {
-      const leg = route.legs[i];
-      for (let j = 0; j < leg.steps.length; j++) {
-        const step = leg.steps[j];
-        
-        // Decode the polyline for this step if it exists
-        if (step.polyline && step.polyline.points) {
-          try {
-            const decodedPath = window.google.maps.geometry.encoding.decodePath(step.polyline.points);
-            for (const pathPoint of decodedPath) {
-              const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
-                stationPos, pathPoint
-              );
-              minDistance = Math.min(minDistance, distance);
-              
-            }
-          } catch (e) {
-            // Fallback to start/end points if decoding fails
-            const startDist = window.google.maps.geometry.spherical.computeDistanceBetween(
-              stationPos, step.start_location
-            );
-            const endDist = window.google.maps.geometry.spherical.computeDistanceBetween(
-              stationPos, step.end_location
-            );
-            minDistance = Math.min(minDistance, startDist, endDist);
-            
-          }
-        }
-      }
-    }
-    
-    return minDistance <= 3000;
+    return false;
   }, [calculatedRoute]);
 
-  // Find best station along route using advanced optimization
+  // Find best station along route using advanced optimization - CACHED
   const getBestStationAlongRoute = useCallback(async (): Promise<ChargingStation | null> => {
     if (!calculatedRoute || !chargingStations.length || !selectedCar) return null;
     
-    // Find all stations near the route
+    // Find all stations near the route (optimized)
     const stationsNearRoute = chargingStations.filter(station => isStationNearRoute(station));
     
     if (stationsNearRoute.length === 0) return null;
+    
+    // Skip optimization service if route is short to improve performance
+    const routeDistance = calculatedRoute.routes[0].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0) / 1000;
+    if (routeDistance < 50) {
+      return getSimpleBestStation(stationsNearRoute);
+    }
     
     try {
       // Call optimization service with weather, trailer, and battery data
@@ -293,7 +252,7 @@ const GoogleRouteMap: React.FC<{
             to: routeData.to,
             trailerWeight: routeData.trailerWeight,
             batteryPercentage: routeData.batteryPercentage,
-            totalDistance: calculatedRoute.routes[0].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0) / 1000,
+            totalDistance: routeDistance,
             estimatedTime: calculatedRoute.routes[0].legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0) / 60
           },
           carData: {
@@ -305,17 +264,13 @@ const GoogleRouteMap: React.FC<{
       });
       
       if (error) {
-        console.error('❌ Optimization service error:', error);
-        // Fallback to simple logic
         return getSimpleBestStation(stationsNearRoute);
       }
       
       const result = data?.recommendedStation;
-      console.log('🎯 Optimization service returned:', result?.name, 'ID:', result?.id);
       
       // Check if charging is not needed
       if (data?.analysis?.chargingNeeded === false) {
-        console.log('✅ No charging needed for this route:', data.analysis.message);
         return null; // No charging station recommended
       }
       
@@ -326,7 +281,6 @@ const GoogleRouteMap: React.FC<{
       return getSimpleBestStation(stationsNearRoute);
       
     } catch (error) {
-      console.error('❌ Optimization error:', error);
       return getSimpleBestStation(stationsNearRoute);
     }
   }, [calculatedRoute, chargingStations, isStationNearRoute, selectedCar, routeData]);
@@ -376,17 +330,15 @@ const GoogleRouteMap: React.FC<{
     // Find best station along route (async)
     let bestStationAlongRoute: ChargingStation | null = null;
     
+    
     const findBestStationAndRender = async () => {
       bestStationAlongRoute = await getBestStationAlongRoute();
-      console.log('🎯 Best station found:', bestStationAlongRoute?.name, 'ID:', bestStationAlongRoute?.id);
-      console.log('🎯 Available station IDs:', stationsToUse.map(s => `${s.name}: ${s.id}`).slice(0,5));
       
       // Add new charging station markers - BRUK STATIONSTOUSE
       stationsToUse.forEach(station => {
         const isRecommendedAlongRoute = bestStationAlongRoute && 
           (station.id === bestStationAlongRoute.id || station.name === bestStationAlongRoute.name);
         const isNearRoute = calculatedRoute && isStationNearRoute(station);
-        console.log(`Station ${station.name}: recommended=${isRecommendedAlongRoute}, nearRoute=${isNearRoute}, stationId=${station.id}, bestId=${bestStationAlongRoute?.id}`);
         
         // Choose marker icon
         const markerIcon = isRecommendedAlongRoute ? {
