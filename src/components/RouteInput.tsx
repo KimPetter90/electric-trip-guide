@@ -476,55 +476,91 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={routeData.arrivalTime}
-                onSelect={(date) => {
-                  if (date) {
-                    // Sett default tid til 12:00 hvis ingen tid er valgt
-                    const arrivalDate = new Date(date);
-                    if (!routeData.arrivalTime) {
-                      arrivalDate.setHours(12, 0, 0, 0);
-                    } else {
-                      arrivalDate.setHours(
-                        routeData.arrivalTime.getHours(),
-                        routeData.arrivalTime.getMinutes(),
-                        0,
-                        0
-                      );
+              <div className="space-y-0">
+                <Calendar
+                  mode="single"
+                  selected={routeData.arrivalTime}
+                  onSelect={(date) => {
+                    if (date) {
+                      // Behold eksisterende tid hvis dato endres
+                      const arrivalDate = new Date(date);
+                      if (!routeData.arrivalTime) {
+                        arrivalDate.setHours(12, 0, 0, 0);
+                      } else {
+                        arrivalDate.setHours(
+                          routeData.arrivalTime.getHours(),
+                          routeData.arrivalTime.getMinutes(),
+                          0,
+                          0
+                        );
+                      }
+                      handleInputChange('arrivalTime', arrivalDate);
                     }
-                    handleInputChange('arrivalTime', arrivalDate);
-                  }
-                  setArrivalCalendarOpen(false);
-                }}
-                disabled={(date) => date < new Date()}
-                initialFocus
-                className={cn("p-3 pointer-events-auto")}
-              />
+                  }}
+                  disabled={(date) => date < new Date()}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+                <div className="border-t p-3">
+                  <Label className="text-sm font-medium mb-2 block">Klokkeslett</Label>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Label htmlFor="hour" className="text-xs text-muted-foreground">Time</Label>
+                      <Input
+                        id="hour"
+                        type="number"
+                        min="0"
+                        max="23"
+                        value={routeData.arrivalTime?.getHours() || 12}
+                        onChange={(e) => {
+                          const hour = parseInt(e.target.value) || 0;
+                          const currentDate = routeData.arrivalTime || new Date();
+                          const newDateTime = new Date(currentDate);
+                          newDateTime.setHours(Math.max(0, Math.min(23, hour)));
+                          handleInputChange('arrivalTime', newDateTime);
+                        }}
+                        className="h-8 text-center"
+                      />
+                    </div>
+                    <div className="flex items-end justify-center pb-2">
+                      <span className="text-lg font-bold">:</span>
+                    </div>
+                    <div className="flex-1">
+                      <Label htmlFor="minute" className="text-xs text-muted-foreground">Minutt</Label>
+                      <Input
+                        id="minute"
+                        type="number"
+                        min="0"
+                        max="59"
+                        step="15"
+                        value={routeData.arrivalTime?.getMinutes() || 0}
+                        onChange={(e) => {
+                          const minute = parseInt(e.target.value) || 0;
+                          const currentDate = routeData.arrivalTime || new Date();
+                          const newDateTime = new Date(currentDate);
+                          newDateTime.setMinutes(Math.max(0, Math.min(59, minute)));
+                          handleInputChange('arrivalTime', newDateTime);
+                        }}
+                        className="h-8 text-center"
+                      />
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => setArrivalCalendarOpen(false)} 
+                    className="w-full mt-3 h-8"
+                    size="sm"
+                  >
+                    Ferdig
+                  </Button>
+                </div>
+              </div>
             </PopoverContent>
           </Popover>
           
           {routeData.arrivalTime && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <input
-                  type="time"
-                  value={routeData.arrivalTime ? format(routeData.arrivalTime, "HH:mm") : ""}
-                  onChange={(e) => {
-                    if (routeData.arrivalTime && e.target.value) {
-                      const [hours, minutes] = e.target.value.split(':');
-                      const newDate = new Date(routeData.arrivalTime);
-                      newDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-                      handleInputChange('arrivalTime', newDate);
-                    }
-                  }}
-                  className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-              </div>
-              <Badge variant="outline" className="text-xs">
-                Ankomst: {format(routeData.arrivalTime, "dd.MM.yyyy 'kl.' HH:mm")}
-              </Badge>
-            </div>
+            <Badge variant="outline" className="text-xs">
+              Ønsket ankomst: {format(routeData.arrivalTime, "dd.MM.yyyy 'kl.' HH:mm")}
+            </Badge>
           )}
         </div>
 
