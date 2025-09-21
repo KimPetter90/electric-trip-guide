@@ -131,7 +131,7 @@ function Index() {
   const handleRouteSelect = useCallback((routeId: string) => {
     console.log('🎯 Route selected:', routeId);
     setSelectedRouteId(routeId);
-    setRouteTrigger(prev => prev + 1); // Trigger new route calculation with different settings
+    setRouteTrigger(prev => prev + 1);
   }, []);
 
   // Load charging stations on component mount
@@ -190,7 +190,10 @@ function Index() {
         image: favoriteCar.car_image || '/placeholder.svg'
       };
       setSelectedCar(favoriteCarModel);
-      // Favorittbil lastet uten melding til bruker
+      toast({
+        title: "Favorittbil lastet",
+        description: `${favoriteCar.car_brand} ${favoriteCar.car_model} er valgt automatisk`,
+      });
     }
   }, [user, favoriteCar, toast]); // Removed selectedCar from dependencies!
 
@@ -270,8 +273,11 @@ function Index() {
     );
   }
   
-  // Allow all users to access the app
-  console.log('✅ User access granted:', { isAdmin, user: !!user });
+  // I Lovable dev: Kun admin får tilgang
+  if (!isAdmin) {
+    console.log('🚫 DEV: Not admin user');
+    return <ComingSoon />;
+  }
   
   console.log('✅ DEV: Admin access granted');
 

@@ -152,7 +152,7 @@ const GoogleRouteMap: React.FC<{
     initializeMap();
   }, []);
 
-  // Check if station is near route (within 2km)
+  // Check if station is near route
   const isStationNearRoute = useCallback((station: ChargingStation): boolean => {
     if (!calculatedRoute || !window.google?.maps?.geometry) {
       return false;
@@ -161,32 +161,14 @@ const GoogleRouteMap: React.FC<{
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
-    // Check distance to overview path points
-    for (const point of route.overview_path) {
-      const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
-        stationPos,
-        point
-      );
-      
-      if (distance <= 2000) { // 2km radius
-        return true;
-      }
-    }
-    
-    // Also check distance to detailed route steps for more precision
     for (const leg of route.legs) {
       for (const step of leg.steps) {
-        // Check start and end points of each step
-        const distanceToStart = window.google.maps.geometry.spherical.computeDistanceBetween(
+        const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
           stationPos,
           step.start_location
         );
-        const distanceToEnd = window.google.maps.geometry.spherical.computeDistanceBetween(
-          stationPos,
-          step.end_location
-        );
         
-        if (distanceToStart <= 2000 || distanceToEnd <= 2000) {
+        if (distance <= 10000) { // 10km radius
           return true;
         }
       }
@@ -210,97 +192,15 @@ const GoogleRouteMap: React.FC<{
       .sort((a, b) => {
         const availabilityA = a.available / a.total;
         const availabilityB = b.available / b.total;
-        
-        // Prioritize stations with >50% availability
-        if (availabilityA >= 0.5 && availabilityB < 0.5) return -1;
-        if (availabilityB >= 0.5 && availabilityA < 0.5) return 1;
-        
-        // Then sort by highest availability
-        return availabilityB - availabilityA;
+        return availabilityB - availabilityA; // Highest availability first
       })[0];
     
     if (bestStation) {
-      const availability = Math.round((bestStation.available / bestStation.total) * 100);
-      console.log(`🎯 BESTE STASJON LANGS RUTEN: ${bestStation.name} (${availability}% tilgjengelig)`);
+      console.log(`🎯 BESTE STASJON LANGS RUTEN: ${bestStation.name}`);
     }
     
     return bestStation || stationsNearRoute[0]; // Fallback to first station along route
   }, [calculatedRoute, chargingStations, isStationNearRoute]);
-
-  // Calculate required charging locations based on range
-  const getRequiredChargingStations = useCallback((): ChargingStation[] => {
-    if (!calculatedRoute || !selectedCar || !routeData.batteryPercentage) {
-      return [];
-    }
-
-    const route = calculatedRoute.routes[0];
-    const totalDistance = route.legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0) / 1000;
-    
-    // Current range available with battery percentage
-    const currentRange = (routeData.batteryPercentage / 100) * selectedCar.range;
-    
-    console.log(`🔋 RANGE ANALYSIS:`, {
-      totalDistance: `${totalDistance.toFixed(1)} km`,
-      carRange: `${selectedCar.range} km`,
-      batteryLevel: `${routeData.batteryPercentage}%`,
-      currentRange: `${currentRange.toFixed(1)} km`,
-      needsCharging: currentRange < totalDistance
-    });
-
-    // If we can reach destination without charging, no required stops
-    if (currentRange >= totalDistance) {
-      console.log('✅ Kan nå destinasjon uten å lade');
-      return [];
-    }
-
-    // Find the first required charging stop
-    let distanceTraveled = 0;
-    const requiredStations: ChargingStation[] = [];
-    
-    // We need to charge when we've used up our current range
-    const chargeNeededAt = currentRange * 0.9; // Add 10% safety margin
-    
-    // Find closest charging station to the point where we need to charge
-    const stationsNearRoute = chargingStations.filter(station => isStationNearRoute(station));
-    
-    if (stationsNearRoute.length > 0) {
-      // For now, find the best station within our range
-      const reachableStations = stationsNearRoute.filter(station => {
-        // Calculate approximate distance to station along the route
-        const routePath = route.overview_path;
-        let closestDistanceToRoute = Infinity;
-        
-        routePath.forEach((point, index) => {
-          const distanceToPoint = google.maps.geometry.spherical.computeDistanceBetween(
-            new google.maps.LatLng(station.latitude, station.longitude),
-            point
-          ) / 1000; // Convert to km
-          
-          if (distanceToPoint < closestDistanceToRoute) {
-            closestDistanceToRoute = distanceToPoint;
-          }
-        });
-        
-        // Station is reachable if it's within our current range
-        return closestDistanceToRoute <= chargeNeededAt;
-      });
-
-      if (reachableStations.length > 0) {
-        // Pick the best reachable station
-        const bestReachableStation = reachableStations
-          .sort((a, b) => {
-            const availabilityA = a.available / a.total;
-            const availabilityB = b.available / b.total;
-            return availabilityB - availabilityA;
-          })[0];
-        
-        requiredStations.push(bestReachableStation);
-        console.log(`🚨 OBLIGATORISK LADESTASJON: ${bestReachableStation.name} - must charge here to reach destination`);
-      }
-    }
-
-    return requiredStations;
-  }, [calculatedRoute, chargingStations, selectedCar, routeData.batteryPercentage, isStationNearRoute]);
 
   // Add charging station markers
   useEffect(() => {
@@ -317,35 +217,16 @@ const GoogleRouteMap: React.FC<{
     // Find best station along route
     const bestStationAlongRoute = getBestStationAlongRoute();
 
-    // Find required charging stations
-    const requiredChargingStations = getRequiredChargingStations();
-
     // Add new charging station markers
     chargingStations.forEach(station => {
       const isRecommendedAlongRoute = bestStationAlongRoute && station.id === bestStationAlongRoute.id;
       const isNearRoute = calculatedRoute && isStationNearRoute(station);
-      const isRequiredForTrip = requiredChargingStations.some(req => req.id === station.id);
       
-      console.log(`🔌 Station ${station.name}:`, {
-        isRecommendedAlongRoute,
-        isNearRoute, 
-        isRequiredForTrip
-      });
-      
-      // All stations on route and within 2km get red markers as requested
-      const markerIcon = isRequiredForTrip ? {
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
-            <circle cx="14" cy="14" r="13" fill="#ff0000" stroke="#cc0000" stroke-width="2"/>
-            <text x="14" y="18" text-anchor="middle" fill="white" font-size="16" font-weight="bold">!</text>
-          </svg>
-        `),
-        scaledSize: new google.maps.Size(28, 28),
-        anchor: new google.maps.Point(14, 14)
-      } : isRecommendedAlongRoute ? {
+      // Choose marker icon
+      const markerIcon = isRecommendedAlongRoute ? {
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="11" fill="#FFD700" stroke="#cc0000" stroke-width="2"/>
+            <circle cx="12" cy="12" r="11" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
             <text x="12" y="16" text-anchor="middle" fill="#000000" font-size="14" font-weight="bold">★</text>
           </svg>
         `),
@@ -353,13 +234,13 @@ const GoogleRouteMap: React.FC<{
         anchor: new google.maps.Point(12, 12)
       } : isNearRoute ? {
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
-            <circle cx="9" cy="9" r="8" fill="#ff0000" stroke="#cc0000" stroke-width="1"/>
-            <text x="9" y="13" text-anchor="middle" fill="white" font-size="12" font-weight="bold">⚡</text>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="7" fill="#ff4444" stroke="#cc0000" stroke-width="1"/>
+            <text x="8" y="12" text-anchor="middle" fill="white" font-size="10" font-weight="bold">⚡</text>
           </svg>
         `),
-        scaledSize: new google.maps.Size(18, 18),
-        anchor: new google.maps.Point(9, 9)
+        scaledSize: new google.maps.Size(16, 16),
+        anchor: new google.maps.Point(8, 8)
       } : {
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
           <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8">
@@ -374,20 +255,19 @@ const GoogleRouteMap: React.FC<{
         position: { lat: station.latitude, lng: station.longitude },
         map: mapInstanceRef.current!,
         icon: markerIcon,
-        title: `${station.name}\n${station.available}/${station.total} tilgjengelig (${Math.round((station.available / station.total) * 100)}%)\n${station.cost} kr/kWh${isRequiredForTrip ? '\n🚨 OBLIGATORISK LADESTOPP' : isRecommendedAlongRoute ? '\n⭐ ANBEFALT LANGS RUTEN' : ''}`,
-        zIndex: isRequiredForTrip ? 2000 : (isRecommendedAlongRoute ? 1000 : (isNearRoute ? 100 : 10))
+        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isRecommendedAlongRoute ? '\n⭐ ANBEFALT LANGS RUTEN' : ''}`,
+        zIndex: isRecommendedAlongRoute ? 1000 : (isNearRoute ? 100 : 10)
       });
 
       const infoWindow = new google.maps.InfoWindow({
         content: `
           <div style="padding: 10px; max-width: 250px;">
             <h3 style="margin: 0 0 10px 0; color: #333;">${station.name}</h3>
-            <p><strong>Tilgjengelig:</strong> ${station.available}/${station.total} (${Math.round((station.available / station.total) * 100)}%)</p>
+            <p><strong>Tilgjengelig:</strong> ${station.available}/${station.total}</p>
             <p><strong>Effekt:</strong> ${station.power}</p>
             <p><strong>Pris:</strong> ${station.cost} kr/kWh</p>
             <p><strong>Leverandør:</strong> ${station.provider}</p>
             <p style="font-size: 12px; color: #666;">${station.address}</p>
-            ${isRequiredForTrip ? '<div style="padding: 5px; background: #ff0000; color: white; border-radius: 3px; text-align: center; font-weight: bold;">🚨 OBLIGATORISK LADESTOPP</div>' : ''}
             ${isRecommendedAlongRoute ? '<div style="padding: 5px; background: #FFD700; border-radius: 3px; text-align: center; font-weight: bold;">⭐ ANBEFALT LANGS RUTEN</div>' : ''}
           </div>
         `
@@ -399,81 +279,49 @@ const GoogleRouteMap: React.FC<{
 
       chargingStationMarkersRef.current.push(marker);
     });
-  }, [chargingStations, calculatedRoute, getBestStationAlongRoute, getRequiredChargingStations]);
+  }, [chargingStations, calculatedRoute, getBestStationAlongRoute]);
 
   // Calculate route when trigger changes
   const calculateRoute = useCallback(async () => {
-    console.log('🛣️ STARTING ROUTE CALCULATION', {
-      hasMap: !!mapInstanceRef.current,
-      from: routeData.from,
-      to: routeData.to,
-      via: routeData.via,
-      selectedRouteType: selectedRouteId
-    });
-
     if (!mapInstanceRef.current || !routeData.from || !routeData.to) {
-      console.log('❌ Missing requirements for route calculation');
       return;
     }
 
     try {
       onLoadingChange(true);
       onError(null);
-      console.log('📍 Creating DirectionsService...');
 
       const directionsService = new google.maps.DirectionsService();
       
       const waypoints = routeData.via ? [{ location: routeData.via, stopover: true }] : [];
       
-      // Configure route options based on selected route type
-      let routeOptions: any = {
+      const request: google.maps.DirectionsRequest = {
         origin: routeData.from,
         destination: routeData.to,
         waypoints: waypoints,
         travelMode: google.maps.TravelMode.DRIVING,
         unitSystem: google.maps.UnitSystem.METRIC,
-        optimizeWaypoints: true
+        optimizeWaypoints: true,
+        avoidHighways: false,
+        avoidTolls: false
       };
 
-      // Adjust route preferences based on selected route type
-      if (selectedRouteId === 'shortest') {
-        routeOptions.avoidHighways = false;
-        routeOptions.avoidTolls = false;
-        console.log('🎯 Calculating SHORTEST route');
-      } else if (selectedRouteId === 'eco') {
-        routeOptions.avoidHighways = true;
-        routeOptions.avoidTolls = true;
-        console.log('🎯 Calculating ECO-FRIENDLY route');
-      } else {
-        // fastest (default)
-        routeOptions.avoidHighways = false;
-        routeOptions.avoidTolls = false;
-        console.log('🎯 Calculating FASTEST route');
-      }
-
-      console.log('🚗 Making directions request...', routeOptions);
-      const result = await directionsService.route(routeOptions);
-      console.log('✅ Route calculated successfully', result);
+      const result = await directionsService.route(request);
       
       if (!directionsRendererRef.current) {
-        console.log('🎨 Creating new DirectionsRenderer...');
         directionsRendererRef.current = new google.maps.DirectionsRenderer({
           suppressMarkers: false,
           polylineOptions: {
             strokeColor: '#2563eb',
-            strokeWeight: 6,
-            strokeOpacity: 0.9,
-            zIndex: 1000
+            strokeWeight: 4,
+            strokeOpacity: 0.8
           }
         });
         directionsRendererRef.current.setMap(mapInstanceRef.current);
-        console.log('✅ DirectionsRenderer created and set to map');
       }
 
-      console.log('🎯 Setting directions on renderer...');
       directionsRendererRef.current.setDirections(result);
       setCalculatedRoute(result);
-      console.log('✅ Route set successfully');
 
       // Calculate trip analysis
       const totalDistance = result.routes[0].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0) / 1000;
@@ -489,25 +337,18 @@ const GoogleRouteMap: React.FC<{
       };
 
       onRouteCalculated(analysis);
-      console.log('📊 Trip analysis completed', analysis);
 
     } catch (error: any) {
       console.error('❌ Route calculation failed:', error);
       onError(`Ruteberegning feilet: ${error.message}`);
     } finally {
       onLoadingChange(false);
-      console.log('🏁 Route calculation finished');
     }
-  }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, selectedRouteId, onRouteCalculated, onLoadingChange, onError]);
+  }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, onRouteCalculated, onLoadingChange, onError]);
 
-  // Calculate route when trigger changes (manual route planning)
   useEffect(() => {
-    console.log('🎯 routeTrigger changed:', routeTrigger, 'hasMap:', !!mapInstanceRef.current);
-    if (routeTrigger > 0 && mapInstanceRef.current) { 
-      console.log('🚀 Triggering calculateRoute...');
-      calculateRoute();
-    }
-  }, [routeTrigger, calculateRoute]);
+    calculateRoute();
+  }, [calculateRoute, routeTrigger]);
 
   // Cleanup on unmount
   useEffect(() => {
