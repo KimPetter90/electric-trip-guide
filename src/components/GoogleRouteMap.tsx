@@ -297,7 +297,8 @@ const GoogleRouteMap: React.FC<{
         routeDistance,
         batteryPercentage: routeData.batteryPercentage,
         carRange: selectedCar.range,
-        currentBatteryRange: (selectedCar.range * routeData.batteryPercentage) / 100
+        currentBatteryRange: (selectedCar.range * routeData.batteryPercentage) / 100,
+        trailerWeight: routeData.trailerWeight
       });
       
       // Call optimization service with weather, trailer, and battery data

@@ -218,7 +218,9 @@ serve(async (req) => {
       stationsCount: optimizationRequest.stations?.length || 0,
       trailerWeight: optimizationRequest.routeData?.trailerWeight,
       batteryPercentage: optimizationRequest.routeData?.batteryPercentage,
-      totalDistance: optimizationRequest.routeData?.totalDistance
+      totalDistance: optimizationRequest.routeData?.totalDistance,
+      from: optimizationRequest.routeData?.from,
+      to: optimizationRequest.routeData?.to
     });
     
     const { stations, routeData, carData } = optimizationRequest;
