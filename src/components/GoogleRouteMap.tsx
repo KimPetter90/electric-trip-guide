@@ -167,6 +167,8 @@ const GoogleRouteMap: React.FC<{
 
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
+    let minDistance = Infinity;
+
     
     // Get ALL points from the encoded polyline overview path
     const overviewPath = route.overview_path;
@@ -177,9 +179,8 @@ const GoogleRouteMap: React.FC<{
         const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
           stationPos, pathPoint
         );
-        if (distance <= 3000) { // Increased to 3km
-          return true;
-        }
+        minDistance = Math.min(minDistance, distance);
+        
         
         // Add interpolation between consecutive points
         if (i < overviewPath.length - 1) {
@@ -193,9 +194,8 @@ const GoogleRouteMap: React.FC<{
             const interpDistance = window.google.maps.geometry.spherical.computeDistanceBetween(
               stationPos, interpPoint
             );
-            if (interpDistance <= 3000) {
-              return true;
-            }
+            minDistance = Math.min(minDistance, interpDistance);
+            
           }
         }
       }
@@ -215,9 +215,8 @@ const GoogleRouteMap: React.FC<{
               const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
                 stationPos, pathPoint
               );
-              if (distance <= 3000) { // Increased to 3km
-                return true;
-              }
+              minDistance = Math.min(minDistance, distance);
+              
             }
           } catch (e) {
             // Fallback to start/end points if decoding fails
@@ -227,15 +226,15 @@ const GoogleRouteMap: React.FC<{
             const endDist = window.google.maps.geometry.spherical.computeDistanceBetween(
               stationPos, step.end_location
             );
-            if (startDist <= 3000 || endDist <= 3000) { // Increased to 3km
-              return true;
-            }
+            minDistance = Math.min(minDistance, startDist, endDist);
+            
           }
         }
       }
     }
     
-    return false;
+    console.log(`🔍 Station ${station.name}: minDistance=${Math.round(minDistance)}m, threshold=3000m, isNear=${minDistance <= 3000}`);
+    return minDistance <= 3000;
   }, [calculatedRoute]);
 
   // Find best station along route
