@@ -420,10 +420,15 @@ function Index() {
     setRouteOptions(mockRoutes);
     setLoadingRoutes(false);
     
-    // Automatisk velg raskeste rute
+    // Automatisk velg raskeste rute og trigger kartberegning
     console.log('🎯 Setting selected route to "fastest"');
     setSelectedRouteId('fastest');
-    // FJERNET: setRouteTrigger(prev => prev + 1); - kun manuell trigger
+    
+    // Trigger kartberegning direkte etter route selection
+    setTimeout(() => {
+      console.log('🗺️ Auto-triggering route calculation for fastest route');
+      setRouteTrigger(prev => prev + 1);
+    }, 100);
     
     // Cache resultatet
     try {
@@ -622,18 +627,7 @@ function Index() {
         console.log('📱 MOBILE DEBUG - Calling generateRouteOptions');
         await generateRouteOptions();
         
-        // Vent litt for å sikre at route options og selection er satt
-        setTimeout(() => {
-          // Sikre at fastest route er valgt hvis ingen annen er valgt
-          if (!selectedRouteId && routeOptions.length > 0) {
-            console.log('🎯 Force-setting selected route to "fastest"');
-            setSelectedRouteId('fastest');
-          }
-          
-          // Trigger kartberegning NÅR brukeren trykker knappen
-          console.log('🗺️ Triggering route calculation with selectedRouteId:', selectedRouteId);
-          setRouteTrigger(prev => prev + 1);
-        }, 150);
+        // Rutevalg og kartberegning håndteres nå av generateRouteOptions
       
       // Toast-melding fjernet på brukerens ønske
       
