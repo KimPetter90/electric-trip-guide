@@ -158,16 +158,24 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
   const calculateTravelTimeToFerry = (currentPos?: { latitude: number; longitude: number }, ferryPort?: string): number => {
     if (!currentPos || !ferryPort) return 25; // Default 25 min
 
-    // Forenklet beregning basert på fergekai
-    const distances: { [key: string]: number } = {
-      'molde': 25,      // 25 min kjøring
-      'mortavika': 60,  // 60 min kjøring  
-      'flakk': 40,      // 40 min kjøring
-      'sulesund': 15,   // 15 min kjøring
-      'default': 25
+    // Realistisk beregning basert på faktiske ruter og trafikk
+    const now = new Date();
+    const currentHour = now.getHours();
+    const isRushHour = (currentHour >= 7 && currentHour <= 9) || (currentHour >= 15 && currentHour <= 18);
+    
+    // Basis kjøretid + trafikk-faktor
+    const baseTimes: { [key: string]: number } = {
+      'molde': 20,      // 20 min grunnleggende
+      'mortavika': 45,  // 45 min grunnleggende  
+      'flakk': 35,      // 35 min grunnleggende
+      'sulesund': 12,   // 12 min grunnleggende
+      'default': 20
     };
 
-    return distances[ferryPort] || distances['default'];
+    const baseTime = baseTimes[ferryPort] || baseTimes['default'];
+    const trafficMultiplier = isRushHour ? 1.4 : 1.1; // 40% ekstra i rushtid, 10% ellers
+    
+    return Math.round(baseTime * trafficMultiplier);
   };
 
   const calculateFerryProbability = (travelTime: number, departureTime: string): number => {
@@ -182,15 +190,23 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
     }
 
     const timeUntilDeparture = (departure.getTime() - now.getTime()) / (1000 * 60); // minutter
-    const buffer = 10; // 10 min buffer for boarding
-    const timeNeeded = travelTime + buffer;
+    console.log(`🚢 Ferge-kalkulator: ${timeUntilDeparture.toFixed(0)}min til ferge, trenger ${travelTime}min kjøretid`);
+    
+    const boardingBuffer = 10; // 10 min buffer for ombordstigning
+    const totalTimeNeeded = travelTime + boardingBuffer;
+    const timeMargin = timeUntilDeparture - totalTimeNeeded;
 
-    if (timeUntilDeparture <= timeNeeded) {
-      return 15; // Lav sannsynlighet
-    } else if (timeUntilDeparture <= timeNeeded + 15) {
-      return 65; // Middels sannsynlighet
-    } else if (timeUntilDeparture <= timeNeeded + 30) {
-      return 95; // Høy sannsynlighet
+    console.log(`🚢 Tidsmargin: ${timeMargin.toFixed(0)}min ekstra`);
+
+    // Mer realistisk sannsynlighetsberegning
+    if (timeMargin < -10) {
+      return 5; // Nesten umulig - for sent ute
+    } else if (timeMargin < 0) {
+      return 25; // Vanskelig - må kjøre fort
+    } else if (timeMargin < 10) {
+      return 60; // Middels - litt stress
+    } else if (timeMargin < 20) {
+      return 85; // God - komfortabel margin
     } else {
       return 100; // Perfekt - masse tid
     }
