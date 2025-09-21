@@ -132,12 +132,14 @@ function calculateTrailerImpact(trailerWeight: number): number {
 }
 
 function calculateRequiredRange(routeData: any, carData: any, weatherImpact: number, trailerImpact: number): number {
+  const baseConsumption = carData.consumption;
+  const adjustedConsumption = baseConsumption * weatherImpact * trailerImpact;
   const rangeWithCurrentBattery = (carData.range * routeData.batteryPercentage) / 100;
   
   // Beregn hvor langt bilen kan kjøre med nåværende batteri under gitte forhold
   const adjustedRange = rangeWithCurrentBattery / (weatherImpact * trailerImpact);
   
-  return Math.max(0, adjustedRange); // Sørg for at vi ikke får negative verdier
+  return adjustedRange;
 }
 
 function calculateStationScore(
@@ -150,9 +152,9 @@ function calculateStationScore(
 ): number {
   let score = 0;
   
-  // Tilgjengelighet (30% av score - redusert for å gi plass til avstand)
+  // Tilgjengelighet (40% av score)
   const availability = station.available / station.total;
-  score += availability * 30;
+  score += availability * 40;
   
   // Hurtiglading bonus (25% av score)
   if (station.fast_charger) {
@@ -166,8 +168,8 @@ function calculateStationScore(
   const costScore = Math.max(0, 15 - (station.cost - 3) * 3);
   score += costScore;
   
-  // Avstand langs rute (30% av score - økt vekt for å forhindre fjerntliggende stasjoner)
-  const distanceScore = Math.max(0, 30 - (distanceToStation / 1000) * 2);
+  // Avstand langs rute (20% av score)
+  const distanceScore = Math.max(0, 20 - (distanceToStation / 1000) * 5);
   score += distanceScore;
   
   // Kritisk stasjon bonus hvis batteri er lavt
@@ -223,13 +225,8 @@ serve(async (req) => {
     
     // Beregn score for hver stasjon
     const stationsWithScores = stations.map(station => {
-      // Beregn faktisk avstand basert på koordinater (forenklet)
-      const routeStartLat = parseFloat(routeData.from.split(',')[0]) || 59.9139;
-      const routeStartLon = parseFloat(routeData.from.split(',')[1]) || 10.7522;
-      
-      const deltaLat = station.latitude - routeStartLat;
-      const deltaLon = station.longitude - routeStartLon;
-      const distanceToStation = Math.sqrt(deltaLat * deltaLat + deltaLon * deltaLon) * 111000; // Omtrentlig avstand i meter
+      // Simuler avstand til stasjon (i en ekte implementering ville vi beregne faktisk avstand langs rute)
+      const distanceToStation = Math.random() * 5000 + 1000; // 1-6 km fra rute
       
       const score = calculateStationScore(
         station,
