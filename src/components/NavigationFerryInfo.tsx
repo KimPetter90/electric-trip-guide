@@ -223,57 +223,31 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
   if (!isVisible || ferryInfo.length === 0) return null;
 
   return (
-    <div className="absolute top-20 left-3 right-3 z-10">
+    <div className="absolute top-3 right-16 z-10 w-64">
       <Card className="bg-background/95 backdrop-blur-sm border border-border/50 shadow-lg">
-        <div className="p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <Anchor className="h-4 w-4 text-blue-400" />
-            <h3 className="font-semibold text-sm">Kommende ferger</h3>
+        <div className="p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Anchor className="h-3 w-3 text-blue-400" />
+            <span className="font-medium text-xs">Neste ferge</span>
           </div>
 
           {loading ? (
-            <div className="text-sm text-muted-foreground">Henter fergetider...</div>
+            <div className="text-xs text-muted-foreground">Laster...</div>
           ) : (
-            <div className="space-y-3">
-              {ferryInfo.slice(0, 2).map((ferry, index) => (
-                <div 
-                  key={ferry.route} 
-                  className={cn(
-                    "border rounded-lg p-3 space-y-2",
-                    index === 0 ? "border-primary/30 bg-primary/5" : "border-border/30"
-                  )}
-                >
+            <div className="space-y-2">
+              {ferryInfo.slice(0, 1).map((ferry) => (
+                <div key={ferry.route} className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-sm font-medium">{ferry.route}</span>
-                    </div>
-                    <Badge {...getProbabilityBadge(ferry.probability)} className="text-xs">
-                      {getProbabilityBadge(ferry.probability).text}
+                    <span className="text-xs font-medium">{ferry.route}</span>
+                    <Badge {...getProbabilityBadge(ferry.probability)} className="text-xs py-0 px-1">
+                      {ferry.probability}%
                     </Badge>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-muted-foreground">Neste:</span>
-                      <span className="font-medium">{ferry.nextDeparture}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <TrendingUp className={cn("h-3 w-3", getProbabilityColor(ferry.probability))} />
-                      <span className={cn("font-medium", getProbabilityColor(ferry.probability))}>
-                        {ferry.probability}%
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{ferry.from} → {ferry.to}</span>
-                    <span>Deretter: {ferry.followingDeparture}</span>
-                  </div>
-
-                  <div className="text-xs text-muted-foreground">
-                    Kjøretid til ferge: {ferry.travelTimeToFerry} min
+                  
+                  <div className="flex items-center gap-2 text-xs">
+                    <Clock className="h-3 w-3 text-muted-foreground" />
+                    <span className="font-medium">{ferry.nextDeparture}</span>
+                    <span className="text-muted-foreground">({ferry.travelTimeToFerry} min)</span>
                   </div>
                 </div>
               ))}
