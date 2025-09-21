@@ -262,7 +262,7 @@ const GoogleRouteMap: React.FC<{
     // Add new charging station markers
     chargingStations.forEach(station => {
       const isRecommendedAlongRoute = bestStationAlongRoute && station.id === bestStationAlongRoute.id;
-      const isNearRoute = calculatedRoute && isStationNearRoute(station);
+      const isNearRoute = true; // TEST: Make ALL stations red
       
       console.log(`🔍 Station ${station.name}: hasRoute=${!!calculatedRoute}, isNearRoute=${isNearRoute}`);
       
