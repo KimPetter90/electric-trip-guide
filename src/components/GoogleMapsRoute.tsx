@@ -40,10 +40,11 @@ interface GoogleMapsRouteProps {
   routeData: RouteData;
 }
 
-// Load charging stations from database
-const [chargingStations, setChargingStations] = useState<ChargingStation[]>([]);
-
 export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: GoogleMapsRouteProps) {
+  // Load charging stations from database
+  const [chargingStations, setChargingStations] = useState<ChargingStation[]>([]);
+  
+  console.log('🔄 GoogleMapsRoute: KOMPONENT STARTER', { isVisible, componentName: 'GoogleMapsRoute' });
   const mapRef = useRef<HTMLDivElement>(null);
   const userLocationMarker = useRef<google.maps.Marker | null>(null);
   const watchId = useRef<number | null>(null);
@@ -65,7 +66,8 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
     isVisible, 
     hasMap: !!map, 
     stationCount: chargingStations.length,
-    batteryPercent: routeData.batteryPercentage 
+    batteryPercent: routeData.batteryPercentage,
+    componentName: 'GoogleMapsRoute'
   });
 
   // GPS functions
