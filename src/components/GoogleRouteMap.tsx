@@ -57,6 +57,7 @@ interface TripAnalysis {
 const GoogleRouteMap: React.FC<{
   center: { lat: number; lng: number };
   zoom: number;
+  navigationMode?: boolean;
   onMapLoad?: (map: google.maps.Map) => void;
   chargingStations: ChargingStation[];
   routeData: RouteData;
@@ -68,7 +69,7 @@ const GoogleRouteMap: React.FC<{
   onRouteCalculated: (analysis: TripAnalysis) => void;
   onLoadingChange: (loading: boolean) => void;
   onError: (error: string | null) => void;
-}> = ({ center, zoom, onMapLoad, chargingStations, routeData, selectedCar, selectedRouteId, routeOptions, routeTrigger, userLocation, onRouteCalculated, onLoadingChange, onError }) => {
+}> = ({ center, zoom, navigationMode = false, onMapLoad, chargingStations, routeData, selectedCar, selectedRouteId, routeOptions, routeTrigger, userLocation, onRouteCalculated, onLoadingChange, onError }) => {
   
   // Refs and state
   const mapRef = useRef<HTMLDivElement>(null);
@@ -131,11 +132,17 @@ const GoogleRouteMap: React.FC<{
   // Effect for å oppdatere kart view når center/zoom endres
   useEffect(() => {
     if (mapInstanceRef.current) {
-      console.log('🗺️ Oppdaterer kartsenter til:', center, 'zoom:', zoom);
+      console.log('🗺️ Oppdaterer kartsenter til:', center, 'zoom:', zoom, 'navigationMode:', navigationMode);
       mapInstanceRef.current.setCenter(center);
       mapInstanceRef.current.setZoom(zoom);
+      
+      // Sett kartet til 2D-modus når navigasjon er aktiv
+      if (navigationMode) {
+        mapInstanceRef.current.setTilt(0); // Flatt 2D-perspektiv
+        mapInstanceRef.current.setHeading(0); // Null rotasjon
+      }
     }
-  }, [center, zoom]);
+  }, [center, zoom, navigationMode]);
 
   // Initialize Google Maps only once
   useEffect(() => {

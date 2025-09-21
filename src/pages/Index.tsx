@@ -113,6 +113,7 @@ function Index() {
   const [showNavigationTracker, setShowNavigationTracker] = useState(false);
   const [navigationZoom, setNavigationZoom] = useState(6); // Ny state for navigasjonszoom
   const [navigationCenter, setNavigationCenter] = useState({ lat: 60.472, lng: 8.4689 }); // Ny state for navigasjonssenter
+  const [navigationMode, setNavigationMode] = useState(false); // Ny state for 2D-modus
 
   // Debug car selection changes
   const handleCarSelect = useCallback((car: CarModel | null) => {
@@ -157,6 +158,7 @@ function Index() {
     console.log('🗺️ Navigasjon startet - zoomer inn til:', location);
     setNavigationCenter({ lat: location.latitude, lng: location.longitude });
     setNavigationZoom(17); // Zoom helt inn for navigasjon
+    setNavigationMode(true); // Aktiver 2D-modus
     setShowNavigationTracker(true);
   }, []);
 
@@ -961,6 +963,7 @@ function Index() {
                     key={`google-map-${selectedRouteId || 'default'}`}
                     center={showNavigationTracker ? navigationCenter : { lat: 60.472, lng: 8.4689 }}
                     zoom={showNavigationTracker ? navigationZoom : 6}
+                    navigationMode={navigationMode}
                     onMapLoad={onMapLoad}
                     chargingStations={chargingStations}
                     routeData={routeData}
