@@ -482,37 +482,38 @@ const GoogleRouteMap: React.FC<{
               
               <div class="status-indicator">
                 <div class="status-dot ${station.available > 0 ? 'available' : 'busy'}"></div>
-                <span>Status: ${station.available > 0 ? 'Tilgjengelig' : 'Opptatt'}</span>
+                <span>Veiledende info - ikke live data</span>
               </div>
               
               <div class="stats-grid">
                 <div class="stat-card">
-                  <div class="stat-value">${station.available}/${station.total}</div>
-                  <div class="stat-label">Plasser</div>
-                </div>
-                <div class="stat-card">
                   <div class="stat-value">${station.power}</div>
-                  <div class="stat-label">Effekt</div>
+                  <div class="stat-label">Makseffekt</div>
                 </div>
                 <div class="stat-card">
-                  <div class="stat-value">${station.cost}</div>
-                  <div class="stat-label">kr/kWh</div>
+                  <div class="stat-value">CCS/Type 2</div>
+                  <div class="stat-label">Kontakter</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-value">24/7</div>
+                  <div class="stat-label">Åpningstid</div>
                 </div>
               </div>
               
               <div class="provider-info">
                 <span class="provider-label">Leverandør:</span>
-                <span class="provider-name">${station.provider}</span>
+                <span class="provider-name">${station.provider || 'Ulike leverandører'}</span>
               </div>
               
-              <div class="address">${station.address}</div>
+              <div class="address">${station.address || station.location}</div>
               
-              <div class="battery-prediction">
-                <div class="prediction-label">Lading estimat</div>
-                <div class="prediction-bar">
-                  <div class="prediction-fill" style="width: ${Math.min(100, (station.available / station.total) * 100)}%"></div>
+              <div class="charging-tips">
+                <div class="tips-label">💡 Tips for elbilsjåfører:</div>
+                <div class="tips-content">
+                  • Sjekk app for live tilgjengelighet<br>
+                  • Ha backup ladestasjon planlagt<br>
+                  • Hurtiglading 10-80% for best effektivitet
                 </div>
-                <div class="prediction-text">${Math.round((station.available / station.total) * 100)}% tilgjengelighet</div>
               </div>
             </div>
           `
