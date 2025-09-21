@@ -382,6 +382,8 @@ const GoogleRouteMap: React.FC<{
   // Calculate route when trigger changes
   const calculateRoute = useCallback(async () => {
     if (!mapInstanceRef.current || !routeData.from || !routeData.to) {
+      console.log('❌ Cannot calculate route: missing map, from, or to');
+      onError('Mangler start- eller sluttadresse for ruteberegning');
       return;
     }
 
