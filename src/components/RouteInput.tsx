@@ -384,7 +384,8 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
       else if (fromLower.includes('ålesund') || toLower.includes('ålesund')) {
         // For Ålesund-området, bruk realistiske korte reisetider
         if (toLower.includes('kvalsvik') || fromLower.includes('kvalsvik')) {
-          estimatedTravelMinutes = Math.round((90 / speedMultiplier)); // 1.5 timer
+          // Inkluderer ferje Sulesund-Hareid (25min) + venting (10min) + kjøring (60min)
+          estimatedTravelMinutes = Math.round((95 / speedMultiplier)); // 1t 35min realistisk
           estimatedDistanceKm = Math.round(71 * distanceMultiplier); // Faktisk distanse
         } else {
           estimatedTravelMinutes = Math.round((120 / speedMultiplier)); // 2 timer for andre lokale ruter
