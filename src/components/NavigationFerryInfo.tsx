@@ -126,8 +126,8 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
       });
     }
 
-    // Fallback: Vis en generisk fergerute hvis ingen matcher
-    if (routes.length === 0) {
+    // Fallback: Vis Molde-Vestnes som standard hvis ingen andre matcher og det er Ålesund/Trondheim området
+    if (routes.length === 0 && (dest.includes('ålesund') || dest.includes('trondheim') || dest.includes('molde') || dest.includes('vestnes'))) {
       const nextDep = new Date();
       nextDep.setHours(currentHour, Math.ceil(currentMinute / 15) * 15, 0, 0);
       if (nextDep.getTime() <= now.getTime()) {
@@ -138,9 +138,9 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
       followingDep.setMinutes(nextDep.getMinutes() + 30);
 
       routes.push({
-        route: 'Nærmeste ferge',
-        from: 'Fra',
-        to: 'Til',
+        route: 'Molde-Vestnes',
+        from: 'Molde',
+        to: 'Vestnes',
         nextDeparture: nextDep.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' }),
         followingDeparture: followingDep.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' }),
         travelTimeToFerry: 20,
