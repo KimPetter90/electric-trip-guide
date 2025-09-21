@@ -138,8 +138,27 @@ const GoogleRouteMap: React.FC<{
       
       // Sett kartet til 2D-modus når navigasjon er aktiv
       if (navigationMode) {
+        console.log('🗺️ Aktiverer 2D-modus for navigasjon');
+        mapInstanceRef.current.setMapTypeId(google.maps.MapTypeId.ROADMAP);
         mapInstanceRef.current.setTilt(0); // Flatt 2D-perspektiv
         mapInstanceRef.current.setHeading(0); // Null rotasjon
+        
+        // Skjul kontroller for navigasjonsvisning
+        mapInstanceRef.current.setOptions({
+          mapTypeControl: false,
+          rotateControl: false,
+          fullscreenControl: false,
+          streetViewControl: false
+        });
+      } else {
+        // Tilbakestill til normal visning
+        mapInstanceRef.current.setMapTypeId(google.maps.MapTypeId.HYBRID);
+        mapInstanceRef.current.setOptions({
+          mapTypeControl: true,
+          rotateControl: false,
+          fullscreenControl: true,
+          streetViewControl: false
+        });
       }
     }
   }, [center, zoom, navigationMode]);
@@ -178,9 +197,9 @@ const GoogleRouteMap: React.FC<{
         const map = new google.maps.Map(mapRef.current, {
           center: center,
           zoom: zoom,
-          mapTypeId: google.maps.MapTypeId.HYBRID,
+          mapTypeId: navigationMode ? google.maps.MapTypeId.ROADMAP : google.maps.MapTypeId.HYBRID,
           zoomControl: true,
-          mapTypeControl: true,
+          mapTypeControl: !navigationMode,
           mapTypeControlOptions: {
             style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
             position: google.maps.ControlPosition.TOP_CENTER,
@@ -193,8 +212,10 @@ const GoogleRouteMap: React.FC<{
           },
           scaleControl: true,
           streetViewControl: false,
-          rotateControl: false,
-          fullscreenControl: true
+          rotateControl: !navigationMode,
+          fullscreenControl: !navigationMode,
+          tilt: navigationMode ? 0 : 45,
+          heading: navigationMode ? 0 : 0
         });
 
         mapInstanceRef.current = map;
