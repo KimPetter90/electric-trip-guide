@@ -197,7 +197,7 @@ const GoogleRouteMap: React.FC<{
     initializeMap();
   }, []);
 
-  // Check if station is near route - OPTIMIZED VERSION
+  // Check if station is near route - UTVIDET FOR Å FANGE ALLE STASJONER LANGS RUTEN
   const isStationNearRoute = useCallback((station: ChargingStation): boolean => {
     if (!calculatedRoute || !window.google?.maps?.geometry) {
       return false;
@@ -206,21 +206,29 @@ const GoogleRouteMap: React.FC<{
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
-    // Quick check using overview path only (much faster)
-    const overviewPath = route.overview_path;
-    if (overviewPath && overviewPath.length > 0) {
-      let minDistance = Infinity;
+    // Sjekk ALLE legs av ruten for å sikre at vi fanger alle stasjoner langs ruten
+    for (const leg of route.legs) {
+      // Sjekk avstand til start og slutt av hvert leg
+      const startPos = new google.maps.LatLng(leg.start_location.lat(), leg.start_location.lng());
+      const endPos = new google.maps.LatLng(leg.end_location.lat(), leg.end_location.lng());
       
-      // Sample every 5th point instead of every point for performance
-      for (let i = 0; i < overviewPath.length; i += 5) {
-        const pathPoint = overviewPath[i];
-        const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
-          stationPos, pathPoint
-        );
-        minDistance = Math.min(minDistance, distance);
-        
-        // Early exit if we find a close station
-        if (minDistance <= 3000) return true;
+      const distanceToStart = window.google.maps.geometry.spherical.computeDistanceBetween(stationPos, startPos);
+      const distanceToEnd = window.google.maps.geometry.spherical.computeDistanceBetween(stationPos, endPos);
+      
+      // Hvis stasjonen er nær start eller slutt av noen del av ruten
+      if (distanceToStart <= 5000 || distanceToEnd <= 5000) return true;
+      
+      // Sjekk også langs hele ruten med tettere sampling
+      if (leg.steps) {
+        for (const step of leg.steps) {
+          const stepStart = new google.maps.LatLng(step.start_location.lat(), step.start_location.lng());
+          const stepEnd = new google.maps.LatLng(step.end_location.lat(), step.end_location.lng());
+          
+          const distanceToStepStart = window.google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
+          const distanceToStepEnd = window.google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
+          
+          if (distanceToStepStart <= 5000 || distanceToStepEnd <= 5000) return true;
+        }
       }
     }
     
