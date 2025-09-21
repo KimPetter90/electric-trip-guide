@@ -235,6 +235,7 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3 text-muted-foreground" />
                 <span className="font-medium">{ferry.nextDeparture}</span>
+                <span className="text-muted-foreground">→ {ferry.followingDeparture}</span>
               </div>
               <Badge {...getProbabilityBadge(ferry.probability)} className="text-xs py-0 px-1 h-4">
                 {ferry.probability}%
