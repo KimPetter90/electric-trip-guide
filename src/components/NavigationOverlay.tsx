@@ -120,7 +120,10 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
   };
 
   const startNavigation = async () => {
+    console.log('🧭 Starter navigasjon...');
+    
     if (!navigator.geolocation) {
+      console.error('❌ Geolocation ikke støttet');
       toast({
         title: "GPS ikke tilgjengelig",
         description: "Denne enheten støtter ikke GPS-posisjonering",
@@ -130,10 +133,33 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
     }
 
     try {
-      // Get initial position
+      console.log('📍 Ber om GPS-tillatelse...');
+      
+      // Check permission first
+      let permission: PermissionState = 'granted';
+      try {
+        const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+        permission = permissionStatus.state;
+        console.log('🔒 GPS-tillatelse status:', permission);
+      } catch (permError) {
+        console.warn('⚠️ Kunne ikke sjekke tillatelser:', permError);
+      }
+
+      if (permission === 'denied') {
+        toast({
+          title: "GPS-tilgang nektet",
+          description: "Vennligst gi tillatelse til stedsdata i nettleserens innstillinger",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Get initial position with more lenient settings
+      console.log('📡 Henter initial posisjon...');
       await new Promise<void>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(
           (position) => {
+            console.log('✅ Fikk GPS-posisjon:', position.coords);
             const locationData: LocationData = {
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
@@ -146,18 +172,40 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
             lastLocationRef.current = locationData;
             resolve();
           },
-          reject,
+          (error) => {
+            console.error('❌ GPS-feil:', error);
+            let errorMsg = 'Ukjent GPS-feil';
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMsg = 'GPS-tilgang ble nektet. Sjekk nettleserens innstillinger.';
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMsg = 'GPS-posisjon ikke tilgjengelig. Prøv utendørs.';
+                break;
+              case error.TIMEOUT:
+                errorMsg = 'GPS-forespørsel tok for lang tid. Prøv igjen.';
+                break;
+            }
+            toast({
+              title: "GPS-feil",
+              description: errorMsg,
+              variant: "destructive",
+            });
+            reject(error);
+          },
           {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 60000
+            enableHighAccuracy: false, // Start with less demanding settings
+            timeout: 15000, // Longer timeout
+            maximumAge: 300000 // Allow cached position
           }
         );
       });
 
-      // Start continuous tracking
+      // Start continuous tracking with less demanding settings initially
+      console.log('🔄 Starter kontinuerlig sporing...');
       watchIdRef.current = navigator.geolocation.watchPosition(
         (position) => {
+          console.log('📍 Ny posisjon mottatt');
           const locationData: LocationData = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
@@ -172,7 +220,7 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
           checkRouteDeviation(locationData);
         },
         (error) => {
-          console.error('GPS tracking feil:', error);
+          console.error('❌ GPS tracking feil:', error);
           stopNavigation();
           toast({
             title: "GPS-feil",
@@ -181,9 +229,9 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
           });
         },
         {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 30000
+          enableHighAccuracy: false, // Start with less demanding, upgrade later
+          timeout: 20000, // Longer timeout
+          maximumAge: 60000
         }
       );
 
@@ -197,16 +245,51 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
       setIsTracking(true);
       setRouteDeviation(false);
       
+      console.log('✅ Navigasjon startet successfully');
       toast({
         title: "🧭 Navigasjon startet",
         description: "Følger din posisjon og ruten i sanntid",
       });
       
+      // Upgrade to high accuracy after initial success
+      setTimeout(() => {
+        if (watchIdRef.current && navigator.geolocation) {
+          console.log('⬆️ Oppgraderer til høy nøyaktighet...');
+          navigator.geolocation.clearWatch(watchIdRef.current);
+          
+          watchIdRef.current = navigator.geolocation.watchPosition(
+            (position) => {
+              const locationData: LocationData = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+                heading: position.coords.heading || undefined,
+                speed: position.coords.speed || undefined,
+                timestamp: Date.now(),
+              };
+              
+              setCurrentLocation(locationData);
+              updateRouteProgress(locationData);
+              checkRouteDeviation(locationData);
+            },
+            (error) => {
+              console.warn('⚠️ High accuracy GPS feil, fortsetter med lavere nøyaktighet:', error);
+              // Don't stop navigation, just continue with lower accuracy
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 15000,
+              maximumAge: 30000
+            }
+          );
+        }
+      }, 3000);
+      
     } catch (error) {
-      console.error('Navigation start error:', error);
+      console.error('❌ Navigation start error:', error);
       toast({
         title: "Kunne ikke starte navigasjon",
-        description: "Sjekk GPS-tillatelser og prøv igjen",
+        description: "Sjekk GPS-tillatelser og internettforbindelse. Prøv igjen.",
         variant: "destructive",
       });
     }
