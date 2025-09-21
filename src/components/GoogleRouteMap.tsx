@@ -233,10 +233,11 @@ const GoogleRouteMap: React.FC<{
   // Add charging station markers
   useEffect(() => {
     if (!mapInstanceRef.current || !chargingStations || chargingStations.length === 0) {
+      console.log('⚠️ Missing requirements for markers:', !!mapInstanceRef.current, !!chargingStations, chargingStations?.length);
       return;
     }
 
-    console.log(`🔌 Legger til ${chargingStations.length} ladestasjoner på kartet`);
+    console.log(`🔌 Legger til ${chargingStations.length} ladestasjoner på kartet, hasRoute: ${!!calculatedRoute}`);
     
     // Clear distance cache when recalculating
     routeDistanceCache.current.clear();
@@ -315,6 +316,8 @@ const GoogleRouteMap: React.FC<{
       chargingStationMarkersRef.current.push(marker);
     });
   }, [chargingStations, calculatedRoute, getBestStationAlongRoute]);
+
+  // Force re-render markers when route changes
 
   // Calculate route when trigger changes
   const calculateRoute = useCallback(async () => {
