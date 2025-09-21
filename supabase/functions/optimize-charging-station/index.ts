@@ -266,10 +266,6 @@ serve(async (req) => {
       const stationLat = parseFloat(station.latitude.toString());
       const stationLon = parseFloat(station.longitude.toString());
       
-      // Enkel geografisk avstand fra startpunkt som proxy for rute-avstand
-      const fromCoords = routeData.from || '';
-      let distanceFromStart = 1000; // Default fallback
-      
       // Geografiske koordinater for kjente steder (demo data)
       const knownLocations: { [key: string]: { lat: number, lon: number } } = {
         'oslo': { lat: 59.9139, lon: 10.7522 },
@@ -280,29 +276,40 @@ serve(async (req) => {
         'lillehammer': { lat: 61.1161, lon: 10.4669 }
       };
       
-      // Finn nærmeste kjente lokasjon fra start
-      const fromLower = fromCoords.toLowerCase();
-      let fromLat = 59.9139, fromLon = 10.7522; // Default Oslo
+      // Finn start og sluttsted fra rute
+      const fromLower = (routeData.from || '').toLowerCase();
+      const toLower = (routeData.to || '').toLowerCase();
       
+      let fromLat = 59.9139, fromLon = 10.7522; // Default Oslo
+      let toLat = 59.9139, toLon = 10.7522;
+      
+      // Finn koordinater for start og slutt
       for (const [place, coords] of Object.entries(knownLocations)) {
         if (fromLower.includes(place)) {
           fromLat = coords.lat;
           fromLon = coords.lon;
-          break;
+        }
+        if (toLower.includes(place)) {
+          toLat = coords.lat;
+          toLon = coords.lon;
         }
       }
       
-      // Beregn avstand fra start til stasjon (Haversine formula)
+      // Beregn avstand fra midtpunkt av ruten til stasjon
+      const midLat = (fromLat + toLat) / 2;
+      const midLon = (fromLon + toLon) / 2;
+      
+      // Haversine formula for avstand til midtpunkt
       const R = 6371; // Earth's radius in km
-      const dLat = (stationLat - fromLat) * Math.PI / 180;
-      const dLon = (stationLon - fromLon) * Math.PI / 180;
+      const dLat = (stationLat - midLat) * Math.PI / 180;
+      const dLon = (stationLon - midLon) * Math.PI / 180;
       const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(fromLat * Math.PI / 180) * Math.cos(stationLat * Math.PI / 180) *
+                Math.cos(midLat * Math.PI / 180) * Math.cos(stationLat * Math.PI / 180) *
                 Math.sin(dLon/2) * Math.sin(dLon/2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      distanceFromStart = R * c;
+      const distanceFromRoute = R * c;
       
-      console.log(`📍 Station ${station.name}: ${distanceFromStart.toFixed(0)}km from start`);
+      console.log(`📍 Station ${station.name}: ${distanceFromRoute.toFixed(0)}km from route midpoint (${fromLower} → ${toLower})`);
       
       const score = calculateStationScore(
         station,
@@ -310,14 +317,13 @@ serve(async (req) => {
         carData,
         weather,
         requiredRange,
-        distanceFromStart
+        distanceFromRoute
       );
       
       return {
         ...station,
         optimizationScore: score,
-        distanceFromRoute: distanceFromStart,
-        distanceFromStart: distanceFromStart,
+        distanceFromRoute: distanceFromRoute,
         weatherImpact,
         trailerImpact
       };
