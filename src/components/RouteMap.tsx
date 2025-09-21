@@ -804,74 +804,77 @@ const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, 
       const arrivalBatteryPercent = Math.max(currentBatteryPercentage - batteryUsedPercent, 0);
 
       const popup = new mapboxgl.Popup({
-        maxWidth: '320px',
+        maxWidth: '340px',
         closeButton: true,
-        closeOnClick: false
+        closeOnClick: false,
+        className: 'futuristic-charging-popup'
       }).setHTML(`
-        <div style="font-family: Inter, sans-serif; padding: 12px; line-height: 1.4;">
-          <div style="background: linear-gradient(135deg, #0066ff, #00aaff); color: white; padding: 10px; margin: -12px -12px 12px -12px; border-radius: 8px;">
-            <h4 style="margin: 0; font-size: 16px; font-weight: 600;">🔋 ${liveData.name}</h4>
-            <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">📍 ${liveData.location}</p>
-            <div style="margin-top: 6px;">
-              <span style="background: rgba(255,255,255,0.3); padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">🔴 LIVE DATA</span>
+        <div class="futuristic-popup-content">
+          <!-- Glowing header with animated elements -->
+          <div class="futuristic-header">
+            <div class="header-background"></div>
+            <div class="station-status-indicator ${(liveData.available || 0) > 0 ? 'online' : 'offline'}"></div>
+            <div class="header-content">
+              <h4 class="station-name">⚡ ${liveData.name}</h4>
+              <p class="station-location">📍 ${liveData.location}</p>
+              <div class="live-badge">
+                <span class="live-pulse"></span>
+                LIVE DATA
+              </div>
             </div>
           </div>
           
-          <div style="background: #f8fafc; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
-            <p style="margin: 0; font-size: 13px; color: #0066ff; font-weight: 600;">🔋 Batteri ved ankomst: ~${arrivalBatteryPercent.toFixed(0)}%</p>
-          </div>
-          
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-            <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-              <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">⚡ EFFEKT</div>
-              <div style="color: #1e293b; font-size: 14px; font-weight: 700;">${liveData.power || 'N/A'}</div>
+          <!-- Battery prediction section -->
+          <div class="battery-prediction">
+            <div class="battery-icon">🔋</div>
+            <div class="battery-info">
+              <span class="battery-label">Batteri ved ankomst</span>
+              <span class="battery-percentage">${arrivalBatteryPercent.toFixed(0)}%</span>
             </div>
-            <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-              <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">💰 PRIS</div>
-              <div style="color: #1e293b; font-size: 14px; font-weight: 700;">${liveData.cost || 'N/A'} kr/kWh</div>
-            </div>
-            <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-              <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">📊 LEDIG</div>
-              <div style="color: ${(liveData.available || 0) > 0 ? '#16a34a' : '#dc2626'}; font-size: 14px; font-weight: 700;">${liveData.available || 0}/${liveData.total || 0}</div>
+            <div class="battery-bar">
+              <div class="battery-fill" style="width: ${arrivalBatteryPercent}%"></div>
             </div>
           </div>
           
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <!-- Stats grid with hover effects -->
+          <div class="stats-grid">
+            <div class="stat-card power-card">
+              <div class="stat-icon">⚡</div>
+              <div class="stat-label">EFFEKT</div>
+              <div class="stat-value">${liveData.power || 'N/A'}</div>
+              <div class="stat-glow"></div>
+            </div>
+            <div class="stat-card price-card">
+              <div class="stat-icon">💰</div>
+              <div class="stat-label">PRIS</div>
+              <div class="stat-value">${liveData.cost || 'N/A'} kr/kWh</div>
+              <div class="stat-glow"></div>
+            </div>
+            <div class="stat-card availability-card ${(liveData.available || 0) > 0 ? 'available' : 'full'}">
+              <div class="stat-icon">📊</div>
+              <div class="stat-label">LEDIG</div>
+              <div class="stat-value">${liveData.available || 0}/${liveData.total || 0}</div>
+              <div class="stat-glow"></div>
+            </div>
+          </div>
+          
+          <!-- Action buttons with futuristic design -->
+          <div class="action-buttons">
             <button 
               onclick="window.showRouteToStation && window.showRouteToStation('${station.id}')"
-              style="
-                background: #22c55e; 
-                color: white; 
-                border: none; 
-                padding: 10px 12px; 
-                border-radius: 6px; 
-                font-size: 13px; 
-                font-weight: 600; 
-                cursor: pointer; 
-                transition: background 0.2s;
-              "
-              onmouseover="this.style.background='#16a34a'"
-              onmouseout="this.style.background='#22c55e'"
+              class="futuristic-btn route-btn"
             >
-              🗺️ Vis rute
+              <span class="btn-icon">🗺️</span>
+              <span class="btn-text">Vis rute</span>
+              <div class="btn-glow"></div>
             </button>
             <button 
               onclick="window.openChargingModal && window.openChargingModal('${station.id}', '${station.name}', ${station.distanceAlongRoute || 0}, ${arrivalBatteryPercent.toFixed(0)})"
-              style="
-                background: #0066ff; 
-                color: white; 
-                border: none; 
-                padding: 10px 12px; 
-                border-radius: 6px; 
-                font-size: 13px; 
-                font-weight: 600; 
-                cursor: pointer; 
-                transition: background 0.2s;
-              "
-              onmouseover="this.style.background='#0052cc'"
-              onmouseout="this.style.background='#0066ff'"
+              class="futuristic-btn charge-btn"
             >
-              ⚡ Lading
+              <span class="btn-icon">⚡</span>
+              <span class="btn-text">Start lading</span>
+              <div class="btn-glow"></div>
             </button>
           </div>
         </div>
@@ -2359,57 +2362,68 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
           console.log('🔄 Creating popup for', station.name, '- Live data:', liveData);
           
           const popup = new mapboxgl.Popup({
-            maxWidth: '300px',
+            maxWidth: '340px',
             closeButton: true,
-            closeOnClick: false
+            closeOnClick: false,
+            className: 'futuristic-charging-popup'
           }).setHTML(`
-            <div style="font-family: Inter, sans-serif; padding: 12px; line-height: 1.4; min-width: 250px;">
-              <div style="background: linear-gradient(135deg, #0066ff, #00aaff); color: white; padding: 10px; margin: -12px -12px 12px -12px; border-radius: 8px;">
-                <h4 style="margin: 0; font-size: 16px; font-weight: 600;">⚡ ${liveData.name}</h4>
-                <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">📍 ${liveData.location}</p>
-                <div style="margin-top: 6px;">
-                  <span style="background: rgba(255,255,255,0.3); padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">🔴 LIVE DATA</span>
+            <div class="futuristic-popup-content">
+              <!-- Critical station header -->
+              <div class="futuristic-header critical-header">
+                <div class="header-background"></div>
+                <div class="station-status-indicator critical"></div>
+                <div class="header-content">
+                  <h4 class="station-name">⚡ ${liveData.name}</h4>
+                  <p class="station-location">📍 ${liveData.location}</p>
+                  <div class="live-badge critical-badge">
+                    <span class="live-pulse"></span>
+                    KRITISK STASJON
+                  </div>
                 </div>
               </div>
               
-              <div style="background: #f8fafc; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
-                <p style="margin: 0; font-size: 13px; color: #0066ff; font-weight: 600;">⚡ Kritisk ladestasjon - batteriet når lavt nivå her</p>
-              </div>
-              
-              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-                <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                  <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">⚡ EFFEKT</div>
-                  <div style="color: #1e293b; font-size: 14px; font-weight: 700;">${liveData.power || 'N/A'}</div>
-                </div>
-                <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                  <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">💰 PRIS</div>
-                  <div style="color: #1e293b; font-size: 14px; font-weight: 700;">${liveData.cost || 'N/A'} kr/kWh</div>
-                </div>
-                <div style="text-align: center; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                  <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">📊 LEDIG</div>
-                  <div style="color: ${(liveData.available || 0) > 0 ? '#16a34a' : '#dc2626'}; font-size: 14px; font-weight: 700;">${liveData.available || 0}/${liveData.total || 0}</div>
+              <!-- Critical warning section -->
+              <div class="critical-warning">
+                <div class="warning-icon">⚡</div>
+                <div class="warning-text">
+                  <span class="warning-label">Kritisk ladestasjon</span>
+                  <span class="warning-desc">Batteriet når lavt nivå her</span>
                 </div>
               </div>
               
-              <button 
-                onclick="window.openChargingModal && window.openChargingModal('${station.id}', '${station.name}', ${station.distanceAlongRoute || 0}, 10)"
-                style="
-                  width: 100%; 
-                  background: #0066ff; 
-                  color: white; 
-                  border: none; 
-                  padding: 12px 16px; 
-                  border-radius: 6px; 
-                  font-size: 14px; 
-                  font-weight: 600; 
-                  cursor: pointer; 
-                  transition: background 0.2s;
-                "
-                onmouseover="this.style.background='#0052cc'"
-                onmouseout="this.style.background='#0066ff'"
-              >
-                ⚡ Velg ladeprosent
-              </button>
+              <!-- Stats grid -->
+              <div class="stats-grid">
+                <div class="stat-card power-card">
+                  <div class="stat-icon">⚡</div>
+                  <div class="stat-label">EFFEKT</div>
+                  <div class="stat-value">${liveData.power || 'N/A'}</div>
+                  <div class="stat-glow"></div>
+                </div>
+                <div class="stat-card price-card">
+                  <div class="stat-icon">💰</div>
+                  <div class="stat-label">PRIS</div>
+                  <div class="stat-value">${liveData.cost || 'N/A'} kr/kWh</div>
+                  <div class="stat-glow"></div>
+                </div>
+                <div class="stat-card availability-card ${(liveData.available || 0) > 0 ? 'available' : 'full'}">
+                  <div class="stat-icon">📊</div>
+                  <div class="stat-label">LEDIG</div>
+                  <div class="stat-value">${liveData.available || 0}/${liveData.total || 0}</div>
+                  <div class="stat-glow"></div>
+                </div>
+              </div>
+              
+              <!-- Single action button for critical stations -->
+              <div class="action-buttons single-button">
+                <button 
+                  onclick="window.openChargingModal && window.openChargingModal('${station.id}', '${station.name}', ${station.distanceAlongRoute || 0}, 10)"
+                  class="futuristic-btn charge-btn critical-btn"
+                >
+                  <span class="btn-icon">⚡</span>
+                  <span class="btn-text">Velg ladeprosent</span>
+                  <div class="btn-glow"></div>
+                </button>
+              </div>
             </div>
           `);
           
