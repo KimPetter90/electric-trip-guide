@@ -673,52 +673,30 @@ const GoogleRouteMap: React.FC<{
               suppressMarkers: false,
               polylineOptions: {
                 strokeColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
-                strokeWeight: 8,
-                strokeOpacity: 1.0,
-                zIndex: 9999, // Høy z-index for synlighet i 3D
-                icons: [{
-                  icon: {
-                    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                    scale: 3,
-                    fillColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
-                    fillOpacity: 1,
-                    strokeWeight: 1,
-                    strokeColor: '#ffffff'
-                  },
-                  offset: '100%',
-                  repeat: '150px'
-                }]
+                strokeWeight: 10,
+                strokeOpacity: 0.9,
+                zIndex: 99999 // Ekstra høy z-index
               },
               markerOptions: {
-                visible: true
+                visible: true,
+                zIndex: 99999
               },
-              preserveViewport: navigationMode
+              preserveViewport: false // Alltid false for å sikre synlighet
             });
           } else {
             // Update line color and style for existing renderer
             directionsRendererRef.current.setOptions({
               polylineOptions: {
                 strokeColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
-                strokeWeight: 8,
-                strokeOpacity: 1.0,
-                zIndex: 9999,
-                icons: [{
-                  icon: {
-                    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                    scale: 3,
-                    fillColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
-                    fillOpacity: 1,
-                    strokeWeight: 1,
-                    strokeColor: '#ffffff'
-                  },
-                  offset: '100%',
-                  repeat: '150px'
-                }]
+                strokeWeight: 10,
+                strokeOpacity: 0.9,
+                zIndex: 99999
               },
               markerOptions: {
-                visible: true
+                visible: true,
+                zIndex: 99999
               },
-              preserveViewport: navigationMode
+              preserveViewport: false
             });
           }
 
@@ -726,7 +704,15 @@ const GoogleRouteMap: React.FC<{
           directionsRendererRef.current.setMap(mapInstanceRef.current);
           console.log('🗺️ Setting directions on renderer...');
           directionsRendererRef.current.setDirections(result);
-          console.log('✅ Directions set successfully');
+          console.log('✅ Directions set successfully - route should be visible');
+          
+          // Force refresh the polyline to ensure it's visible
+          setTimeout(() => {
+            if (directionsRendererRef.current) {
+              directionsRendererRef.current.setDirections(result);
+              console.log('🔄 Forced route refresh for visibility');
+            }
+          }, 100);
           
           // Adjust map viewport to show the entire route
           const bounds = new google.maps.LatLngBounds();
