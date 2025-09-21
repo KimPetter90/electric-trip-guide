@@ -263,6 +263,14 @@ serve(async (req) => {
     const safetyMargin = 1.5; // 50% sikkerhetsmarginal
     const isRisky = adjustedCurrentRange < (routeDistance * safetyMargin);
     
+    console.log('🚨 SIKKERHETSEVALUERING:', {
+      adjustedCurrentRange: adjustedCurrentRange.toFixed(0),
+      routeDistance: routeDistance.toFixed(0),
+      requiredSafeRange: (routeDistance * safetyMargin).toFixed(0),
+      isRisky: isRisky,
+      safetyMarginPercent: ((adjustedCurrentRange / routeDistance) * 100).toFixed(0) + '%'
+    });
+    
     if (isRisky) {
       console.log('⚠️ RISIKABEL RUTE: Leter etter nærmeste sikre ladestasjon i stedet for optimal');
     } else {
@@ -288,7 +296,7 @@ serve(async (req) => {
       });
     }
     
-    // Beregn score for hver stasjon
+    // Beregn score for hver stasjon - MED RISIKOEVALUERING
     const stationsWithScores = stations.map(station => {
       // Simuler avstand til stasjon basert på geografisk plassering
       const stationLat = parseFloat(station.latitude.toString());
