@@ -92,8 +92,6 @@ const GoogleRouteMap: React.FC<{
       try {
         onLoadingChange(true);
         onError(null);
-        console.log('🗺️ Initialiserer Google Maps...');
-
         // Get API key from Supabase function
         const { data: tokenData, error: tokenError } = await supabase.functions.invoke('google-maps-proxy');
         
@@ -140,12 +138,10 @@ const GoogleRouteMap: React.FC<{
           onMapLoad(map);
         }
 
-        console.log('✅ Google Maps initialisert');
         onLoadingChange(false);
 
         // Trigger initial route calculation if we have route data
         if (routeData.from && routeData.to) {
-          console.log('🎯 Triggering initial route calculation');
           setTimeout(() => calculateRoute(), 100);
         }
 
@@ -233,7 +229,6 @@ const GoogleRouteMap: React.FC<{
       }
     }
     
-    console.log(`🔍 Station ${station.name}: minDistance=${Math.round(minDistance)}m, threshold=3000m, isNear=${minDistance <= 3000}`);
     return minDistance <= 3000;
   }, [calculatedRoute]);
 
@@ -275,8 +270,6 @@ const GoogleRouteMap: React.FC<{
       
       const result = data?.recommendedStation;
       if (result) {
-        console.log('🎯 OPTIMALISERT BESTE STASJON:', result.name);
-        console.log('📊 Analyseresultat:', data.analysis);
         return result;
       }
       
@@ -298,21 +291,14 @@ const GoogleRouteMap: React.FC<{
         return availabilityB - availabilityA; // Highest availability first
       })[0];
     
-    if (bestStation) {
-      console.log(`🎯 ENKEL BESTE STASJON: ${bestStation.name}`);
-    }
-    
     return bestStation || stationsNearRoute[0];
   };
 
   // Add charging station markers
   useEffect(() => {
     if (!mapInstanceRef.current || !chargingStations || chargingStations.length === 0) {
-      console.log('⚠️ Missing requirements for markers:', !!mapInstanceRef.current, !!chargingStations, chargingStations?.length);
       return;
     }
-
-    console.log(`🔌 Legger til ${chargingStations.length} ladestasjoner på kartet, hasRoute: ${!!calculatedRoute}`);
     
     // Clear distance cache when recalculating
     routeDistanceCache.current.clear();
@@ -331,8 +317,6 @@ const GoogleRouteMap: React.FC<{
       chargingStations.forEach(station => {
         const isRecommendedAlongRoute = bestStationAlongRoute && station.id === bestStationAlongRoute.id;
         const isNearRoute = calculatedRoute && isStationNearRoute(station);
-        
-        console.log(`🔍 Station ${station.name}: hasRoute=${!!calculatedRoute}, isNearRoute=${isNearRoute}`);
         
         // Choose marker icon
         const markerIcon = isRecommendedAlongRoute ? {
@@ -402,16 +386,7 @@ const GoogleRouteMap: React.FC<{
 
   // Calculate route when trigger changes
   const calculateRoute = useCallback(async () => {
-    console.log('🔄 calculateRoute called with:', {
-      hasMap: !!mapInstanceRef.current,
-      from: routeData.from,
-      to: routeData.to,
-      selectedRouteId,
-      routeTrigger
-    });
-    
     if (!mapInstanceRef.current || !routeData.from || !routeData.to) {
-      console.log('❌ Missing requirements for route calculation');
       return;
     }
 
@@ -442,12 +417,6 @@ const GoogleRouteMap: React.FC<{
         avoidHighways = false;
         avoidTolls = false;
       }
-      
-      console.log(`🗺️ Beregner ${selectedRouteId || 'standard'} rute med:`, {
-        avoidHighways,
-        avoidTolls,
-        optimizeWaypoints
-      });
       
       const request: google.maps.DirectionsRequest = {
         origin: routeData.from,
