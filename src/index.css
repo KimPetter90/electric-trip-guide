@@ -770,8 +770,8 @@ All colors MUST be HSL.
   padding: 16px;
   min-width: 280px;
   max-width: 320px;
-  box-shadow: 0 0 30px hsl(var(--primary) / 0.3), 0 0 15px hsl(var(--primary) / 0.5);
-  border: 1px solid hsl(var(--primary) / 0.4);
+  box-shadow: 0 0 20px hsl(140 100% 50% / 0.2), 0 0 40px hsl(140 100% 50% / 0.1);
+  border: 1px solid hsl(140 100% 50% / 0.3);
   position: relative;
   color: hsl(var(--foreground));
   font-family: inherit;
@@ -784,10 +784,10 @@ All colors MUST be HSL.
   left: -1px;
   right: -1px;
   bottom: -1px;
-  background: linear-gradient(45deg, hsl(var(--primary)), hsl(var(--accent)), hsl(var(--primary)));
+  background: linear-gradient(45deg, hsl(140 100% 50%), hsl(180 100% 50%), hsl(140 100% 50%));
   border-radius: inherit;
   z-index: -1;
-  opacity: 0.6;
+  opacity: 0.3;
   animation: pulse 2s infinite;
 }
 
@@ -797,7 +797,7 @@ All colors MUST be HSL.
   align-items: flex-start;
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid hsl(var(--primary) / 0.3);
+  border-bottom: 1px solid hsl(140 100% 50% / 0.3);
 }
 
 .popup-header.critical {
@@ -813,8 +813,8 @@ All colors MUST be HSL.
 }
 
 .optimal-badge {
-  background: linear-gradient(135deg, hsl(var(--warning)), hsl(var(--warning) / 0.8));
-  color: hsl(var(--warning-foreground));
+  background: linear-gradient(135deg, hsl(60 100% 50%), hsl(45 100% 50%));
+  color: hsl(0 0% 0%);
   padding: 4px 8px;
   border-radius: 6px;
   font-size: 11px;
@@ -840,13 +840,13 @@ All colors MUST be HSL.
 }
 
 .status-dot.available {
-  background: hsl(var(--primary));
-  box-shadow: 0 0 10px hsl(var(--primary));
+  background: hsl(140 100% 50%);
+  box-shadow: 0 0 10px hsl(140 100% 50%);
 }
 
 .status-dot.busy {
-  background: hsl(var(--destructive));
-  box-shadow: 0 0 10px hsl(var(--destructive));
+  background: hsl(0 100% 60%);
+  box-shadow: 0 0 10px hsl(0 100% 60%);
 }
 
 .stats-grid {
