@@ -336,7 +336,7 @@ const GoogleRouteMap: React.FC<{
     return bestStation || stationsNearRoute[0];
   };
 
-  // Add charging station markers - BRUK LOADEDSTATIONS ISTEDENFOR CHARGINGSTATIONS
+  // Add charging station markers - SHOW IMMEDIATELY WHEN MAP LOADS
   useEffect(() => {
     const stationsToUse = loadedStations.length > 0 ? loadedStations : chargingStations;
     console.log('🗺️ Charging stations effect triggered:', {
@@ -346,8 +346,13 @@ const GoogleRouteMap: React.FC<{
       usingStations: stationsToUse?.length || 0
     });
     
-    if (!mapInstanceRef.current || !stationsToUse || stationsToUse.length === 0) {
-      console.log('❌ Skipping charging stations - missing requirements');
+    if (!mapInstanceRef.current) {
+      console.log('❌ Skipping charging stations - map not ready');
+      return;
+    }
+    
+    if (!stationsToUse || stationsToUse.length === 0) {
+      console.log('❌ Skipping charging stations - no stations available');
       return;
     }
     
@@ -433,7 +438,7 @@ const GoogleRouteMap: React.FC<{
     // Execute async function
     findBestStationAndRender();
     
-  }, [loadedStations, chargingStations, calculatedRoute, getBestStationAlongRoute, isStationNearRoute]);
+  }, [isMapInitialized, loadedStations, chargingStations, calculatedRoute, getBestStationAlongRoute, isStationNearRoute]);
 
   // Force re-render markers when route changes
 
