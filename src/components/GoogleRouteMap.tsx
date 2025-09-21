@@ -128,6 +128,15 @@ const GoogleRouteMap: React.FC<{
     loadChargingStations();
   }, []);
 
+  // Effect for å oppdatere kart view når center/zoom endres
+  useEffect(() => {
+    if (mapInstanceRef.current) {
+      console.log('🗺️ Oppdaterer kartsenter til:', center, 'zoom:', zoom);
+      mapInstanceRef.current.setCenter(center);
+      mapInstanceRef.current.setZoom(zoom);
+    }
+  }, [center, zoom]);
+
   // Initialize Google Maps only once
   useEffect(() => {
     if (typeof window === 'undefined' || isMapInitialized) return;

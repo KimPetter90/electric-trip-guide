@@ -111,6 +111,8 @@ function Index() {
   const [mapError, setMapError] = useState<string | null>(null);
   const [chargingStations, setChargingStations] = useState<any[]>([]);
   const [showNavigationTracker, setShowNavigationTracker] = useState(false);
+  const [navigationZoom, setNavigationZoom] = useState(6); // Ny state for navigasjonszoom
+  const [navigationCenter, setNavigationCenter] = useState({ lat: 60.472, lng: 8.4689 }); // Ny state for navigasjonssenter
 
   // Debug car selection changes
   const handleCarSelect = useCallback((car: CarModel | null) => {
@@ -148,6 +150,14 @@ function Index() {
 
   const onError = useCallback((error: string | null) => {
     setMapError(error);
+  }, []);
+
+  // Ny callback for når navigasjon starter
+  const onNavigationStart = useCallback((location: any) => {
+    console.log('🗺️ Navigasjon startet - zoomer inn til:', location);
+    setNavigationCenter({ lat: location.latitude, lng: location.longitude });
+    setNavigationZoom(17); // Zoom helt inn for navigasjon
+    setShowNavigationTracker(true);
   }, []);
 
   // Optimized route selection - stable function reference
@@ -901,7 +911,7 @@ function Index() {
                       });
                     }}
                     onNavigationStart={(startLocation) => {
-                      console.log('🚀 Navigasjon startet i Index - trigge ruteoppdatering');
+                      console.log('🚀 Navigasjon startet i Index - zoom inn og oppdater posisjon');
                       // Umiddelbart oppdater brukerposisjon
                       setUserLocation({
                         latitude: startLocation.latitude,
@@ -909,6 +919,8 @@ function Index() {
                         heading: startLocation.heading,
                         accuracy: startLocation.accuracy
                       });
+                      // Kall den nye onNavigationStart funksjonen for å zoome inn
+                      onNavigationStart(startLocation);
                       // Trigger en spesiell ruteoppdatering
                       setRouteTrigger(prev => prev + 10); // Spesiell trigger for navigasjonsstart
                     }}
@@ -947,8 +959,8 @@ function Index() {
                   )}
                   <GoogleRouteMap 
                     key={`google-map-${selectedRouteId || 'default'}`}
-                    center={{ lat: 60.472, lng: 8.4689 }}
-                    zoom={6}
+                    center={showNavigationTracker ? navigationCenter : { lat: 60.472, lng: 8.4689 }}
+                    zoom={showNavigationTracker ? navigationZoom : 6}
                     onMapLoad={onMapLoad}
                     chargingStations={chargingStations}
                     routeData={routeData}
