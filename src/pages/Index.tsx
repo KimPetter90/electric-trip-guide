@@ -82,7 +82,7 @@ function Index() {
     travelDate: undefined
   });
   const [showRoute, setShowRoute] = useState(true);
-  const [routeTrigger, setRouteTrigger] = useState(0);
+  const [routeTrigger, setRouteTrigger] = useState(1); // Start med 1 for initial calculation
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
@@ -423,8 +423,9 @@ function Index() {
     setRouteOptions(mockRoutes);
     setLoadingRoutes(false);
     
-    // Automatisk velg og vis raskeste rute
+    // Automatisk velg raskeste rute (men ikke trigger på nytt siden det gjøres i handleRouteSelect)
     setSelectedRouteId('fastest');
+    // Trigger route calculation for første gang
     setRouteTrigger(prev => prev + 1);
     
     // Cache resultatet

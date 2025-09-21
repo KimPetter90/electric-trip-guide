@@ -142,6 +142,12 @@ const GoogleRouteMap: React.FC<{
         console.log('✅ Google Maps initialisert');
         onLoadingChange(false);
 
+        // Trigger initial route calculation if we have route data
+        if (routeData.from && routeData.to) {
+          console.log('🎯 Triggering initial route calculation');
+          setTimeout(() => calculateRoute(), 100);
+        }
+
       } catch (error: any) {
         console.error('❌ Google Maps initialization failed:', error);
         onError(`Google Maps kunne ikke lastes: ${error.message}`);
@@ -392,10 +398,8 @@ const GoogleRouteMap: React.FC<{
   }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, selectedRouteId, onRouteCalculated, onLoadingChange, onError]);
 
   useEffect(() => {
-    if (routeTrigger > 0) {
-      console.log('🎯 Route trigger changed to:', routeTrigger, 'for route:', selectedRouteId);
-      calculateRoute();
-    }
+    console.log('🎯 Route trigger changed to:', routeTrigger, 'for route:', selectedRouteId);
+    calculateRoute();
   }, [calculateRoute, routeTrigger, selectedRouteId]);
 
   // Cleanup on unmount
