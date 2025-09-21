@@ -161,10 +161,8 @@ const GoogleRouteMap: React.FC<{
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
-    // Check distance to the route path
-    const routePath = route.overview_path;
-    
-    for (const point of routePath) {
+    // Check distance to overview path points
+    for (const point of route.overview_path) {
       const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
         stationPos,
         point
@@ -172,6 +170,25 @@ const GoogleRouteMap: React.FC<{
       
       if (distance <= 2000) { // 2km radius
         return true;
+      }
+    }
+    
+    // Also check distance to detailed route steps for more precision
+    for (const leg of route.legs) {
+      for (const step of leg.steps) {
+        // Check start and end points of each step
+        const distanceToStart = window.google.maps.geometry.spherical.computeDistanceBetween(
+          stationPos,
+          step.start_location
+        );
+        const distanceToEnd = window.google.maps.geometry.spherical.computeDistanceBetween(
+          stationPos,
+          step.end_location
+        );
+        
+        if (distanceToStart <= 2000 || distanceToEnd <= 2000) {
+          return true;
+        }
       }
     }
     
