@@ -170,38 +170,48 @@ const GoogleRouteMap: React.FC<{
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
-    // Check every single point along the route thoroughly
+    // Create a dense array of points along the entire route
+    const routePoints: google.maps.LatLng[] = [];
+    
     for (let i = 0; i < route.legs.length; i++) {
       const leg = route.legs[i];
+      routePoints.push(leg.start_location);
       
-      // Check leg start and end
-      let distance = window.google.maps.geometry.spherical.computeDistanceBetween(
-        stationPos, leg.start_location
-      );
-      if (distance <= 10000) return true; // 10km for testing
-      
-      distance = window.google.maps.geometry.spherical.computeDistanceBetween(
-        stationPos, leg.end_location
-      );
-      if (distance <= 10000) return true; // 10km for testing
-      
-      // Check ALL steps without skipping any
       for (let j = 0; j < leg.steps.length; j++) {
         const step = leg.steps[j];
+        routePoints.push(step.start_location);
+        routePoints.push(step.end_location);
         
-        // Check step start and end
-        distance = window.google.maps.geometry.spherical.computeDistanceBetween(
-          stationPos, step.start_location
-        );
-        if (distance <= 10000) return true; // 10km for testing
+        // Add interpolated points between start and end of each step
+        const startLat = step.start_location.lat();
+        const startLng = step.start_location.lng();
+        const endLat = step.end_location.lat();
+        const endLng = step.end_location.lng();
         
-        distance = window.google.maps.geometry.spherical.computeDistanceBetween(
-          stationPos, step.end_location
-        );
-        if (distance <= 10000) return true; // 10km for testing
+        // Add 20 points between start and end of each step
+        for (let k = 1; k < 20; k++) {
+          const ratio = k / 20;
+          const interpLat = startLat + (endLat - startLat) * ratio;
+          const interpLng = startLng + (endLng - startLng) * ratio;
+          routePoints.push(new google.maps.LatLng(interpLat, interpLng));
+        }
+      }
+      
+      routePoints.push(leg.end_location);
+    }
+    
+    // Check distance to all these route points
+    for (const routePoint of routePoints) {
+      const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+        stationPos, routePoint
+      );
+      if (distance <= 2000) { // Back to 2km
+        console.log(`✅ Station ${station.name} is ${Math.round(distance)}m from route`);
+        return true;
       }
     }
     
+    console.log(`❌ Station ${station.name} is too far from route`);
     return false;
   }, [calculatedRoute]);
 
