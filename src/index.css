@@ -910,7 +910,11 @@ All colors MUST be HSL.
 }
 
 .battery-prediction {
-  margin-top: 12px;
+  margin-top: 12px !important;
+  background: hsl(140 25% 18% / 0.4) !important;
+  padding: 8px !important;
+  border-radius: 8px !important;
+  border: 1px solid hsl(140 40% 30% / 0.3) !important;
 }
 
 .prediction-label {
@@ -921,12 +925,12 @@ All colors MUST be HSL.
 }
 
 .prediction-bar {
-  background: hsl(140 30% 25% / 0.3);
-  border-radius: 6px;
-  height: 6px;
-  overflow: hidden;
-  margin-bottom: 4px;
-  border: 1px solid hsl(140 40% 30%);
+  background: hsl(140 30% 25% / 0.3) !important;
+  border-radius: 6px !important;
+  height: 6px !important;
+  overflow: hidden !important;
+  margin-bottom: 4px !important;
+  border: 1px solid hsl(140 40% 30%) !important;
 }
 
 .prediction-fill {
