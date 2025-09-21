@@ -143,7 +143,11 @@ const GoogleRouteMap: React.FC<{
         console.log('✅ Google Maps initialisert');
         onLoadingChange(false);
 
-        // Don't trigger automatic route calculation - wait for user to click plan route
+        // Trigger initial route calculation if we have route data
+        if (routeData.from && routeData.to) {
+          console.log('🎯 Triggering initial route calculation');
+          setTimeout(() => calculateRoute(), 100);
+        }
 
       } catch (error: any) {
         console.error('❌ Google Maps initialization failed:', error);
