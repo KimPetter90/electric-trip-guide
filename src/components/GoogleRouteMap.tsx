@@ -502,12 +502,12 @@ const GoogleRouteMap: React.FC<{
 
   // Calculate route when trigger changes (manual route planning)
   useEffect(() => {
-    console.log('🎯 routeTrigger changed:', routeTrigger);
-    if (routeTrigger > 0) { // Only calculate when button is clicked
+    console.log('🎯 routeTrigger changed:', routeTrigger, 'hasMap:', !!mapInstanceRef.current);
+    if (routeTrigger > 0 && mapInstanceRef.current) { 
       console.log('🚀 Triggering calculateRoute...');
       calculateRoute();
     }
-  }, [calculateRoute, routeTrigger]);
+  }, [routeTrigger, calculateRoute]);
 
   // Cleanup on unmount
   useEffect(() => {
