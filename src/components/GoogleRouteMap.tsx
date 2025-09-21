@@ -712,9 +712,16 @@ const GoogleRouteMap: React.FC<{
           
           setCalculatedRoute(result);
 
-          // Calculate trip analysis
           const totalDistance = result.routes[0].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0) / 1000;
-          const totalTime = result.routes[0].legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0) / 60;
+          const totalTimeInSeconds = result.routes[0].legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0);
+          const totalTime = totalTimeInSeconds / 60; // Konverter til minutter
+          
+          console.log('⏱️ Tidsberegning:', {
+            distanceKm: totalDistance,
+            durationSeconds: totalTimeInSeconds,
+            durationMinutes: totalTime,
+            durationFormatted: `${Math.floor(totalTime / 60)}t ${Math.round(totalTime % 60)}min`
+          });
           
           const analysis: TripAnalysis = {
             totalDistance,

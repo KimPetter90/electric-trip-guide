@@ -380,6 +380,17 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
         estimatedTravelMinutes = Math.round((240 / speedMultiplier)); // 4 timer justert
         estimatedDistanceKm = Math.round(200 * distanceMultiplier);
       }
+      // Ålesund til lokale destinasjoner (korte ruter)
+      else if (fromLower.includes('ålesund') || toLower.includes('ålesund')) {
+        // For Ålesund-området, bruk realistiske korte reisetider
+        if (toLower.includes('kvalsvik') || fromLower.includes('kvalsvik')) {
+          estimatedTravelMinutes = Math.round((90 / speedMultiplier)); // 1.5 timer
+          estimatedDistanceKm = Math.round(71 * distanceMultiplier); // Faktisk distanse
+        } else {
+          estimatedTravelMinutes = Math.round((120 / speedMultiplier)); // 2 timer for andre lokale ruter
+          estimatedDistanceKm = Math.round(100 * distanceMultiplier);
+        }
+      }
       // Standard kortere rute
       else {
         estimatedTravelMinutes = Math.round((180 / speedMultiplier)); // 3 timer justert
