@@ -716,6 +716,16 @@ const GoogleRouteMap: React.FC<{
           const totalTimeInSeconds = result.routes[0].legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0);
           let totalTime = totalTimeInSeconds / 60; // Konverter til minutter
           
+          // SJEKK RUTE FØRST FOR DEBUG
+          console.log('🔍 RUTE DEBUG:', {
+            from: routeData.from,
+            to: routeData.to,
+            fromLower: routeData.from.toLowerCase(),
+            toLower: routeData.to.toLowerCase(),
+            shouldOverride: (routeData.from.toLowerCase().includes('ålesund') && routeData.to.toLowerCase().includes('kvalsvik')) ||
+                           (routeData.from.toLowerCase().includes('kvalsvik') && routeData.to.toLowerCase().includes('ålesund'))
+          });
+          
           // FIKSER ÅLESUND-KVALSVIK TIDSBEREGNING MED FERJE OG TRAFIKK
           const fromLower = routeData.from.toLowerCase();
           const toLower = routeData.to.toLowerCase();
@@ -749,11 +759,13 @@ const GoogleRouteMap: React.FC<{
             totalTime = realisticTime;
           }
           
-          console.log('⏱️ Tidsberegning:', {
+          console.log('⏱️ FINAL Tidsberegning:', {
             distanceKm: totalDistance,
             durationSeconds: totalTimeInSeconds,
             durationMinutes: totalTime,
-            durationFormatted: `${Math.floor(totalTime / 60)}t ${Math.round(totalTime % 60)}min`
+            durationFormatted: `${Math.floor(totalTime / 60)}t ${Math.round(totalTime % 60)}min`,
+            wasOverridden: (fromLower.includes('ålesund') && toLower.includes('kvalsvik')) ||
+                          (fromLower.includes('kvalsvik') && toLower.includes('ålesund'))
           });
           
           const analysis: TripAnalysis = {

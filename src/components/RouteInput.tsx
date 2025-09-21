@@ -310,6 +310,12 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
 
   // Funksjon for å beregne anbefalt avreisertid basert på valgt rutetype
   const calculateDepartureTime = (arrivalTime: Date): string => {
+    console.log('🕒 RouteInput calculateDepartureTime called:', {
+      from: routeData.from,
+      to: routeData.to,
+      arrivalTime: arrivalTime
+    });
+    
     // Mer realistiske reisetider basert på faktiske kjøreavstander og rutetype
     let estimatedTravelMinutes = 180; // Standard 3 timer for kort rute
     let estimatedDistanceKm = 200; // Standard distanse
@@ -472,11 +478,20 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
     const totalTravelMinutes = estimatedTravelMinutes + ferryBufferMinutes + trafficBufferMinutes + chargingTimeMinutes + weatherBufferMinutes;
     
     // Beregn avreisertid
-    const departureTime = new Date(arrivalTime.getTime() - (totalTravelMinutes * 60 * 1000));
+    console.log('🕒 RouteInput Final calculation:', {
+      estimatedTravelMinutes,
+      routeDescription,
+      from: routeData.from,
+      to: routeData.to
+    });
     
-    const hours = Math.floor(totalTravelMinutes / 60);
-    const minutes = totalTravelMinutes % 60;
+    const departureTime = new Date(arrivalTime.getTime() - (estimatedTravelMinutes * 60 * 1000));
+    
+    const hours = Math.floor(estimatedTravelMinutes / 60);
+    const minutes = estimatedTravelMinutes % 60;
     const totalTimeInfo = `${hours}t ${minutes}m via ${routeDescription}`;
+    
+    console.log('🕒 RouteInput returning:', totalTimeInfo);
     
     return `${format(departureTime, "dd.MM 'kl.' HH:mm")} (${totalTimeInfo})`;
   };
