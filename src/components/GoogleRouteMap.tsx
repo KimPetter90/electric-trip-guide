@@ -152,7 +152,7 @@ const GoogleRouteMap: React.FC<{
     initializeMap();
   }, []);
 
-  // Check if station is near route
+  // Check if station is near route (within 2km)
   const isStationNearRoute = useCallback((station: ChargingStation): boolean => {
     if (!calculatedRoute || !window.google?.maps?.geometry) {
       return false;
@@ -161,16 +161,17 @@ const GoogleRouteMap: React.FC<{
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
-    for (const leg of route.legs) {
-      for (const step of leg.steps) {
-        const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
-          stationPos,
-          step.start_location
-        );
-        
-        if (distance <= 10000) { // 10km radius
-          return true;
-        }
+    // Check distance to the route path
+    const routePath = route.overview_path;
+    
+    for (const point of routePath) {
+      const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+        stationPos,
+        point
+      );
+      
+      if (distance <= 2000) { // 2km radius
+        return true;
       }
     }
     
@@ -314,7 +315,7 @@ const GoogleRouteMap: React.FC<{
         isRequiredForTrip
       });
       
-      // Choose marker icon - Required stations get priority
+      // All stations on route and within 2km get red markers as requested
       const markerIcon = isRequiredForTrip ? {
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
           <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
@@ -327,7 +328,7 @@ const GoogleRouteMap: React.FC<{
       } : isRecommendedAlongRoute ? {
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="11" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
+            <circle cx="12" cy="12" r="11" fill="#FFD700" stroke="#cc0000" stroke-width="2"/>
             <text x="12" y="16" text-anchor="middle" fill="#000000" font-size="14" font-weight="bold">★</text>
           </svg>
         `),
@@ -335,13 +336,13 @@ const GoogleRouteMap: React.FC<{
         anchor: new google.maps.Point(12, 12)
       } : isNearRoute ? {
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-            <circle cx="8" cy="8" r="7" fill="#ff4444" stroke="#cc0000" stroke-width="1"/>
-            <text x="8" y="12" text-anchor="middle" fill="white" font-size="10" font-weight="bold">⚡</text>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+            <circle cx="9" cy="9" r="8" fill="#ff0000" stroke="#cc0000" stroke-width="1"/>
+            <text x="9" y="13" text-anchor="middle" fill="white" font-size="12" font-weight="bold">⚡</text>
           </svg>
         `),
-        scaledSize: new google.maps.Size(16, 16),
-        anchor: new google.maps.Point(8, 8)
+        scaledSize: new google.maps.Size(18, 18),
+        anchor: new google.maps.Point(9, 9)
       } : {
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
           <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8">
