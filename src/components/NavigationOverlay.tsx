@@ -362,7 +362,7 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
   return (
     <>
       {/* Ferry Information - above the map */}
-      <div className="absolute top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
+      <div className="absolute top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50 py-1">
         <NavigationFerryInfo
           currentLocation={currentLocation ? {
             latitude: currentLocation.latitude,
@@ -373,7 +373,7 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
         />
       </div>
 
-      <div className="absolute inset-0 pointer-events-none mt-16">
+      <div className="absolute inset-0 pointer-events-none mt-8">
 
       <div className="absolute top-3 left-3 right-3 z-20 flex justify-between items-start gap-4 pointer-events-auto">
       {/* Navigation info panel */}

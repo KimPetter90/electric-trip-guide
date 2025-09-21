@@ -223,38 +223,26 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
   if (!isVisible || ferryInfo.length === 0) return null;
 
   return (
-    <div className="w-full flex justify-center py-2">
-      <Card className="bg-background/95 backdrop-blur-sm border border-border/50 shadow-lg w-64">
-        <div className="p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <Anchor className="h-3 w-3 text-blue-400" />
-            <span className="font-medium text-xs">Neste ferge</span>
-          </div>
-
-          {loading ? (
-            <div className="text-xs text-muted-foreground">Laster...</div>
-          ) : (
-            <div className="space-y-2">
-              {ferryInfo.slice(0, 1).map((ferry) => (
-                <div key={ferry.route} className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium">{ferry.route}</span>
-                    <Badge {...getProbabilityBadge(ferry.probability)} className="text-xs py-0 px-1">
-                      {ferry.probability}%
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 text-xs">
-                    <Clock className="h-3 w-3 text-muted-foreground" />
-                    <span className="font-medium">{ferry.nextDeparture}</span>
-                    <span className="text-muted-foreground">({ferry.travelTimeToFerry} min)</span>
-                  </div>
-                </div>
-              ))}
+    <div className="w-full flex justify-center">
+      <div className="bg-transparent flex items-center gap-4 px-4 py-1">
+        {loading ? (
+          <div className="text-xs text-muted-foreground">Laster ferge...</div>
+        ) : (
+          ferryInfo.slice(0, 1).map((ferry) => (
+            <div key={ferry.route} className="flex items-center gap-3 text-xs">
+              <Anchor className="h-3 w-3 text-blue-400" />
+              <span className="font-medium">{ferry.route}</span>
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3 text-muted-foreground" />
+                <span className="font-medium">{ferry.nextDeparture}</span>
+              </div>
+              <Badge {...getProbabilityBadge(ferry.probability)} className="text-xs py-0 px-1 h-4">
+                {ferry.probability}%
+              </Badge>
             </div>
-          )}
-        </div>
-      </Card>
+          ))
+        )}
+      </div>
     </div>
   );
 };
