@@ -421,6 +421,7 @@ function Index() {
     setLoadingRoutes(false);
     
     // Automatisk velg raskeste rute
+    console.log('🎯 Setting selected route to "fastest"');
     setSelectedRouteId('fastest');
     // FJERNET: setRouteTrigger(prev => prev + 1); - kun manuell trigger
     
@@ -617,13 +618,22 @@ function Index() {
         }
       }
       
-       // Generer rutevalg
-       console.log('📱 MOBILE DEBUG - Calling generateRouteOptions');
-       await generateRouteOptions();
-       
-       // Trigger kartberegning NÅR brukeren trykker knappen
-       console.log('🗺️ Triggering route calculation...');
-       setRouteTrigger(prev => prev + 1);
+        // Generer rutevalg
+        console.log('📱 MOBILE DEBUG - Calling generateRouteOptions');
+        await generateRouteOptions();
+        
+        // Vent litt for å sikre at route options og selection er satt
+        setTimeout(() => {
+          // Sikre at fastest route er valgt hvis ingen annen er valgt
+          if (!selectedRouteId && routeOptions.length > 0) {
+            console.log('🎯 Force-setting selected route to "fastest"');
+            setSelectedRouteId('fastest');
+          }
+          
+          // Trigger kartberegning NÅR brukeren trykker knappen
+          console.log('🗺️ Triggering route calculation with selectedRouteId:', selectedRouteId);
+          setRouteTrigger(prev => prev + 1);
+        }, 150);
       
       // Toast-melding fjernet på brukerens ønske
       
