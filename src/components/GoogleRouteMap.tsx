@@ -284,6 +284,9 @@ const GoogleRouteMap: React.FC<{
       const isRecommendedAlongRoute = bestStationAlongRoute && station.id === bestStationAlongRoute.id;
       const isNearRoute = calculatedRoute && isStationNearRoute(station);
       
+      console.log(`🔍 Station ${station.name}: isNearRoute=${isNearRoute}, distance check done`);
+      
+      
       // Choose marker icon
       const markerIcon = isRecommendedAlongRoute ? {
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
@@ -297,7 +300,7 @@ const GoogleRouteMap: React.FC<{
       } : isNearRoute ? {
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-            <circle cx="8" cy="8" r="7" fill="#ff4444" stroke="#cc0000" stroke-width="1"/>
+            <circle cx="8" cy="8" r="7" fill="#ff0000" stroke="#990000" stroke-width="2"/>
             <text x="8" y="12" text-anchor="middle" fill="white" font-size="10" font-weight="bold">⚡</text>
           </svg>
         `),
