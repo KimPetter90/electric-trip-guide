@@ -74,6 +74,7 @@ const GoogleRouteMap: React.FC<{
   const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
   const allMarkersRef = useRef<google.maps.Marker[]>([]);
   const chargingStationMarkersRef = useRef<google.maps.Marker[]>([]);
+  const currentInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const userLocationMarker = useRef<google.maps.Marker | null>(null);
   const routeDistanceCache = useRef(new Map());
   const watchId = useRef<number | null>(null);
@@ -180,6 +181,14 @@ const GoogleRouteMap: React.FC<{
 
         mapInstanceRef.current = map;
         setIsMapInitialized(true);
+
+        // Add click listener to map to close InfoWindows when clicking outside
+        map.addListener('click', () => {
+          if (currentInfoWindowRef.current) {
+            currentInfoWindowRef.current.close();
+            currentInfoWindowRef.current = null;
+          }
+        });
 
         if (onMapLoad) {
           onMapLoad(map);
@@ -510,6 +519,13 @@ const GoogleRouteMap: React.FC<{
         });
 
         marker.addListener('click', () => {
+          // Close any currently open InfoWindow
+          if (currentInfoWindowRef.current) {
+            currentInfoWindowRef.current.close();
+          }
+          
+          // Set this as the current InfoWindow and open it
+          currentInfoWindowRef.current = infoWindow;
           infoWindow.open(mapInstanceRef.current, marker);
           
           // Add close button functionality after the InfoWindow opens
@@ -518,6 +534,7 @@ const GoogleRouteMap: React.FC<{
             if (closeBtn) {
               closeBtn.addEventListener('click', () => {
                 infoWindow.close();
+                currentInfoWindowRef.current = null;
               });
             }
           }, 100);
