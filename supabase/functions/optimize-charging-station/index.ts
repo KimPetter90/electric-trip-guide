@@ -339,21 +339,33 @@ serve(async (req) => {
         }
       }
       
-      // Beregn avstand fra midtpunkt av ruten til stasjon
-      const midLat = (fromLat + toLat) / 2;
-      const midLon = (fromLon + toLon) / 2;
+      // Beregn avstand fra start av ruten til stasjon (ikke midtpunkt) når risikabelt
+      let distanceFromRoute;
       
-      // Haversine formula for avstand til midtpunkt
-      const R = 6371; // Earth's radius in km
-      const dLat = (stationLat - midLat) * Math.PI / 180;
-      const dLon = (stationLon - midLon) * Math.PI / 180;
-      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(midLat * Math.PI / 180) * Math.cos(stationLat * Math.PI / 180) *
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      const distanceFromRoute = R * c;
+      if (isRisky) {
+        // Ved risikabel situasjon: beregn avstand fra START av ruten
+        const dLat = (stationLat - fromLat) * Math.PI / 180;
+        const dLon = (stationLon - fromLon) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(fromLat * Math.PI / 180) * Math.cos(stationLat * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        distanceFromRoute = R * c;
+      } else {
+        // Normal situasjon: beregn avstand fra midtpunkt av ruten
+        const midLat = (fromLat + toLat) / 2;
+        const midLon = (fromLon + toLon) / 2;
+        
+        const dLat = (stationLat - midLat) * Math.PI / 180;
+        const dLon = (stationLon - midLon) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(midLat * Math.PI / 180) * Math.cos(stationLat * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        distanceFromRoute = R * c;
+      }
       
-      console.log(`📍 Station ${station.name}: ${distanceFromRoute.toFixed(0)}km from route midpoint (${fromLower} → ${toLower})`);
+      console.log(`📍 Station ${station.name}: ${distanceFromRoute.toFixed(0)}km from route ${isRisky ? 'START (risky mode)' : 'midpoint (normal mode)'} (${fromLower} → ${toLower})`);
       
       const score = calculateStationScore(
         station,
