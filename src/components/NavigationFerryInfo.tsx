@@ -107,8 +107,8 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
       });
     }
 
-    // Trondheim/Nord-Norge ruter
-    if (dest.includes('trondheim') || dest.includes('bodø') || dest.includes('flakk')) {
+    // Flakk-Rørvik (kun for spesifikke ruter som faktisk bruker denne ferjen)
+    if (dest.includes('flakk') || dest.includes('rørvik')) {
       const nextDep = new Date();
       nextDep.setHours(currentHour + 1, 30, 0, 0);
       
