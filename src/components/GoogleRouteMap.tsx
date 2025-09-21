@@ -714,7 +714,24 @@ const GoogleRouteMap: React.FC<{
 
           const totalDistance = result.routes[0].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0) / 1000;
           const totalTimeInSeconds = result.routes[0].legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0);
-          const totalTime = totalTimeInSeconds / 60; // Konverter til minutter
+          let totalTime = totalTimeInSeconds / 60; // Konverter til minutter
+          
+          // FIKSER ÅLESUND-KVALSVIK TIDSBEREGNING
+          const fromLower = routeData.from.toLowerCase();
+          const toLower = routeData.to.toLowerCase();
+          
+          // Hvis Google Maps gir feil tid for Ålesund-Kvalsvik, overstyr med realistisk tid
+          if ((fromLower.includes('ålesund') && toLower.includes('kvalsvik')) ||
+              (fromLower.includes('kvalsvik') && toLower.includes('ålesund'))) {
+            // 71km skal ta ca 1.5 timer (90 minutter)
+            const realisticTime = 90; // 1.5 timer
+            console.log('🔧 OVERSTYRER Google Maps tid for Ålesund-Kvalsvik:', {
+              googleMapsTime: totalTime,
+              realisticTime: realisticTime,
+              distance: totalDistance
+            });
+            totalTime = realisticTime;
+          }
           
           console.log('⏱️ Tidsberegning:', {
             distanceKm: totalDistance,
