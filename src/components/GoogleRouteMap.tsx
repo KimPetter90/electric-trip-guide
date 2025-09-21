@@ -140,9 +140,9 @@ const GoogleRouteMap: React.FC<{
       if (navigationMode) {
         console.log('🗺️ Aktiverer 2D-modus for navigasjon');
         mapInstanceRef.current.setMapTypeId(google.maps.MapTypeId.ROADMAP);
-        mapInstanceRef.current.setTilt(0); // Flatt 2D-perspektiv
+        mapInstanceRef.current.setTilt(45); // 3D-perspektiv
         mapInstanceRef.current.setHeading(0); // Null rotasjon
-        mapInstanceRef.current.setZoom(18); // Zoom helt inn for navigasjon
+        mapInstanceRef.current.setZoom(20); // Maksimal zoom for 3D+ visning
         
         // Skjul kontroller for navigasjonsvisning
         mapInstanceRef.current.setOptions({
