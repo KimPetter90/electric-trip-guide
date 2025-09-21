@@ -283,7 +283,16 @@ const GoogleRouteMap: React.FC<{
 
   // Calculate route when trigger changes
   const calculateRoute = useCallback(async () => {
+    console.log('🔄 calculateRoute called with:', {
+      hasMap: !!mapInstanceRef.current,
+      from: routeData.from,
+      to: routeData.to,
+      selectedRouteId,
+      routeTrigger
+    });
+    
     if (!mapInstanceRef.current || !routeData.from || !routeData.to) {
+      console.log('❌ Missing requirements for route calculation');
       return;
     }
 
@@ -333,17 +342,27 @@ const GoogleRouteMap: React.FC<{
       };
 
       const result = await directionsService.route(request);
+      console.log('✅ Route calculated successfully for:', selectedRouteId, 'with distance:', result.routes[0].legs[0].distance?.text);
       
       if (!directionsRendererRef.current) {
         directionsRendererRef.current = new google.maps.DirectionsRenderer({
           suppressMarkers: false,
           polylineOptions: {
-            strokeColor: '#2563eb',
+            strokeColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
             strokeWeight: 4,
             strokeOpacity: 0.8
           }
         });
         directionsRendererRef.current.setMap(mapInstanceRef.current);
+      } else {
+        // Update line color for existing renderer
+        directionsRendererRef.current.setOptions({
+          polylineOptions: {
+            strokeColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
+            strokeWeight: 4,
+            strokeOpacity: 0.8
+          }
+        });
       }
 
       directionsRendererRef.current.setDirections(result);
@@ -373,8 +392,11 @@ const GoogleRouteMap: React.FC<{
   }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, selectedRouteId, onRouteCalculated, onLoadingChange, onError]);
 
   useEffect(() => {
-    calculateRoute();
-  }, [calculateRoute, routeTrigger]);
+    if (routeTrigger > 0) {
+      console.log('🎯 Route trigger changed to:', routeTrigger, 'for route:', selectedRouteId);
+      calculateRoute();
+    }
+  }, [calculateRoute, routeTrigger, selectedRouteId]);
 
   // Cleanup on unmount
   useEffect(() => {
