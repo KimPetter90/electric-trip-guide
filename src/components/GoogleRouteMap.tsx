@@ -139,7 +139,7 @@ const GoogleRouteMap: React.FC<{
         console.log('🗺️ Aktiverer 3D-modus for navigasjon');
         mapInstanceRef.current.setMapTypeId(google.maps.MapTypeId.SATELLITE);
         mapInstanceRef.current.setCenter(center);
-        mapInstanceRef.current.setZoom(21); // Høy zoom for 3D visning
+        mapInstanceRef.current.setZoom(Math.max(19, zoom)); // Høy zoom for 3D visning, minimum 19
         mapInstanceRef.current.setTilt(67.5); // Maksimal tilt for 3D-effekt
         mapInstanceRef.current.setHeading(0); // Null rotasjon
         
@@ -218,7 +218,11 @@ const GoogleRouteMap: React.FC<{
           rotateControl: !navigationMode,
           fullscreenControl: !navigationMode,
           tilt: navigationMode ? 0 : 45,
-          heading: navigationMode ? 0 : 0
+          heading: navigationMode ? 0 : 0,
+          // Remove zoom restrictions - allow full zoom range
+          minZoom: 1,
+          maxZoom: 22, // Maximum zoom level for detailed street view
+          gestureHandling: 'cooperative' // Better touch/mouse handling
         });
 
         mapInstanceRef.current = map;
