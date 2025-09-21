@@ -161,7 +161,9 @@ const GoogleRouteMap: React.FC<{
 
   // Check if station is near route - OPTIMIZED VERSION
   const isStationNearRoute = useCallback((station: ChargingStation): boolean => {
+    console.log('🔍 Checking station:', station.name, 'hasRoute:', !!calculatedRoute);
     if (!calculatedRoute || !window.google?.maps?.geometry) {
+      console.log('❌ No route or geometry:', !!calculatedRoute, !!window.google?.maps?.geometry);
       return false;
     }
 
@@ -251,7 +253,8 @@ const GoogleRouteMap: React.FC<{
       const isRecommendedAlongRoute = bestStationAlongRoute && station.id === bestStationAlongRoute.id;
       const isNearRoute = calculatedRoute && isStationNearRoute(station);
       
-      console.log(`🔍 Station ${station.name}: isNearRoute=${isNearRoute}, distance check done`);
+      console.log(`🔍 Station ${station.name}: hasRoute=${!!calculatedRoute}, isNearRoute=${isNearRoute}`);
+      
       
       
       // Choose marker icon
