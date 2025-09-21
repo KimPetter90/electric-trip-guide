@@ -309,84 +309,107 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
 
   // Funksjon for å beregne anbefalt avreisertid
   const calculateDepartureTime = (arrivalTime: Date): string => {
-    // Estimert reisetid basert på rute (kan utvides med faktisk ruteberegning)
-    let estimatedTravelMinutes = 180; // Standard 3 timer
+    // Mer realistiske reisetider basert på faktiske kjøreavstander
+    let estimatedTravelMinutes = 180; // Standard 3 timer for kort rute
     let estimatedDistanceKm = 200; // Standard distanse
     
-    // Juster basert på fra/til distanse (grov estimering)
+    // Realistiske kjøretider basert på faktiske ruter
     if (routeData.from && routeData.to) {
       const fromLower = routeData.from.toLowerCase();
       const toLower = routeData.to.toLowerCase();
       
-      // Grov distanse-estimering basert på kjente ruter
-      if ((fromLower.includes('oslo') && toLower.includes('bergen')) || 
-          (fromLower.includes('bergen') && toLower.includes('oslo'))) {
-        estimatedTravelMinutes = 480; // 8 timer
-        estimatedDistanceKm = 460;
-      } else if ((fromLower.includes('oslo') && toLower.includes('stavanger')) ||
-                 (fromLower.includes('stavanger') && toLower.includes('oslo'))) {
-        estimatedTravelMinutes = 420; // 7 timer
-        estimatedDistanceKm = 400;
-      } else if ((fromLower.includes('oslo') && toLower.includes('trondheim')) ||
-                 (fromLower.includes('trondheim') && toLower.includes('oslo'))) {
+      // Oslo - Trondheim: 500km, 5.5-6 timer
+      if ((fromLower.includes('oslo') && toLower.includes('trondheim')) ||
+          (fromLower.includes('trondheim') && toLower.includes('oslo'))) {
         estimatedTravelMinutes = 360; // 6 timer
         estimatedDistanceKm = 500;
-      } else if ((fromLower.includes('oslo') && toLower.includes('kristiansand')) ||
-                 (fromLower.includes('kristiansand') && toLower.includes('oslo'))) {
+      }
+      // Oslo - Bergen: 460km, 7-8 timer (fjellvei)
+      else if ((fromLower.includes('oslo') && toLower.includes('bergen')) || 
+               (fromLower.includes('bergen') && toLower.includes('oslo'))) {
+        estimatedTravelMinutes = 480; // 8 timer
+        estimatedDistanceKm = 460;
+      }
+      // Oslo - Stavanger: 400km, 6-7 timer
+      else if ((fromLower.includes('oslo') && toLower.includes('stavanger')) ||
+               (fromLower.includes('stavanger') && toLower.includes('oslo'))) {
+        estimatedTravelMinutes = 420; // 7 timer
+        estimatedDistanceKm = 400;
+      }
+      // Oslo - Kristiansand: 320km, 4.5-5 timer
+      else if ((fromLower.includes('oslo') && toLower.includes('kristiansand')) ||
+               (fromLower.includes('kristiansand') && toLower.includes('oslo'))) {
         estimatedTravelMinutes = 300; // 5 timer
         estimatedDistanceKm = 320;
       }
+      // Bergen - Trondheim: 650km, 8-9 timer
+      else if ((fromLower.includes('bergen') && toLower.includes('trondheim')) ||
+               (fromLower.includes('trondheim') && toLower.includes('bergen'))) {
+        estimatedTravelMinutes = 540; // 9 timer
+        estimatedDistanceKm = 650;
+      }
+      // Bergen - Stavanger: 200km, 3-4 timer
+      else if ((fromLower.includes('bergen') && toLower.includes('stavanger')) ||
+               (fromLower.includes('stavanger') && toLower.includes('bergen'))) {
+        estimatedTravelMinutes = 240; // 4 timer
+        estimatedDistanceKm = 200;
+      }
     }
     
-    // Beregn ladebehov basert på batterinivå og distanse
+    // Beregn ladebehov mer konservativt
     const currentBattery = routeData.batteryPercentage;
     const trailerWeight = routeData.trailerWeight;
     
-    // Estimert rekkevidde (justert for tilhenger)
-    const baseRangeKm = 400; // Typisk rekkevidde for elbil
-    const trailerReduction = trailerWeight > 0 ? 0.7 : 1; // 30% reduksjon med tilhenger
-    const effectiveRangeKm = baseRangeKm * trailerReduction;
+    // Konservativ rekkevidde-estimering
+    const baseRangeKm = 350; // Mer konservativ rekkevidde
+    const trailerReduction = trailerWeight > 0 ? 0.65 : 1; // 35% reduksjon med tilhenger
+    const winterReduction = 0.85; // 15% reduksjon for vinter/kulde
+    const effectiveRangeKm = baseRangeKm * trailerReduction * winterReduction;
     
     // Beregn hvor langt vi kan kjøre med nåværende batteri
     const currentRangeKm = (currentBattery / 100) * effectiveRangeKm;
     
     let chargingTimeMinutes = 0;
     
-    if (estimatedDistanceKm > currentRangeKm) {
+    if (estimatedDistanceKm > currentRangeKm * 0.9) { // Buffer på 10%
       // Trenger lading underveis
-      const remainingDistanceKm = estimatedDistanceKm - currentRangeKm;
-      const chargingStops = Math.ceil(remainingDistanceKm / (effectiveRangeKm * 0.8)); // Lad til 80%
+      const remainingDistanceKm = estimatedDistanceKm - (currentRangeKm * 0.9);
+      const chargingStops = Math.ceil(remainingDistanceKm / (effectiveRangeKm * 0.7)); // Lad til 70% for å være sikker
       
-      // Hver ladestasjon tar tid
+      // Første lading avhenger av startnivå
       if (currentBattery < 20) {
-        chargingTimeMinutes += 45; // Første lading tar lenger tid fra lavt nivå
+        chargingTimeMinutes += 60; // Lang ladetid fra lavt nivå
       } else if (currentBattery < 50) {
-        chargingTimeMinutes += 30; // Moderat ladetid
+        chargingTimeMinutes += 40; // Moderat ladetid
       } else {
-        chargingTimeMinutes += 20; // Kort påfyll
+        chargingTimeMinutes += 25; // Kort påfyll
       }
       
-      // Ekstra ladestopP underveis (20-30 min hver)
-      chargingTimeMinutes += (chargingStops - 1) * 25;
+      // Ekstra ladestopP underveis (30-40 min hver)
+      chargingTimeMinutes += (chargingStops - 1) * 35;
       
-      // Buffer for å finne ladestasjoner
-      chargingTimeMinutes += chargingStops * 10;
-    } else if (currentBattery < 30) {
-      // Sikkerhetslading selv om vi teknisk sett når frem
-      chargingTimeMinutes = 25;
+      // Buffer for å finne ladestasjoner og køer
+      chargingTimeMinutes += chargingStops * 15;
+    } else if (currentBattery < 40 && estimatedDistanceKm > 150) {
+      // Sikkerhetslading på lengre turer
+      chargingTimeMinutes = 30;
     }
     
-    // Andre buffere
-    const ferryBufferMinutes = 45; // Buffer for ferjetider
-    const trafficBufferMinutes = estimatedDistanceKm > 300 ? 45 : 20; // Mer trafikk på lange turer
+    // Realistiske buffere
+    const ferryBufferMinutes = estimatedDistanceKm > 300 ? 60 : 30; // Mer buffer på lange turer med ferjer
+    const trafficBufferMinutes = estimatedDistanceKm > 300 ? 60 : 30; // Trafikk og pauser
+    const weatherBufferMinutes = 20; // Værforhold
     
-    const totalTravelMinutes = estimatedTravelMinutes + ferryBufferMinutes + trafficBufferMinutes + chargingTimeMinutes;
+    const totalTravelMinutes = estimatedTravelMinutes + ferryBufferMinutes + trafficBufferMinutes + chargingTimeMinutes + weatherBufferMinutes;
     
     // Beregn avreisertid
     const departureTime = new Date(arrivalTime.getTime() - (totalTravelMinutes * 60 * 1000));
     
-    const chargingInfo = chargingTimeMinutes > 0 ? ` (inkl. ${chargingTimeMinutes} min lading)` : '';
-    return `${format(departureTime, "dd.MM 'kl.' HH:mm")}${chargingInfo}`;
+    const hours = Math.floor(totalTravelMinutes / 60);
+    const minutes = totalTravelMinutes % 60;
+    const totalTimeInfo = `${hours}t ${minutes}m`;
+    
+    return `${format(departureTime, "dd.MM 'kl.' HH:mm")} (${totalTimeInfo} total)`;
   };
 
   return (
