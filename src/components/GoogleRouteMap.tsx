@@ -709,6 +709,29 @@ const GoogleRouteMap: React.FC<{
     }
   }, [calculateRoute, routeTrigger, selectedRouteId]);
 
+  // Lytt til brukerposisjon og sjekk for ruteoppdateringer
+  useEffect(() => {
+    if (userLocation && mapInstanceRef.current && calculatedRoute) {
+      console.log('🗺️ Sjekker brukerposisjon mot rute:', userLocation);
+      
+      const userLatLng = new google.maps.LatLng(userLocation.latitude, userLocation.longitude);
+      const route = calculatedRoute.routes[0];
+      
+      if (route && route.legs[0]) {
+        const startLocation = route.legs[0].start_location;
+        const distanceFromStart = google.maps.geometry.spherical.computeDistanceBetween(
+          userLatLng,
+          startLocation
+        );
+        
+        // Hvis mer enn 1km fra startpunktet, foreslå oppdatering
+        if (distanceFromStart > 1000) {
+          console.log('📍 Bruker er', Math.round(distanceFromStart), 'meter fra startpunkt - kan trenge ruteoppdatering');
+        }
+      }
+    }
+  }, [userLocation, calculatedRoute]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -730,11 +753,19 @@ const GoogleRouteMap: React.FC<{
     <div style={{ width: '100%', height: '500px', position: 'relative' }}>
       <div ref={mapRef} style={{ width: '100%', height: '100%', borderRadius: '8px' }} />
       
+      {/* Debug info */}
+      {userLocation && (
+        <div style={{ position: 'absolute', top: '10px', left: '10px', background: 'rgba(0,0,0,0.7)', color: 'white', padding: '5px', fontSize: '12px', borderRadius: '4px' }}>
+          GPS: {userLocation.latitude.toFixed(6)}, {userLocation.longitude.toFixed(6)}
+          {userLocation.heading && ` | Retning: ${userLocation.heading.toFixed(0)}°`}
+        </div>
+      )}
+      
       {/* Brukerposisjonspil */}
       <GoogleUserLocationMarker 
         map={mapInstanceRef.current}
         location={userLocation}
-        isVisible={true}
+        isVisible={!!userLocation}
       />
     </div>
   );

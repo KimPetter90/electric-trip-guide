@@ -252,6 +252,7 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
           checkRouteDeviation(locationData);
           
           // Send posisjon til kartet for brukerposisjonspil
+          console.log('📍 Sender posisjon til kart:', locationData);
           onLocationUpdate?.(locationData);
         },
         (error) => {
