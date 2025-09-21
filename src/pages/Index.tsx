@@ -81,8 +81,14 @@ function Index() {
     };
     
     const handleStartCarNavigation = (event: CustomEvent) => {
+      console.log('🚗 Starting car navigation mode');
       setShowCarNavigation(true);
       setNavigationMode(true);
+      // Set navigation center to user location if available
+      if (userLocation) {
+        setNavigationCenter({ lat: userLocation.latitude, lng: userLocation.longitude });
+        setNavigationZoom(22); // Maximum zoom for navigation
+      }
       // Start GPS tracking and update route trigger
       setRouteTrigger(prev => prev + 10);
     };
