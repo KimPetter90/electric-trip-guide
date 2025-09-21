@@ -82,7 +82,7 @@ function Index() {
     travelDate: undefined
   });
   const [showRoute, setShowRoute] = useState(true);
-  const [routeTrigger, setRouteTrigger] = useState(1); // Start med 1 for initial calculation
+  const [routeTrigger, setRouteTrigger] = useState(0); // Start med 0 - ingen automatisk beregning
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
@@ -131,7 +131,7 @@ function Index() {
   const handleRouteSelect = useCallback((routeId: string) => {
     console.log('🎯 Route selected:', routeId);
     setSelectedRouteId(routeId);
-    setRouteTrigger(prev => prev + 1);
+    // FJERNET: setRouteTrigger(prev => prev + 1); - kun manuell trigger
   }, []);
 
   // Load charging stations on component mount
@@ -417,10 +417,9 @@ function Index() {
     setRouteOptions(mockRoutes);
     setLoadingRoutes(false);
     
-    // Automatisk velg raskeste rute (men ikke trigger på nytt siden det gjøres i handleRouteSelect)
+    // Automatisk velg raskeste rute
     setSelectedRouteId('fastest');
-    // Trigger route calculation for første gang
-    setRouteTrigger(prev => prev + 1);
+    // FJERNET: setRouteTrigger(prev => prev + 1); - kun manuell trigger
     
     // Cache resultatet
     try {
@@ -615,9 +614,13 @@ function Index() {
         }
       }
       
-      // Generer rutevalg
-      console.log('📱 MOBILE DEBUG - Calling generateRouteOptions');
-      await generateRouteOptions();
+       // Generer rutevalg
+       console.log('📱 MOBILE DEBUG - Calling generateRouteOptions');
+       await generateRouteOptions();
+       
+       // Trigger kartberegning NÅR brukeren trykker knappen
+       console.log('🗺️ Triggering route calculation...');
+       setRouteTrigger(prev => prev + 1);
       
       // Toast-melding fjernet på brukerens ønske
       
