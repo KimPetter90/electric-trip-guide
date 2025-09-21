@@ -137,7 +137,7 @@ const GoogleRouteMap: React.FC<{
       // Standard bilnavigasjon - som Google Maps/Waze
       if (navigationMode) {
         console.log('🗺️ Aktiverer bilnavigasjon');
-        mapInstanceRef.current.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+        mapInstanceRef.current.setMapTypeId(google.maps.MapTypeId.SATELLITE); // Satellitt for navigasjon
         mapInstanceRef.current.setZoom(18); // Standard navigasjonszoom
         mapInstanceRef.current.setTilt(0);
         mapInstanceRef.current.setHeading(0);
@@ -208,7 +208,7 @@ const GoogleRouteMap: React.FC<{
         const map = new google.maps.Map(mapRef.current, {
           center: center,
           zoom: zoom,
-          mapTypeId: google.maps.MapTypeId.ROADMAP,
+          mapTypeId: google.maps.MapTypeId.SATELLITE,
           zoomControl: true,
           mapTypeControl: true,
           scaleControl: true,
