@@ -339,11 +339,6 @@ const GoogleRouteMap: React.FC<{
       return;
     }
     
-    if (!stationsToUse || stationsToUse.length === 0) {
-      console.log('❌ Skipping charging stations - no stations available');
-      return;
-    }
-    
     console.log('✅ Adding charging station markers to map');
     
     // Clear distance cache when recalculating
@@ -428,7 +423,7 @@ const GoogleRouteMap: React.FC<{
     // Execute async function
     findBestStationAndRender();
     
-  }, [loadedStations, chargingStations, calculatedRoute, getBestStationAlongRoute, isStationNearRoute]);
+  }, [mapInstanceRef.current, loadedStations, chargingStations, calculatedRoute, getBestStationAlongRoute, isStationNearRoute]);
 
   // Force re-render markers when route changes
 
