@@ -158,49 +158,50 @@ const ComprehensiveFerrySchedule: React.FC<ComprehensiveFerryProps> = ({
         continue;
       }
       
-      // Spesifikke regionale matcher for ruter som faktisk trenger ferjer
+      // Spesifikke regionale matcher for kjente ferjeruter
       const routeMatches = [
         { condition: fromLower.includes('stavanger') && toLower.includes('tau'), route: 'stavanger-tau' },
         { condition: fromLower.includes('bergen') && toLower.includes('stavanger'), route: 'bergen-stavanger' },
         { condition: fromLower.includes('molde') && toLower.includes('ålesund'), route: 'molde-vestnes' },
+        { condition: fromLower.includes('ålesund') && toLower.includes('molde'), route: 'molde-vestnes' },
         { condition: fromLower.includes('åndalsnes') && toLower.includes('geiranger'), route: 'åndalsnes-valldal' },
         { condition: fromLower.includes('flåm') && toLower.includes('bergen'), route: 'flåm-gudvangen' },
         { condition: fromLower.includes('lavik') && toLower.includes('oppedal'), route: 'lavik-oppedal' },
         { condition: fromLower.includes('bodø') && (toLower.includes('lofoten') || toLower.includes('værøy')), route: 'bodø-værøy' },
         { condition: fromLower.includes('lofoten') && toLower.includes('bodø'), route: 'moskenes-bodø' },
-        // Unngå ferjer for direkte landruter
-        { condition: fromLower.includes('ålesund') && toLower.includes('trondheim'), route: null }, // Ingen ferje på denne ruten
-        { condition: fromLower.includes('oslo') && toLower.includes('bergen'), route: null }, // Går via land
-        { condition: fromLower.includes('oslo') && toLower.includes('trondheim'), route: null }, // Går via land
-        { condition: fromLower.includes('oslo') && toLower.includes('stavanger'), route: null }, // Går via land
-        { condition: fromLower.includes('bergen') && toLower.includes('trondheim'), route: null }, // Går via land
+        // Ålesund til Trondheim går via Molde-Vestnes ferjen
+        { condition: fromLower.includes('ålesund') && toLower.includes('trondheim'), route: 'molde-vestnes' },
+        { condition: fromLower.includes('trondheim') && toLower.includes('ålesund'), route: 'molde-vestnes' },
       ];
 
       for (const match of routeMatches) {
-        if (match.condition) {
-          if (match.route === routeKey) {
-            relevantRoutes.push(routeKey);
-          } else if (match.route === null) {
-            // Eksplisitt ingen ferje for denne ruten
-            break;
-          }
+        if (match.condition && match.route === routeKey) {
+          relevantRoutes.push(routeKey);
+          break;
+        }
+      }
+
+      // Hvis vi har GPS-posisjon, sjekk om vi er nær en ferjerute (men kun hvis ingen spesifikk match)
+      if (currentLocation && isGPSActive && relevantRoutes.length === 0) {
+        const distanceToFrom = calculateDistance(
+          currentLocation.lat, currentLocation.lng,
+          ferryData.from.lat, ferryData.from.lng
+        );
+        const distanceToTo = calculateDistance(
+          currentLocation.lat, currentLocation.lng,
+          ferryData.to.lat, ferryData.to.lng
+        );
+
+        // Hvis vi er innenfor 25km av en ferje og ingen spesifikk rute er funnet
+        if (distanceToFrom <= 25 || distanceToTo <= 25) {
+          relevantRoutes.push(routeKey);
         }
       }
     }
 
-    // Spesialsjekk: hvis det er en direkte landvei, ikke inkluder tilfeldig ferjer
-    const isDirectLandRoute = 
-      (fromLower.includes('ålesund') && toLower.includes('trondheim')) ||
-      (fromLower.includes('oslo') && (toLower.includes('bergen') || toLower.includes('trondheim') || toLower.includes('stavanger'))) ||
-      (fromLower.includes('bergen') && toLower.includes('trondheim'));
-
-    if (isDirectLandRoute) {
-      console.log('🚫 Direkte landvei detektert, ingen ferjer inkludert for:', fromLocation, '→', toLocation);
-      return [];
-    }
-
+    console.log('🚢 Ferjeruter funnet for', fromLocation, '→', toLocation, ':', relevantRoutes);
     return [...new Set(relevantRoutes)]; // Fjern duplikater
-  }, [fromLocation, toLocation]);
+  }, [fromLocation, toLocation, currentLocation, isGPSActive, calculateDistance]);
 
   // Beregn ferjetider basert på nåværende tid og posisjon
   const calculateFerryTimes = useCallback(() => {
