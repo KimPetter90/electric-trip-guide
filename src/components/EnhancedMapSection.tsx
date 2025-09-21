@@ -31,6 +31,7 @@ interface EnhancedMapSectionProps {
   routeTrigger: number;
   mapLoading: boolean;
   mapError: string | null;
+  chargingStations: any[];
   onChargingStationUpdate: (station: any, showButton: boolean, optimizedStations?: any[]) => void;
   onRouteAnalysisUpdate: (analysis: any) => void;
   onMapLoad: (map: google.maps.Map) => void;
@@ -46,6 +47,7 @@ export const EnhancedMapSection: React.FC<EnhancedMapSectionProps> = ({
   routeTrigger,
   mapLoading,
   mapError,
+  chargingStations,
   onChargingStationUpdate,
   onRouteAnalysisUpdate,
   onMapLoad,
@@ -117,7 +119,7 @@ export const EnhancedMapSection: React.FC<EnhancedMapSectionProps> = ({
           <GoogleRouteMap
             center={{ lat: 60.4720, lng: 8.4689 }}
             zoom={6}
-            chargingStations={[]}
+            chargingStations={chargingStations}
             routeData={routeData}
             selectedCar={selectedCar}
             routeTrigger={routeTrigger}
