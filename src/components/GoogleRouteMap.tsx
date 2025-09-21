@@ -673,24 +673,52 @@ const GoogleRouteMap: React.FC<{
               suppressMarkers: false,
               polylineOptions: {
                 strokeColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
-                strokeWeight: 6,
-                strokeOpacity: 1.0
+                strokeWeight: 8,
+                strokeOpacity: 1.0,
+                zIndex: 9999, // Høy z-index for synlighet i 3D
+                icons: [{
+                  icon: {
+                    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                    scale: 3,
+                    fillColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
+                    fillOpacity: 1,
+                    strokeWeight: 1,
+                    strokeColor: '#ffffff'
+                  },
+                  offset: '100%',
+                  repeat: '150px'
+                }]
               },
               markerOptions: {
                 visible: true
-              }
+              },
+              preserveViewport: navigationMode
             });
           } else {
-            // Update line color for existing renderer
+            // Update line color and style for existing renderer
             directionsRendererRef.current.setOptions({
               polylineOptions: {
                 strokeColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
-                strokeWeight: 6,
-                strokeOpacity: 1.0
+                strokeWeight: 8,
+                strokeOpacity: 1.0,
+                zIndex: 9999,
+                icons: [{
+                  icon: {
+                    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                    scale: 3,
+                    fillColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
+                    fillOpacity: 1,
+                    strokeWeight: 1,
+                    strokeColor: '#ffffff'
+                  },
+                  offset: '100%',
+                  repeat: '150px'
+                }]
               },
               markerOptions: {
                 visible: true
-              }
+              },
+              preserveViewport: navigationMode
             });
           }
 
