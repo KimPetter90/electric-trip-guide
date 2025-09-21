@@ -371,13 +371,15 @@ const GoogleRouteMap: React.FC<{
     
     const findBestStationAndRender = async () => {
       bestStationAlongRoute = await getBestStationAlongRoute();
-      console.log('🎯 Best station found:', bestStationAlongRoute?.name, bestStationAlongRoute?.id);
+      console.log('🎯 Best station found:', bestStationAlongRoute?.name, 'ID:', bestStationAlongRoute?.id);
+      console.log('🎯 Available station IDs:', stationsToUse.map(s => `${s.name}: ${s.id}`).slice(0,5));
       
       // Add new charging station markers - BRUK STATIONSTOUSE
       stationsToUse.forEach(station => {
-        const isRecommendedAlongRoute = bestStationAlongRoute && station.id === bestStationAlongRoute.id;
+        const isRecommendedAlongRoute = bestStationAlongRoute && 
+          (station.id === bestStationAlongRoute.id || station.name === bestStationAlongRoute.name);
         const isNearRoute = calculatedRoute && isStationNearRoute(station);
-        console.log(`Station ${station.name}: recommended=${isRecommendedAlongRoute}, nearRoute=${isNearRoute}`);
+        console.log(`Station ${station.name}: recommended=${isRecommendedAlongRoute}, nearRoute=${isNearRoute}, stationId=${station.id}, bestId=${bestStationAlongRoute?.id}`);
         
         // Choose marker icon
         const markerIcon = isRecommendedAlongRoute ? {
