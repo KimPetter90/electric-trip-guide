@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { useCarPlay } from "./hooks/useCarPlay";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Pricing from "./pages/Pricing";
@@ -35,6 +36,8 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  const { isConnected, isSupported } = useCarPlay();
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>

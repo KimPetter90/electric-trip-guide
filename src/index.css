@@ -126,6 +126,28 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground font-exo;
   }
+
+  /* CarPlay optimizations */
+  .carplay-mode {
+    font-size: 1.2rem;
+  }
+  
+  .carplay-mode .text-sm {
+    font-size: 1rem;
+  }
+  
+  .carplay-mode .text-lg {
+    font-size: 1.5rem;
+  }
+  
+  .carplay-mode .p-4 {
+    padding: 1.5rem;
+  }
+  
+  .carplay-mode button {
+    min-height: 44px;
+    font-size: 1.1rem;
+  }
 }
 
 /* Enhanced futuristic utility classes */

@@ -14,6 +14,13 @@ const config: CapacitorConfig = {
       backgroundColor: '#ffffff',
       showSpinner: false
     }
+  },
+  ios: {
+    entitlements: {
+      'com.apple.developer.carplay-audio': true,
+      'com.apple.developer.carplay-maps': true,
+      'com.apple.developer.carplay-navigation': true
+    }
   }
 };
 
