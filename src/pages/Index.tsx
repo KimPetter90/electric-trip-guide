@@ -27,7 +27,7 @@ import { NavigationTracker } from "@/components/NavigationTracker";
 
 import ComprehensiveFerrySchedule from "@/components/ComprehensiveFerrySchedule";
 
-import { Zap, Route, MapPin, Car, Battery, LogIn, User, CreditCard, LogOut, AlertTriangle, BarChart3, Building2, Cloud, TrendingUp, Clock, TreePine } from "lucide-react";
+import { Zap, Route, MapPin, Car, Battery, LogIn, User, CreditCard, LogOut, AlertTriangle, BarChart3, Building2, Cloud, TrendingUp, Clock, TreePine, Navigation } from "lucide-react";
 import futuristicBg from "@/assets/futuristic-ev-bg.jpg";
 import { type RouteOption } from "@/components/RouteSelector";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
@@ -886,6 +886,16 @@ function Index() {
                 
                 
                 <div data-testid="route-map" className="relative mt-8">
+                  {/* Start reise knapp - øvre venstre hjørne av kartet */}
+                  <Button
+                    onClick={() => setShowNavigationTracker(true)}
+                    className="absolute top-3 left-3 z-20 bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
+                    size="sm"
+                  >
+                    <Navigation className="h-4 w-4 mr-2" />
+                    Start reise
+                  </Button>
+
                   {/* Mobile-specific loading indicator */}
                   {(mapLoading || planningRoute) && window.innerWidth < 768 && (
                     <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
