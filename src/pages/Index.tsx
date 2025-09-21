@@ -837,9 +837,9 @@ function Index() {
               />
             </div>
 
-            {/* Navigation Tracker - alltid synlig som demo */}
+            {/* Navigation Tracker */}
             <NavigationTracker
-              isVisible={true}
+              isVisible={showNavigationTracker}
               onToggle={() => setShowNavigationTracker(!showNavigationTracker)}
             />
 

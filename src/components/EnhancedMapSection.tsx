@@ -2,7 +2,7 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { MapPin, Zap, AlertTriangle } from "lucide-react";
+import { MapPin, Zap, AlertTriangle, Navigation } from "lucide-react";
 import GoogleRouteMap from "@/components/GoogleRouteMap";
 import { ShareRoute } from "@/components/ShareRoute";
 
@@ -116,6 +116,20 @@ export const EnhancedMapSection: React.FC<EnhancedMapSectionProps> = ({
 
         {/* Map Container */}
         <div className="relative bg-muted/20 rounded-lg overflow-hidden border border-primary/10 h-96">
+          {/* Start reise knapp - øvre venstre hjørne */}
+          <Button
+            onClick={() => {
+              // Find the parent window to trigger navigation tracker
+              const event = new CustomEvent('showNavigationTracker');
+              window.dispatchEvent(event);
+            }}
+            className="absolute top-3 left-3 z-20 bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
+            size="sm"
+          >
+            <Navigation className="h-4 w-4 mr-2" />
+            Start reise
+          </Button>
+          
           <GoogleRouteMap
             center={{ lat: 60.4720, lng: 8.4689 }}
             zoom={6}
