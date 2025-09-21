@@ -489,72 +489,83 @@ const GoogleRouteMap: React.FC<{
         avoidTolls: avoidTolls
       };
 
-      const result = await directionsService.route(request);
-      console.log('✅ Route calculated successfully for:', selectedRouteId, 'with distance:', result.routes[0].legs[0].distance?.text);
+      console.log('🔍 SENDER DIRECTIONS REQUEST:', request);
       
-      if (!directionsRendererRef.current) {
-        directionsRendererRef.current = new google.maps.DirectionsRenderer({
-          suppressMarkers: false,
-          polylineOptions: {
-            strokeColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
-            strokeWeight: 6,
-            strokeOpacity: 1.0
-          },
-          markerOptions: {
-            visible: true
+      directionsService.route(request, (result, status) => {
+        console.log('📍 DIRECTIONS RESPONS:', { status, result: !!result });
+        
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          console.log('✅ Route calculated successfully for:', selectedRouteId, 'with distance:', result.routes[0].legs[0].distance?.text);
+          
+          if (!directionsRendererRef.current) {
+            console.log('🔧 Creating new DirectionsRenderer');
+            directionsRendererRef.current = new google.maps.DirectionsRenderer({
+              suppressMarkers: false,
+              polylineOptions: {
+                strokeColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
+                strokeWeight: 6,
+                strokeOpacity: 1.0
+              },
+              markerOptions: {
+                visible: true
+              }
+            });
+          } else {
+            // Update line color for existing renderer
+            directionsRendererRef.current.setOptions({
+              polylineOptions: {
+                strokeColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
+                strokeWeight: 6,
+                strokeOpacity: 1.0
+              },
+              markerOptions: {
+                visible: true
+              }
+            });
           }
-        });
-      } else {
-        // Update line color for existing renderer
-        directionsRendererRef.current.setOptions({
-          polylineOptions: {
-            strokeColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
-            strokeWeight: 6,
-            strokeOpacity: 1.0
-          },
-          markerOptions: {
-            visible: true
-          }
-        });
-      }
 
-      // ALWAYS set map again to ensure it's attached
-      directionsRendererRef.current.setMap(mapInstanceRef.current);
-      console.log('🗺️ Setting directions on renderer...', directionsRendererRef.current);
-      directionsRendererRef.current.setDirections(result);
-      console.log('✅ Directions set successfully');
-      
-      // Adjust map viewport to show the entire route
-      const bounds = new google.maps.LatLngBounds();
-      result.routes[0].legs.forEach(leg => {
-        bounds.extend(leg.start_location);
-        bounds.extend(leg.end_location);
+          // ALWAYS set map again to ensure it's attached
+          directionsRendererRef.current.setMap(mapInstanceRef.current);
+          console.log('🗺️ Setting directions on renderer...');
+          directionsRendererRef.current.setDirections(result);
+          console.log('✅ Directions set successfully');
+          
+          // Adjust map viewport to show the entire route
+          const bounds = new google.maps.LatLngBounds();
+          result.routes[0].legs.forEach(leg => {
+            bounds.extend(leg.start_location);
+            bounds.extend(leg.end_location);
+          });
+          mapInstanceRef.current!.fitBounds(bounds);
+          console.log('📍 Map viewport adjusted to show route');
+          
+          setCalculatedRoute(result);
+
+          // Calculate trip analysis
+          const totalDistance = result.routes[0].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0) / 1000;
+          const totalTime = result.routes[0].legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0) / 60;
+          
+          const analysis: TripAnalysis = {
+            totalDistance,
+            estimatedTime: totalTime,
+            batteryUsage: selectedCar ? (totalDistance / selectedCar.range) * 100 : 0,
+            requiredStops: selectedCar ? Math.max(0, Math.ceil((totalDistance / selectedCar.range) - (routeData.batteryPercentage / 100))) : 0,
+            weatherImpact: 'Moderat',
+            routeEfficiency: 'God'
+          };
+
+          onRouteCalculated(analysis);
+          onLoadingChange(false);
+        } else {
+          console.error('❌ Directions request failed:', status);
+          onError(`Ruteberegning feilet: ${status}`);
+          onLoadingChange(false);
+        }
       });
-      mapInstanceRef.current!.fitBounds(bounds);
-      console.log('📍 Map viewport adjusted to show route');
-      
-      
-      setCalculatedRoute(result);
-
-      // Calculate trip analysis
-      const totalDistance = result.routes[0].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0) / 1000;
-      const totalTime = result.routes[0].legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0) / 60;
-      
-      const analysis: TripAnalysis = {
-        totalDistance,
-        estimatedTime: totalTime,
-        batteryUsage: selectedCar ? (totalDistance / selectedCar.range) * 100 : 0,
-        requiredStops: selectedCar ? Math.max(0, Math.ceil((totalDistance / selectedCar.range) - (routeData.batteryPercentage / 100))) : 0,
-        weatherImpact: 'Moderat',
-        routeEfficiency: 'God'
-      };
-
-      onRouteCalculated(analysis);
 
     } catch (error: any) {
       console.error('❌ Route calculation failed:', error);
       onError(`Ruteberegning feilet: ${error.message}`);
-    } finally {
       onLoadingChange(false);
     }
   }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, selectedRouteId, onRouteCalculated, onLoadingChange, onError]);
