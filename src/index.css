@@ -764,7 +764,7 @@ All colors MUST be HSL.
 
 /* Charging Station Popup Styles */
 .charging-station-popup {
-  background: transparent !important;
+  background: hsl(140 30% 15% / 0.95) !important;
   backdrop-filter: blur(12px) !important;
   border-radius: 12px !important;
   padding: 16px !important;
@@ -945,4 +945,20 @@ All colors MUST be HSL.
   color: hsl(var(--muted-foreground));
   text-align: center;
   font-weight: 500;
+}
+
+/* Override Google Maps InfoWindow white background */
+.gm-style .gm-style-iw-c {
+  background: transparent !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+.gm-style .gm-style-iw-d {
+  background: transparent !important;
+  overflow: visible !important;
+}
+
+.gm-style .gm-style-iw {
+  background: transparent !important;
 }
