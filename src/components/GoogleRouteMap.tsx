@@ -175,10 +175,10 @@ const GoogleRouteMap: React.FC<{
     }
     
     
-    // Sample fewer points for better performance
-    for (let i = 0; i < route.legs.length; i += 2) { // Check every 2nd leg
+    // Check ALL points for more accurate detection
+    for (let i = 0; i < route.legs.length; i++) { // Check ALL legs
       const leg = route.legs[i];
-      for (let j = 0; j < leg.steps.length; j += 3) { // Check every 3rd step
+      for (let j = 0; j < leg.steps.length; j++) { // Check ALL steps
         const step = leg.steps[j];
         
         const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
@@ -187,6 +187,17 @@ const GoogleRouteMap: React.FC<{
         );
         
         if (distance <= 2000) { // 2km radius
+          routeDistanceCache.current.set(cacheKey, true);
+          return true;
+        }
+        
+        // Also check end location
+        const endDistance = window.google.maps.geometry.spherical.computeDistanceBetween(
+          stationPos,
+          step.end_location
+        );
+        
+        if (endDistance <= 2000) { // 2km radius
           routeDistanceCache.current.set(cacheKey, true);
           return true;
         }
