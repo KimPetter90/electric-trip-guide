@@ -172,12 +172,31 @@ const GoogleRouteMap: React.FC<{
     const overviewPath = route.overview_path;
     if (overviewPath && overviewPath.length > 0) {
       // Check distance to every point in the overview path
-      for (const pathPoint of overviewPath) {
+      for (let i = 0; i < overviewPath.length; i++) {
+        const pathPoint = overviewPath[i];
         const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
           stationPos, pathPoint
         );
         if (distance <= 3000) { // Increased to 3km
           return true;
+        }
+        
+        // Add interpolation between consecutive points
+        if (i < overviewPath.length - 1) {
+          const nextPoint = overviewPath[i + 1];
+          // Add 5 interpolated points between current and next
+          for (let j = 1; j < 5; j++) {
+            const ratio = j / 5;
+            const interpLat = pathPoint.lat() + (nextPoint.lat() - pathPoint.lat()) * ratio;
+            const interpLng = pathPoint.lng() + (nextPoint.lng() - pathPoint.lng()) * ratio;
+            const interpPoint = new google.maps.LatLng(interpLat, interpLng);
+            const interpDistance = window.google.maps.geometry.spherical.computeDistanceBetween(
+              stationPos, interpPoint
+            );
+            if (interpDistance <= 3000) {
+              return true;
+            }
+          }
         }
       }
     }
