@@ -190,10 +190,7 @@ function Index() {
         image: favoriteCar.car_image || '/placeholder.svg'
       };
       setSelectedCar(favoriteCarModel);
-      toast({
-        title: "Favorittbil lastet",
-        description: `${favoriteCar.car_brand} ${favoriteCar.car_model} er valgt automatisk`,
-      });
+      // Favorittbil lastet uten melding til bruker
     }
   }, [user, favoriteCar, toast]); // Removed selectedCar from dependencies!
 
