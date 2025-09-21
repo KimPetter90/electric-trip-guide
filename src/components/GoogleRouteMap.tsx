@@ -490,7 +490,21 @@ const GoogleRouteMap: React.FC<{
 
     } catch (error: any) {
       console.error('❌ Route calculation failed:', error);
-      onError(`Ruteberegning feilet: ${error.message}`);
+      
+      let errorMessage = 'Ruteberegning feilet';
+      if (error.code === 'ZERO_RESULTS') {
+        errorMessage = 'Kunne ikke finne rute mellom stedene. Sjekk at adressene er korrekte og at det er mulig å kjøre mellom dem.';
+      } else if (error.code === 'NOT_FOUND') {
+        errorMessage = 'En eller flere av adressene kunne ikke finnes. Vennligst sjekk stavemåten.';
+      } else if (error.code === 'OVER_QUERY_LIMIT') {
+        errorMessage = 'For mange forespørsler. Vennligst prøv igjen om litt.';
+      } else if (error.code === 'REQUEST_DENIED') {
+        errorMessage = 'Tilgang nektet til rute-tjenesten.';
+      } else {
+        errorMessage = `Ruteberegning feilet: ${error.message}`;
+      }
+      
+      onError(errorMessage);
     } finally {
       onLoadingChange(false);
     }
