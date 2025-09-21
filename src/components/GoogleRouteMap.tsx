@@ -483,10 +483,17 @@ const GoogleRouteMap: React.FC<{
         avoidTolls = false;
       }
       
+      // Rens stedsnavn - fjern alt etter (
+      const cleanOrigin = routeData.from.split('(')[0].trim();
+      const cleanDestination = routeData.to.split('(')[0].trim();
+      const cleanVia = routeData.via ? routeData.via.split('(')[0].trim() : undefined;
+      
+      const cleanedWaypoints = cleanVia ? [{ location: cleanVia, stopover: true }] : [];
+      
       const request: google.maps.DirectionsRequest = {
-        origin: routeData.from,
-        destination: routeData.to,
-        waypoints: waypoints,
+        origin: cleanOrigin,
+        destination: cleanDestination,
+        waypoints: cleanedWaypoints,
         travelMode: google.maps.TravelMode.DRIVING,
         unitSystem: google.maps.UnitSystem.METRIC,
         optimizeWaypoints: optimizeWaypoints,
@@ -494,7 +501,13 @@ const GoogleRouteMap: React.FC<{
         avoidTolls: avoidTolls
       };
 
-      console.log('🔍 SENDER DIRECTIONS REQUEST:', request);
+      console.log('🔍 SENDER DIRECTIONS REQUEST (rensede navn):', { 
+        originalFrom: routeData.from, 
+        cleanOrigin: cleanOrigin,
+        originalTo: routeData.to,
+        cleanDestination: cleanDestination,
+        request 
+      });
       
       directionsService.route(request, (result, status) => {
         console.log('📍 DIRECTIONS RESPONS:', { status, result: !!result });
