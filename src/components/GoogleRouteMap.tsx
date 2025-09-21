@@ -439,7 +439,14 @@ const GoogleRouteMap: React.FC<{
 
   // Calculate route when trigger changes
   const calculateRoute = useCallback(async () => {
+    console.log('🛣️ CALCULATEROUTE STARTET:', { 
+      mapExists: !!mapInstanceRef.current, 
+      from: routeData.from, 
+      to: routeData.to 
+    });
+    
     if (!mapInstanceRef.current || !routeData.from || !routeData.to) {
+      console.log('❌ CALCULATEROUTE AVBRUTT - manglende requirements');
       return;
     }
 
@@ -554,6 +561,7 @@ const GoogleRouteMap: React.FC<{
 
   useEffect(() => {
     console.log('🎯 Route trigger changed to:', routeTrigger, 'for route:', selectedRouteId);
+    console.log('🛣️ KALLER CALCULATEROUTE fra useEffect');
     calculateRoute();
   }, [calculateRoute, routeTrigger, selectedRouteId]);
 
