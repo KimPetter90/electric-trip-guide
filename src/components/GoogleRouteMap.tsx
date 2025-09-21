@@ -428,7 +428,7 @@ const GoogleRouteMap: React.FC<{
     // Execute async function
     findBestStationAndRender();
     
-  }, [isMapInitialized, loadedStations, chargingStations, calculatedRoute, getBestStationAlongRoute, isStationNearRoute]);
+  }, [loadedStations, chargingStations, calculatedRoute, getBestStationAlongRoute, isStationNearRoute]);
 
   // Force re-render markers when route changes
 
