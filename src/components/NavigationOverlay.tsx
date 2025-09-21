@@ -155,11 +155,17 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
         return;
       }
 
-      // Try to get real GPS position first
+      // Try to get real GPS position with more patience
       let useSimulation = false;
       
       try {
-        console.log('📡 Prøver å hente ekte GPS-posisjon...');
+        console.log('📡 Henter ekte GPS-posisjon (kan ta opptil 30 sekunder)...');
+        toast({
+          title: "📡 Søker GPS-signal",
+          description: "Venter på GPS-posisjon. Gå gjerne utendørs for bedre signal.",
+          duration: 5000,
+        });
+
         await new Promise<void>((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(
             (position) => {
@@ -174,125 +180,129 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
               };
               setCurrentLocation(locationData);
               lastLocationRef.current = locationData;
+              
+              toast({
+                title: "✅ GPS tilkoblet",
+                description: `Posisjon funnet med ${Math.round(position.coords.accuracy)}m nøyaktighet`,
+                duration: 3000,
+              });
+              
               resolve();
             },
-            () => {
-              // GPS failed, will use simulation
-              reject(new Error('GPS not available'));
+            (error) => {
+              console.error('❌ GPS-feil:', error);
+              let errorMsg = 'Ukjent GPS-feil';
+              
+              switch (error.code) {
+                case error.PERMISSION_DENIED:
+                  errorMsg = 'GPS-tilgang ble nektet. Sjekk nettleserens innstillinger.';
+                  break;
+                case error.POSITION_UNAVAILABLE:
+                  errorMsg = 'GPS-posisjon ikke tilgjengelig. Prøv utendørs med klar himmel.';
+                  break;
+                case error.TIMEOUT:
+                  errorMsg = 'GPS-signal tok for lang tid. Prøv å gå utendørs og prøv igjen.';
+                  break;
+              }
+              
+              toast({
+                title: "❌ GPS-feil",
+                description: errorMsg,
+                variant: "destructive",
+                duration: 6000,
+              });
+              
+              reject(error);
             },
             {
-              enableHighAccuracy: false,
-              timeout: 5000, // Quick timeout for fallback
-              maximumAge: 300000
+              enableHighAccuracy: true, // Krev høy nøyaktighet
+              timeout: 30000, // 30 sekunder timeout
+              maximumAge: 60000 // 1 minutt cache OK
             }
           );
         });
         
-        console.log('✅ Bruker ekte GPS');
+        console.log('✅ Bruker ekte GPS med høy nøyaktighet');
         
       } catch (gpsError) {
-        console.log('📱 GPS ikke tilgjengelig, starter demo-modus...');
-        useSimulation = true;
-        setIsSimulating(true);
-        
-        // Start with simulated location in Ålesund
-        const simulatedLocation: LocationData = {
-          latitude: 62.472,
-          longitude: 6.1549,
-          accuracy: 5,
-          heading: 45, // NE direction
-          speed: 50, // 50 km/h
-          timestamp: Date.now(),
-        };
-        
-        setCurrentLocation(simulatedLocation);
-        lastLocationRef.current = simulatedLocation;
-        
-        toast({
-          title: "🎭 Demo-modus aktivert",
-          description: "Viser simulert GPS-bevegelse for testing",
-          duration: 4000,
-        });
+        console.error('❌ Kunne ikke få GPS-posisjon:', gpsError);
+        return; // Stopp helt hvis GPS ikke fungerer
       }
 
-      // Start tracking (real or simulated)
-      if (useSimulation) {
-        // Simulation mode
-        routeCheckIntervalRef.current = setInterval(() => {
-          const currentLoc = currentLocation;
-          if (currentLoc) {
-            // Simulate realistic movement
-            const simulatedLocation: LocationData = {
-              latitude: currentLoc.latitude + (Math.random() - 0.5) * 0.002, // ~200m movement
-              longitude: currentLoc.longitude + (Math.random() - 0.5) * 0.002,
-              accuracy: 3 + Math.random() * 7,
-              heading: ((currentLoc.heading || 45) + (Math.random() - 0.5) * 20 + 360) % 360,
-              speed: 45 + Math.random() * 15, // 45-60 km/h
-              timestamp: Date.now(),
-            };
-            
-            setCurrentLocation(simulatedLocation);
-            updateRouteProgress(simulatedLocation);
-            checkRouteDeviation(simulatedLocation);
+      // Start real GPS tracking only
+      console.log('🔄 Starter kontinuerlig GPS-sporing...');
+      
+      watchIdRef.current = navigator.geolocation.watchPosition(
+        (position) => {
+          console.log('📍 Ny GPS-posisjon mottatt - nøyaktighet:', Math.round(position.coords.accuracy), 'm');
+          const locationData: LocationData = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            heading: position.coords.heading || undefined,
+            speed: position.coords.speed || undefined,
+            timestamp: Date.now(),
+          };
+          
+          setCurrentLocation(locationData);
+          updateRouteProgress(locationData);
+          checkRouteDeviation(locationData);
+        },
+        (error) => {
+          console.error('❌ GPS tracking feil:', error);
+          let errorMsg = 'GPS-signal tapt';
+          
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMsg = 'GPS-tilgang ble nektet under kjøring';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMsg = 'GPS-signal tapt. Prøv å gå til et sted med bedre sikt til himmelen.';
+              break;
+            case error.TIMEOUT:
+              errorMsg = 'GPS-signal ustabilt. Fortsetter å prøve...';
+              break;
           }
-        }, 2000); // Update every 2 seconds
-        
-      } else {
-        // Real GPS mode
-        watchIdRef.current = navigator.geolocation.watchPosition(
-          (position) => {
-            console.log('📍 Ny GPS-posisjon mottatt');
-            const locationData: LocationData = {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              accuracy: position.coords.accuracy,
-              heading: position.coords.heading || undefined,
-              speed: position.coords.speed || undefined,
-              timestamp: Date.now(),
-            };
-            
-            setCurrentLocation(locationData);
-            updateRouteProgress(locationData);
-            checkRouteDeviation(locationData);
-          },
-          (error) => {
-            console.error('❌ GPS tracking feil:', error);
-            toast({
-              title: "GPS-feil",
-              description: "GPS-signal tapt. Venter på gjenoppkobling...",
-              duration: 3000,
-            });
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 30000
-          }
-        );
+          
+          toast({
+            title: "⚠️ GPS-problem",
+            description: errorMsg,
+            duration: 4000,
+          });
+          
+          // Don't stop navigation immediately, GPS might recover
+        },
+        {
+          enableHighAccuracy: true, // Høy nøyaktighet
+          timeout: 20000, // 20 sekunder timeout
+          maximumAge: 10000 // Max 10 sekunder gammel posisjon
+        }
+      );
 
-        // Additional route checking for real GPS
-        routeCheckIntervalRef.current = setInterval(() => {
-          if (currentLocation) {
-            updateRouteProgress(currentLocation);
-          }
-        }, 5000);
-      }
+      // Route checking interval for real GPS
+      routeCheckIntervalRef.current = setInterval(() => {
+        if (currentLocation) {
+          updateRouteProgress(currentLocation);
+        }
+      }, 3000); // Sjekk hver 3. sekund
 
       setIsTracking(true);
       setRouteDeviation(false);
+      setIsSimulating(false); // Alltid ekte GPS nå
       
-      console.log('✅ Navigasjon startet successfully');
+      console.log('✅ Navigasjon startet med ekte GPS');
       toast({
-        title: "🧭 Navigasjon startet",
-        description: useSimulation ? "Demo-modus med simulert bevegelse" : "Følger din GPS-posisjon i sanntid",
+        title: "🧭 GPS-navigasjon aktiv",
+        description: "Følger din ekte posisjon i sanntid",
       });
       
     } catch (error) {
       console.error('❌ Navigation start error:', error);
       toast({
-        title: "Kunne ikke starte navigasjon",
-        description: "Prøv igjen eller kontakt support",
+        title: "Kunne ikke starte GPS-navigasjon",
+        description: "Sjekk at du er utendørs og har god sikt til himmelen. Prøv igjen.",
         variant: "destructive",
+        duration: 6000,
       });
     }
   };
