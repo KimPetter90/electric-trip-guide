@@ -156,26 +156,56 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
   };
 
   const calculateTravelTimeToFerry = (currentPos?: { latitude: number; longitude: number }, ferryPort?: string): number => {
-    if (!currentPos || !ferryPort) return 25; // Default 25 min
+    if (!ferryPort) return 25; // Default 25 min
 
-    // Realistisk beregning basert på faktiske ruter og trafikk
     const now = new Date();
     const currentHour = now.getHours();
     const isRushHour = (currentHour >= 7 && currentHour <= 9) || (currentHour >= 15 && currentHour <= 18);
     
-    // Basis kjøretid + trafikk-faktor
-    const baseTimes: { [key: string]: number } = {
-      'molde': 20,      // 20 min grunnleggende
-      'mortavika': 45,  // 45 min grunnleggende  
-      'flakk': 35,      // 35 min grunnleggende
-      'sulesund': 12,   // 12 min grunnleggende
-      'default': 20
+    // Fergekai-koordinater (omtrentlige)
+    const ferryLocations: { [key: string]: { lat: number; lng: number } } = {
+      'molde': { lat: 62.7372, lng: 7.1607 },
+      'mortavika': { lat: 59.5317, lng: 6.0397 },
+      'flakk': { lat: 63.4305, lng: 9.6709 },
+      'sulesund': { lat: 62.5756, lng: 6.1167 },
+      'default': { lat: 62.4722, lng: 6.1549 } // Ålesund
     };
 
+    const ferryPos = ferryLocations[ferryPort] || ferryLocations['default'];
+    
+    // Hvis vi har GPS-posisjon, beregn faktisk avstand
+    if (currentPos) {
+      const distance = calculateDistance(currentPos.latitude, currentPos.longitude, ferryPos.lat, ferryPos.lng);
+      console.log(`🚢 Avstand til ${ferryPort}: ${distance.toFixed(1)}km`);
+      
+      // Beregn kjøretid basert på avstand og fartsgrense
+      const avgSpeed = isRushHour ? 45 : 60; // km/t (lavere i rushtid)
+      const baseTime = (distance / avgSpeed) * 60; // minutter
+      const trafficBuffer = isRushHour ? 1.3 : 1.1; // 30% ekstra i rushtid
+      
+      return Math.max(5, Math.round(baseTime * trafficBuffer));
+    }
+    
+    // Fallback til fast tid hvis ingen GPS
+    const baseTimes: { [key: string]: number } = {
+      'molde': 20, 'mortavika': 45, 'flakk': 35, 'sulesund': 12, 'default': 20
+    };
     const baseTime = baseTimes[ferryPort] || baseTimes['default'];
-    const trafficMultiplier = isRushHour ? 1.4 : 1.1; // 40% ekstra i rushtid, 10% ellers
+    const trafficMultiplier = isRushHour ? 1.4 : 1.1;
     
     return Math.round(baseTime * trafficMultiplier);
+  };
+
+  // Haversine-formel for avstandsberegning
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Jordens radius i km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
   };
 
   const calculateFerryProbability = (travelTime: number, departureTime: string): number => {
