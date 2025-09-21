@@ -360,16 +360,20 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
 
   // Return the minimal navigation overlay when tracking
   return (
-    <div className="absolute inset-0 pointer-events-none">
-      {/* Ferry Information */}
-      <NavigationFerryInfo
-        currentLocation={currentLocation ? {
-          latitude: currentLocation.latitude,
-          longitude: currentLocation.longitude
-        } : undefined}
-        destination={routeData?.to}
-        isVisible={true}
-      />
+    <>
+      {/* Ferry Information - above the map */}
+      <div className="absolute top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
+        <NavigationFerryInfo
+          currentLocation={currentLocation ? {
+            latitude: currentLocation.latitude,
+            longitude: currentLocation.longitude
+          } : undefined}
+          destination={routeData?.to}
+          isVisible={true}
+        />
+      </div>
+
+      <div className="absolute inset-0 pointer-events-none mt-16">
 
       <div className="absolute top-3 left-3 right-3 z-20 flex justify-between items-start gap-4 pointer-events-auto">
       {/* Navigation info panel */}
@@ -439,6 +443,7 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
         <Square className="h-4 w-4" />
       </Button>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
