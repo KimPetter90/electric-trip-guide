@@ -174,32 +174,59 @@ const GoogleRouteMap: React.FC<{
       return routeDistanceCache.current.get(cacheKey);
     }
     
-    
-    // Check ALL points for more accurate detection
-    for (let i = 0; i < route.legs.length; i++) { // Check ALL legs
+    // Check if station is near ANY point along the entire route path
+    for (let i = 0; i < route.legs.length; i++) {
       const leg = route.legs[i];
-      for (let j = 0; j < leg.steps.length; j++) { // Check ALL steps
+      
+      // Check start and end of each leg
+      let distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+        stationPos, leg.start_location
+      );
+      if (distance <= 2000) {
+        routeDistanceCache.current.set(cacheKey, true);
+        return true;
+      }
+      
+      distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+        stationPos, leg.end_location
+      );
+      if (distance <= 2000) {
+        routeDistanceCache.current.set(cacheKey, true);
+        return true;
+      }
+      
+      // Check each step in detail
+      for (let j = 0; j < leg.steps.length; j++) {
         const step = leg.steps[j];
         
-        const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
-          stationPos,
-          step.start_location
+        // Check step start and end
+        distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+          stationPos, step.start_location
         );
-        
-        if (distance <= 2000) { // 2km radius
+        if (distance <= 2000) {
           routeDistanceCache.current.set(cacheKey, true);
           return true;
         }
         
-        // Also check end location
-        const endDistance = window.google.maps.geometry.spherical.computeDistanceBetween(
-          stationPos,
-          step.end_location
+        distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+          stationPos, step.end_location
         );
-        
-        if (endDistance <= 2000) { // 2km radius
+        if (distance <= 2000) {
           routeDistanceCache.current.set(cacheKey, true);
           return true;
+        }
+        
+        // Also check path points if available
+        if (step.path && step.path.length > 0) {
+          for (let k = 0; k < step.path.length; k += 5) { // Sample every 5th point
+            distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+              stationPos, step.path[k]
+            );
+            if (distance <= 2000) {
+              routeDistanceCache.current.set(cacheKey, true);
+              return true;
+            }
+          }
         }
       }
     }
