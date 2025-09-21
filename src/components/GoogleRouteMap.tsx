@@ -302,6 +302,22 @@ const GoogleRouteMap: React.FC<{
         fullRouteData: routeData
       });
       
+      console.log('📤 FULL REQUEST TIL OPTIMIZE-FUNCTION:', {
+        stations: stationsNearRoute.length,
+        routeData: {
+          from: routeData.from,
+          to: routeData.to,
+          trailerWeight: routeData.trailerWeight,
+          batteryPercentage: routeData.batteryPercentage,
+          totalDistance: routeDistance,
+        },
+        carData: {
+          range: selectedCar.range,
+          consumption: selectedCar.consumption,
+          batteryCapacity: selectedCar.batteryCapacity
+        }
+      });
+      
       // Call optimization service with weather, trailer, and battery data
       const { data, error } = await supabase.functions.invoke('optimize-charging-station', {
         body: {
@@ -322,7 +338,10 @@ const GoogleRouteMap: React.FC<{
         }
       });
       
+      console.log('📥 RESPONSE FRA OPTIMIZE-FUNCTION:', data);
+      
       if (error) {
+        console.error('🚨 Optimization error:', error);
         return getSimpleBestStation(stationsNearRoute);
       }
       
