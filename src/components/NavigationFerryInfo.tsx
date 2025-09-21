@@ -126,8 +126,8 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
       });
     }
 
-    // Fallback: Vis Molde-Vestnes som standard hvis ingen andre matcher og det er Ålesund/Trondheim området
-    if (routes.length === 0 && (dest.includes('ålesund') || dest.includes('trondheim') || dest.includes('molde') || dest.includes('vestnes'))) {
+    // Fallback: Vis relevante ferjenavn basert på destinasjon
+    if (routes.length === 0) {
       const nextDep = new Date();
       nextDep.setHours(currentHour, Math.ceil(currentMinute / 15) * 15, 0, 0);
       if (nextDep.getTime() <= now.getTime()) {
@@ -137,10 +137,45 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
       const followingDep = new Date(nextDep);
       followingDep.setMinutes(nextDep.getMinutes() + 30);
 
+      // Velg relevant ferje basert på destinasjon
+      let routeName = 'Molde-Vestnes'; // Standard for Vestlandet
+      let fromPort = 'Molde';
+      let toPort = 'Vestnes';
+
+      if (dest.includes('stavanger') || dest.includes('tau') || dest.includes('ryfylke')) {
+        routeName = 'Stavanger-Tau';
+        fromPort = 'Stavanger';
+        toPort = 'Tau';
+      } else if (dest.includes('bergen') || dest.includes('hordaland')) {
+        routeName = 'Lavik-Oppedal';
+        fromPort = 'Lavik';
+        toPort = 'Oppedal';
+      } else if (dest.includes('kristiansand') || dest.includes('danmark')) {
+        routeName = 'Hirtshals-Kristiansand';
+        fromPort = 'Hirtshals';
+        toPort = 'Kristiansand';
+      } else if (dest.includes('bodø') || dest.includes('lofoten') || dest.includes('værøy')) {
+        routeName = 'Bodø-Værøy';
+        fromPort = 'Bodø';
+        toPort = 'Værøy';
+      } else if (dest.includes('flakk') || dest.includes('rørvik')) {
+        routeName = 'Flakk-Rørvik';
+        fromPort = 'Flakk';
+        toPort = 'Rørvik';
+      } else if (dest.includes('geiranger') || dest.includes('åndalsnes')) {
+        routeName = 'Åndalsnes-Valldal';
+        fromPort = 'Åndalsnes';
+        toPort = 'Valldal';
+      } else if (dest.includes('flåm') || dest.includes('gudvangen')) {
+        routeName = 'Flåm-Gudvangen';
+        fromPort = 'Flåm';
+        toPort = 'Gudvangen';
+      }
+
       routes.push({
-        route: 'Molde-Vestnes',
-        from: 'Molde',
-        to: 'Vestnes',
+        route: routeName,
+        from: fromPort,
+        to: toPort,
         nextDeparture: nextDep.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' }),
         followingDeparture: followingDep.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' }),
         travelTimeToFerry: 20,
