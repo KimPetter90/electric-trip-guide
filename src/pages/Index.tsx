@@ -627,6 +627,9 @@ function Index() {
         // Generer rutevalg
         console.log('📱 MOBILE DEBUG - Calling generateRouteOptions');
         await generateRouteOptions();
+        console.log('✅ generateRouteOptions completed');
+        console.log('🎯 Current selectedRouteId after generateRouteOptions:', selectedRouteId);
+        console.log('📊 Current routeOptions length:', routeOptions.length);
         
         // Rutevalg og kartberegning håndteres nå av generateRouteOptions
       
