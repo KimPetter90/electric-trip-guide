@@ -228,20 +228,20 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
         {loading ? (
           <div className="text-xs text-muted-foreground">Laster ferge...</div>
         ) : (
-          ferryInfo.slice(0, 1).map((ferry) => (
-            <div key={ferry.route} className="flex items-center gap-3 text-xs">
-              <Anchor className="h-3 w-3 text-blue-400" />
-              <span className="font-medium">{ferry.route}</span>
-              <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3 text-muted-foreground" />
-                <span className="font-medium">Kommende {ferry.nextDeparture}</span>
-                <span className="text-muted-foreground">Neste {ferry.followingDeparture}</span>
+          ferryInfo.slice(0, 1).map((ferry) => {
+            const followingProbability = calculateFerryProbability(ferry.travelTimeToFerry, ferry.followingDeparture);
+            return (
+              <div key={ferry.route} className="flex items-center gap-3 text-xs">
+                <Anchor className="h-3 w-3 text-blue-400" />
+                <span className="font-medium">{ferry.route}</span>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-3 w-3 text-muted-foreground" />
+                  <span className="font-medium">Kommende {ferry.nextDeparture} ({ferry.probability}%)</span>
+                  <span className="text-muted-foreground">Neste {ferry.followingDeparture} ({followingProbability}%)</span>
+                </div>
               </div>
-              <Badge {...getProbabilityBadge(ferry.probability)} className="text-xs py-0 px-1 h-4">
-                {ferry.probability}%
-              </Badge>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
