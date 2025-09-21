@@ -397,12 +397,12 @@ const GoogleRouteMap: React.FC<{
           anchor: new google.maps.Point(8, 8)
         } : {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8">
-              <circle cx="4" cy="4" r="3" fill="#00ff41" stroke="#00cc33" stroke-width="1"/>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+              <circle cx="6" cy="6" r="5" fill="#00ff41" stroke="#00cc33" stroke-width="1"/>
             </svg>
           `),
-          scaledSize: new google.maps.Size(8, 8),
-          anchor: new google.maps.Point(4, 4)
+          scaledSize: new google.maps.Size(12, 12),
+          anchor: new google.maps.Point(6, 6)
         };
 
         const marker = new google.maps.Marker({
