@@ -339,7 +339,8 @@ serve(async (req) => {
         }
       }
       
-      // Beregn avstand fra start av ruten til stasjon (ikke midtpunkt) når risikabelt
+      // Beregn avstand fra start av ruten til stasjon (ikke midtpunkt) når risikabelt  
+      const R = 6371; // Earth's radius in km
       let distanceFromRoute;
       
       if (isRisky) {
