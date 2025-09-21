@@ -90,12 +90,18 @@ const GoogleRouteMap: React.FC<{
 
     const initializeMap = async () => {
       try {
+        console.log('🗺️ Starting Google Maps initialization...');
         onLoadingChange(true);
         onError(null);
+        
         // Get API key from Supabase function
+        console.log('🔑 Fetching Google Maps API key...');
         const { data: tokenData, error: tokenError } = await supabase.functions.invoke('google-maps-proxy');
         
+        console.log('🔑 API key response:', { tokenData, tokenError });
+        
         if (tokenError || !tokenData?.apiKey) {
+          console.error('❌ API key fetch failed:', tokenError);
           throw new Error('Kunne ikke hente Google Maps API-nøkkel');
         }
 
