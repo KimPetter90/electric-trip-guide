@@ -134,38 +134,41 @@ const GoogleRouteMap: React.FC<{
     if (mapInstanceRef.current) {
       console.log('🗺️ Oppdaterer kartsenter til:', center, 'zoom:', zoom, 'navigationMode:', navigationMode);
       
-      // Sett kartet til 2D navigasjonsmodus når navigasjon er aktiv
+      // Standard bilnavigasjon - som Google Maps/Waze
       if (navigationMode) {
-        console.log('🗺️ Aktiverer 2D navigasjonsmodus');
-        mapInstanceRef.current.setMapTypeId(google.maps.MapTypeId.ROADMAP); // 2D roadmap for navigasjon
-        mapInstanceRef.current.setCenter(center);
-        mapInstanceRef.current.setZoom(25); // Absolut maksimal zoom som Google Maps tillater
-        mapInstanceRef.current.setTilt(0); // 2D visning (ingen tilt)
-        mapInstanceRef.current.setHeading(0); // Ingen rotasjon
+        console.log('🗺️ Aktiverer bilnavigasjon');
+        mapInstanceRef.current.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+        mapInstanceRef.current.setZoom(18); // Standard navigasjonszoom
+        mapInstanceRef.current.setTilt(0);
+        mapInstanceRef.current.setHeading(0);
         
-        // Skjul alle kontroller for ren navigasjonsvisning
+        // Følg brukerposisjon hvis tilgjengelig
+        if (userLocation) {
+          mapInstanceRef.current.setCenter({ 
+            lat: userLocation.latitude, 
+            lng: userLocation.longitude 
+          });
+        } else {
+          mapInstanceRef.current.setCenter(center);
+        }
+        
+        // Skjul unødvendige kontroller
         mapInstanceRef.current.setOptions({
           mapTypeControl: false,
           rotateControl: false,
           fullscreenControl: false,
-          streetViewControl: false,
-          zoomControl: true, // Behold zoom-kontroller
-          scaleControl: false
+          streetViewControl: false
         });
       } else {
-        // Normal visning når ikke i navigasjonsmodus
+        // Normal kartvisning
         mapInstanceRef.current.setCenter(center);
         mapInstanceRef.current.setZoom(zoom);
-        // Tilbakestill til normal visning
         mapInstanceRef.current.setMapTypeId(google.maps.MapTypeId.HYBRID);
-        mapInstanceRef.current.setTilt(0); // Alltid 2D
         mapInstanceRef.current.setOptions({
           mapTypeControl: true,
           rotateControl: false,
           fullscreenControl: true,
-          streetViewControl: false,
-          zoomControl: true,
-          scaleControl: true
+          streetViewControl: false
         });
       }
     }
@@ -205,31 +208,18 @@ const GoogleRouteMap: React.FC<{
         const map = new google.maps.Map(mapRef.current, {
           center: center,
           zoom: zoom,
-          mapTypeId: navigationMode ? google.maps.MapTypeId.ROADMAP : google.maps.MapTypeId.HYBRID,
+          mapTypeId: google.maps.MapTypeId.ROADMAP,
           zoomControl: true,
-          mapTypeControl: !navigationMode,
-          mapTypeControlOptions: {
-            style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-            position: google.maps.ControlPosition.TOP_CENTER,
-            mapTypeIds: [
-              google.maps.MapTypeId.ROADMAP,
-              google.maps.MapTypeId.SATELLITE,
-              google.maps.MapTypeId.HYBRID,
-              google.maps.MapTypeId.TERRAIN
-            ]
-          },
+          mapTypeControl: true,
           scaleControl: true,
           streetViewControl: false,
-          rotateControl: !navigationMode,
-          fullscreenControl: !navigationMode,
-          tilt: 0, // Alltid 2D for bilnavigasjon
+          rotateControl: false,
+          fullscreenControl: true,
+          tilt: 0,
           heading: 0,
-          // Fjern alle zoom-restriksjoner for maksimal zoom
           minZoom: 1,
-          maxZoom: 25, // Økt til maksimal Google Maps zoom
-          gestureHandling: 'greedy', // Mer responsiv zoom
-          disableDoubleClickZoom: false,
-          scrollwheel: true
+          maxZoom: 20,
+          gestureHandling: 'greedy'
         });
 
         mapInstanceRef.current = map;
@@ -756,17 +746,18 @@ const GoogleRouteMap: React.FC<{
     if (routeTrigger > 0) {
       console.log('🎯 Route trigger changed to:', routeTrigger, 'for route:', selectedRouteId);
       
-      // Spesiell behandling for navigasjonsstart (trigger >= 10)
+      // Start navigasjon
       if (routeTrigger >= 10 && userLocation) {
-        console.log('🚀 NAVIGASJONSSTART - beregner rute fra brukerposisjon til destinasjon');
-        // Sentrér kartet på brukerposisjonen med maksimal zoom
+        console.log('🚀 STARTER NAVIGASJON');
+        // Zoom til brukerposisjon
         if (mapInstanceRef.current) {
-          mapInstanceRef.current.setCenter({ lat: userLocation.latitude, lng: userLocation.longitude });
-          mapInstanceRef.current.setZoom(25); // Absolut maksimal zoom
+          mapInstanceRef.current.panTo({ lat: userLocation.latitude, lng: userLocation.longitude });
+          setTimeout(() => {
+            mapInstanceRef.current!.setZoom(18); // Standard bilnavigasjon zoom
+          }, 500);
         }
         updateRemainingRoute(userLocation, routeData.to);
       } else {
-        console.log('🛣️ KALLER CALCULATEROUTE fra useEffect - NORMAL TRIGGER');
         calculateRoute();
       }
     }
