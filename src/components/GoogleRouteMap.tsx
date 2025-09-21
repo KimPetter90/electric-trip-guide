@@ -295,15 +295,41 @@ const GoogleRouteMap: React.FC<{
       
       const waypoints = routeData.via ? [{ location: routeData.via, stopover: true }] : [];
       
+      // Configure route parameters based on selected route type
+      let avoidHighways = false;
+      let avoidTolls = false;
+      let optimizeWaypoints = true;
+      
+      if (selectedRouteId === 'eco') {
+        // Eco route: avoid highways and tolls for more efficient driving
+        avoidHighways = true;
+        avoidTolls = true;
+      } else if (selectedRouteId === 'shortest') {
+        // Shortest route: focus on distance optimization
+        optimizeWaypoints = true;
+        avoidHighways = false;
+        avoidTolls = false;
+      } else {
+        // Fastest route (default): use highways for speed
+        avoidHighways = false;
+        avoidTolls = false;
+      }
+      
+      console.log(`🗺️ Beregner ${selectedRouteId || 'standard'} rute med:`, {
+        avoidHighways,
+        avoidTolls,
+        optimizeWaypoints
+      });
+      
       const request: google.maps.DirectionsRequest = {
         origin: routeData.from,
         destination: routeData.to,
         waypoints: waypoints,
         travelMode: google.maps.TravelMode.DRIVING,
         unitSystem: google.maps.UnitSystem.METRIC,
-        optimizeWaypoints: true,
-        avoidHighways: false,
-        avoidTolls: false
+        optimizeWaypoints: optimizeWaypoints,
+        avoidHighways: avoidHighways,
+        avoidTolls: avoidTolls
       };
 
       const result = await directionsService.route(request);
@@ -344,7 +370,7 @@ const GoogleRouteMap: React.FC<{
     } finally {
       onLoadingChange(false);
     }
-  }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, onRouteCalculated, onLoadingChange, onError]);
+  }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, selectedRouteId, onRouteCalculated, onLoadingChange, onError]);
 
   useEffect(() => {
     calculateRoute();
