@@ -132,14 +132,12 @@ function calculateTrailerImpact(trailerWeight: number): number {
 }
 
 function calculateRequiredRange(routeData: any, carData: any, weatherImpact: number, trailerImpact: number): number {
-  const baseConsumption = carData.consumption;
-  const adjustedConsumption = baseConsumption * weatherImpact * trailerImpact;
   const rangeWithCurrentBattery = (carData.range * routeData.batteryPercentage) / 100;
   
   // Beregn hvor langt bilen kan kjøre med nåværende batteri under gitte forhold
   const adjustedRange = rangeWithCurrentBattery / (weatherImpact * trailerImpact);
   
-  return adjustedRange;
+  return Math.max(0, adjustedRange); // Sørg for at vi ikke får negative verdier
 }
 
 function calculateStationScore(
@@ -225,8 +223,12 @@ serve(async (req) => {
     
     // Beregn score for hver stasjon
     const stationsWithScores = stations.map(station => {
-      // Simuler avstand til stasjon (i en ekte implementering ville vi beregne faktisk avstand langs rute)
-      const distanceToStation = Math.random() * 5000 + 1000; // 1-6 km fra rute
+      // Bruk en konsistent avstand basert på stasjonens ID for å unngå tilfeldige resultater
+      const stationHash = station.id.split('').reduce((a, b) => {
+        a = ((a << 5) - a) + b.charCodeAt(0);
+        return a & a;
+      }, 0);
+      const distanceToStation = Math.abs(stationHash % 5000) + 1000; // 1-6 km fra rute
       
       const score = calculateStationScore(
         station,
