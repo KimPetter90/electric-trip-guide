@@ -168,35 +168,50 @@ const GoogleRouteMap: React.FC<{
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
-    // Simple approach: check distance to all waypoints along the route
+    // Get ALL points from the encoded polyline overview path
+    const overviewPath = route.overview_path;
+    if (overviewPath && overviewPath.length > 0) {
+      // Check distance to every point in the overview path
+      for (const pathPoint of overviewPath) {
+        const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+          stationPos, pathPoint
+        );
+        if (distance <= 2000) {
+          return true;
+        }
+      }
+    }
+    
+    // Also check each step's encoded polyline for more detail
     for (let i = 0; i < route.legs.length; i++) {
       const leg = route.legs[i];
-      
-      // Check distance to leg start and end
-      const startDist = window.google.maps.geometry.spherical.computeDistanceBetween(
-        stationPos, leg.start_location
-      );
-      const endDist = window.google.maps.geometry.spherical.computeDistanceBetween(
-        stationPos, leg.end_location
-      );
-      
-      if (startDist <= 2000 || endDist <= 2000) {
-        return true;
-      }
-      
-      // Check distance to all step points
       for (let j = 0; j < leg.steps.length; j++) {
         const step = leg.steps[j];
         
-        const stepStartDist = window.google.maps.geometry.spherical.computeDistanceBetween(
-          stationPos, step.start_location
-        );
-        const stepEndDist = window.google.maps.geometry.spherical.computeDistanceBetween(
-          stationPos, step.end_location
-        );
-        
-        if (stepStartDist <= 2000 || stepEndDist <= 2000) {
-          return true;
+        // Decode the polyline for this step if it exists
+        if (step.polyline && step.polyline.points) {
+          try {
+            const decodedPath = window.google.maps.geometry.encoding.decodePath(step.polyline.points);
+            for (const pathPoint of decodedPath) {
+              const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+                stationPos, pathPoint
+              );
+              if (distance <= 2000) {
+                return true;
+              }
+            }
+          } catch (e) {
+            // Fallback to start/end points if decoding fails
+            const startDist = window.google.maps.geometry.spherical.computeDistanceBetween(
+              stationPos, step.start_location
+            );
+            const endDist = window.google.maps.geometry.spherical.computeDistanceBetween(
+              stationPos, step.end_location
+            );
+            if (startDist <= 2000 || endDist <= 2000) {
+              return true;
+            }
+          }
         }
       }
     }
