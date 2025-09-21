@@ -267,8 +267,8 @@ serve(async (req) => {
       needsCharging: adjustedCurrentRange < (routeDistance * 1.2)
     });
     
-    // SIKKERHETSMARGINAL: Hvis adjustert rekkevidde er mindre enn 150% av ruterekkevidde, finn nærmeste sikre stasjon
-    const safetyMargin = 1.5; // 50% sikkerhetsmarginal
+    // SIKKERHETSMARGINAL: Forskjellig margin basert på hengerlast
+    const safetyMargin = routeData.trailerWeight > 0 ? 1.4 : 1.15; // 40% med henger, 15% uten
     const isRisky = adjustedCurrentRange < (routeDistance * safetyMargin);
     
     console.log('🚨 DETALJERT SIKKERHETSEVALUERING:', {
@@ -279,6 +279,7 @@ serve(async (req) => {
       currentRange: currentRange,
       adjustedCurrentRange: adjustedCurrentRange.toFixed(0),
       routeDistance: routeDistance.toFixed(0),
+      safetyMargin: safetyMargin,
       requiredSafeRange: (routeDistance * safetyMargin).toFixed(0),
       isRisky: isRisky,
       safetyMarginPercent: ((adjustedCurrentRange / routeDistance) * 100).toFixed(0) + '%',
