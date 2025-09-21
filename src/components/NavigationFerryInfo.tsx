@@ -223,7 +223,7 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
   if (!isVisible || ferryInfo.length === 0) return null;
 
   return (
-    <div className="absolute top-3 right-16 z-10 w-64">
+    <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-10 w-64">
       <Card className="bg-background/95 backdrop-blur-sm border border-border/50 shadow-lg">
         <div className="p-3">
           <div className="flex items-center gap-2 mb-2">
