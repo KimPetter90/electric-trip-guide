@@ -382,8 +382,6 @@ const GoogleRouteMap: React.FC<{
   // Calculate route when trigger changes
   const calculateRoute = useCallback(async () => {
     if (!mapInstanceRef.current || !routeData.from || !routeData.to) {
-      console.log('❌ Cannot calculate route: missing map, from, or to');
-      onError('Mangler start- eller sluttadresse for ruteberegning');
       return;
     }
 
@@ -497,11 +495,9 @@ const GoogleRouteMap: React.FC<{
   }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, selectedRouteId, onRouteCalculated, onLoadingChange, onError]);
 
   useEffect(() => {
-    if (routeTrigger > 0) {
-      console.log('🎯 Route trigger changed to:', routeTrigger, 'for route:', selectedRouteId);
-      calculateRoute();
-    }
-  }, [routeTrigger]);
+    console.log('🎯 Route trigger changed to:', routeTrigger, 'for route:', selectedRouteId);
+    calculateRoute();
+  }, [calculateRoute, routeTrigger, selectedRouteId]);
 
   // Cleanup on unmount
   useEffect(() => {

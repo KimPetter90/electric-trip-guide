@@ -82,7 +82,7 @@ function Index() {
     travelDate: undefined
   });
   const [showRoute, setShowRoute] = useState(true);
-  const [routeTrigger, setRouteTrigger] = useState(0); // Start med 0 så det ikke trigger automatisk
+  const [routeTrigger, setRouteTrigger] = useState(1); // Start med 1 for initial calculation
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
@@ -127,7 +127,7 @@ function Index() {
     setMapError(error);
   }, []);
 
-  // Optimized route selection - stable function reference  
+  // Optimized route selection - stable function reference
   const handleRouteSelect = useCallback((routeId: string) => {
     console.log('🎯 Route selected:', routeId);
     setSelectedRouteId(routeId);
@@ -418,9 +418,10 @@ function Index() {
     setRouteOptions(mockRoutes);
     setLoadingRoutes(false);
     
-    // Automatisk velg raskeste rute OG trigger beregning
+    // Automatisk velg raskeste rute (men ikke trigger på nytt siden det gjøres i handleRouteSelect)
     setSelectedRouteId('fastest');
-    setTimeout(() => setRouteTrigger(prev => prev + 1), 100);
+    // Trigger route calculation for første gang
+    setRouteTrigger(prev => prev + 1);
     
     // Cache resultatet
     try {
