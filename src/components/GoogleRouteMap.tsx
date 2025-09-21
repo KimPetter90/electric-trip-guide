@@ -501,7 +501,7 @@ const GoogleRouteMap: React.FC<{
       console.log('🎯 Route trigger changed to:', routeTrigger, 'for route:', selectedRouteId);
       calculateRoute();
     }
-  }, [calculateRoute, routeTrigger, selectedRouteId]);
+  }, [routeTrigger]);
 
   // Cleanup on unmount
   useEffect(() => {
