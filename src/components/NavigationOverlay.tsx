@@ -13,6 +13,7 @@ interface NavigationOverlayProps {
     via?: string;
   };
   onRouteDeviation?: (newFrom: string, to: string) => void;
+  onLocationUpdate?: (location: LocationData) => void; // Ny prop for å sende posisjon til kartet
 }
 
 interface LocationData {
@@ -26,7 +27,8 @@ interface LocationData {
 
 export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
   routeData,
-  onRouteDeviation
+  onRouteDeviation,
+  onLocationUpdate
 }) => {
   const [isTracking, setIsTracking] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<LocationData | null>(null);
@@ -248,6 +250,9 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
           setCurrentLocation(locationData);
           updateRouteProgress(locationData);
           checkRouteDeviation(locationData);
+          
+          // Send posisjon til kartet for brukerposisjonspil
+          onLocationUpdate?.(locationData);
         },
         (error) => {
           console.error('❌ GPS tracking feil:', error);

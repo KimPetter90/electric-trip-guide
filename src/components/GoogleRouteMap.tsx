@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Play, Pause, LocateFixed, Navigation, Ship, Clock } from "lucide-react";
 import { toast } from "sonner";
 import ComprehensiveFerrySchedule from '@/components/ComprehensiveFerrySchedule';
+import { GoogleUserLocationMarker } from './GoogleUserLocationMarker';
 
 interface CarModel {
   id: string;
@@ -63,10 +64,11 @@ const GoogleRouteMap: React.FC<{
   selectedRouteId?: string | null;
   routeOptions?: RouteOption[];
   routeTrigger: number;
+  userLocation?: {latitude: number, longitude: number, heading?: number, accuracy?: number} | null;
   onRouteCalculated: (analysis: TripAnalysis) => void;
   onLoadingChange: (loading: boolean) => void;
   onError: (error: string | null) => void;
-}> = ({ center, zoom, onMapLoad, chargingStations, routeData, selectedCar, selectedRouteId, routeOptions, routeTrigger, onRouteCalculated, onLoadingChange, onError }) => {
+}> = ({ center, zoom, onMapLoad, chargingStations, routeData, selectedCar, selectedRouteId, routeOptions, routeTrigger, userLocation, onRouteCalculated, onLoadingChange, onError }) => {
   
   // Refs and state
   const mapRef = useRef<HTMLDivElement>(null);
@@ -81,7 +83,7 @@ const GoogleRouteMap: React.FC<{
   
   const [isMapInitialized, setIsMapInitialized] = useState(false);
   const [calculatedRoute, setCalculatedRoute] = useState<google.maps.DirectionsResult | null>(null);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [internalUserLocation, setInternalUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsPermission, setGpsPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
   const [allFerryTimes, setAllFerryTimes] = useState<any[]>([]);
   const [loadedStations, setLoadedStations] = useState<ChargingStation[]>([]);
@@ -727,6 +729,13 @@ const GoogleRouteMap: React.FC<{
   return (
     <div style={{ width: '100%', height: '500px', position: 'relative' }}>
       <div ref={mapRef} style={{ width: '100%', height: '100%', borderRadius: '8px' }} />
+      
+      {/* Brukerposisjonspil */}
+      <GoogleUserLocationMarker 
+        map={mapInstanceRef.current}
+        location={userLocation}
+        isVisible={true}
+      />
     </div>
   );
 };

@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { UserLocationMarker } from './UserLocationMarker';
 
 interface CarModel {
   id: string;
@@ -94,6 +95,7 @@ interface RouteMapProps {
   selectedCar: CarModel;
   routeTrigger?: number;
   selectedRouteId?: string | null;
+  userLocation?: {latitude: number, longitude: number, heading?: number, accuracy?: number} | null; // Ny prop
   onChargingStationUpdate?: (station: ChargingStation | null, showButton: boolean, optimizedStations?: ChargingStation[]) => void;
   onRouteAnalysisUpdate?: (analysis: TripAnalysis | null) => void;
 }
@@ -393,7 +395,7 @@ const fetchWeatherData = async (startCoords: [number, number], endCoords: [numbe
   return data;
 };
 
-const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, routeTrigger, selectedRouteId, onChargingStationUpdate, onRouteAnalysisUpdate }) => {
+const RouteMap: React.FC<RouteMapProps> = ({ isVisible, routeData, selectedCar, routeTrigger, selectedRouteId, userLocation, onChargingStationUpdate, onRouteAnalysisUpdate }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const routeUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Throttle API-kall
@@ -4032,6 +4034,12 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
         </DialogContent>
       </Dialog>
       
+      {/* Brukerposisjonspil */}
+      <UserLocationMarker 
+        map={map.current}
+        location={userLocation}
+        isVisible={isVisible}
+      />
       
     </div>
   );

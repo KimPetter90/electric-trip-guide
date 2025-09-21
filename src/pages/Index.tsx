@@ -93,7 +93,8 @@ function Index() {
     travelDate: undefined
   });
   const [showRoute, setShowRoute] = useState(true);
-  const [routeTrigger, setRouteTrigger] = useState(0); // Start med 0 - ingen automatisk beregning
+  const [routeTrigger, setRouteTrigger] = useState(0);
+  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number, heading?: number, accuracy?: number} | null>(null); // Start med 0 - ingen automatisk beregning
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
@@ -888,6 +889,14 @@ function Index() {
                       setRouteData(prev => ({ ...prev, from: newFrom, to }));
                       setRouteTrigger(prev => prev + 1);
                     }}
+                    onLocationUpdate={(location) => {
+                      setUserLocation({
+                        latitude: location.latitude,
+                        longitude: location.longitude,
+                        heading: location.heading,
+                        accuracy: location.accuracy
+                      });
+                    }}
                   />
 
                   {/* Mobile-specific loading indicator */}
@@ -930,7 +939,7 @@ function Index() {
                     routeData={routeData}
                     selectedCar={selectedCar}
                     selectedRouteId={selectedRouteId}
-                    routeOptions={routeOptions}
+                    userLocation={userLocation}
                     routeTrigger={routeTrigger}
                     onRouteCalculated={onRouteCalculated}
                     onLoadingChange={onLoadingChange}
