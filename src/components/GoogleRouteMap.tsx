@@ -320,6 +320,8 @@ const GoogleRouteMap: React.FC<{
     }
 
     console.log(`🔌 Legger til ${chargingStations.length} ladestasjoner på kartet`);
+    console.log('🗺️ Calculated route exists:', !!calculatedRoute);
+    console.log('🎯 DirectionsRenderer exists:', !!directionsRendererRef.current);
 
     // Clear existing charging station markers
     chargingStationMarkersRef.current.forEach(marker => marker.setMap(null));
@@ -414,7 +416,15 @@ const GoogleRouteMap: React.FC<{
 
   // Calculate route when trigger changes
   const calculateRoute = useCallback(async () => {
+    console.log('🛣️ STARTING ROUTE CALCULATION:', {
+      hasMap: !!mapInstanceRef.current,
+      from: routeData.from,
+      to: routeData.to,
+      via: routeData.via
+    });
+    
     if (!mapInstanceRef.current || !routeData.from || !routeData.to) {
+      console.log('❌ Cannot calculate route - missing map or route data');
       return;
     }
 
@@ -438,19 +448,26 @@ const GoogleRouteMap: React.FC<{
       };
 
       const result = await directionsService.route(request);
+      console.log('🗺️ Route calculated successfully:', {
+        legs: result.routes[0].legs.length,
+        totalDistance: result.routes[0].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0) / 1000
+      });
       
       if (!directionsRendererRef.current) {
+        console.log('🎨 Creating new DirectionsRenderer');
         directionsRendererRef.current = new google.maps.DirectionsRenderer({
           suppressMarkers: false,
           polylineOptions: {
             strokeColor: '#2563eb',
-            strokeWeight: 4,
-            strokeOpacity: 0.8
+            strokeWeight: 6,
+            strokeOpacity: 1.0,
+            zIndex: 1000
           }
         });
         directionsRendererRef.current.setMap(mapInstanceRef.current);
       }
 
+      console.log('🎯 Setting directions on renderer');
       directionsRendererRef.current.setDirections(result);
       setCalculatedRoute(result);
 
