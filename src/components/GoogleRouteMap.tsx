@@ -218,15 +218,15 @@ const GoogleRouteMap: React.FC<{
     const route = calculatedRoute.routes[0];
     const totalDistance = route.legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0) / 1000;
     
-    // Current range available with battery percentage
+    // Current range available with battery percentage  
     const currentRange = (routeData.batteryPercentage / 100) * selectedCar.range;
     
-    console.log(`🔋 RANGE ANALYSIS:`, {
+    console.log(`🔋 OBLIGATORISK LADE-ANALYSE:`, {
       totalDistance: `${totalDistance.toFixed(1)} km`,
       carRange: `${selectedCar.range} km`,
       batteryLevel: `${routeData.batteryPercentage}%`,
       currentRange: `${currentRange.toFixed(1)} km`,
-      needsCharging: currentRange < totalDistance
+      shortfall: `${Math.max(0, totalDistance - currentRange).toFixed(1)} km`
     });
 
     // If we can reach destination without charging, no required stops
@@ -235,49 +235,78 @@ const GoogleRouteMap: React.FC<{
       return [];
     }
 
-    // Find the first required charging stop
-    let distanceTraveled = 0;
+    // We need to charge! Find where we must stop
+    const safetyMargin = 0.1; // Keep 10% buffer
+    const maxDistanceBeforeCharging = currentRange * (1 - safetyMargin);
+    
+    console.log(`🚨 MÅ LADE! Maksimal kjøreavstand: ${maxDistanceBeforeCharging.toFixed(1)} km`);
+
+    // Find charging stations that are within our reachable distance from start
     const requiredStations: ChargingStation[] = [];
-    
-    // We need to charge when we've used up our current range
-    const chargeNeededAt = currentRange * 0.9; // Add 10% safety margin
-    
-    // Find closest charging station to the point where we need to charge
     const stationsNearRoute = chargingStations.filter(station => isStationNearRoute(station));
     
     if (stationsNearRoute.length > 0) {
-      // For now, find the best station within our range
-      const reachableStations = stationsNearRoute.filter(station => {
-        // Calculate approximate distance to station along the route
-        const routePath = route.overview_path;
-        let closestDistanceToRoute = Infinity;
+      // Calculate each station's position along the route
+      const routePath = route.overview_path;
+      const stationsWithDistance = stationsNearRoute.map(station => {
+        let shortestDistanceFromStart = Infinity;
+        let routeProgressKm = 0;
         
+        // Find closest point on route to this station and estimate distance from start
         routePath.forEach((point, index) => {
-          const distanceToPoint = google.maps.geometry.spherical.computeDistanceBetween(
+          const distanceToStation = google.maps.geometry.spherical.computeDistanceBetween(
             new google.maps.LatLng(station.latitude, station.longitude),
             point
-          ) / 1000; // Convert to km
+          ) / 1000;
           
-          if (distanceToPoint < closestDistanceToRoute) {
-            closestDistanceToRoute = distanceToPoint;
+          if (distanceToStation < shortestDistanceFromStart) {
+            shortestDistanceFromStart = distanceToStation;
+            // Rough estimate of progress along route
+            routeProgressKm = (index / routePath.length) * totalDistance;
           }
         });
         
-        // Station is reachable if it's within our current range
-        return closestDistanceToRoute <= chargeNeededAt;
+        return {
+          ...station,
+          distanceFromRoute: shortestDistanceFromStart,
+          estimatedProgressKm: routeProgressKm
+        };
       });
 
+      // Find stations that are:
+      // 1. Within our reachable distance from start
+      // 2. Close enough to the actual route (max 5km detour)
+      const reachableStations = stationsWithDistance.filter(station => 
+        station.estimatedProgressKm <= maxDistanceBeforeCharging && 
+        station.distanceFromRoute <= 5
+      );
+
+      console.log(`🔍 Reachable stations within ${maxDistanceBeforeCharging.toFixed(1)} km:`, 
+        reachableStations.map(s => ({
+          name: s.name,
+          progressKm: s.estimatedProgressKm.toFixed(1),
+          fromRoute: s.distanceFromRoute.toFixed(1)
+        }))
+      );
+
       if (reachableStations.length > 0) {
-        // Pick the best reachable station
+        // Pick the best station we can reach (furthest along route but still reachable)
         const bestReachableStation = reachableStations
           .sort((a, b) => {
+            // First priority: furthest along the route (but still reachable)
+            const progressDiff = b.estimatedProgressKm - a.estimatedProgressKm;
+            if (Math.abs(progressDiff) > 10) return progressDiff > 0 ? 1 : -1; // 10km threshold
+            
+            // Second priority: availability
             const availabilityA = a.available / a.total;
             const availabilityB = b.available / b.total;
             return availabilityB - availabilityA;
           })[0];
         
         requiredStations.push(bestReachableStation);
-        console.log(`🚨 OBLIGATORISK LADESTASJON: ${bestReachableStation.name} - must charge here to reach destination`);
+        console.log(`🚨 OBLIGATORISK LADESTASJON FUNNET: ${bestReachableStation.name} ved ${bestReachableStation.estimatedProgressKm.toFixed(1)} km`);
+      } else {
+        console.log('⚠️ INGEN reachable ladestasjoner funnet - kan ikke fullføre turen!');
       }
     }
 
