@@ -336,7 +336,7 @@ function Index() {
         const cachedData = JSON.parse(cached);
         if (Date.now() - cachedData.timestamp < 300000) { // 5 min cache
           setRouteOptions(cachedData.routes);
-          setSelectedRouteId(null);
+          setSelectedRouteId('fastest');
           setLoadingRoutes(false);
           return;
         }
@@ -420,10 +420,9 @@ function Index() {
     setRouteOptions(mockRoutes);
     setLoadingRoutes(false);
     
-    console.log('🎯 Route options generated:', mockRoutes.length, 'routes');
-    console.log('📋 Routes:', mockRoutes.map(r => r.name));
-    
-    // La brukeren velge rute selv - ikke automatisk valg
+    // Automatisk velg raskeste rute
+    setSelectedRouteId('fastest');
+    // FJERNET: setRouteTrigger(prev => prev + 1); - kun manuell trigger
     
     // Cache resultatet
     try {
@@ -544,7 +543,6 @@ function Index() {
 
   // Enhanced route planning with proper loading states
   const handlePlanRoute = async () => {
-    console.log('🚀 PLANLEGG RUTE KNAPP TRYKKET!'); // Ny logging
     console.log('🔍 DEBUG: Planning route with:', {
       selectedCar: selectedCar?.brand + ' ' + selectedCar?.model,
       from: routeData.from,
@@ -588,10 +586,11 @@ function Index() {
       setPlanningRoute(true);
       setLoadingRoutes(true);
       
-    try {
-      // Vis kartet først
-      setShowRoute(true);
-    
+      try {
+        // Vis kartet først
+        console.log('🗺️ Setting showRoute to true');
+        setShowRoute(true);
+      
       // Track route planning
       if (user && subscription) {
         try {
@@ -618,15 +617,34 @@ function Index() {
         }
       }
       
-      // Generer rutevalg
-      await generateRouteOptions();
+       // Generer rutevalg
+       console.log('📱 MOBILE DEBUG - Calling generateRouteOptions');
+       await generateRouteOptions();
+       
+       // Trigger kartberegning NÅR brukeren trykker knappen
+       console.log('🗺️ Triggering route calculation...');
+       setRouteTrigger(prev => prev + 1);
+      
+      // Toast-melding fjernet på brukerens ønske
       
     } catch (error: any) {
       console.error('❌ Route planning failed:', error);
       setShowRoute(false);
+      // Toast fjernet
     } finally {
-      setPlanningRoute(false);
-      setLoadingRoutes(false);
+      // Rask loading reset for bedre respons
+      setTimeout(() => {
+        setPlanningRoute(false);
+        console.log('✅ Planning state reset');
+        
+        // Forsikre at kartet er synlig i tilfelle det har blitt skjult
+        if (!showRoute) {
+          console.log('🚨 Kart er ikke synlig i finally - forcing visible!');
+          setShowRoute(true);
+        }
+        
+        console.log('✅ Loading state reset, showRoute:', showRoute);
+      }, 300); // Redusert fra 2000ms til 300ms for kjappere respons
     }
   };
 
