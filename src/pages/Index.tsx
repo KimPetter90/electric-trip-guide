@@ -82,7 +82,7 @@ function Index() {
     travelDate: undefined
   });
   const [showRoute, setShowRoute] = useState(true);
-  const [routeTrigger, setRouteTrigger] = useState(1); // Start med 1 for initial calculation
+  const [routeTrigger, setRouteTrigger] = useState(0); // Start med 0 så det ikke trigger automatisk
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
