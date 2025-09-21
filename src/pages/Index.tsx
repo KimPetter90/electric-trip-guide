@@ -273,13 +273,8 @@ function Index() {
     );
   }
   
-  // I Lovable dev: Kun admin får tilgang
-  if (!isAdmin) {
-    console.log('🚫 DEV: Not admin user');
-    return <ComingSoon />;
-  }
-  
-  console.log('✅ DEV: Admin access granted');
+  // Temporarily allow all users for development
+  console.log('✅ DEV: Access granted for development');
 
   // Handle route reset function
   const handleResetRoutes = async () => {
