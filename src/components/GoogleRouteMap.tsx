@@ -237,16 +237,59 @@ const GoogleRouteMap: React.FC<{
     return minDistance <= 3000;
   }, [calculatedRoute]);
 
-  // Find best station along route
-  const getBestStationAlongRoute = useCallback((): ChargingStation | null => {
-    if (!calculatedRoute || !chargingStations.length) return null;
+  // Find best station along route using advanced optimization
+  const getBestStationAlongRoute = useCallback(async (): Promise<ChargingStation | null> => {
+    if (!calculatedRoute || !chargingStations.length || !selectedCar) return null;
     
     // Find all stations near the route
     const stationsNearRoute = chargingStations.filter(station => isStationNearRoute(station));
     
     if (stationsNearRoute.length === 0) return null;
     
-    // Choose best station based on availability and fast charging
+    try {
+      // Call optimization service with weather, trailer, and battery data
+      const { data, error } = await supabase.functions.invoke('optimize-charging-station', {
+        body: {
+          stations: stationsNearRoute,
+          routeData: {
+            from: routeData.from,
+            to: routeData.to,
+            trailerWeight: routeData.trailerWeight,
+            batteryPercentage: routeData.batteryPercentage,
+            totalDistance: calculatedRoute.routes[0].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0) / 1000,
+            estimatedTime: calculatedRoute.routes[0].legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0) / 60
+          },
+          carData: {
+            range: selectedCar.range,
+            consumption: selectedCar.consumption,
+            batteryCapacity: selectedCar.batteryCapacity
+          }
+        }
+      });
+      
+      if (error) {
+        console.error('❌ Optimization service error:', error);
+        // Fallback to simple logic
+        return getSimpleBestStation(stationsNearRoute);
+      }
+      
+      const result = data?.recommendedStation;
+      if (result) {
+        console.log('🎯 OPTIMALISERT BESTE STASJON:', result.name);
+        console.log('📊 Analyseresultat:', data.analysis);
+        return result;
+      }
+      
+      return getSimpleBestStation(stationsNearRoute);
+      
+    } catch (error) {
+      console.error('❌ Optimization error:', error);
+      return getSimpleBestStation(stationsNearRoute);
+    }
+  }, [calculatedRoute, chargingStations, isStationNearRoute, selectedCar, routeData]);
+  
+  // Simple fallback logic
+  const getSimpleBestStation = (stationsNearRoute: ChargingStation[]): ChargingStation | null => {
     const bestStation = stationsNearRoute
       .filter(s => s.fast_charger) // Only fast charging
       .sort((a, b) => {
@@ -256,11 +299,11 @@ const GoogleRouteMap: React.FC<{
       })[0];
     
     if (bestStation) {
-      console.log(`🎯 BESTE STASJON LANGS RUTEN: ${bestStation.name}`);
+      console.log(`🎯 ENKEL BESTE STASJON: ${bestStation.name}`);
     }
     
-    return bestStation || stationsNearRoute[0]; // Fallback to first station along route
-  }, [calculatedRoute, chargingStations, isStationNearRoute]);
+    return bestStation || stationsNearRoute[0];
+  };
 
   // Add charging station markers
   useEffect(() => {
@@ -278,76 +321,82 @@ const GoogleRouteMap: React.FC<{
     chargingStationMarkersRef.current.forEach(marker => marker.setMap(null));
     chargingStationMarkersRef.current = [];
 
-    // Find best station along route
-    const bestStationAlongRoute = getBestStationAlongRoute();
+    // Find best station along route (async)
+    let bestStationAlongRoute: ChargingStation | null = null;
+    
+    const findBestStationAndRender = async () => {
+      bestStationAlongRoute = await getBestStationAlongRoute();
+      
+      // Add new charging station markers
+      chargingStations.forEach(station => {
+        const isRecommendedAlongRoute = bestStationAlongRoute && station.id === bestStationAlongRoute.id;
+        const isNearRoute = calculatedRoute && isStationNearRoute(station);
+        
+        console.log(`🔍 Station ${station.name}: hasRoute=${!!calculatedRoute}, isNearRoute=${isNearRoute}`);
+        
+        // Choose marker icon
+        const markerIcon = isRecommendedAlongRoute ? {
+          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="11" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
+              <text x="12" y="16" text-anchor="middle" fill="#000000" font-size="14" font-weight="bold">★</text>
+            </svg>
+          `),
+          scaledSize: new google.maps.Size(24, 24),
+          anchor: new google.maps.Point(12, 12)
+        } : isNearRoute ? {
+          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+              <circle cx="8" cy="8" r="7" fill="#ff0000" stroke="#990000" stroke-width="2"/>
+              <text x="8" y="12" text-anchor="middle" fill="white" font-size="10" font-weight="bold">⚡</text>
+            </svg>
+          `),
+          scaledSize: new google.maps.Size(16, 16),
+          anchor: new google.maps.Point(8, 8)
+        } : {
+          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8">
+              <circle cx="4" cy="4" r="3" fill="#00ff41" stroke="#00cc33" stroke-width="1"/>
+            </svg>
+          `),
+          scaledSize: new google.maps.Size(8, 8),
+          anchor: new google.maps.Point(4, 4)
+        };
 
-    // Add new charging station markers
-    chargingStations.forEach(station => {
-      const isRecommendedAlongRoute = bestStationAlongRoute && station.id === bestStationAlongRoute.id;
-      const isNearRoute = calculatedRoute && isStationNearRoute(station);
-      
-      console.log(`🔍 Station ${station.name}: hasRoute=${!!calculatedRoute}, isNearRoute=${isNearRoute}`);
-      
-      
-      
-      // Choose marker icon
-      const markerIcon = isRecommendedAlongRoute ? {
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="11" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
-            <text x="12" y="16" text-anchor="middle" fill="#000000" font-size="14" font-weight="bold">★</text>
-          </svg>
-        `),
-        scaledSize: new google.maps.Size(24, 24),
-        anchor: new google.maps.Point(12, 12)
-      } : isNearRoute ? {
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-            <circle cx="8" cy="8" r="7" fill="#ff0000" stroke="#990000" stroke-width="2"/>
-            <text x="8" y="12" text-anchor="middle" fill="white" font-size="10" font-weight="bold">⚡</text>
-          </svg>
-        `),
-        scaledSize: new google.maps.Size(16, 16),
-        anchor: new google.maps.Point(8, 8)
-      } : {
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8">
-            <circle cx="4" cy="4" r="3" fill="#00ff41" stroke="#00cc33" stroke-width="1"/>
-          </svg>
-        `),
-        scaledSize: new google.maps.Size(8, 8),
-        anchor: new google.maps.Point(4, 4)
-      };
+        const marker = new google.maps.Marker({
+          position: { lat: station.latitude, lng: station.longitude },
+          map: mapInstanceRef.current!,
+          icon: markerIcon,
+          title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isRecommendedAlongRoute ? '\n⭐ OPTIMALISERT ANBEFALING' : ''}`,
+          zIndex: isRecommendedAlongRoute ? 1000 : (isNearRoute ? 100 : 10)
+        });
 
-      const marker = new google.maps.Marker({
-        position: { lat: station.latitude, lng: station.longitude },
-        map: mapInstanceRef.current!,
-        icon: markerIcon,
-        title: `${station.name}\n${station.available}/${station.total} tilgjengelig\n${station.cost} kr/kWh${isRecommendedAlongRoute ? '\n⭐ ANBEFALT LANGS RUTEN' : ''}`,
-        zIndex: isRecommendedAlongRoute ? 1000 : (isNearRoute ? 100 : 10)
+        const infoWindow = new google.maps.InfoWindow({
+          content: `
+            <div style="padding: 10px; max-width: 250px;">
+              <h3 style="margin: 0 0 10px 0; color: #333;">${station.name}</h3>
+              <p><strong>Tilgjengelig:</strong> ${station.available}/${station.total}</p>
+              <p><strong>Effekt:</strong> ${station.power}</p>
+              <p><strong>Pris:</strong> ${station.cost} kr/kWh</p>
+              <p><strong>Leverandør:</strong> ${station.provider}</p>
+              <p style="font-size: 12px; color: #666;">${station.address}</p>
+              ${isRecommendedAlongRoute ? '<div style="padding: 5px; background: #FFD700; border-radius: 3px; text-align: center; font-weight: bold;">⭐ OPTIMALISERT ANBEFALING</div>' : ''}
+            </div>
+          `
+        });
+
+        marker.addListener('click', () => {
+          infoWindow.open(mapInstanceRef.current, marker);
+        });
+
+        chargingStationMarkersRef.current.push(marker);
       });
-
-      const infoWindow = new google.maps.InfoWindow({
-        content: `
-          <div style="padding: 10px; max-width: 250px;">
-            <h3 style="margin: 0 0 10px 0; color: #333;">${station.name}</h3>
-            <p><strong>Tilgjengelig:</strong> ${station.available}/${station.total}</p>
-            <p><strong>Effekt:</strong> ${station.power}</p>
-            <p><strong>Pris:</strong> ${station.cost} kr/kWh</p>
-            <p><strong>Leverandør:</strong> ${station.provider}</p>
-            <p style="font-size: 12px; color: #666;">${station.address}</p>
-            ${isRecommendedAlongRoute ? '<div style="padding: 5px; background: #FFD700; border-radius: 3px; text-align: center; font-weight: bold;">⭐ ANBEFALT LANGS RUTEN</div>' : ''}
-          </div>
-        `
-      });
-
-      marker.addListener('click', () => {
-        infoWindow.open(mapInstanceRef.current, marker);
-      });
-
-      chargingStationMarkersRef.current.push(marker);
-    });
-  }, [chargingStations, calculatedRoute, getBestStationAlongRoute]);
+    };
+    
+    // Execute async function
+    findBestStationAndRender();
+    
+  }, [chargingStations, calculatedRoute, getBestStationAlongRoute, isStationNearRoute]);
 
   // Force re-render markers when route changes
 
