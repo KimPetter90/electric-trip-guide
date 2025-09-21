@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AutocompleteInput } from "@/components/ui/autocomplete-input";
-import { MapPin, Truck, Route, Battery, CalendarIcon, Navigation } from "lucide-react";
+import { MapPin, Truck, Route, Battery, CalendarIcon, Navigation, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -235,6 +235,7 @@ interface RouteData {
   trailerWeight: number;
   batteryPercentage: number;
   travelDate?: Date;
+  arrivalTime?: Date; // Ny felt for ønsket ankomsttid
 }
 
 interface RouteInputProps {
@@ -247,6 +248,7 @@ interface RouteInputProps {
 export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPlanning = false }: RouteInputProps) {
   const [allCities, setAllCities] = useState<string[]>([]);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [arrivalCalendarOpen, setArrivalCalendarOpen] = useState(false);
 
   // Last inn lærte steder når komponenten starter
   useEffect(() => {
@@ -452,6 +454,77 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
             <Badge variant="outline" className="text-xs">
               Værvarsel for {format(routeData.travelDate, "dd.MM.yyyy")}
             </Badge>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <Clock className="h-3 w-3" />
+            Ønsket ankomsttid
+          </Label>
+          <Popover open={arrivalCalendarOpen} onOpenChange={setArrivalCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal bg-background/50 border-border hover:border-primary",
+                  !routeData.arrivalTime && "text-muted-foreground"
+                )}
+              >
+                <Clock className="mr-2 h-4 w-4" />
+                {routeData.arrivalTime ? format(routeData.arrivalTime, "PPP 'kl.' HH:mm") : "Velg ønsket ankomsttid"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={routeData.arrivalTime}
+                onSelect={(date) => {
+                  if (date) {
+                    // Sett default tid til 12:00 hvis ingen tid er valgt
+                    const arrivalDate = new Date(date);
+                    if (!routeData.arrivalTime) {
+                      arrivalDate.setHours(12, 0, 0, 0);
+                    } else {
+                      arrivalDate.setHours(
+                        routeData.arrivalTime.getHours(),
+                        routeData.arrivalTime.getMinutes(),
+                        0,
+                        0
+                      );
+                    }
+                    handleInputChange('arrivalTime', arrivalDate);
+                  }
+                  setArrivalCalendarOpen(false);
+                }}
+                disabled={(date) => date < new Date()}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+          
+          {routeData.arrivalTime && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="time"
+                  value={routeData.arrivalTime ? format(routeData.arrivalTime, "HH:mm") : ""}
+                  onChange={(e) => {
+                    if (routeData.arrivalTime && e.target.value) {
+                      const [hours, minutes] = e.target.value.split(':');
+                      const newDate = new Date(routeData.arrivalTime);
+                      newDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+                      handleInputChange('arrivalTime', newDate);
+                    }
+                  }}
+                  className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              <Badge variant="outline" className="text-xs">
+                Ankomst: {format(routeData.arrivalTime, "dd.MM.yyyy 'kl.' HH:mm")}
+              </Badge>
+            </div>
           )}
         </div>
 

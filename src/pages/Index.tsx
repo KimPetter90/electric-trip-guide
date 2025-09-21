@@ -50,6 +50,7 @@ interface RouteData {
   trailerWeight: number;
   batteryPercentage: number;
   travelDate?: Date;
+  arrivalTime?: Date; // Ny felt for ønsket ankomsttid
 }
 
 interface RouteAnalysis {
@@ -90,7 +91,8 @@ function Index() {
     via: "",
     trailerWeight: 0,
     batteryPercentage: 80, // Default til 80% for bedre brukeropplevelse
-    travelDate: undefined
+    travelDate: undefined,
+    arrivalTime: undefined // Ny felt
   });
   const [showRoute, setShowRoute] = useState(true);
   const [routeTrigger, setRouteTrigger] = useState(0);
