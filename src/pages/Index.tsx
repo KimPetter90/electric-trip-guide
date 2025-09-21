@@ -421,7 +421,8 @@ function Index() {
     setRouteOptions(mockRoutes);
     setLoadingRoutes(false);
     
-    // La brukeren velge rute manuelt, ikke automatisk
+    // Automatisk velg raskeste rute
+    setSelectedRouteId('fastest');
     
     // Cache resultatet
     try {
