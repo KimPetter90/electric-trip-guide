@@ -23,7 +23,7 @@ import { EnhancedRouteInput } from "@/components/EnhancedRouteInput";
 import { EnhancedMapSection } from "@/components/EnhancedMapSection";
 import { PricingSection } from "@/components/PricingSection";
 import PerformanceOptimizer from "@/components/PerformanceOptimizer";
-import { NavigationTracker } from "@/components/NavigationTracker";
+import { NavigationOverlay } from "@/components/NavigationOverlay";
 
 import ComprehensiveFerrySchedule from "@/components/ComprehensiveFerrySchedule";
 
@@ -837,22 +837,6 @@ function Index() {
               />
             </div>
 
-            {/* Navigation Tracker */}
-            <NavigationTracker
-              isVisible={showNavigationTracker}
-              onToggle={() => setShowNavigationTracker(!showNavigationTracker)}
-              routeData={routeData}
-              onRouteDeviation={(newFrom, to) => {
-                // Update route data with new starting point
-                setRouteData(prev => ({ ...prev, from: newFrom, to }));
-                // Trigger route recalculation
-                setRouteTrigger(prev => prev + 1);
-                toast({
-                  title: "Ny rute beregnes",
-                  description: `Omruter fra din nåværende posisjon til ${to}`,
-                });
-              }}
-            />
 
           </section>
 
@@ -897,15 +881,14 @@ function Index() {
                 
                 
                 <div data-testid="route-map" className="relative mt-8">
-                  {/* Start reise knapp - øvre venstre hjørne av kartet */}
-                  <Button
-                    onClick={() => setShowNavigationTracker(true)}
-                    className="absolute top-3 left-3 z-20 bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
-                    size="sm"
-                  >
-                    <Navigation className="h-4 w-4 mr-2" />
-                    Start reise
-                  </Button>
+                  {/* Navigation Overlay - minimal og elegant */}
+                  <NavigationOverlay
+                    routeData={routeData}
+                    onRouteDeviation={(newFrom, to) => {
+                      setRouteData(prev => ({ ...prev, from: newFrom, to }));
+                      setRouteTrigger(prev => prev + 1);
+                    }}
+                  />
 
                   {/* Mobile-specific loading indicator */}
                   {(mapLoading || planningRoute) && window.innerWidth < 768 && (
