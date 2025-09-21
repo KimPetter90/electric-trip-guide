@@ -268,7 +268,7 @@ const GoogleRouteMap: React.FC<{
       } : {
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
           <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8">
-            <circle cx="4" cy="4" r="3" fill="#ff4444" stroke="#cc0000" stroke-width="1"/>
+            <circle cx="4" cy="4" r="3" fill="#00ff41" stroke="#00cc33" stroke-width="1"/>
           </svg>
         `),
         scaledSize: new google.maps.Size(8, 8),
