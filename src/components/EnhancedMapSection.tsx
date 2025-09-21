@@ -114,9 +114,18 @@ export const EnhancedMapSection: React.FC<EnhancedMapSectionProps> = ({
 
         {/* Map Container */}
         <div className="relative bg-muted/20 rounded-lg overflow-hidden border border-primary/10 h-96">
-          <div className="w-full h-full bg-gradient-to-br from-primary/5 to-secondary/5 flex items-center justify-center">
-            <p className="text-muted-foreground">Kartkomponent vil vises her</p>
-          </div>
+          <GoogleRouteMap
+            center={{ lat: 60.4720, lng: 8.4689 }}
+            zoom={6}
+            chargingStations={[]}
+            routeData={routeData}
+            selectedCar={selectedCar}
+            routeTrigger={routeTrigger}
+            onRouteCalculated={onRouteCalculated}
+            onLoadingChange={onLoadingChange}
+            onError={onError}
+            onMapLoad={onMapLoad}
+          />
         </div>
       </Card>
     </div>
