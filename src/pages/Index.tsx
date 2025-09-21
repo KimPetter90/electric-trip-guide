@@ -837,6 +837,7 @@ function Index() {
                 onRouteChange={setRouteData}
                 onPlanRoute={handlePlanRoute}
                 isPlanning={planningRoute}
+                selectedRouteType={selectedRouteId || 'fastest'}
               />
             </div>
 

@@ -243,9 +243,10 @@ interface RouteInputProps {
   onRouteChange: (data: RouteData) => void;
   onPlanRoute: () => void;
   isPlanning?: boolean; // Ny prop for loading state
+  selectedRouteType?: string; // Ny prop for å få vite valgt rutetype
 }
 
-export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPlanning = false }: RouteInputProps) {
+export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPlanning = false, selectedRouteType = 'fastest' }: RouteInputProps) {
   const [allCities, setAllCities] = useState<string[]>([]);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [arrivalCalendarOpen, setArrivalCalendarOpen] = useState(false);
@@ -307,13 +308,38 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
     onRouteChange(newData);
   };
 
-  // Funksjon for å beregne anbefalt avreisertid
+  // Funksjon for å beregne anbefalt avreisertid basert på valgt rutetype
   const calculateDepartureTime = (arrivalTime: Date): string => {
-    // Mer realistiske reisetider basert på faktiske kjøreavstander
+    // Mer realistiske reisetider basert på faktiske kjøreavstander og rutetype
     let estimatedTravelMinutes = 180; // Standard 3 timer for kort rute
     let estimatedDistanceKm = 200; // Standard distanse
     
-    // Realistiske kjøretider basert på faktiske ruter
+    // Juster hastighet og distanse basert på rutetype
+    let speedMultiplier = 1;
+    let distanceMultiplier = 1;
+    let routeDescription = '';
+    
+    switch (selectedRouteType) {
+      case 'fastest':
+        speedMultiplier = 1.15; // 15% raskere på motorveier
+        distanceMultiplier = 1.02; // Litt lengre for motorveier
+        routeDescription = 'raskeste rute';
+        break;
+      case 'shortest':
+        speedMultiplier = 0.9; // 10% tregere på mindre veier
+        distanceMultiplier = 0.95; // 5% kortere distanse
+        routeDescription = 'korteste rute';
+        break;
+      case 'eco':
+        speedMultiplier = 0.95; // 5% tregere for eco-kjøring
+        distanceMultiplier = 1.08; // 8% lengre for å unngå hovedveier
+        routeDescription = 'miljøvennlig rute';
+        break;
+      default:
+        routeDescription = 'standard rute';
+    }
+    
+    // Realistiske kjøretider basert på faktiske ruter og rutetype
     if (routeData.from && routeData.to) {
       const fromLower = routeData.from.toLowerCase();
       const toLower = routeData.to.toLowerCase();
@@ -321,47 +347,64 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
       // Oslo - Trondheim: 500km, 5.5-6 timer
       if ((fromLower.includes('oslo') && toLower.includes('trondheim')) ||
           (fromLower.includes('trondheim') && toLower.includes('oslo'))) {
-        estimatedTravelMinutes = 360; // 6 timer
-        estimatedDistanceKm = 500;
+        estimatedTravelMinutes = Math.round((360 / speedMultiplier)); // 6 timer justert for rutetype
+        estimatedDistanceKm = Math.round(500 * distanceMultiplier);
       }
       // Oslo - Bergen: 460km, 7-8 timer (fjellvei)
       else if ((fromLower.includes('oslo') && toLower.includes('bergen')) || 
                (fromLower.includes('bergen') && toLower.includes('oslo'))) {
-        estimatedTravelMinutes = 480; // 8 timer
-        estimatedDistanceKm = 460;
+        estimatedTravelMinutes = Math.round((480 / speedMultiplier)); // 8 timer justert
+        estimatedDistanceKm = Math.round(460 * distanceMultiplier);
       }
       // Oslo - Stavanger: 400km, 6-7 timer
       else if ((fromLower.includes('oslo') && toLower.includes('stavanger')) ||
                (fromLower.includes('stavanger') && toLower.includes('oslo'))) {
-        estimatedTravelMinutes = 420; // 7 timer
-        estimatedDistanceKm = 400;
+        estimatedTravelMinutes = Math.round((420 / speedMultiplier)); // 7 timer justert
+        estimatedDistanceKm = Math.round(400 * distanceMultiplier);
       }
       // Oslo - Kristiansand: 320km, 4.5-5 timer
       else if ((fromLower.includes('oslo') && toLower.includes('kristiansand')) ||
                (fromLower.includes('kristiansand') && toLower.includes('oslo'))) {
-        estimatedTravelMinutes = 300; // 5 timer
-        estimatedDistanceKm = 320;
+        estimatedTravelMinutes = Math.round((300 / speedMultiplier)); // 5 timer justert
+        estimatedDistanceKm = Math.round(320 * distanceMultiplier);
       }
       // Bergen - Trondheim: 650km, 8-9 timer
       else if ((fromLower.includes('bergen') && toLower.includes('trondheim')) ||
                (fromLower.includes('trondheim') && toLower.includes('bergen'))) {
-        estimatedTravelMinutes = 540; // 9 timer
-        estimatedDistanceKm = 650;
+        estimatedTravelMinutes = Math.round((540 / speedMultiplier)); // 9 timer justert
+        estimatedDistanceKm = Math.round(650 * distanceMultiplier);
       }
       // Bergen - Stavanger: 200km, 3-4 timer
       else if ((fromLower.includes('bergen') && toLower.includes('stavanger')) ||
                (fromLower.includes('stavanger') && toLower.includes('bergen'))) {
-        estimatedTravelMinutes = 240; // 4 timer
-        estimatedDistanceKm = 200;
+        estimatedTravelMinutes = Math.round((240 / speedMultiplier)); // 4 timer justert
+        estimatedDistanceKm = Math.round(200 * distanceMultiplier);
+      }
+      // Standard kortere rute
+      else {
+        estimatedTravelMinutes = Math.round((180 / speedMultiplier)); // 3 timer justert
+        estimatedDistanceKm = Math.round(200 * distanceMultiplier);
       }
     }
     
-    // Beregn ladebehov mer konservativt
+    // Beregn ladebehov mer konservativt basert på rutetype
     const currentBattery = routeData.batteryPercentage;
     const trailerWeight = routeData.trailerWeight;
     
-    // Konservativ rekkevidde-estimering
-    const baseRangeKm = 350; // Mer konservativ rekkevidde
+    // Konservativ rekkevidde-estimering justert for rutetype
+    let baseRangeKm = 350; // Mer konservativ rekkevidde
+    
+    // Rutetype påvirker energiforbruk
+    switch (selectedRouteType) {
+      case 'fastest':
+        baseRangeKm *= 0.95; // 5% mer forbruk på motorveier
+        break;
+      case 'eco':
+        baseRangeKm *= 1.1; // 10% mindre forbruk på eco-rute
+        break;
+      // 'shortest' bruker standard rekkevidde
+    }
+    
     const trailerReduction = trailerWeight > 0 ? 0.65 : 1; // 35% reduksjon med tilhenger
     const winterReduction = 0.85; // 15% reduksjon for vinter/kulde
     const effectiveRangeKm = baseRangeKm * trailerReduction * winterReduction;
@@ -388,16 +431,30 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
       // Ekstra ladestopP underveis (30-40 min hver)
       chargingTimeMinutes += (chargingStops - 1) * 35;
       
-      // Buffer for å finne ladestasjoner og køer
-      chargingTimeMinutes += chargingStops * 15;
+      // Buffer for å finne ladestasjoner og køer (eco-rute kan ha færre stasjoner)
+      const stationBuffer = selectedRouteType === 'eco' ? 20 : 15;
+      chargingTimeMinutes += chargingStops * stationBuffer;
     } else if (currentBattery < 40 && estimatedDistanceKm > 150) {
       // Sikkerhetslading på lengre turer
       chargingTimeMinutes = 30;
     }
     
-    // Realistiske buffere
-    const ferryBufferMinutes = estimatedDistanceKm > 300 ? 60 : 30; // Mer buffer på lange turer med ferjer
-    const trafficBufferMinutes = estimatedDistanceKm > 300 ? 60 : 30; // Trafikk og pauser
+    // Realistiske buffere justert for rutetype
+    let ferryBufferMinutes = estimatedDistanceKm > 300 ? 60 : 30;
+    let trafficBufferMinutes = estimatedDistanceKm > 300 ? 60 : 30;
+    
+    // Juster buffere basert på rutetype
+    switch (selectedRouteType) {
+      case 'fastest':
+        trafficBufferMinutes *= 0.8; // Mindre trafikk på motorveier
+        break;
+      case 'eco':
+        ferryBufferMinutes *= 1.2; // Mer ferjer på miljøvennlig rute
+        trafficBufferMinutes *= 1.1; // Mer trafikk på mindre veier
+        break;
+      // 'shortest' bruker standard buffere
+    }
+    
     const weatherBufferMinutes = 20; // Værforhold
     
     const totalTravelMinutes = estimatedTravelMinutes + ferryBufferMinutes + trafficBufferMinutes + chargingTimeMinutes + weatherBufferMinutes;
@@ -407,9 +464,9 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
     
     const hours = Math.floor(totalTravelMinutes / 60);
     const minutes = totalTravelMinutes % 60;
-    const totalTimeInfo = `${hours}t ${minutes}m`;
+    const totalTimeInfo = `${hours}t ${minutes}m via ${routeDescription}`;
     
-    return `${format(departureTime, "dd.MM 'kl.' HH:mm")} (${totalTimeInfo} total)`;
+    return `${format(departureTime, "dd.MM 'kl.' HH:mm")} (${totalTimeInfo})`;
   };
 
   return (
