@@ -311,6 +311,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
   const calculateDepartureTime = (arrivalTime: Date): string => {
     // Estimert reisetid basert på rute (kan utvides med faktisk ruteberegning)
     let estimatedTravelMinutes = 180; // Standard 3 timer
+    let estimatedDistanceKm = 200; // Standard distanse
     
     // Juster basert på fra/til distanse (grov estimering)
     if (routeData.from && routeData.to) {
@@ -321,26 +322,71 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
       if ((fromLower.includes('oslo') && toLower.includes('bergen')) || 
           (fromLower.includes('bergen') && toLower.includes('oslo'))) {
         estimatedTravelMinutes = 480; // 8 timer
+        estimatedDistanceKm = 460;
       } else if ((fromLower.includes('oslo') && toLower.includes('stavanger')) ||
                  (fromLower.includes('stavanger') && toLower.includes('oslo'))) {
         estimatedTravelMinutes = 420; // 7 timer
+        estimatedDistanceKm = 400;
       } else if ((fromLower.includes('oslo') && toLower.includes('trondheim')) ||
                  (fromLower.includes('trondheim') && toLower.includes('oslo'))) {
         estimatedTravelMinutes = 360; // 6 timer
+        estimatedDistanceKm = 500;
+      } else if ((fromLower.includes('oslo') && toLower.includes('kristiansand')) ||
+                 (fromLower.includes('kristiansand') && toLower.includes('oslo'))) {
+        estimatedTravelMinutes = 300; // 5 timer
+        estimatedDistanceKm = 320;
       }
     }
     
-    // Legg til buffer for ferjer og trafikk
-    const ferryBufferMinutes = 45; // Buffer for ferjetider
-    const trafficBufferMinutes = 30; // Buffer for trafikk
-    const chargingBufferMinutes = routeData.batteryPercentage < 50 ? 60 : 20; // Buffer for lading
+    // Beregn ladebehov basert på batterinivå og distanse
+    const currentBattery = routeData.batteryPercentage;
+    const trailerWeight = routeData.trailerWeight;
     
-    const totalTravelMinutes = estimatedTravelMinutes + ferryBufferMinutes + trafficBufferMinutes + chargingBufferMinutes;
+    // Estimert rekkevidde (justert for tilhenger)
+    const baseRangeKm = 400; // Typisk rekkevidde for elbil
+    const trailerReduction = trailerWeight > 0 ? 0.7 : 1; // 30% reduksjon med tilhenger
+    const effectiveRangeKm = baseRangeKm * trailerReduction;
+    
+    // Beregn hvor langt vi kan kjøre med nåværende batteri
+    const currentRangeKm = (currentBattery / 100) * effectiveRangeKm;
+    
+    let chargingTimeMinutes = 0;
+    
+    if (estimatedDistanceKm > currentRangeKm) {
+      // Trenger lading underveis
+      const remainingDistanceKm = estimatedDistanceKm - currentRangeKm;
+      const chargingStops = Math.ceil(remainingDistanceKm / (effectiveRangeKm * 0.8)); // Lad til 80%
+      
+      // Hver ladestasjon tar tid
+      if (currentBattery < 20) {
+        chargingTimeMinutes += 45; // Første lading tar lenger tid fra lavt nivå
+      } else if (currentBattery < 50) {
+        chargingTimeMinutes += 30; // Moderat ladetid
+      } else {
+        chargingTimeMinutes += 20; // Kort påfyll
+      }
+      
+      // Ekstra ladestopP underveis (20-30 min hver)
+      chargingTimeMinutes += (chargingStops - 1) * 25;
+      
+      // Buffer for å finne ladestasjoner
+      chargingTimeMinutes += chargingStops * 10;
+    } else if (currentBattery < 30) {
+      // Sikkerhetslading selv om vi teknisk sett når frem
+      chargingTimeMinutes = 25;
+    }
+    
+    // Andre buffere
+    const ferryBufferMinutes = 45; // Buffer for ferjetider
+    const trafficBufferMinutes = estimatedDistanceKm > 300 ? 45 : 20; // Mer trafikk på lange turer
+    
+    const totalTravelMinutes = estimatedTravelMinutes + ferryBufferMinutes + trafficBufferMinutes + chargingTimeMinutes;
     
     // Beregn avreisertid
     const departureTime = new Date(arrivalTime.getTime() - (totalTravelMinutes * 60 * 1000));
     
-    return format(departureTime, "dd.MM 'kl.' HH:mm");
+    const chargingInfo = chargingTimeMinutes > 0 ? ` (inkl. ${chargingTimeMinutes} min lading)` : '';
+    return `${format(departureTime, "dd.MM 'kl.' HH:mm")}${chargingInfo}`;
   };
 
   return (
