@@ -168,72 +168,39 @@ const GoogleRouteMap: React.FC<{
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
-    // Use a more thorough approach - check if station is near the polyline path
-    let minDistance = Infinity;
-    
+    // Check every single point along the route thoroughly
     for (let i = 0; i < route.legs.length; i++) {
       const leg = route.legs[i];
       
-      // Check distance to start and end points
-      const startDistance = window.google.maps.geometry.spherical.computeDistanceBetween(
+      // Check leg start and end
+      let distance = window.google.maps.geometry.spherical.computeDistanceBetween(
         stationPos, leg.start_location
       );
-      const endDistance = window.google.maps.geometry.spherical.computeDistanceBetween(
+      if (distance <= 2000) return true;
+      
+      distance = window.google.maps.geometry.spherical.computeDistanceBetween(
         stationPos, leg.end_location
       );
+      if (distance <= 2000) return true;
       
-      minDistance = Math.min(minDistance, startDistance, endDistance);
-      
-      // Check every single step
+      // Check ALL steps without skipping any
       for (let j = 0; j < leg.steps.length; j++) {
         const step = leg.steps[j];
         
-        // Distance to step start and end
-        const stepStartDistance = window.google.maps.geometry.spherical.computeDistanceBetween(
+        // Check step start and end
+        distance = window.google.maps.geometry.spherical.computeDistanceBetween(
           stationPos, step.start_location
         );
-        const stepEndDistance = window.google.maps.geometry.spherical.computeDistanceBetween(
+        if (distance <= 2000) return true;
+        
+        distance = window.google.maps.geometry.spherical.computeDistanceBetween(
           stationPos, step.end_location
         );
-        
-        minDistance = Math.min(minDistance, stepStartDistance, stepEndDistance);
-        
-        // If step has a path (detailed route points), check those too
-        if (step.path && step.path.length > 0) {
-          for (let k = 0; k < step.path.length; k++) {
-            const pathDistance = window.google.maps.geometry.spherical.computeDistanceBetween(
-              stationPos, step.path[k]
-            );
-            minDistance = Math.min(minDistance, pathDistance);
-          }
-        }
-        
-        // Use interpolation between step points for more accuracy
-        if (j < leg.steps.length - 1) {
-          const currentStep = step;
-          const nextStep = leg.steps[j + 1];
-          
-          // Calculate 10 interpolated points between current and next step
-          for (let interp = 0; interp <= 10; interp++) {
-            const ratio = interp / 10;
-            const interpLat = currentStep.end_location.lat() + 
-              (nextStep.start_location.lat() - currentStep.end_location.lat()) * ratio;
-            const interpLng = currentStep.end_location.lng() + 
-              (nextStep.start_location.lng() - currentStep.end_location.lng()) * ratio;
-            
-            const interpPoint = new google.maps.LatLng(interpLat, interpLng);
-            const interpDistance = window.google.maps.geometry.spherical.computeDistanceBetween(
-              stationPos, interpPoint
-            );
-            minDistance = Math.min(minDistance, interpDistance);
-          }
-        }
+        if (distance <= 2000) return true;
       }
     }
     
-    // Station is near route if within 2km
-    return minDistance <= 2000;
-    
+    return false;
   }, [calculatedRoute]);
 
   // Find best station along route
