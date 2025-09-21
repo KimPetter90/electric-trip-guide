@@ -311,6 +311,7 @@ const GoogleRouteMap: React.FC<{
       }
       
       const result = data?.recommendedStation;
+      console.log('🎯 Optimization service returned:', result?.name, 'ID:', result?.id);
       if (result) {
         return result;
       }
