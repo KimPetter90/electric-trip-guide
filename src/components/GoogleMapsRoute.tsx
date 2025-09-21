@@ -198,18 +198,26 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
   useEffect(() => {
     const loadChargingStations = async () => {
       try {
-        console.log('🔌 Starter henting av ladestasjoner fra database...');
+        console.log('🔌 STARTER HENTING AV LADESTASJONER FRA DATABASE...');
         const { data, error } = await supabase
           .from('charging_stations')
           .select('*');
         
+        console.log('🔌 DATABASSE RESPONS:', { 
+          data: data ? `${data.length} stasjoner` : 'null', 
+          error: error ? error.message : 'ingen feil',
+          firstStation: data?.[0] ? data[0].name : 'ingen data'
+        });
+        
         if (error) {
-          console.error('Feil ved henting av ladestasjoner:', error);
+          console.error('❌ FEIL VED HENTING AV LADESTASJONER:', error);
           return;
         }
 
         if (data && data.length > 0) {
-          console.log(`✅ Hentet ${data.length} ladestasjoner fra database`);
+          console.log(`✅ HENTET ${data.length} LADESTASJONER FRA DATABASE`);
+          console.log('📊 FØRSTE 3 STASJONER:', data.slice(0, 3).map(s => s.name));
+          
           // Map database fields to our interface
           const mappedStations = data.map(station => ({
             id: station.id,
@@ -220,12 +228,15 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
             cost: station.cost,
             location: station.location
           }));
+          
+          console.log('🗂️ MAPPED STATIONS:', mappedStations.slice(0, 2));
           setChargingStations(mappedStations);
+          console.log('✅ CHARGING STATIONS STATE OPPDATERT');
         } else {
-          console.log('⚠️ Ingen ladestasjoner funnet i database');
+          console.log('⚠️ INGEN LADESTASJONER FUNNET I DATABASE');
         }
       } catch (err) {
-        console.error('Feil ved henting av ladestasjoner:', err);
+        console.error('💥 EXCEPTION VED HENTING AV LADESTASJONER:', err);
       }
     };
 
