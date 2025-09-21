@@ -336,7 +336,7 @@ function Index() {
         const cachedData = JSON.parse(cached);
         if (Date.now() - cachedData.timestamp < 300000) { // 5 min cache
           setRouteOptions(cachedData.routes);
-          setSelectedRouteId('fastest');
+          setSelectedRouteId(null);
           setLoadingRoutes(false);
           return;
         }
@@ -420,15 +420,7 @@ function Index() {
     setRouteOptions(mockRoutes);
     setLoadingRoutes(false);
     
-    // Automatisk velg raskeste rute og trigger kartberegning
-    console.log('🎯 Setting selected route to "fastest"');
-    setSelectedRouteId('fastest');
-    
-    // Trigger kartberegning direkte etter route selection
-    setTimeout(() => {
-      console.log('🗺️ Auto-triggering route calculation for fastest route');
-      setRouteTrigger(prev => prev + 1);
-    }, 100);
+    // La brukeren velge rute selv - ikke automatisk valg
     
     // Cache resultatet
     try {
