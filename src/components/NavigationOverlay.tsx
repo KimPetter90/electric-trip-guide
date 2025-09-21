@@ -14,6 +14,7 @@ interface NavigationOverlayProps {
   };
   onRouteDeviation?: (newFrom: string, to: string) => void;
   onLocationUpdate?: (location: LocationData) => void; // Ny prop for å sende posisjon til kartet
+  onNavigationStart?: (startLocation: LocationData) => void; // Ny prop for når navigasjon starter
 }
 
 interface LocationData {
@@ -28,7 +29,8 @@ interface LocationData {
 export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
   routeData,
   onRouteDeviation,
-  onLocationUpdate
+  onLocationUpdate,
+  onNavigationStart
 }) => {
   const [isTracking, setIsTracking] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<LocationData | null>(null);
@@ -189,6 +191,11 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
                 description: `Posisjon funnet med ${Math.round(position.coords.accuracy)}m nøyaktighet`,
                 duration: 3000,
               });
+              
+              // Umiddelbart send startposisjon til kartet for ruteoppdatering
+              console.log('🚀 Navigasjon startet - sender startposisjon til kart');
+              onNavigationStart?.(locationData);
+              onLocationUpdate?.(locationData);
               
               resolve();
             },

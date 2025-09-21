@@ -704,15 +704,22 @@ const GoogleRouteMap: React.FC<{
     // KUN beregn rute når routeTrigger er eksplisitt satt (ikke 0)
     if (routeTrigger > 0) {
       console.log('🎯 Route trigger changed to:', routeTrigger, 'for route:', selectedRouteId);
-      console.log('🛣️ KALLER CALCULATEROUTE fra useEffect - MANUELL TRIGGER');
-      calculateRoute();
+      
+      // Spesiell behandling for navigasjonsstart (trigger >= 10)
+      if (routeTrigger >= 10 && userLocation) {
+        console.log('🚀 NAVIGASJONSSTART - beregner rute fra brukerposisjon');
+        updateRemainingRoute(userLocation, routeData.to);
+      } else {
+        console.log('🛣️ KALLER CALCULATEROUTE fra useEffect - NORMAL TRIGGER');
+        calculateRoute();
+      }
     }
-  }, [calculateRoute, routeTrigger, selectedRouteId]);
+  }, [calculateRoute, routeTrigger, selectedRouteId, userLocation, routeData.to]);
 
-  // Lytt til brukerposisjon og oppdater ruten til å vise kun gjenværende del
+  // Lytt til brukerposisjon og oppdater ruten til å vise kun gjenværende del (kun under normal kjøring)
   useEffect(() => {
-    if (userLocation && mapInstanceRef.current && calculatedRoute && directionsRendererRef.current) {
-      console.log('🗺️ Oppdaterer rute basert på brukerposisjon:', userLocation);
+    if (userLocation && mapInstanceRef.current && calculatedRoute && directionsRendererRef.current && routeTrigger < 10) {
+      console.log('🗺️ Oppdaterer rute basert på brukerposisjon under kjøring:', userLocation);
       
       const userLatLng = new google.maps.LatLng(userLocation.latitude, userLocation.longitude);
       const route = calculatedRoute.routes[0];
@@ -734,12 +741,11 @@ const GoogleRouteMap: React.FC<{
         
         // Hvis brukeren er nær ruten (under 100m), oppdater ruten
         if (minDistance < 100) {
-          // Beregn ny rute fra brukerposisjon til destinasjon
           updateRemainingRoute(userLocation, routeData.to);
         }
       }
     }
-  }, [userLocation, calculatedRoute, routeData.to]);
+  }, [userLocation, calculatedRoute, routeData.to, routeTrigger]);
 
   // Funksjon for å oppdatere ruten til kun gjenværende del
   const updateRemainingRoute = async (currentPos: {latitude: number, longitude: number}, destination: string) => {

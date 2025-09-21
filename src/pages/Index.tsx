@@ -897,6 +897,18 @@ function Index() {
                         accuracy: location.accuracy
                       });
                     }}
+                    onNavigationStart={(startLocation) => {
+                      console.log('🚀 Navigasjon startet i Index - trigge ruteoppdatering');
+                      // Umiddelbart oppdater brukerposisjon
+                      setUserLocation({
+                        latitude: startLocation.latitude,
+                        longitude: startLocation.longitude,
+                        heading: startLocation.heading,
+                        accuracy: startLocation.accuracy
+                      });
+                      // Trigger en spesiell ruteoppdatering
+                      setRouteTrigger(prev => prev + 10); // Spesiell trigger for navigasjonsstart
+                    }}
                   />
 
                   {/* Mobile-specific loading indicator */}
