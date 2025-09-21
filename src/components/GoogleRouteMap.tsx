@@ -197,7 +197,7 @@ const GoogleRouteMap: React.FC<{
     initializeMap();
   }, []);
 
-  // Check if station is near route - PRESIST 3KM RADIUS
+  // Check if station is near route - MED DEBUGGING
   const isStationNearRoute = useCallback((station: ChargingStation): boolean => {
     if (!calculatedRoute || !window.google?.maps?.geometry) {
       return false;
@@ -205,6 +205,8 @@ const GoogleRouteMap: React.FC<{
 
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
+    let minDistance = Infinity;
+    let foundNearRoute = false;
     
     // Sjekk overview path med TET sampling og PRESIST 3km radius
     if (route.overview_path && route.overview_path.length > 0) {
@@ -213,38 +215,59 @@ const GoogleRouteMap: React.FC<{
         const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
           stationPos, pathPoint
         );
+        minDistance = Math.min(minDistance, distance);
+        
         // PRESIST 3km radius
-        if (distance <= 3000) return true;
-      }
-    }
-    
-    // Sjekk ALLE legs detaljert
-    for (const leg of route.legs) {
-      const startPos = new google.maps.LatLng(leg.start_location.lat(), leg.start_location.lng());
-      const endPos = new google.maps.LatLng(leg.end_location.lat(), leg.end_location.lng());
-      
-      const distanceToStart = window.google.maps.geometry.spherical.computeDistanceBetween(stationPos, startPos);
-      const distanceToEnd = window.google.maps.geometry.spherical.computeDistanceBetween(stationPos, endPos);
-      
-      // 3km radius til start/slutt av hvert leg
-      if (distanceToStart <= 3000 || distanceToEnd <= 3000) return true;
-      
-      // Sjekk ALLE steps i detalj
-      if (leg.steps) {
-        for (const step of leg.steps) {
-          const stepStart = new google.maps.LatLng(step.start_location.lat(), step.start_location.lng());
-          const stepEnd = new google.maps.LatLng(step.end_location.lat(), step.end_location.lng());
-          
-          const distanceToStepStart = window.google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
-          const distanceToStepEnd = window.google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
-          
-          // 3km radius til hvert step
-          if (distanceToStepStart <= 3000 || distanceToStepEnd <= 3000) return true;
+        if (distance <= 3000) {
+          foundNearRoute = true;
+          break;
         }
       }
     }
     
-    return false;
+    // Sjekk ALLE legs detaljert
+    if (!foundNearRoute) {
+      for (const leg of route.legs) {
+        const startPos = new google.maps.LatLng(leg.start_location.lat(), leg.start_location.lng());
+        const endPos = new google.maps.LatLng(leg.end_location.lat(), leg.end_location.lng());
+        
+        const distanceToStart = window.google.maps.geometry.spherical.computeDistanceBetween(stationPos, startPos);
+        const distanceToEnd = window.google.maps.geometry.spherical.computeDistanceBetween(stationPos, endPos);
+        
+        minDistance = Math.min(minDistance, distanceToStart, distanceToEnd);
+        
+        // 3km radius til start/slutt av hvert leg
+        if (distanceToStart <= 3000 || distanceToEnd <= 3000) {
+          foundNearRoute = true;
+          break;
+        }
+        
+        // Sjekk ALLE steps i detalj
+        if (leg.steps && !foundNearRoute) {
+          for (const step of leg.steps) {
+            const stepStart = new google.maps.LatLng(step.start_location.lat(), step.start_location.lng());
+            const stepEnd = new google.maps.LatLng(step.end_location.lat(), step.end_location.lng());
+            
+            const distanceToStepStart = window.google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
+            const distanceToStepEnd = window.google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
+            
+            minDistance = Math.min(minDistance, distanceToStepStart, distanceToStepEnd);
+            
+            // 3km radius til hvert step
+            if (distanceToStepStart <= 3000 || distanceToStepEnd <= 3000) {
+              foundNearRoute = true;
+              break;
+            }
+          }
+        }
+        if (foundNearRoute) break;
+      }
+    }
+    
+    // DEBUG LOGGING
+    console.log(`🔍 AVSTAND ${station.name} (${station.location}): ${Math.round(minDistance)}m - ${foundNearRoute ? 'RØD' : 'GRØNN'} markør`);
+    
+    return foundNearRoute;
   }, [calculatedRoute]);
 
   // Find best station along route using advanced optimization - CACHED
