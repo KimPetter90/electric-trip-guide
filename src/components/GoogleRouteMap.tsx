@@ -427,7 +427,10 @@ const GoogleRouteMap: React.FC<{
         });
       }
 
+      console.log('🗺️ Setting directions on renderer...', directionsRendererRef.current);
       directionsRendererRef.current.setDirections(result);
+      console.log('✅ Directions set successfully');
+      
       setCalculatedRoute(result);
 
       // Calculate trip analysis
