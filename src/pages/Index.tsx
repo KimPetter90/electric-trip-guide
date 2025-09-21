@@ -549,6 +549,7 @@ function Index() {
 
   // Enhanced route planning with proper loading states
   const handlePlanRoute = async () => {
+    console.log('🚀 PLANLEGG RUTE KNAPP TRYKKET!'); // Ny logging
     console.log('🔍 DEBUG: Planning route with:', {
       selectedCar: selectedCar?.brand + ' ' + selectedCar?.model,
       from: routeData.from,
