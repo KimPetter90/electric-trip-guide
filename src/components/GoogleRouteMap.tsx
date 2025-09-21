@@ -748,15 +748,19 @@ const GoogleRouteMap: React.FC<{
       
       // Start navigasjon
       if (routeTrigger >= 10 && userLocation) {
-        console.log('🚀 STARTER NAVIGASJON');
+        console.log('🚀 STARTER NAVIGASJON - trigger:', routeTrigger);
+        console.log('📍 Brukerposisjon:', userLocation);
+        console.log('🎯 Destinasjon:', routeData.to);
+        
         // Zoom til brukerposisjon
         if (mapInstanceRef.current) {
           mapInstanceRef.current.panTo({ lat: userLocation.latitude, lng: userLocation.longitude });
           setTimeout(() => {
-            mapInstanceRef.current!.setZoom(18); // Standard bilnavigasjon zoom
+            mapInstanceRef.current!.setZoom(18);
+            // Start ruteberegning etter zoom
+            updateRemainingRoute(userLocation, routeData.to);
           }, 500);
         }
-        updateRemainingRoute(userLocation, routeData.to);
       } else {
         calculateRoute();
       }
@@ -796,11 +800,33 @@ const GoogleRouteMap: React.FC<{
 
   // Funksjon for å oppdatere ruten til kun gjenværende del
   const updateRemainingRoute = async (currentPos: {latitude: number, longitude: number}, destination: string) => {
-    if (!mapInstanceRef.current || !directionsRendererRef.current) return;
+    if (!mapInstanceRef.current) return;
     
-    console.log('🔄 Oppdaterer rute fra nåværende posisjon til destinasjon');
+    console.log('🔄 Beregner navigasjonsrute fra posisjon til destinasjon:', {
+      from: currentPos,
+      to: destination
+    });
     
     const directionsService = new google.maps.DirectionsService();
+    
+    // Lag ny DirectionsRenderer for navigasjon
+    if (directionsRendererRef.current) {
+      directionsRendererRef.current.setMap(null);
+    }
+    
+    directionsRendererRef.current = new google.maps.DirectionsRenderer({
+      suppressMarkers: false,
+      polylineOptions: {
+        strokeColor: '#1976d2',
+        strokeWeight: 8,
+        strokeOpacity: 1.0
+      },
+      markerOptions: {
+        visible: true
+      }
+    });
+    
+    directionsRendererRef.current.setMap(mapInstanceRef.current);
     
     try {
       const result = await new Promise<google.maps.DirectionsResult>((resolve, reject) => {
@@ -814,19 +840,21 @@ const GoogleRouteMap: React.FC<{
           },
           (result, status) => {
             if (status === google.maps.DirectionsStatus.OK && result) {
+              console.log('✅ Navigasjonsrute beregnet');
               resolve(result);
             } else {
+              console.error('❌ Navigasjonsrute feilet:', status);
               reject(new Error(`Directions request failed: ${status}`));
             }
           }
         );
       });
       
-      // Oppdater ruten med kun gjenværende del
+      // Vis ruten
       directionsRendererRef.current.setDirections(result);
-      
-      // Oppdater den lagrede ruten
       setCalculatedRoute(result);
+      
+      console.log('✅ Navigasjonsrute vist på kart');
       
       console.log('✅ Rute oppdatert til gjenværende del');
       
