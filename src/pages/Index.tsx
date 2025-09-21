@@ -97,6 +97,14 @@ function Index() {
   const [mapError, setMapError] = useState<string | null>(null);
   const [chargingStations, setChargingStations] = useState<any[]>([]);
 
+  // Debug car selection changes
+  const handleCarSelect = useCallback((car: CarModel | null) => {
+    console.log('🚗 Car selected:', car ? `${car.brand} ${car.model}` : 'null');
+    console.log('🔋 Current battery before car change:', routeData.batteryPercentage);
+    setSelectedCar(car);
+    console.log('🔋 Current battery after car change:', routeData.batteryPercentage);
+  }, [routeData.batteryPercentage]);
+
   // Stable callback functions to prevent re-renders
   const handleChargingStationUpdate = useCallback((station: any, showButton: boolean, optimizedStations?: any[]) => {
     setCurrentChargingStation(station);
@@ -804,7 +812,7 @@ function Index() {
             <div>
               <CarSelector 
                 selectedCar={selectedCar}
-                onCarSelect={setSelectedCar}
+                onCarSelect={handleCarSelect}
               />
             </div>
             
