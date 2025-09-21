@@ -978,20 +978,9 @@ All colors MUST be HSL.
   background: transparent !important;
   border-radius: 12px !important;
   box-shadow: none !important;
-  pointer-events: auto !important;
 }
 
 .gm-style .gm-style-iw-d {
   background: transparent !important;
   overflow: visible !important;
-  pointer-events: auto !important;
-}
-
-.gm-style .gm-style-iw {
-  background: transparent !important;
-  pointer-events: auto !important;
-}
-
-.gm-style .gm-style-iw-t {
-  pointer-events: auto !important;
 }
