@@ -770,8 +770,8 @@ All colors MUST be HSL.
   padding: 16px;
   min-width: 280px;
   max-width: 320px;
-  box-shadow: 0 0 20px hsl(140 100% 50% / 0.2), 0 0 40px hsl(140 100% 50% / 0.1);
-  border: 1px solid hsl(140 100% 50% / 0.3);
+  box-shadow: 0 0 20px hsl(140 60% 40% / 0.3), 0 0 40px hsl(140 60% 40% / 0.1);
+  border: 1px solid hsl(140 60% 40% / 0.4);
   position: relative;
   color: hsl(var(--foreground));
   font-family: inherit;
@@ -784,7 +784,7 @@ All colors MUST be HSL.
   left: -1px;
   right: -1px;
   bottom: -1px;
-  background: linear-gradient(45deg, hsl(140 100% 50%), hsl(180 100% 50%), hsl(140 100% 50%));
+  background: linear-gradient(45deg, hsl(140 60% 40%), hsl(160 50% 35%), hsl(140 60% 40%));
   border-radius: inherit;
   z-index: -1;
   opacity: 0.3;
@@ -797,7 +797,7 @@ All colors MUST be HSL.
   align-items: flex-start;
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid hsl(140 100% 50% / 0.3);
+  border-bottom: 1px solid hsl(140 60% 40% / 0.3);
 }
 
 .popup-header.critical {
@@ -840,13 +840,13 @@ All colors MUST be HSL.
 }
 
 .status-dot.available {
-  background: hsl(140 100% 50%);
-  box-shadow: 0 0 10px hsl(140 100% 50%);
+  background: hsl(140 60% 45%);
+  box-shadow: 0 0 10px hsl(140 60% 45%);
 }
 
 .status-dot.busy {
-  background: hsl(0 100% 60%);
-  box-shadow: 0 0 10px hsl(0 100% 60%);
+  background: hsl(0 80% 55%);
+  box-shadow: 0 0 10px hsl(0 80% 55%);
 }
 
 .stats-grid {
