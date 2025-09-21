@@ -75,6 +75,7 @@ const GoogleRouteMap: React.FC<{
   const allMarkersRef = useRef<google.maps.Marker[]>([]);
   const chargingStationMarkersRef = useRef<google.maps.Marker[]>([]);
   const userLocationMarker = useRef<google.maps.Marker | null>(null);
+  const routeDistanceCache = useRef(new Map());
   const watchId = useRef<number | null>(null);
   
   const [isMapInitialized, setIsMapInitialized] = useState(false);
@@ -158,57 +159,43 @@ const GoogleRouteMap: React.FC<{
     initializeMap();
   }, []);
 
-  // Check if station is near route - IMPROVED ALGORITHM
+  // Check if station is near route - OPTIMIZED VERSION
   const isStationNearRoute = useCallback((station: ChargingStation): boolean => {
     if (!calculatedRoute || !window.google?.maps?.geometry) {
       return false;
     }
-    
+
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
-    // Check against ALL points along the route more thoroughly
-    for (const leg of route.legs) {
-      for (const step of leg.steps) {
-        // Check start and end points
-        let distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+    // Optimize by checking fewer points and caching results
+    const cacheKey = `${station.id}-${route.summary}`;
+    if (routeDistanceCache.current.has(cacheKey)) {
+      return routeDistanceCache.current.get(cacheKey);
+    }
+    
+    
+    // Sample fewer points for better performance
+    for (let i = 0; i < route.legs.length; i += 2) { // Check every 2nd leg
+      const leg = route.legs[i];
+      for (let j = 0; j < leg.steps.length; j += 3) { // Check every 3rd step
+        const step = leg.steps[j];
+        
+        const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
           stationPos,
           step.start_location
         );
         
         if (distance <= 2000) { // 2km radius
-          console.log(`🔴 Station ${station.name} is ${Math.round(distance)}m from route (start)`);
+          routeDistanceCache.current.set(cacheKey, true);
           return true;
-        }
-        
-        distance = window.google.maps.geometry.spherical.computeDistanceBetween(
-          stationPos,
-          step.end_location
-        );
-        
-        if (distance <= 2000) { // 2km radius
-          console.log(`🔴 Station ${station.name} is ${Math.round(distance)}m from route (end)`);
-          return true;
-        }
-        
-        // Check intermediate points if available
-        if (step.path && step.path.length > 2) {
-          for (const point of step.path) {
-            distance = window.google.maps.geometry.spherical.computeDistanceBetween(
-              stationPos,
-              point
-            );
-            
-            if (distance <= 2000) { // 2km radius
-              console.log(`🔴 Station ${station.name} is ${Math.round(distance)}m from route (path)`);
-              return true;
-            }
-          }
         }
       }
     }
     
+    routeDistanceCache.current.set(cacheKey, false);
     return false;
+    
   }, [calculatedRoute]);
 
   // Find best station along route
@@ -243,6 +230,9 @@ const GoogleRouteMap: React.FC<{
     }
 
     console.log(`🔌 Legger til ${chargingStations.length} ladestasjoner på kartet`);
+    
+    // Clear distance cache when recalculating
+    routeDistanceCache.current.clear();
 
     // Clear existing charging station markers
     chargingStationMarkersRef.current.forEach(marker => marker.setMap(null));
