@@ -403,13 +403,22 @@ const GoogleRouteMap: React.FC<{
 
   // Calculate route when trigger changes
   const calculateRoute = useCallback(async () => {
+    console.log('🛣️ STARTING ROUTE CALCULATION', {
+      hasMap: !!mapInstanceRef.current,
+      from: routeData.from,
+      to: routeData.to,
+      via: routeData.via
+    });
+
     if (!mapInstanceRef.current || !routeData.from || !routeData.to) {
+      console.log('❌ Missing requirements for route calculation');
       return;
     }
 
     try {
       onLoadingChange(true);
       onError(null);
+      console.log('📍 Creating DirectionsService...');
 
       const directionsService = new google.maps.DirectionsService();
       
@@ -426,9 +435,12 @@ const GoogleRouteMap: React.FC<{
         avoidTolls: false
       };
 
+      console.log('🚗 Making directions request...', request);
       const result = await directionsService.route(request);
+      console.log('✅ Route calculated successfully', result);
       
       if (!directionsRendererRef.current) {
+        console.log('🎨 Creating new DirectionsRenderer...');
         directionsRendererRef.current = new google.maps.DirectionsRenderer({
           suppressMarkers: false,
           polylineOptions: {
@@ -439,10 +451,13 @@ const GoogleRouteMap: React.FC<{
           }
         });
         directionsRendererRef.current.setMap(mapInstanceRef.current);
+        console.log('✅ DirectionsRenderer created and set to map');
       }
 
+      console.log('🎯 Setting directions on renderer...');
       directionsRendererRef.current.setDirections(result);
       setCalculatedRoute(result);
+      console.log('✅ Route set successfully');
 
       // Calculate trip analysis
       const totalDistance = result.routes[0].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0) / 1000;
@@ -458,12 +473,14 @@ const GoogleRouteMap: React.FC<{
       };
 
       onRouteCalculated(analysis);
+      console.log('📊 Trip analysis completed', analysis);
 
     } catch (error: any) {
       console.error('❌ Route calculation failed:', error);
       onError(`Ruteberegning feilet: ${error.message}`);
     } finally {
       onLoadingChange(false);
+      console.log('🏁 Route calculation finished');
     }
   }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, onRouteCalculated, onLoadingChange, onError]);
 
