@@ -307,6 +307,42 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
     onRouteChange(newData);
   };
 
+  // Funksjon for å beregne anbefalt avreisertid
+  const calculateDepartureTime = (arrivalTime: Date): string => {
+    // Estimert reisetid basert på rute (kan utvides med faktisk ruteberegning)
+    let estimatedTravelMinutes = 180; // Standard 3 timer
+    
+    // Juster basert på fra/til distanse (grov estimering)
+    if (routeData.from && routeData.to) {
+      const fromLower = routeData.from.toLowerCase();
+      const toLower = routeData.to.toLowerCase();
+      
+      // Grov distanse-estimering basert på kjente ruter
+      if ((fromLower.includes('oslo') && toLower.includes('bergen')) || 
+          (fromLower.includes('bergen') && toLower.includes('oslo'))) {
+        estimatedTravelMinutes = 480; // 8 timer
+      } else if ((fromLower.includes('oslo') && toLower.includes('stavanger')) ||
+                 (fromLower.includes('stavanger') && toLower.includes('oslo'))) {
+        estimatedTravelMinutes = 420; // 7 timer
+      } else if ((fromLower.includes('oslo') && toLower.includes('trondheim')) ||
+                 (fromLower.includes('trondheim') && toLower.includes('oslo'))) {
+        estimatedTravelMinutes = 360; // 6 timer
+      }
+    }
+    
+    // Legg til buffer for ferjer og trafikk
+    const ferryBufferMinutes = 45; // Buffer for ferjetider
+    const trafficBufferMinutes = 30; // Buffer for trafikk
+    const chargingBufferMinutes = routeData.batteryPercentage < 50 ? 60 : 20; // Buffer for lading
+    
+    const totalTravelMinutes = estimatedTravelMinutes + ferryBufferMinutes + trafficBufferMinutes + chargingBufferMinutes;
+    
+    // Beregn avreisertid
+    const departureTime = new Date(arrivalTime.getTime() - (totalTravelMinutes * 60 * 1000));
+    
+    return format(departureTime, "dd.MM 'kl.' HH:mm");
+  };
+
   return (
     <Card className="p-6 bg-card/80 backdrop-blur-sm border-border shadow-lg">
       <div className="flex items-center gap-2 mb-4">
@@ -460,7 +496,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
         <div className="space-y-2">
           <Label className="flex items-center gap-2">
             <Clock className="h-3 w-3" />
-            Ønsket ankomsttid
+            Ønsket ankomsttid (valgfritt)
           </Label>
           <Popover open={arrivalCalendarOpen} onOpenChange={setArrivalCalendarOpen}>
             <PopoverTrigger asChild>
@@ -558,9 +594,14 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
           </Popover>
           
           {routeData.arrivalTime && (
-            <Badge variant="outline" className="text-xs">
-              Ønsket ankomst: {format(routeData.arrivalTime, "dd.MM.yyyy 'kl.' HH:mm")}
-            </Badge>
+            <div className="space-y-1">
+              <Badge variant="outline" className="text-xs">
+                Ønsket ankomst: {format(routeData.arrivalTime, "dd.MM.yyyy 'kl.' HH:mm")}
+              </Badge>
+              <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                💡 Anbefalt avreise: {calculateDepartureTime(routeData.arrivalTime)}
+              </Badge>
+            </div>
           )}
         </div>
 
