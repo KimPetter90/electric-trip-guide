@@ -418,10 +418,8 @@ function Index() {
     setRouteOptions(mockRoutes);
     setLoadingRoutes(false);
     
-    // Automatisk velg raskeste rute (men ikke trigger på nytt siden det gjøres i handleRouteSelect)
+    // Automatisk velg raskeste rute
     setSelectedRouteId('fastest');
-    // Trigger route calculation for første gang
-    setRouteTrigger(prev => prev + 1);
     
     // Cache resultatet
     try {
