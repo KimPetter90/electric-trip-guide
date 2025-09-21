@@ -790,6 +790,32 @@ All colors MUST be HSL.
   opacity: 0.3 !important;
 }
 
+.popup-close-btn {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  width: 24px !important;
+  height: 24px !important;
+  background: hsl(0 0% 0% / 0.8) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 16px !important;
+  font-weight: bold !important;
+  line-height: 1 !important;
+  z-index: 10 !important;
+  transition: all 0.2s ease !important;
+}
+
+.popup-close-btn:hover {
+  background: hsl(0 0% 0% / 1) !important;
+  transform: scale(1.1) !important;
+}
+
 .popup-header {
   display: flex;
   justify-content: space-between;

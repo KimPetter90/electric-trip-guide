@@ -465,6 +465,7 @@ const GoogleRouteMap: React.FC<{
         const infoWindow = new google.maps.InfoWindow({
           content: `
             <div class="charging-station-popup">
+              <div class="popup-close-btn" id="close-btn-${station.id}">×</div>
               <div class="popup-header ${isRecommendedAlongRoute ? 'critical' : ''}">
                 <h3>${station.name}</h3>
                 ${isRecommendedAlongRoute ? '<div class="optimal-badge">⭐ OPTIMALISERT ANBEFALING</div>' : ''}
@@ -510,6 +511,16 @@ const GoogleRouteMap: React.FC<{
 
         marker.addListener('click', () => {
           infoWindow.open(mapInstanceRef.current, marker);
+          
+          // Add close button functionality after the InfoWindow opens
+          setTimeout(() => {
+            const closeBtn = document.getElementById(`close-btn-${station.id}`);
+            if (closeBtn) {
+              closeBtn.addEventListener('click', () => {
+                infoWindow.close();
+              });
+            }
+          }, 100);
         });
 
         chargingStationMarkersRef.current.push(marker);
