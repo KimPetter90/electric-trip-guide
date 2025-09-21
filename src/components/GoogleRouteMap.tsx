@@ -234,6 +234,13 @@ const GoogleRouteMap: React.FC<{
     // Find all stations near the route (optimized)
     const stationsNearRoute = chargingStations.filter(station => isStationNearRoute(station));
     
+    console.log('🗺️ Route and station analysis:', {
+      totalStations: chargingStations.length,
+      stationsNearRoute: stationsNearRoute.length,
+      nearRouteStations: stationsNearRoute.map(s => `${s.name} (${s.location})`),
+      routeLegs: calculatedRoute?.routes[0]?.legs?.map(leg => `${leg.start_address} → ${leg.end_address}`)
+    });
+    
     if (stationsNearRoute.length === 0) return null;
     
     // Skip optimization service if route is short to improve performance

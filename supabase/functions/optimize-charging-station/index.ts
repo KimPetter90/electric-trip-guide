@@ -168,8 +168,9 @@ function calculateStationScore(
   const costScore = Math.max(0, 15 - (station.cost - 3) * 3);
   score += costScore;
   
-  // Avstand langs rute (20% av score)
-  const distanceScore = Math.max(0, 20 - (distanceToStation / 1000) * 5);
+  // Avstand langs rute (20% av score) - favoriser stasjoner nærmere ruten
+  const maxReasonableDistance = 200; // km
+  const distanceScore = Math.max(0, 20 - (distanceToStation / maxReasonableDistance) * 20);
   score += distanceScore;
   
   // Kritisk stasjon bonus hvis batteri er lavt
@@ -238,7 +239,8 @@ serve(async (req) => {
       routeDistance,
       needsCharging: adjustedCurrentRange < (routeDistance * 1.2)
     });
-    
+    console.log('🚦 Charging is needed, analyzing stations...');
+    console.log('📍 Available stations:', stations.map(s => `${s.name} (${s.location})`));
     // If we have 20% safety margin beyond route distance, no charging needed
     const safetyMargin = 1.2; // 20% safety margin
     if (adjustedCurrentRange >= (routeDistance * safetyMargin)) {
@@ -260,8 +262,47 @@ serve(async (req) => {
     
     // Beregn score for hver stasjon
     const stationsWithScores = stations.map(station => {
-      // Simuler avstand til stasjon (i en ekte implementering ville vi beregne faktisk avstand langs rute)
-      const distanceToStation = Math.random() * 5000 + 1000; // 1-6 km fra rute
+      // Simuler avstand til stasjon basert på geografisk plassering
+      const stationLat = parseFloat(station.latitude.toString());
+      const stationLon = parseFloat(station.longitude.toString());
+      
+      // Enkel geografisk avstand fra startpunkt som proxy for rute-avstand
+      const fromCoords = routeData.from || '';
+      let distanceFromStart = 1000; // Default fallback
+      
+      // Geografiske koordinater for kjente steder (demo data)
+      const knownLocations: { [key: string]: { lat: number, lon: number } } = {
+        'oslo': { lat: 59.9139, lon: 10.7522 },
+        'trondheim': { lat: 63.4305, lon: 10.3951 },
+        'bergen': { lat: 60.3913, lon: 5.3221 },
+        'ålesund': { lat: 62.4722, lon: 6.1549 },
+        'dombås': { lat: 62.0767, lon: 9.1181 },
+        'lillehammer': { lat: 61.1161, lon: 10.4669 }
+      };
+      
+      // Finn nærmeste kjente lokasjon fra start
+      const fromLower = fromCoords.toLowerCase();
+      let fromLat = 59.9139, fromLon = 10.7522; // Default Oslo
+      
+      for (const [place, coords] of Object.entries(knownLocations)) {
+        if (fromLower.includes(place)) {
+          fromLat = coords.lat;
+          fromLon = coords.lon;
+          break;
+        }
+      }
+      
+      // Beregn avstand fra start til stasjon (Haversine formula)
+      const R = 6371; // Earth's radius in km
+      const dLat = (stationLat - fromLat) * Math.PI / 180;
+      const dLon = (stationLon - fromLon) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(fromLat * Math.PI / 180) * Math.cos(stationLat * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      distanceFromStart = R * c;
+      
+      console.log(`📍 Station ${station.name}: ${distanceFromStart.toFixed(0)}km from start`);
       
       const score = calculateStationScore(
         station,
@@ -269,13 +310,14 @@ serve(async (req) => {
         carData,
         weather,
         requiredRange,
-        distanceToStation
+        distanceFromStart
       );
       
       return {
         ...station,
         optimizationScore: score,
-        distanceFromRoute: distanceToStation,
+        distanceFromRoute: distanceFromStart,
+        distanceFromStart: distanceFromStart,
         weatherImpact,
         trailerImpact
       };
