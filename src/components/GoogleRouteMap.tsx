@@ -197,7 +197,7 @@ const GoogleRouteMap: React.FC<{
     initializeMap();
   }, []);
 
-  // Check if station is near route - UTVIDET FOR Å FANGE ALLE STASJONER LANGS RUTEN
+  // Check if station is near route - KRAFTIG UTVIDET FOR Å FANGE ALLE STASJONER
   const isStationNearRoute = useCallback((station: ChargingStation): boolean => {
     if (!calculatedRoute || !window.google?.maps?.geometry) {
       return false;
@@ -206,19 +206,30 @@ const GoogleRouteMap: React.FC<{
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
-    // Sjekk ALLE legs av ruten for å sikre at vi fanger alle stasjoner langs ruten
+    // 1. Sjekk overview path med TET sampling og STØRRE radius
+    if (route.overview_path && route.overview_path.length > 0) {
+      for (let i = 0; i < route.overview_path.length; i++) {
+        const pathPoint = route.overview_path[i];
+        const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+          stationPos, pathPoint
+        );
+        // Økt til 10km radius for å sikre at vi fanger ALLE stasjoner langs ruten
+        if (distance <= 10000) return true;
+      }
+    }
+    
+    // 2. Sjekk ALLE legs detaljert
     for (const leg of route.legs) {
-      // Sjekk avstand til start og slutt av hvert leg
       const startPos = new google.maps.LatLng(leg.start_location.lat(), leg.start_location.lng());
       const endPos = new google.maps.LatLng(leg.end_location.lat(), leg.end_location.lng());
       
       const distanceToStart = window.google.maps.geometry.spherical.computeDistanceBetween(stationPos, startPos);
       const distanceToEnd = window.google.maps.geometry.spherical.computeDistanceBetween(stationPos, endPos);
       
-      // Hvis stasjonen er nær start eller slutt av noen del av ruten
-      if (distanceToStart <= 5000 || distanceToEnd <= 5000) return true;
+      // 15km radius til start/slutt av hvert leg
+      if (distanceToStart <= 15000 || distanceToEnd <= 15000) return true;
       
-      // Sjekk også langs hele ruten med tettere sampling
+      // 3. Sjekk ALLE steps i detalj
       if (leg.steps) {
         for (const step of leg.steps) {
           const stepStart = new google.maps.LatLng(step.start_location.lat(), step.start_location.lng());
@@ -227,7 +238,8 @@ const GoogleRouteMap: React.FC<{
           const distanceToStepStart = window.google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepStart);
           const distanceToStepEnd = window.google.maps.geometry.spherical.computeDistanceBetween(stationPos, stepEnd);
           
-          if (distanceToStepStart <= 5000 || distanceToStepEnd <= 5000) return true;
+          // 8km radius til hvert step
+          if (distanceToStepStart <= 8000 || distanceToStepEnd <= 8000) return true;
         }
       }
     }
