@@ -289,23 +289,18 @@ const GoogleRouteMap: React.FC<{
     return bestStation || stationsNearRoute[0];
   };
 
-  // Add charging station markers - only show before route is calculated
+  // Add charging station markers - always visible
   useEffect(() => {
     if (!mapInstanceRef.current || !chargingStations || chargingStations.length === 0) {
       return;
     }
     
+    // Clear distance cache when recalculating
+    routeDistanceCache.current.clear();
+
     // Clear existing charging station markers
     chargingStationMarkersRef.current.forEach(marker => marker.setMap(null));
     chargingStationMarkersRef.current = [];
-
-    // Only show charging stations if no route is calculated yet
-    if (calculatedRoute) {
-      return; // Don't show charging stations when route exists
-    }
-    
-    // Clear distance cache when recalculating
-    routeDistanceCache.current.clear();
 
     // Find best station along route (async)
     let bestStationAlongRoute: ChargingStation | null = null;
