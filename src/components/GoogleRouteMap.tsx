@@ -302,17 +302,26 @@ const GoogleRouteMap: React.FC<{
     }
   }, [calculatedRoute, chargingStations, isStationNearRoute, selectedCar, routeData]);
   
-  // Simple fallback logic
+  // Simple fallback logic - prioriterer stasjoner langs ruten
   const getSimpleBestStation = (stationsNearRoute: ChargingStation[]): ChargingStation | null => {
-    const bestStation = stationsNearRoute
-      .filter(s => s.fast_charger) // Only fast charging
+    // Først prøv hurtigladere med god tilgjengelighet
+    const fastChargersWithAvailability = stationsNearRoute
+      .filter(s => s.fast_charger && (s.available / s.total) > 0.3)
       .sort((a, b) => {
         const availabilityA = a.available / a.total;
         const availabilityB = b.available / b.total;
-        return availabilityB - availabilityA; // Highest availability first
-      })[0];
+        return availabilityB - availabilityA; // Høyest tilgjengelighet først
+      });
     
-    return bestStation || stationsNearRoute[0];
+    if (fastChargersWithAvailability.length > 0) {
+      return fastChargersWithAvailability[0];
+    }
+    
+    // Fallback til beste tilgjengelige stasjon
+    const bestAvailable = stationsNearRoute
+      .sort((a, b) => (b.available / b.total) - (a.available / a.total))[0];
+    
+    return bestAvailable || stationsNearRoute[0];
   };
 
   // Add charging station markers - SHOW IMMEDIATELY WHEN MAP LOADS

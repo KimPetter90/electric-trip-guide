@@ -168,10 +168,15 @@ function calculateStationScore(
   const costScore = Math.max(0, 15 - (station.cost - 3) * 3);
   score += costScore;
   
-  // Avstand langs rute (20% av score) - favoriser stasjoner nærmere ruten
-  const maxReasonableDistance = 200; // km
-  const distanceScore = Math.max(0, 20 - (distanceToStation / maxReasonableDistance) * 20);
+  // Avstand langs rute (30% av score) - sterkt favoriser stasjoner nærmere ruten
+  const maxReasonableDistance = 100; // km - redusert for å favorisere nærliggende stasjoner
+  const distanceScore = Math.max(0, 30 - (distanceToStation / maxReasonableDistance) * 30);
   score += distanceScore;
+  
+  // Ekstra straff for stasjoner veldig langt unna ruten
+  if (distanceToStation > 150) {
+    score -= 20; // Stor straff for stasjoner langt fra ruten
+  }
   
   // Kritisk stasjon bonus hvis batteri er lavt
   if (routeData.batteryPercentage < 30 && distanceToStation < requiredRange * 1000 * 0.8) {
@@ -329,11 +334,26 @@ serve(async (req) => {
       };
     });
     
-    // Sorter etter score
-    const sortedStations = stationsWithScores.sort((a, b) => b.optimizationScore - a.optimizationScore);
+    // Sorter etter score og filtrer ut stasjoner som er for langt unna
+    const filteredStations = stationsWithScores.filter(station => station.distanceFromRoute < 200); // Max 200km fra ruten
+    const sortedStations = filteredStations.sort((a, b) => b.optimizationScore - a.optimizationScore);
+    
+    if (sortedStations.length === 0) {
+      console.log('❌ No suitable stations found within reasonable distance');
+      return new Response(JSON.stringify({
+        recommendedStation: null,
+        analysis: {
+          chargingNeeded: true,
+          error: 'Ingen passende ladestasjoner funnet langs ruten'
+        },
+        totalStationsAnalyzed: stations.length
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     const recommendedStation = sortedStations[0];
     
-    console.log(`🏆 Best station: ${recommendedStation.name} (Score: ${recommendedStation.optimizationScore.toFixed(1)})`);
+    console.log(`🏆 Best station: ${recommendedStation.name} (Score: ${recommendedStation.optimizationScore.toFixed(1)}, Distance: ${recommendedStation.distanceFromRoute.toFixed(0)}km from route)`);
     
     const analysis = {
       weatherConditions: {
