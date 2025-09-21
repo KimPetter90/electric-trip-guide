@@ -158,7 +158,7 @@ const GoogleRouteMap: React.FC<{
     initializeMap();
   }, []);
 
-  // Check if station is near route
+  // Check if station is near route - IMPROVED ALGORITHM
   const isStationNearRoute = useCallback((station: ChargingStation): boolean => {
     if (!calculatedRoute || !window.google?.maps?.geometry) {
       return false;
@@ -167,15 +167,43 @@ const GoogleRouteMap: React.FC<{
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
+    // Check against ALL points along the route more thoroughly
     for (const leg of route.legs) {
       for (const step of leg.steps) {
-        const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+        // Check start and end points
+        let distance = window.google.maps.geometry.spherical.computeDistanceBetween(
           stationPos,
           step.start_location
         );
         
         if (distance <= 2000) { // 2km radius
+          console.log(`🔴 Station ${station.name} is ${Math.round(distance)}m from route (start)`);
           return true;
+        }
+        
+        distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+          stationPos,
+          step.end_location
+        );
+        
+        if (distance <= 2000) { // 2km radius
+          console.log(`🔴 Station ${station.name} is ${Math.round(distance)}m from route (end)`);
+          return true;
+        }
+        
+        // Check intermediate points if available
+        if (step.path && step.path.length > 2) {
+          for (const point of step.path) {
+            distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+              stationPos,
+              point
+            );
+            
+            if (distance <= 2000) { // 2km radius
+              console.log(`🔴 Station ${station.name} is ${Math.round(distance)}m from route (path)`);
+              return true;
+            }
+          }
         }
       }
     }
