@@ -142,6 +142,7 @@ const GoogleRouteMap: React.FC<{
         mapInstanceRef.current.setMapTypeId(google.maps.MapTypeId.ROADMAP);
         mapInstanceRef.current.setTilt(0); // Flatt 2D-perspektiv
         mapInstanceRef.current.setHeading(0); // Null rotasjon
+        mapInstanceRef.current.setZoom(18); // Zoom helt inn for navigasjon
         
         // Skjul kontroller for navigasjonsvisning
         mapInstanceRef.current.setOptions({
