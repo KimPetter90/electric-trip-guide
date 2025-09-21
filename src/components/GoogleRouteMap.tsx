@@ -467,9 +467,10 @@ const GoogleRouteMap: React.FC<{
     }
   }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, onRouteCalculated, onLoadingChange, onError]);
 
-  useEffect(() => {
-    calculateRoute();
-  }, [calculateRoute, routeTrigger]);
+  // Remove automatic route calculation - only calculate when user clicks "planlegg rute"
+  // useEffect(() => {
+  //   calculateRoute();
+  // }, [calculateRoute, routeTrigger]);
 
   // Cleanup on unmount
   useEffect(() => {
