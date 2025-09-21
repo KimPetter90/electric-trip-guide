@@ -511,9 +511,7 @@ const GoogleRouteMap: React.FC<{
   }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, selectedRouteId, onRouteCalculated, onLoadingChange, onError]);
 
   useEffect(() => {
-    if (routeTrigger > 0) {
-      calculateRoute();
-    }
+    calculateRoute();
   }, [calculateRoute, routeTrigger, selectedRouteId]);
 
   // Cleanup on unmount
