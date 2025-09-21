@@ -134,13 +134,13 @@ const GoogleRouteMap: React.FC<{
     if (mapInstanceRef.current) {
       console.log('🗺️ Oppdaterer kartsenter til:', center, 'zoom:', zoom, 'navigationMode:', navigationMode);
       
-      // Sett kartet til 3D+ modus når navigasjon er aktiv
+      // Sett kartet til 3D-modus når navigasjon er aktiv
       if (navigationMode) {
-        console.log('🗺️ Aktiverer 3D+ modus for navigasjon');
-        mapInstanceRef.current.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+        console.log('🗺️ Aktiverer 3D-modus for navigasjon');
+        mapInstanceRef.current.setMapTypeId(google.maps.MapTypeId.SATELLITE);
         mapInstanceRef.current.setCenter(center);
-        mapInstanceRef.current.setZoom(22); // Maksimal zoom for 3D+ visning
-        mapInstanceRef.current.setTilt(60); // Høy 3D-perspektiv vinkel
+        mapInstanceRef.current.setZoom(21); // Høy zoom for 3D visning
+        mapInstanceRef.current.setTilt(67.5); // Maksimal tilt for 3D-effekt
         mapInstanceRef.current.setHeading(0); // Null rotasjon
         
         // Skjul kontroller for navigasjonsvisning
