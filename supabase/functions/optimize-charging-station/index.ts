@@ -223,6 +223,30 @@ serve(async (req) => {
       currentBatteryRange: (carData.range * routeData.batteryPercentage) / 100
     });
     
+    // CRITICAL: Check if charging is actually needed
+    const currentRange = (carData.range * routeData.batteryPercentage) / 100;
+    const adjustedCurrentRange = currentRange / (weatherImpact * trailerImpact);
+    const routeDistance = routeData.totalDistance || 0;
+    
+    // If we have 20% safety margin beyond route distance, no charging needed
+    const safetyMargin = 1.2; // 20% safety margin
+    if (adjustedCurrentRange >= (routeDistance * safetyMargin)) {
+      console.log('✅ No charging needed! Current range sufficient for route');
+      return new Response(JSON.stringify({
+        recommendedStation: null,
+        analysis: {
+          chargingNeeded: false,
+          currentRange: adjustedCurrentRange,
+          routeDistance: routeDistance,
+          safetyMargin: (adjustedCurrentRange / routeDistance).toFixed(1) + 'x',
+          message: `Du har ${routeData.batteryPercentage}% batteri som gir deg ${adjustedCurrentRange.toFixed(0)} km rekkevidde. Ruten er ${routeDistance.toFixed(0)} km, så ingen lading er nødvendig.`
+        },
+        totalStationsAnalyzed: stations.length
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
     // Beregn score for hver stasjon
     const stationsWithScores = stations.map(station => {
       // Simuler avstand til stasjon (i en ekte implementering ville vi beregne faktisk avstand langs rute)

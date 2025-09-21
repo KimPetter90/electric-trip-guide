@@ -312,6 +312,13 @@ const GoogleRouteMap: React.FC<{
       
       const result = data?.recommendedStation;
       console.log('🎯 Optimization service returned:', result?.name, 'ID:', result?.id);
+      
+      // Check if charging is not needed
+      if (data?.analysis?.chargingNeeded === false) {
+        console.log('✅ No charging needed for this route:', data.analysis.message);
+        return null; // No charging station recommended
+      }
+      
       if (result) {
         return result;
       }
