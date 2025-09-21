@@ -841,6 +841,17 @@ function Index() {
             <NavigationTracker
               isVisible={showNavigationTracker}
               onToggle={() => setShowNavigationTracker(!showNavigationTracker)}
+              routeData={routeData}
+              onRouteDeviation={(newFrom, to) => {
+                // Update route data with new starting point
+                setRouteData(prev => ({ ...prev, from: newFrom, to }));
+                // Trigger route recalculation
+                setRouteTrigger(prev => prev + 1);
+                toast({
+                  title: "Ny rute beregnes",
+                  description: `Omruter fra din nåværende posisjon til ${to}`,
+                });
+              }}
             />
 
           </section>
