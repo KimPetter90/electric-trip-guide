@@ -416,8 +416,9 @@ const GoogleRouteMap: React.FC<{
           suppressMarkers: false,
           polylineOptions: {
             strokeColor: '#2563eb',
-            strokeWeight: 4,
-            strokeOpacity: 0.8
+            strokeWeight: 6,
+            strokeOpacity: 0.9,
+            zIndex: 1000
           }
         });
         directionsRendererRef.current.setMap(mapInstanceRef.current);
