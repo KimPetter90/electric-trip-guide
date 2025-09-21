@@ -716,56 +716,109 @@ const GoogleRouteMap: React.FC<{
           const totalTimeInSeconds = result.routes[0].legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0);
           let totalTime = totalTimeInSeconds / 60; // Konverter til minutter
           
-          // SJEKK RUTE FØRST FOR DEBUG
-          console.log('🔍 RUTE DEBUG:', {
-            from: routeData.from,
-            to: routeData.to,
-            fromLower: routeData.from.toLowerCase(),
-            toLower: routeData.to.toLowerCase(),
-            shouldOverride: (routeData.from.toLowerCase().includes('ålesund') && routeData.to.toLowerCase().includes('kvalsvik')) ||
-                           (routeData.from.toLowerCase().includes('kvalsvik') && routeData.to.toLowerCase().includes('ålesund'))
-          });
-          
-          // FIKSER ÅLESUND-KVALSVIK TIDSBEREGNING MED FERJE OG TRAFIKK
+          // REALISTISK TIDSBEREGNING FOR ALLE NORSKE RUTER
           const fromLower = routeData.from.toLowerCase();
           const toLower = routeData.to.toLowerCase();
           
-          // Hvis Google Maps gir feil tid for Ålesund-Kvalsvik, overstyr med realistisk tid
+          // Base faktorer for alle ruter
+          let realisticTime = totalTime;
+          let ferryTime = 0;
+          let trafficBuffer = 0;
+          let weatherBuffer = 0;
+          let routeBuffer = 0;
+
+          // Spesifikke ruter med ferjer og utfordringer
           if ((fromLower.includes('ålesund') && toLower.includes('kvalsvik')) ||
-              (fromLower.includes('kvalsvik') && toLower.includes('ålesund'))) {
-            
-            // REALISTISK BEREGNING (mer konservativ):
-            // - Ålesund til Sulesund ferjekai: ~20 min (med trafikk)
-            // - Venting på ferje: ~15 min (gjennomsnitt + sikkerhet)
-            // - Ferjeoverfart Sulesund-Hareid: 25 min
-            // - Hareid til Kvalsvik: ~45 min (med lokaltrafikk)
-            // - Buffer for uforutsett: ~10 min
-            // TOTALT: ca 115 minutter (1t 55min)
-            
-            const realisticTime = 115; // 1t 55min - mer realistisk
-            console.log('🚢 OVERSTYRER med realistisk Ålesund-Kvalsvik tid:', {
-              googleMapsTime: `${Math.floor(totalTime / 60)}t ${Math.round(totalTime % 60)}min`,
-              realisticTimeFormatted: `${Math.floor(realisticTime / 60)}t ${Math.round(realisticTime % 60)}min`,
-              distance: `${totalDistance.toFixed(1)}km`,
-              breakdown: {
-                drivingToFerry: '20min',
-                waitingForFerry: '15min', 
-                ferryTime: '25min',
-                drivingFromFerry: '45min',
-                buffer: '10min',
-                total: '115min'
-              }
-            });
-            totalTime = realisticTime;
+              (fromLower.includes('kvalsvik') && fromLower.includes('ålesund'))) {
+            realisticTime = 115; // 1t 55min med ferje og alt
           }
+          // Bergen-Stavanger (kan ha ferje)
+          else if ((fromLower.includes('bergen') && toLower.includes('stavanger')) ||
+                   (fromLower.includes('stavanger') && toLower.includes('bergen'))) {
+            ferryTime = 25;
+            trafficBuffer = 20;
+            weatherBuffer = 15;
+            routeBuffer = 10;
+            realisticTime = totalTime + ferryTime + trafficBuffer + weatherBuffer + routeBuffer;
+          }
+          // Bergen-Ålesund/Molde (fjellvei + mulig ferje)
+          else if ((fromLower.includes('bergen') && (toLower.includes('ålesund') || toLower.includes('molde'))) ||
+                   ((fromLower.includes('ålesund') || fromLower.includes('molde')) && toLower.includes('bergen'))) {
+            ferryTime = 15;
+            trafficBuffer = 15;
+            weatherBuffer = 25;
+            routeBuffer = 20;
+            realisticTime = totalTime + ferryTime + trafficBuffer + weatherBuffer + routeBuffer;
+          }
+          // Nordnorge (E6)
+          else if ((fromLower.includes('trondheim') && (toLower.includes('bodø') || toLower.includes('tromsø') || toLower.includes('narvik'))) ||
+                   ((fromLower.includes('bodø') || fromLower.includes('tromsø') || fromLower.includes('narvik')) && toLower.includes('trondheim'))) {
+            trafficBuffer = 30;
+            weatherBuffer = 45;
+            routeBuffer = 30;
+            realisticTime = totalTime + trafficBuffer + weatherBuffer + routeBuffer;
+          }
+          // Oslo-Bergen (fjellvei)
+          else if ((fromLower.includes('oslo') && toLower.includes('bergen')) ||
+                   (fromLower.includes('bergen') && toLower.includes('oslo'))) {
+            trafficBuffer = 30;
+            weatherBuffer = 30;
+            routeBuffer = 20;
+            realisticTime = totalTime + trafficBuffer + weatherBuffer + routeBuffer;
+          }
+          // Oslo-Trondheim (lang strekning)
+          else if ((fromLower.includes('oslo') && toLower.includes('trondheim')) ||
+                   (fromLower.includes('trondheim') && toLower.includes('oslo'))) {
+            trafficBuffer = 35;
+            weatherBuffer = 25;
+            routeBuffer = 25;
+            realisticTime = totalTime + trafficBuffer + weatherBuffer + routeBuffer;
+          }
+          // Vestlandet generelt
+          else if ((fromLower.includes('bergen') || fromLower.includes('stavanger') || fromLower.includes('haugesund') ||
+                    fromLower.includes('ålesund') || fromLower.includes('molde') || fromLower.includes('kristiansund')) &&
+                   (toLower.includes('bergen') || toLower.includes('stavanger') || toLower.includes('haugesund') ||
+                    toLower.includes('ålesund') || toLower.includes('molde') || toLower.includes('kristiansund'))) {
+            ferryTime = 20;
+            trafficBuffer = 15;
+            weatherBuffer = 20;
+            routeBuffer = 15;
+            realisticTime = totalTime + ferryTime + trafficBuffer + weatherBuffer + routeBuffer;
+          }
+          // Lange ruter (over 300km)
+          else if (totalDistance > 300) {
+            ferryTime = 10;
+            trafficBuffer = 25;
+            weatherBuffer = 20;
+            routeBuffer = 15;
+            realisticTime = totalTime + ferryTime + trafficBuffer + weatherBuffer + routeBuffer;
+          }
+          // Mellomstore ruter (150-300km)
+          else if (totalDistance > 150) {
+            trafficBuffer = 15;
+            weatherBuffer = 15;
+            routeBuffer = 10;
+            realisticTime = totalTime + trafficBuffer + weatherBuffer + routeBuffer;
+          }
+          // Korte ruter (under 150km)
+          else {
+            trafficBuffer = 10;
+            weatherBuffer = 10;
+            routeBuffer = 5;
+            realisticTime = totalTime + trafficBuffer + weatherBuffer + routeBuffer;
+          }
+
+          totalTime = Math.max(realisticTime, totalTime); // Aldri mindre enn Google Maps
           
-          console.log('⏱️ FINAL Tidsberegning:', {
+          console.log('⏱️ REALISTISK Tidsberegning:', {
             distanceKm: totalDistance,
-            durationSeconds: totalTimeInSeconds,
-            durationMinutes: totalTime,
-            durationFormatted: `${Math.floor(totalTime / 60)}t ${Math.round(totalTime % 60)}min`,
-            wasOverridden: (fromLower.includes('ålesund') && toLower.includes('kvalsvik')) ||
-                          (fromLower.includes('kvalsvik') && toLower.includes('ålesund'))
+            googleTime: `${Math.floor(totalTimeInSeconds / 60 / 60)}t ${Math.round((totalTimeInSeconds / 60) % 60)}min`,
+            ferryTime: `${ferryTime}min`,
+            trafficBuffer: `${trafficBuffer}min`,
+            weatherBuffer: `${weatherBuffer}min`,
+            routeBuffer: `${routeBuffer}min`,
+            finalTime: `${Math.floor(totalTime / 60)}t ${Math.round(totalTime % 60)}min`,
+            increase: `+${Math.round((totalTime / (totalTimeInSeconds / 60) - 1) * 100)}%`
           });
           
           const analysis: TripAnalysis = {

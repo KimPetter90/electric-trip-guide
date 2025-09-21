@@ -308,6 +308,108 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
     onRouteChange(newData);
   };
 
+  // Funksjon for å beregne realistisk reisetid og distanse for alle norske ruter
+  const calculateRealisticRouteTime = (from: string, to: string, routeType: string) => {
+    const fromLower = from.toLowerCase();
+    const toLower = to.toLowerCase();
+    
+    // Rutetype-påvirkning
+    let speedMultiplier = 1;
+    let distanceMultiplier = 1;
+    let routeDescription = '';
+    
+    switch (routeType) {
+      case 'fastest':
+        speedMultiplier = 1.05; // 5% raskere (men fortsatt realistisk)
+        distanceMultiplier = 1.02;
+        routeDescription = 'raskeste rute';
+        break;
+      case 'shortest':
+        speedMultiplier = 0.9; // 10% tregere på mindre veier
+        distanceMultiplier = 0.95;
+        routeDescription = 'korteste rute';
+        break;
+      case 'eco':
+        speedMultiplier = 0.95; // 5% tregere
+        distanceMultiplier = 1.08;
+        routeDescription = 'miljøvennlig rute';
+        break;
+      default:
+        routeDescription = 'standard rute';
+    }
+
+    // Realistiske ruter med ferjer, fjellveier og trafikk inkludert
+    let baseMinutes = 180;
+    let baseDistance = 200;
+
+    // Hovedruter med alle realistiske faktorer
+    if ((fromLower.includes('ålesund') && toLower.includes('kvalsvik')) ||
+        (fromLower.includes('kvalsvik') && fromLower.includes('ålesund'))) {
+      baseMinutes = 115; // Ferje + alt
+      baseDistance = 71;
+    }
+    else if ((fromLower.includes('oslo') && toLower.includes('trondheim')) ||
+             (fromLower.includes('trondheim') && toLower.includes('oslo'))) {
+      baseMinutes = 390; // 6.5t (inkl. trafikk + buffer)
+      baseDistance = 500;
+    }
+    else if ((fromLower.includes('oslo') && toLower.includes('bergen')) ||
+             (fromLower.includes('bergen') && toLower.includes('oslo'))) {
+      baseMinutes = 510; // 8.5t (fjellvei + vær)
+      baseDistance = 460;
+    }
+    else if ((fromLower.includes('oslo') && toLower.includes('stavanger')) ||
+             (fromLower.includes('stavanger') && toLower.includes('oslo'))) {
+      baseMinutes = 450; // 7.5t
+      baseDistance = 400;
+    }
+    else if ((fromLower.includes('bergen') && toLower.includes('stavanger')) ||
+             (fromLower.includes('stavanger') && toLower.includes('bergen'))) {
+      baseMinutes = 270; // 4.5t (med ferje)
+      baseDistance = 200;
+    }
+    else if ((fromLower.includes('bergen') && toLower.includes('trondheim')) ||
+             (fromLower.includes('trondheim') && toLower.includes('bergen'))) {
+      baseMinutes = 600; // 10t (lang fjellvei)
+      baseDistance = 650;
+    }
+    // Vestlandsruter (ferjer og fjorder)
+    else if ((fromLower.includes('bergen') && (toLower.includes('ålesund') || toLower.includes('molde'))) ||
+             ((fromLower.includes('ålesund') || fromLower.includes('molde')) && toLower.includes('bergen'))) {
+      baseMinutes = 360; // 6t (ferjer + fjellvei)
+      baseDistance = 280;
+    }
+    // Nordnorge
+    else if ((fromLower.includes('trondheim') && (toLower.includes('bodø') || toLower.includes('tromsø'))) ||
+             ((fromLower.includes('bodø') || fromLower.includes('tromsø')) && toLower.includes('trondheim'))) {
+      baseMinutes = 720; // 12t+ (lange avstander)
+      baseDistance = 800;
+    }
+    // Kort-mellom ruter
+    else if ((fromLower.includes('oslo') && (toLower.includes('kristiansand') || toLower.includes('drammen'))) ||
+             ((fromLower.includes('kristiansand') || fromLower.includes('drammen')) && toLower.includes('oslo'))) {
+      baseMinutes = 330; // 5.5t
+      baseDistance = 320;
+    }
+
+    const finalMinutes = Math.round(baseMinutes / speedMultiplier);
+    const finalDistance = Math.round(baseDistance * distanceMultiplier);
+
+    console.log('🕒 RouteInput realistisk beregning:', {
+      from: from,
+      to: to,
+      routeType: routeType,
+      finalTime: `${Math.floor(finalMinutes / 60)}t ${finalMinutes % 60}min`,
+      finalDistance: `${finalDistance}km`
+    });
+
+    return {
+      minutes: finalMinutes,
+      distance: finalDistance,
+      description: routeDescription
+    };
+  };
+
   // Funksjon for å beregne anbefalt avreisertid basert på valgt rutetype
   const calculateDepartureTime = (arrivalTime: Date): string => {
     console.log('🕒 RouteInput calculateDepartureTime called:', {
@@ -316,94 +418,11 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
       arrivalTime: arrivalTime
     });
     
-    // Mer realistiske reisetider basert på faktiske kjøreavstander og rutetype
-    let estimatedTravelMinutes = 180; // Standard 3 timer for kort rute
-    let estimatedDistanceKm = 200; // Standard distanse
-    
-    // Juster hastighet og distanse basert på rutetype
-    let speedMultiplier = 1;
-    let distanceMultiplier = 1;
-    let routeDescription = '';
-    
-    switch (selectedRouteType) {
-      case 'fastest':
-        speedMultiplier = 1.15; // 15% raskere på motorveier
-        distanceMultiplier = 1.02; // Litt lengre for motorveier
-        routeDescription = 'raskeste rute';
-        break;
-      case 'shortest':
-        speedMultiplier = 0.9; // 10% tregere på mindre veier
-        distanceMultiplier = 0.95; // 5% kortere distanse
-        routeDescription = 'korteste rute';
-        break;
-      case 'eco':
-        speedMultiplier = 0.95; // 5% tregere for eco-kjøring
-        distanceMultiplier = 1.08; // 8% lengre for å unngå hovedveier
-        routeDescription = 'miljøvennlig rute';
-        break;
-      default:
-        routeDescription = 'standard rute';
-    }
-    
-    // Realistiske kjøretider basert på faktiske ruter og rutetype
-    if (routeData.from && routeData.to) {
-      const fromLower = routeData.from.toLowerCase();
-      const toLower = routeData.to.toLowerCase();
-      
-      // Oslo - Trondheim: 500km, 5.5-6 timer
-      if ((fromLower.includes('oslo') && toLower.includes('trondheim')) ||
-          (fromLower.includes('trondheim') && toLower.includes('oslo'))) {
-        estimatedTravelMinutes = Math.round((360 / speedMultiplier)); // 6 timer justert for rutetype
-        estimatedDistanceKm = Math.round(500 * distanceMultiplier);
-      }
-      // Oslo - Bergen: 460km, 7-8 timer (fjellvei)
-      else if ((fromLower.includes('oslo') && toLower.includes('bergen')) || 
-               (fromLower.includes('bergen') && toLower.includes('oslo'))) {
-        estimatedTravelMinutes = Math.round((480 / speedMultiplier)); // 8 timer justert
-        estimatedDistanceKm = Math.round(460 * distanceMultiplier);
-      }
-      // Oslo - Stavanger: 400km, 6-7 timer
-      else if ((fromLower.includes('oslo') && toLower.includes('stavanger')) ||
-               (fromLower.includes('stavanger') && toLower.includes('oslo'))) {
-        estimatedTravelMinutes = Math.round((420 / speedMultiplier)); // 7 timer justert
-        estimatedDistanceKm = Math.round(400 * distanceMultiplier);
-      }
-      // Oslo - Kristiansand: 320km, 4.5-5 timer
-      else if ((fromLower.includes('oslo') && toLower.includes('kristiansand')) ||
-               (fromLower.includes('kristiansand') && toLower.includes('oslo'))) {
-        estimatedTravelMinutes = Math.round((300 / speedMultiplier)); // 5 timer justert
-        estimatedDistanceKm = Math.round(320 * distanceMultiplier);
-      }
-      // Bergen - Trondheim: 650km, 8-9 timer
-      else if ((fromLower.includes('bergen') && toLower.includes('trondheim')) ||
-               (fromLower.includes('trondheim') && toLower.includes('bergen'))) {
-        estimatedTravelMinutes = Math.round((540 / speedMultiplier)); // 9 timer justert
-        estimatedDistanceKm = Math.round(650 * distanceMultiplier);
-      }
-      // Bergen - Stavanger: 200km, 3-4 timer
-      else if ((fromLower.includes('bergen') && toLower.includes('stavanger')) ||
-               (fromLower.includes('stavanger') && toLower.includes('bergen'))) {
-        estimatedTravelMinutes = Math.round((240 / speedMultiplier)); // 4 timer justert
-        estimatedDistanceKm = Math.round(200 * distanceMultiplier);
-      }
-      // Ålesund til lokale destinasjoner (korte ruter)
-      else if (fromLower.includes('ålesund') || toLower.includes('ålesund')) {
-        // For Ålesund-området, bruk realistiske korte reisetider
-        if (toLower.includes('kvalsvik') || fromLower.includes('kvalsvik')) {
-          // Inkluderer ferje + venting + kjøring + buffer = 1t 55min realistisk
-          estimatedTravelMinutes = Math.round((115 / speedMultiplier)); // 1t 55min
-          estimatedDistanceKm = Math.round(71 * distanceMultiplier); // Faktisk distanse
-        } else {
-          estimatedTravelMinutes = Math.round((120 / speedMultiplier)); // 2 timer for andre lokale ruter
-          estimatedDistanceKm = Math.round(100 * distanceMultiplier);
-        }
-      }
-      // Standard kortere rute
-      else {
-        estimatedTravelMinutes = Math.round((180 / speedMultiplier)); // 3 timer justert
-        estimatedDistanceKm = Math.round(200 * distanceMultiplier);
-      }
-    }
+    // Beregn realistisk reisetid for alle norske ruter
+    const realisticTravelData = calculateRealisticRouteTime(routeData.from, routeData.to, selectedRouteType);
+    let estimatedTravelMinutes = realisticTravelData.minutes;
+    let estimatedDistanceKm = realisticTravelData.distance;
+    let routeDescription = realisticTravelData.description;
     
     // Beregn ladebehov mer konservativt basert på rutetype
     const currentBattery = routeData.batteryPercentage;
