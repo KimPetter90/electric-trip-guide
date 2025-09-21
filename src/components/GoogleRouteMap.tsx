@@ -431,6 +431,16 @@ const GoogleRouteMap: React.FC<{
       directionsRendererRef.current.setDirections(result);
       console.log('✅ Directions set successfully');
       
+      // Adjust map viewport to show the entire route
+      const bounds = new google.maps.LatLngBounds();
+      result.routes[0].legs.forEach(leg => {
+        bounds.extend(leg.start_location);
+        bounds.extend(leg.end_location);
+      });
+      mapInstanceRef.current!.fitBounds(bounds);
+      console.log('📍 Map viewport adjusted to show route');
+      
+      
       setCalculatedRoute(result);
 
       // Calculate trip analysis
