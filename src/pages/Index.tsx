@@ -420,6 +420,9 @@ function Index() {
     setRouteOptions(mockRoutes);
     setLoadingRoutes(false);
     
+    console.log('🎯 Route options generated:', mockRoutes.length, 'routes');
+    console.log('📋 Routes:', mockRoutes.map(r => r.name));
+    
     // La brukeren velge rute selv - ikke automatisk valg
     
     // Cache resultatet
@@ -585,11 +588,10 @@ function Index() {
       setPlanningRoute(true);
       setLoadingRoutes(true);
       
-      try {
-        // Vis kartet først
-        console.log('🗺️ Setting showRoute to true');
-        setShowRoute(true);
-      
+    try {
+      // Vis kartet først
+      setShowRoute(true);
+    
       // Track route planning
       if (user && subscription) {
         try {
@@ -616,35 +618,15 @@ function Index() {
         }
       }
       
-        // Generer rutevalg
-        console.log('📱 MOBILE DEBUG - Calling generateRouteOptions');
-        await generateRouteOptions();
-        console.log('✅ generateRouteOptions completed');
-        console.log('🎯 Current selectedRouteId after generateRouteOptions:', selectedRouteId);
-        console.log('📊 Current routeOptions length:', routeOptions.length);
-        
-        // Rutevalg og kartberegning håndteres nå av generateRouteOptions
-      
-      // Toast-melding fjernet på brukerens ønske
+      // Generer rutevalg
+      await generateRouteOptions();
       
     } catch (error: any) {
       console.error('❌ Route planning failed:', error);
       setShowRoute(false);
-      // Toast fjernet
     } finally {
-      // Rask loading reset for bedre respons
-      setTimeout(() => {
-        setPlanningRoute(false);
-        console.log('✅ Planning state reset');
-        
-        // Forsikre at kartet er synlig i tilfelle det har blitt skjult
-        if (!showRoute) {
-          console.log('🚨 Kart er ikke synlig i finally - forcing visible!');
-          setShowRoute(true);
-        }
-        
-        console.log('✅ Loading state reset, showRoute:', showRoute);
-      }, 300); // Redusert fra 2000ms til 300ms for kjappere respons
+      setPlanningRoute(false);
+      setLoadingRoutes(false);
     }
   };
 
