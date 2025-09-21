@@ -273,11 +273,8 @@ function Index() {
     );
   }
   
-  // I Lovable dev: Kun admin får tilgang
-  if (!isAdmin) {
-    console.log('🚫 DEV: Not admin user');
-    return <ComingSoon />;
-  }
+  // Allow all users to access the app
+  console.log('✅ User access granted:', { isAdmin, user: !!user });
   
   console.log('✅ DEV: Admin access granted');
 
