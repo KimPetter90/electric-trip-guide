@@ -133,16 +133,15 @@ const GoogleRouteMap: React.FC<{
   useEffect(() => {
     if (mapInstanceRef.current) {
       console.log('🗺️ Oppdaterer kartsenter til:', center, 'zoom:', zoom, 'navigationMode:', navigationMode);
-      mapInstanceRef.current.setCenter(center);
-      mapInstanceRef.current.setZoom(zoom);
       
-      // Sett kartet til 2D-modus når navigasjon er aktiv
+      // Sett kartet til 3D+ modus når navigasjon er aktiv
       if (navigationMode) {
-        console.log('🗺️ Aktiverer 2D-modus for navigasjon');
+        console.log('🗺️ Aktiverer 3D+ modus for navigasjon');
         mapInstanceRef.current.setMapTypeId(google.maps.MapTypeId.ROADMAP);
-        mapInstanceRef.current.setTilt(45); // 3D-perspektiv
+        mapInstanceRef.current.setCenter(center);
+        mapInstanceRef.current.setZoom(22); // Maksimal zoom for 3D+ visning
+        mapInstanceRef.current.setTilt(60); // Høy 3D-perspektiv vinkel
         mapInstanceRef.current.setHeading(0); // Null rotasjon
-        mapInstanceRef.current.setZoom(20); // Maksimal zoom for 3D+ visning
         
         // Skjul kontroller for navigasjonsvisning
         mapInstanceRef.current.setOptions({
@@ -152,6 +151,9 @@ const GoogleRouteMap: React.FC<{
           streetViewControl: false
         });
       } else {
+        // Normal visning når ikke i navigasjonsmodus
+        mapInstanceRef.current.setCenter(center);
+        mapInstanceRef.current.setZoom(zoom);
         // Tilbakestill til normal visning
         mapInstanceRef.current.setMapTypeId(google.maps.MapTypeId.HYBRID);
         mapInstanceRef.current.setOptions({
