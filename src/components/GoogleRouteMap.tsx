@@ -407,7 +407,8 @@ const GoogleRouteMap: React.FC<{
       hasMap: !!mapInstanceRef.current,
       from: routeData.from,
       to: routeData.to,
-      via: routeData.via
+      via: routeData.via,
+      selectedRouteType: selectedRouteId
     });
 
     if (!mapInstanceRef.current || !routeData.from || !routeData.to) {
@@ -424,19 +425,34 @@ const GoogleRouteMap: React.FC<{
       
       const waypoints = routeData.via ? [{ location: routeData.via, stopover: true }] : [];
       
-      const request: google.maps.DirectionsRequest = {
+      // Configure route options based on selected route type
+      let routeOptions: any = {
         origin: routeData.from,
         destination: routeData.to,
         waypoints: waypoints,
         travelMode: google.maps.TravelMode.DRIVING,
         unitSystem: google.maps.UnitSystem.METRIC,
-        optimizeWaypoints: true,
-        avoidHighways: false,
-        avoidTolls: false
+        optimizeWaypoints: true
       };
 
-      console.log('🚗 Making directions request...', request);
-      const result = await directionsService.route(request);
+      // Adjust route preferences based on selected route type
+      if (selectedRouteId === 'shortest') {
+        routeOptions.avoidHighways = false;
+        routeOptions.avoidTolls = false;
+        console.log('🎯 Calculating SHORTEST route');
+      } else if (selectedRouteId === 'eco') {
+        routeOptions.avoidHighways = true;
+        routeOptions.avoidTolls = true;
+        console.log('🎯 Calculating ECO-FRIENDLY route');
+      } else {
+        // fastest (default)
+        routeOptions.avoidHighways = false;
+        routeOptions.avoidTolls = false;
+        console.log('🎯 Calculating FASTEST route');
+      }
+
+      console.log('🚗 Making directions request...', routeOptions);
+      const result = await directionsService.route(routeOptions);
       console.log('✅ Route calculated successfully', result);
       
       if (!directionsRendererRef.current) {
@@ -482,7 +498,7 @@ const GoogleRouteMap: React.FC<{
       onLoadingChange(false);
       console.log('🏁 Route calculation finished');
     }
-  }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, onRouteCalculated, onLoadingChange, onError]);
+  }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, selectedRouteId, onRouteCalculated, onLoadingChange, onError]);
 
   // Calculate route when trigger changes (manual route planning)
   useEffect(() => {

@@ -131,7 +131,7 @@ function Index() {
   const handleRouteSelect = useCallback((routeId: string) => {
     console.log('🎯 Route selected:', routeId);
     setSelectedRouteId(routeId);
-    // Don't trigger new route calculation, just update the selection
+    setRouteTrigger(prev => prev + 1); // Trigger new route calculation with different settings
   }, []);
 
   // Load charging stations on component mount
