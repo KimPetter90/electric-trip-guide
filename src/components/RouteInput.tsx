@@ -269,6 +269,14 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
   };
 
   const handleInputChange = (field: keyof RouteData, value: string | number | Date) => {
+    // Debug logging for battery percentage changes
+    if (field === 'batteryPercentage') {
+      console.log('🔋 Battery percentage changing from', routeData.batteryPercentage, 'to', value);
+      console.trace('Battery change origin:');
+    } else if (routeData.batteryPercentage !== undefined) {
+      console.log('🔍 Field changing:', field, 'Current battery:', routeData.batteryPercentage);
+    }
+    
     // Validering og sanitizing
     if ((field === 'from' || field === 'to' || field === 'via') && typeof value === 'string') {
       const sanitized = value.trim().slice(0, 50); // Begrenset lengde
@@ -284,10 +292,17 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
       value = Math.max(0, Math.min(3500, value)); // Sikre 0-3500 kg range
     }
     
-    onRouteChange({
+    const newData = {
       ...routeData,
       [field]: value
-    });
+    };
+    
+    // Extra logging for battery changes
+    if (newData.batteryPercentage !== routeData.batteryPercentage) {
+      console.log('🚨 Battery percentage changed from', routeData.batteryPercentage, 'to', newData.batteryPercentage, 'when changing field:', field);
+    }
+    
+    onRouteChange(newData);
   };
 
   return (
