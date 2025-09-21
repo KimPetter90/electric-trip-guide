@@ -724,23 +724,27 @@ const GoogleRouteMap: React.FC<{
           if ((fromLower.includes('ålesund') && toLower.includes('kvalsvik')) ||
               (fromLower.includes('kvalsvik') && toLower.includes('ålesund'))) {
             
-            // REALISTISK BEREGNING:
-            // - Ålesund til Sulesund ferjekai: ~15 min
-            // - Venting på ferje: ~10 min (gjennomsnitt)
-            // - Ferjeoverfart Sulesund-Hareid: 25 min (bekreftet fra Fjord1)
-            // - Hareid til Kvalsvik: ~40 min
-            // - Buffer for trafikk: ~5 min
-            // TOTALT: ca 95 minutter (1t 35min)
+            // REALISTISK BEREGNING (mer konservativ):
+            // - Ålesund til Sulesund ferjekai: ~20 min (med trafikk)
+            // - Venting på ferje: ~15 min (gjennomsnitt + sikkerhet)
+            // - Ferjeoverfart Sulesund-Hareid: 25 min
+            // - Hareid til Kvalsvik: ~45 min (med lokaltrafikk)
+            // - Buffer for uforutsett: ~10 min
+            // TOTALT: ca 115 minutter (1t 55min)
             
-            const realisticTime = 95; // 1t 35min inkludert ferje og trafikk
-            console.log('🚢 OVERSTYRER med riktig Ålesund-Kvalsvik tid inkl. ferje:', {
+            const realisticTime = 115; // 1t 55min - mer realistisk
+            console.log('🚢 OVERSTYRER med realistisk Ålesund-Kvalsvik tid:', {
               googleMapsTime: `${Math.floor(totalTime / 60)}t ${Math.round(totalTime % 60)}min`,
-              realisticTime: `${Math.floor(realisticTime / 60)}t ${Math.round(realisticTime % 60)}min`,
+              realisticTimeFormatted: `${Math.floor(realisticTime / 60)}t ${Math.round(realisticTime % 60)}min`,
               distance: `${totalDistance.toFixed(1)}km`,
-              ferryTime: '25min',
-              waitingTime: '10min',
-              drivingTime: '55min',
-              trafficBuffer: '5min'
+              breakdown: {
+                drivingToFerry: '20min',
+                waitingForFerry: '15min', 
+                ferryTime: '25min',
+                drivingFromFerry: '45min',
+                buffer: '10min',
+                total: '115min'
+              }
             });
             totalTime = realisticTime;
           }
