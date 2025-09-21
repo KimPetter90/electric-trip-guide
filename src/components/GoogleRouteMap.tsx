@@ -361,7 +361,7 @@ const GoogleRouteMap: React.FC<{
           (station.id === bestStationAlongRoute.id || station.name === bestStationAlongRoute.name);
         const isNearRoute = calculatedRoute && isStationNearRoute(station);
         
-        // Choose marker icon
+        // Choose marker icon - ALLE STASJONER LANGS RUTEN SKAL VÆRE RØDE!
         const markerIcon = isRecommendedAlongRoute ? {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
@@ -383,7 +383,8 @@ const GoogleRouteMap: React.FC<{
         } : {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
-              <circle cx="6" cy="6" r="5" fill="#00ff41" stroke="#00cc33" stroke-width="1"/>
+              <circle cx="6" cy="6" r="5" fill="#ff0000" stroke="#990000" stroke-width="1"/>
+              <text x="6" y="8" text-anchor="middle" fill="white" font-size="8" font-weight="bold">⚡</text>
             </svg>
           `),
           scaledSize: new google.maps.Size(12, 12),
