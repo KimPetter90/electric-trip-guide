@@ -361,16 +361,17 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
                 handleInputChange('batteryPercentage', 0);
               } else {
                 const numValue = parseFloat(value);
-                if (isNaN(numValue)) {
+                if (isNaN(numValue) || numValue < 0) {
                   handleInputChange('batteryPercentage', 0);
+                } else if (numValue > 100) {
+                  handleInputChange('batteryPercentage', 100);
                 } else {
-                  const finalValue = Math.max(1, Math.min(100, Math.round(numValue)));
-                  handleInputChange('batteryPercentage', finalValue);
+                  handleInputChange('batteryPercentage', Math.round(numValue));
                 }
               }
             }}
             className="bg-background/50 border-border focus:border-primary focus:shadow-lg"
-            min="1"
+            min="0"
             max="100"
           />
           {routeData.batteryPercentage > 0 && (
