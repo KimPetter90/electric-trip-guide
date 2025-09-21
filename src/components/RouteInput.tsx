@@ -720,11 +720,8 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
           </Popover>
           
           {routeData.arrivalTime && (
-            <div className="space-y-1">
-              <Badge variant="outline" className="text-xs">
-                Ønsket ankomst: {format(routeData.arrivalTime, "dd.MM.yyyy 'kl.' HH:mm")}
-              </Badge>
-              <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+            <div className="mt-3">
+              <Badge variant="secondary" className="text-sm font-medium px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-800 border-blue-200 shadow-sm">
                 💡 Anbefalt avreise: {calculateDepartureTime(routeData.arrivalTime)}
               </Badge>
             </div>
