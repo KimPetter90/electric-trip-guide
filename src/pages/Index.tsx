@@ -23,6 +23,7 @@ import { EnhancedRouteInput } from "@/components/EnhancedRouteInput";
 import { EnhancedMapSection } from "@/components/EnhancedMapSection";
 import { PricingSection } from "@/components/PricingSection";
 import PerformanceOptimizer from "@/components/PerformanceOptimizer";
+import { NavigationTracker } from "@/components/NavigationTracker";
 
 import ComprehensiveFerrySchedule from "@/components/ComprehensiveFerrySchedule";
 
@@ -70,6 +71,16 @@ function Index() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+
+  // Listen for navigation tracker events
+  useEffect(() => {
+    const handleShowNavigationTracker = () => {
+      setShowNavigationTracker(true);
+    };
+    
+    window.addEventListener('showNavigationTracker', handleShowNavigationTracker);
+    return () => window.removeEventListener('showNavigationTracker', handleShowNavigationTracker);
+  }, []);
   
   // All state declarations - MUST be unconditional
   const [selectedCar, setSelectedCar] = useState<CarModel | null>(null);
@@ -96,6 +107,7 @@ function Index() {
   const [mapLoading, setMapLoading] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [chargingStations, setChargingStations] = useState<any[]>([]);
+  const [showNavigationTracker, setShowNavigationTracker] = useState(false);
 
   // Debug car selection changes
   const handleCarSelect = useCallback((car: CarModel | null) => {
@@ -824,6 +836,12 @@ function Index() {
                 isPlanning={planningRoute}
               />
             </div>
+
+            {/* Navigation Tracker */}
+            <NavigationTracker
+              isVisible={showNavigationTracker}
+              onToggle={() => setShowNavigationTracker(!showNavigationTracker)}
+            />
 
           </section>
 

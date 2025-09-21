@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AutocompleteInput } from "@/components/ui/autocomplete-input";
-import { MapPin, Truck, Route, Battery, CalendarIcon } from "lucide-react";
+import { MapPin, Truck, Route, Battery, CalendarIcon, Navigation } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -455,29 +455,46 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
           )}
         </div>
 
-        <Button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onPlanRoute();
-          }}
-          disabled={isPlanning}
-          className="w-full bg-gradient-electric hover:bg-gradient-eco shadow-neon hover:shadow-glow animate-pulse-neon disabled:opacity-50 disabled:cursor-not-allowed"
-          size="lg"
-        >
-          {isPlanning ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></div>
-              Planlegger rute...
-            </>
-          ) : (
-            <>
-              <Route className="h-4 w-4 mr-2" />
-              Planlegg rute
-            </>
-          )}
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onPlanRoute();
+            }}
+            disabled={isPlanning}
+            className="flex-1 bg-gradient-electric hover:bg-gradient-eco shadow-neon hover:shadow-glow animate-pulse-neon disabled:opacity-50 disabled:cursor-not-allowed"
+            size="lg"
+          >
+            {isPlanning ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></div>
+                Planlegger rute...
+              </>
+            ) : (
+              <>
+                <Route className="h-4 w-4 mr-2" />
+                Planlegg rute
+              </>
+            )}
+          </Button>
+          
+          <Button
+            type="button"
+            onClick={() => {
+              // Find the parent window to trigger navigation tracker
+              const event = new CustomEvent('showNavigationTracker');
+              window.dispatchEvent(event);
+            }}
+            variant="outline"
+            className="px-4 border-primary/30 hover:border-primary/60"
+            size="lg"
+            title="Start GPS-navigasjon"
+          >
+            <Navigation className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </Card>
   );
