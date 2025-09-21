@@ -764,7 +764,7 @@ All colors MUST be HSL.
 
 /* Charging Station Popup Styles */
 .charging-station-popup {
-  background: hsl(var(--background) / 0.95);
+  background: transparent;
   backdrop-filter: blur(12px);
   border-radius: 12px;
   padding: 16px;
@@ -784,7 +784,7 @@ All colors MUST be HSL.
   left: -1px;
   right: -1px;
   bottom: -1px;
-  background: linear-gradient(45deg, hsl(140 60% 40%), hsl(160 50% 35%), hsl(140 60% 40%));
+  background: linear-gradient(45deg, hsl(140 60% 40%), hsl(120 50% 35%), hsl(140 60% 40%));
   border-radius: inherit;
   z-index: -1;
   opacity: 0.3;
