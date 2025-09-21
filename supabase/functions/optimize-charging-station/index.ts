@@ -339,7 +339,7 @@ serve(async (req) => {
         }
       }
       
-      // Beregn avstand fra start av ruten til stasjon (ikke midtpunkt) når risikabelt  
+      // Beregn avstand - forskjellig strategi for risikabel vs normal situasjon
       const R = 6371; // Earth's radius in km
       let distanceFromRoute;
       
@@ -374,7 +374,7 @@ serve(async (req) => {
         carData,
         weather,
         requiredRange,
-        distanceFromRoute,
+        distanceFromRoute,  // Send riktig avstand basert på modus
         isRisky  // Send med sikkerhetsstatus
       );
       
