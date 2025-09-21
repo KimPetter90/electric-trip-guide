@@ -147,10 +147,12 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
 
   useEffect(() => {
     if (isVisible && destination) {
+      console.log('🚢 Sjekker fergeruter for destinasjon:', destination);
       setLoading(true);
       // Simuler lasting
       setTimeout(() => {
         const routes = getFerryRoutes(destination);
+        console.log('🚢 Fergeruter funnet:', routes);
         setFerryInfo(routes);
         setLoading(false);
       }, 1000);
@@ -172,7 +174,7 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
   if (!isVisible || ferryInfo.length === 0) return null;
 
   return (
-    <div className="absolute top-16 left-3 right-3 z-10">
+    <div className="absolute top-20 left-3 right-3 z-10">
       <Card className="bg-background/95 backdrop-blur-sm border border-border/50 shadow-lg">
         <div className="p-4 space-y-3">
           <div className="flex items-center gap-2">
