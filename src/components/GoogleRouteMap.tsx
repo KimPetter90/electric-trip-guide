@@ -411,22 +411,29 @@ const GoogleRouteMap: React.FC<{
           suppressMarkers: false,
           polylineOptions: {
             strokeColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
-            strokeWeight: 4,
-            strokeOpacity: 0.8
+            strokeWeight: 6,
+            strokeOpacity: 1.0
+          },
+          markerOptions: {
+            visible: true
           }
         });
-        directionsRendererRef.current.setMap(mapInstanceRef.current);
       } else {
         // Update line color for existing renderer
         directionsRendererRef.current.setOptions({
           polylineOptions: {
             strokeColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
-            strokeWeight: 4,
-            strokeOpacity: 0.8
+            strokeWeight: 6,
+            strokeOpacity: 1.0
+          },
+          markerOptions: {
+            visible: true
           }
         });
       }
 
+      // ALWAYS set map again to ensure it's attached
+      directionsRendererRef.current.setMap(mapInstanceRef.current);
       console.log('🗺️ Setting directions on renderer...', directionsRendererRef.current);
       directionsRendererRef.current.setDirections(result);
       console.log('✅ Directions set successfully');
