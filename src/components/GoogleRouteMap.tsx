@@ -83,6 +83,47 @@ const GoogleRouteMap: React.FC<{
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsPermission, setGpsPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
   const [allFerryTimes, setAllFerryTimes] = useState<any[]>([]);
+  const [loadedStations, setLoadedStations] = useState<ChargingStation[]>([]);
+
+  // KRITISK FIX: Last ladestasjoner fra database
+  useEffect(() => {
+    const loadChargingStations = async () => {
+      try {
+        console.log('🔌 GoogleRouteMap: STARTER HENTING AV LADESTASJONER...');
+        const { data, error } = await supabase
+          .from('charging_stations')
+          .select('*');
+        
+        if (error) {
+          console.error('❌ FEIL ved henting av ladestasjoner:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          console.log(`✅ GoogleRouteMap: HENTET ${data.length} LADESTASJONER`);
+          const mappedStations: ChargingStation[] = data.map(station => ({
+            id: station.id,
+            name: station.name,
+            location: station.location,
+            latitude: station.latitude,
+            longitude: station.longitude,
+            available: station.available,
+            total: station.total,
+            fast_charger: station.fast_charger,
+            power: station.power,
+            cost: station.cost,
+            provider: station.provider || 'Ukjent',
+            address: station.address || station.location
+          }));
+          setLoadedStations(mappedStations);
+        }
+      } catch (err) {
+        console.error('💥 GoogleRouteMap: EXCEPTION ved henting:', err);
+      }
+    };
+
+    loadChargingStations();
+  }, []);
 
   // Initialize Google Maps only once
   useEffect(() => {
@@ -295,15 +336,17 @@ const GoogleRouteMap: React.FC<{
     return bestStation || stationsNearRoute[0];
   };
 
-  // Add charging station markers - always visible
+  // Add charging station markers - BRUK LOADEDSTATIONS ISTEDENFOR CHARGINGSTATIONS
   useEffect(() => {
+    const stationsToUse = loadedStations.length > 0 ? loadedStations : chargingStations;
     console.log('🗺️ Charging stations effect triggered:', {
       mapExists: !!mapInstanceRef.current,
-      stationsCount: chargingStations?.length || 0,
-      stations: chargingStations
+      loadedStationsCount: loadedStations.length,
+      propsStationsCount: chargingStations?.length || 0,
+      usingStations: stationsToUse?.length || 0
     });
     
-    if (!mapInstanceRef.current || !chargingStations || chargingStations.length === 0) {
+    if (!mapInstanceRef.current || !stationsToUse || stationsToUse.length === 0) {
       console.log('❌ Skipping charging stations - missing requirements');
       return;
     }
@@ -323,8 +366,8 @@ const GoogleRouteMap: React.FC<{
     const findBestStationAndRender = async () => {
       bestStationAlongRoute = await getBestStationAlongRoute();
       
-      // Add new charging station markers
-      chargingStations.forEach(station => {
+      // Add new charging station markers - BRUK STATIONSTOUSE
+      stationsToUse.forEach(station => {
         const isRecommendedAlongRoute = bestStationAlongRoute && station.id === bestStationAlongRoute.id;
         const isNearRoute = calculatedRoute && isStationNearRoute(station);
         
@@ -390,7 +433,7 @@ const GoogleRouteMap: React.FC<{
     // Execute async function
     findBestStationAndRender();
     
-  }, [chargingStations, calculatedRoute, getBestStationAlongRoute, isStationNearRoute]);
+  }, [loadedStations, chargingStations, calculatedRoute, getBestStationAlongRoute, isStationNearRoute]);
 
   // Force re-render markers when route changes
 
