@@ -228,6 +228,17 @@ serve(async (req) => {
     const adjustedCurrentRange = currentRange / (weatherImpact * trailerImpact);
     const routeDistance = routeData.totalDistance || 0;
     
+    console.log('🔍 Charging need calculation:', {
+      batteryPercentage: routeData.batteryPercentage,
+      carRange: carData.range,
+      currentRange,
+      weatherImpact,
+      trailerImpact,
+      adjustedCurrentRange,
+      routeDistance,
+      needsCharging: adjustedCurrentRange < (routeDistance * 1.2)
+    });
+    
     // If we have 20% safety margin beyond route distance, no charging needed
     const safetyMargin = 1.2; // 20% safety margin
     if (adjustedCurrentRange >= (routeDistance * safetyMargin)) {

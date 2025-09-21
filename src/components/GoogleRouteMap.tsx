@@ -243,6 +243,13 @@ const GoogleRouteMap: React.FC<{
     }
     
     try {
+      console.log('🔋 Optimization request data:', {
+        routeDistance,
+        batteryPercentage: routeData.batteryPercentage,
+        carRange: selectedCar.range,
+        currentBatteryRange: (selectedCar.range * routeData.batteryPercentage) / 100
+      });
+      
       // Call optimization service with weather, trailer, and battery data
       const { data, error } = await supabase.functions.invoke('optimize-charging-station', {
         body: {
@@ -269,8 +276,11 @@ const GoogleRouteMap: React.FC<{
       
       const result = data?.recommendedStation;
       
+      console.log('🎯 Optimization result:', data);
+      
       // Check if charging is not needed
       if (data?.analysis?.chargingNeeded === false) {
+        console.log('✅ No charging needed according to optimization service');
         return null; // No charging station recommended
       }
       
