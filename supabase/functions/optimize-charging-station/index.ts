@@ -267,9 +267,10 @@ serve(async (req) => {
       needsCharging: adjustedCurrentRange < (routeDistance * 1.2)
     });
     
-    // SIKKERHETSMARGINAL: Forskjellig margin basert på hengerlast
-    const safetyMargin = routeData.trailerWeight > 0 ? 1.4 : 1.05; // 40% med henger, 5% uten
-    const isRisky = adjustedCurrentRange < (routeDistance * safetyMargin);
+    // SIKKERHETSMARGINAL: Kun risikabelt hvis VELDIG tett på å ikke klare ruten
+    const isRisky = routeData.trailerWeight > 0 ? 
+      (adjustedCurrentRange < routeDistance * 1.3) :  // Med henger: trenger 30% margin
+      (adjustedCurrentRange < routeDistance * 1.02);  // Uten henger: trenger bare 2% margin
     
     console.log('🚨 DETALJERT SIKKERHETSEVALUERING:', {
       batteryPercentage: routeData.batteryPercentage,
@@ -279,8 +280,8 @@ serve(async (req) => {
       currentRange: currentRange,
       adjustedCurrentRange: adjustedCurrentRange.toFixed(0),
       routeDistance: routeDistance.toFixed(0),
-      safetyMargin: safetyMargin,
-      requiredSafeRange: (routeDistance * safetyMargin).toFixed(0),
+      marginWithTrailer: routeData.trailerWeight > 0 ? '30%' : '2%',
+      requiredSafeRange: routeData.trailerWeight > 0 ? (routeDistance * 1.3).toFixed(0) : (routeDistance * 1.02).toFixed(0),
       isRisky: isRisky,
       safetyMarginPercent: ((adjustedCurrentRange / routeDistance) * 100).toFixed(0) + '%',
       modus: isRisky ? 'RISIKABEL - beregner fra START' : 'NORMAL - beregner fra MIDTPUNKT'
