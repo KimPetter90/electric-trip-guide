@@ -293,12 +293,13 @@ const GoogleRouteMap: React.FC<{
     }
     
     try {
-      console.log('🔋 Optimization request data:', {
+      console.log('🔋 DEBUGGING - Frontend sender:', {
         routeDistance,
         batteryPercentage: routeData.batteryPercentage,
         carRange: selectedCar.range,
         currentBatteryRange: (selectedCar.range * routeData.batteryPercentage) / 100,
-        trailerWeight: routeData.trailerWeight
+        trailerWeight: routeData.trailerWeight,
+        fullRouteData: routeData
       });
       
       // Call optimization service with weather, trailer, and battery data
