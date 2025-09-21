@@ -268,7 +268,7 @@ serve(async (req) => {
     });
     
     // SIKKERHETSMARGINAL: Forskjellig margin basert på hengerlast
-    const safetyMargin = routeData.trailerWeight > 0 ? 1.4 : 1.15; // 40% med henger, 15% uten
+    const safetyMargin = routeData.trailerWeight > 0 ? 1.4 : 1.05; // 40% med henger, 5% uten
     const isRisky = adjustedCurrentRange < (routeDistance * safetyMargin);
     
     console.log('🚨 DETALJERT SIKKERHETSEVALUERING:', {
