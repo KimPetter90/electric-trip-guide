@@ -214,6 +214,12 @@ serve(async (req) => {
   try {
     const optimizationRequest: OptimizationRequest = await req.json();
     console.log('🎯 Optimizing charging station selection...');
+    console.log('📥 MOTTATT DATA:', {
+      stationsCount: optimizationRequest.stations?.length || 0,
+      trailerWeight: optimizationRequest.routeData?.trailerWeight,
+      batteryPercentage: optimizationRequest.routeData?.batteryPercentage,
+      totalDistance: optimizationRequest.routeData?.totalDistance
+    });
     
     const { stations, routeData, carData } = optimizationRequest;
     
