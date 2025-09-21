@@ -161,57 +161,46 @@ const GoogleRouteMap: React.FC<{
 
   // Check if station is near route - OPTIMIZED VERSION
   const isStationNearRoute = useCallback((station: ChargingStation): boolean => {
-    console.log('🔍 Checking station:', station.name, 'hasRoute:', !!calculatedRoute);
     if (!calculatedRoute || !window.google?.maps?.geometry) {
-      console.log('❌ No route or geometry:', !!calculatedRoute, !!window.google?.maps?.geometry);
       return false;
     }
 
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
-    // Create a dense array of points along the entire route
-    const routePoints: google.maps.LatLng[] = [];
-    
+    // Simple approach: check distance to all waypoints along the route
     for (let i = 0; i < route.legs.length; i++) {
       const leg = route.legs[i];
-      routePoints.push(leg.start_location);
       
-      for (let j = 0; j < leg.steps.length; j++) {
-        const step = leg.steps[j];
-        routePoints.push(step.start_location);
-        routePoints.push(step.end_location);
-        
-        // Add interpolated points between start and end of each step
-        const startLat = step.start_location.lat();
-        const startLng = step.start_location.lng();
-        const endLat = step.end_location.lat();
-        const endLng = step.end_location.lng();
-        
-        // Add 20 points between start and end of each step
-        for (let k = 1; k < 20; k++) {
-          const ratio = k / 20;
-          const interpLat = startLat + (endLat - startLat) * ratio;
-          const interpLng = startLng + (endLng - startLng) * ratio;
-          routePoints.push(new google.maps.LatLng(interpLat, interpLng));
-        }
-      }
-      
-      routePoints.push(leg.end_location);
-    }
-    
-    // Check distance to all these route points
-    for (const routePoint of routePoints) {
-      const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
-        stationPos, routePoint
+      // Check distance to leg start and end
+      const startDist = window.google.maps.geometry.spherical.computeDistanceBetween(
+        stationPos, leg.start_location
       );
-      if (distance <= 2000) { // Back to 2km
-        console.log(`✅ Station ${station.name} is ${Math.round(distance)}m from route`);
+      const endDist = window.google.maps.geometry.spherical.computeDistanceBetween(
+        stationPos, leg.end_location
+      );
+      
+      if (startDist <= 2000 || endDist <= 2000) {
         return true;
       }
+      
+      // Check distance to all step points
+      for (let j = 0; j < leg.steps.length; j++) {
+        const step = leg.steps[j];
+        
+        const stepStartDist = window.google.maps.geometry.spherical.computeDistanceBetween(
+          stationPos, step.start_location
+        );
+        const stepEndDist = window.google.maps.geometry.spherical.computeDistanceBetween(
+          stationPos, step.end_location
+        );
+        
+        if (stepStartDist <= 2000 || stepEndDist <= 2000) {
+          return true;
+        }
+      }
     }
     
-    console.log(`❌ Station ${station.name} is too far from route`);
     return false;
   }, [calculatedRoute]);
 
@@ -262,7 +251,7 @@ const GoogleRouteMap: React.FC<{
     // Add new charging station markers
     chargingStations.forEach(station => {
       const isRecommendedAlongRoute = bestStationAlongRoute && station.id === bestStationAlongRoute.id;
-      const isNearRoute = true; // TEST: Make ALL stations red
+      const isNearRoute = calculatedRoute && isStationNearRoute(station);
       
       console.log(`🔍 Station ${station.name}: hasRoute=${!!calculatedRoute}, isNearRoute=${isNearRoute}`);
       
