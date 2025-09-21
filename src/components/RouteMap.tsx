@@ -3150,7 +3150,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                               selectedCar && 
                               accessToken && 
                               !loading &&
-                              (routeTrigger > 0 || selectedRouteId === 'fastest');
+                              routeTrigger > 0; // KUN når manuelt trigget
 
     if (shouldUpdateRoute) {
       console.log('🚀 STARTER RUTEPLANLEGGING:', selectedRouteId || 'fastest');
@@ -3162,7 +3162,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
     } else {
       console.log('⏸️ Venter på requirements...');
     }
-  }, [routeTrigger, selectedRouteId, accessToken, routeData.from, routeData.to, selectedCar, loading]);
+  }, [routeTrigger, accessToken, routeData.from, routeData.to, selectedCar, loading]); // Fjernet selectedRouteId
 
   if (!isVisible) {
     console.log('🚫 RouteMap ikke synlig - isVisible:', isVisible);

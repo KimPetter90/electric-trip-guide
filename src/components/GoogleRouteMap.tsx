@@ -576,10 +576,13 @@ const GoogleRouteMap: React.FC<{
   }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, selectedRouteId, onRouteCalculated, onLoadingChange, onError]);
 
   useEffect(() => {
-    console.log('🎯 Route trigger changed to:', routeTrigger, 'for route:', selectedRouteId);
-    console.log('🛣️ KALLER CALCULATEROUTE fra useEffect');
-    calculateRoute();
-  }, [calculateRoute, routeTrigger, selectedRouteId]);
+    // KUN beregn rute når routeTrigger er eksplisitt satt (ikke 0)
+    if (routeTrigger > 0) {
+      console.log('🎯 Route trigger changed to:', routeTrigger, 'for route:', selectedRouteId);
+      console.log('🛣️ KALLER CALCULATEROUTE fra useEffect - MANUELL TRIGGER');
+      calculateRoute();
+    }
+  }, [calculateRoute, routeTrigger]);
 
   // Cleanup on unmount
   useEffect(() => {
