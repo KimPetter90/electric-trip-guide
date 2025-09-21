@@ -33,6 +33,7 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
   const [estimatedArrival, setEstimatedArrival] = useState<string>('');
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [routeDeviation, setRouteDeviation] = useState<boolean>(false);
+  const [isSimulating, setIsSimulating] = useState<boolean>(false);
   
   const watchIdRef = useRef<number | null>(null);
   const lastLocationRef = useRef<LocationData | null>(null);
@@ -154,111 +155,15 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
         return;
       }
 
-      // Get initial position with more lenient settings
-      console.log('📡 Henter initial posisjon...');
-      await new Promise<void>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            console.log('✅ Fikk GPS-posisjon:', position.coords);
-            const locationData: LocationData = {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              accuracy: position.coords.accuracy,
-              heading: position.coords.heading || undefined,
-              speed: position.coords.speed || undefined,
-              timestamp: Date.now(),
-            };
-            setCurrentLocation(locationData);
-            lastLocationRef.current = locationData;
-            resolve();
-          },
-          (error) => {
-            console.error('❌ GPS-feil:', error);
-            let errorMsg = 'Ukjent GPS-feil';
-            switch (error.code) {
-              case error.PERMISSION_DENIED:
-                errorMsg = 'GPS-tilgang ble nektet. Sjekk nettleserens innstillinger.';
-                break;
-              case error.POSITION_UNAVAILABLE:
-                errorMsg = 'GPS-posisjon ikke tilgjengelig. Prøv utendørs.';
-                break;
-              case error.TIMEOUT:
-                errorMsg = 'GPS-forespørsel tok for lang tid. Prøv igjen.';
-                break;
-            }
-            toast({
-              title: "GPS-feil",
-              description: errorMsg,
-              variant: "destructive",
-            });
-            reject(error);
-          },
-          {
-            enableHighAccuracy: false, // Start with less demanding settings
-            timeout: 15000, // Longer timeout
-            maximumAge: 300000 // Allow cached position
-          }
-        );
-      });
-
-      // Start continuous tracking with less demanding settings initially
-      console.log('🔄 Starter kontinuerlig sporing...');
-      watchIdRef.current = navigator.geolocation.watchPosition(
-        (position) => {
-          console.log('📍 Ny posisjon mottatt');
-          const locationData: LocationData = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            heading: position.coords.heading || undefined,
-            speed: position.coords.speed || undefined,
-            timestamp: Date.now(),
-          };
-          
-          setCurrentLocation(locationData);
-          updateRouteProgress(locationData);
-          checkRouteDeviation(locationData);
-        },
-        (error) => {
-          console.error('❌ GPS tracking feil:', error);
-          stopNavigation();
-          toast({
-            title: "GPS-feil",
-            description: "Kunne ikke følge posisjon. Navigasjon stoppet.",
-            variant: "destructive",
-          });
-        },
-        {
-          enableHighAccuracy: false, // Start with less demanding, upgrade later
-          timeout: 20000, // Longer timeout
-          maximumAge: 60000
-        }
-      );
-
-      // Route checking interval
-      routeCheckIntervalRef.current = setInterval(() => {
-        if (currentLocation) {
-          updateRouteProgress(currentLocation);
-        }
-      }, 5000);
-
-      setIsTracking(true);
-      setRouteDeviation(false);
+      // Try to get real GPS position first
+      let useSimulation = false;
       
-      console.log('✅ Navigasjon startet successfully');
-      toast({
-        title: "🧭 Navigasjon startet",
-        description: "Følger din posisjon og ruten i sanntid",
-      });
-      
-      // Upgrade to high accuracy after initial success
-      setTimeout(() => {
-        if (watchIdRef.current && navigator.geolocation) {
-          console.log('⬆️ Oppgraderer til høy nøyaktighet...');
-          navigator.geolocation.clearWatch(watchIdRef.current);
-          
-          watchIdRef.current = navigator.geolocation.watchPosition(
+      try {
+        console.log('📡 Prøver å hente ekte GPS-posisjon...');
+        await new Promise<void>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
             (position) => {
+              console.log('✅ Fikk ekte GPS-posisjon:', position.coords);
               const locationData: LocationData = {
                 latitude: position.coords.latitude,
                 longitude: position.coords.longitude,
@@ -267,29 +172,126 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
                 speed: position.coords.speed || undefined,
                 timestamp: Date.now(),
               };
-              
               setCurrentLocation(locationData);
-              updateRouteProgress(locationData);
-              checkRouteDeviation(locationData);
+              lastLocationRef.current = locationData;
+              resolve();
             },
-            (error) => {
-              console.warn('⚠️ High accuracy GPS feil, fortsetter med lavere nøyaktighet:', error);
-              // Don't stop navigation, just continue with lower accuracy
+            () => {
+              // GPS failed, will use simulation
+              reject(new Error('GPS not available'));
             },
             {
-              enableHighAccuracy: true,
-              timeout: 15000,
-              maximumAge: 30000
+              enableHighAccuracy: false,
+              timeout: 5000, // Quick timeout for fallback
+              maximumAge: 300000
             }
           );
-        }
-      }, 3000);
+        });
+        
+        console.log('✅ Bruker ekte GPS');
+        
+      } catch (gpsError) {
+        console.log('📱 GPS ikke tilgjengelig, starter demo-modus...');
+        useSimulation = true;
+        setIsSimulating(true);
+        
+        // Start with simulated location in Ålesund
+        const simulatedLocation: LocationData = {
+          latitude: 62.472,
+          longitude: 6.1549,
+          accuracy: 5,
+          heading: 45, // NE direction
+          speed: 50, // 50 km/h
+          timestamp: Date.now(),
+        };
+        
+        setCurrentLocation(simulatedLocation);
+        lastLocationRef.current = simulatedLocation;
+        
+        toast({
+          title: "🎭 Demo-modus aktivert",
+          description: "Viser simulert GPS-bevegelse for testing",
+          duration: 4000,
+        });
+      }
+
+      // Start tracking (real or simulated)
+      if (useSimulation) {
+        // Simulation mode
+        routeCheckIntervalRef.current = setInterval(() => {
+          const currentLoc = currentLocation;
+          if (currentLoc) {
+            // Simulate realistic movement
+            const simulatedLocation: LocationData = {
+              latitude: currentLoc.latitude + (Math.random() - 0.5) * 0.002, // ~200m movement
+              longitude: currentLoc.longitude + (Math.random() - 0.5) * 0.002,
+              accuracy: 3 + Math.random() * 7,
+              heading: ((currentLoc.heading || 45) + (Math.random() - 0.5) * 20 + 360) % 360,
+              speed: 45 + Math.random() * 15, // 45-60 km/h
+              timestamp: Date.now(),
+            };
+            
+            setCurrentLocation(simulatedLocation);
+            updateRouteProgress(simulatedLocation);
+            checkRouteDeviation(simulatedLocation);
+          }
+        }, 2000); // Update every 2 seconds
+        
+      } else {
+        // Real GPS mode
+        watchIdRef.current = navigator.geolocation.watchPosition(
+          (position) => {
+            console.log('📍 Ny GPS-posisjon mottatt');
+            const locationData: LocationData = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy,
+              heading: position.coords.heading || undefined,
+              speed: position.coords.speed || undefined,
+              timestamp: Date.now(),
+            };
+            
+            setCurrentLocation(locationData);
+            updateRouteProgress(locationData);
+            checkRouteDeviation(locationData);
+          },
+          (error) => {
+            console.error('❌ GPS tracking feil:', error);
+            toast({
+              title: "GPS-feil",
+              description: "GPS-signal tapt. Venter på gjenoppkobling...",
+              duration: 3000,
+            });
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 30000
+          }
+        );
+
+        // Additional route checking for real GPS
+        routeCheckIntervalRef.current = setInterval(() => {
+          if (currentLocation) {
+            updateRouteProgress(currentLocation);
+          }
+        }, 5000);
+      }
+
+      setIsTracking(true);
+      setRouteDeviation(false);
+      
+      console.log('✅ Navigasjon startet successfully');
+      toast({
+        title: "🧭 Navigasjon startet",
+        description: useSimulation ? "Demo-modus med simulert bevegelse" : "Følger din GPS-posisjon i sanntid",
+      });
       
     } catch (error) {
       console.error('❌ Navigation start error:', error);
       toast({
         title: "Kunne ikke starte navigasjon",
-        description: "Sjekk GPS-tillatelser og internettforbindelse. Prøv igjen.",
+        description: "Prøv igjen eller kontakt support",
         variant: "destructive",
       });
     }
@@ -310,6 +312,7 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
     setRouteProgress(0);
     setEstimatedArrival('');
     setCurrentSpeed(0);
+    setIsSimulating(false);
     lastLocationRef.current = null;
     
     toast({
@@ -352,7 +355,7 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
         <div className="flex items-center gap-2 mb-2">
           <Navigation className="h-4 w-4 text-green-400 animate-pulse" />
           <Badge variant="default" className="text-xs">
-            Navigerer
+            {isSimulating ? "Demo" : "Live"}
           </Badge>
           {routeDeviation && (
             <Badge variant="destructive" className="text-xs">
@@ -384,6 +387,13 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
             <div className="flex justify-between">
               <span className="text-muted-foreground">Ankomst:</span>
               <span className="font-medium">{estimatedArrival}</span>
+            </div>
+          )}
+          
+          {currentLocation && (
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">Nøyaktighet:</span>
+              <span className="font-medium">±{Math.round(currentLocation.accuracy)}m</span>
             </div>
           )}
         </div>
