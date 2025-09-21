@@ -148,7 +148,8 @@ function calculateStationScore(
   carData: any, 
   weather: WeatherData,
   requiredRange: number,
-  distanceToStation: number
+  distanceToStation: number,
+  isRisky: boolean = false
 ): number {
   let score = 0;
   
@@ -168,19 +169,32 @@ function calculateStationScore(
   const costScore = Math.max(0, 15 - (station.cost - 3) * 3);
   score += costScore;
   
-  // Avstand langs rute (30% av score) - sterkt favoriser stasjoner nærmere ruten
-  const maxReasonableDistance = 100; // km - redusert for å favorisere nærliggende stasjoner
-  const distanceScore = Math.max(0, 30 - (distanceToStation / maxReasonableDistance) * 30);
-  score += distanceScore;
-  
-  // Ekstra straff for stasjoner veldig langt unna ruten
-  if (distanceToStation > 150) {
-    score -= 20; // Stor straff for stasjoner langt fra ruten
+  // SIKKERHETSJUSTERING: Hvis situasjonen er risikabel, favoriser STERKT nærmere stasjoner
+  if (isRisky) {
+    // Gi MASSIV bonus til stasjoner som er nær (under 100km fra ruten)
+    if (distanceToStation < 50) {
+      score += 50; // Stor sikkerhetbonus
+    } else if (distanceToStation < 100) {
+      score += 30; // Moderat sikkerhetbonus
+    }
+    // Stor straff for stasjoner langt unna når situasjonen er risikabel
+    if (distanceToStation > 150) {
+      score -= 40;
+    }
+  } else {
+    // Normal avstandsberegning når ikke risikabelt
+    const maxReasonableDistance = 100;
+    const distanceScore = Math.max(0, 30 - (distanceToStation / maxReasonableDistance) * 30);
+    score += distanceScore;
+    
+    if (distanceToStation > 150) {
+      score -= 20;
+    }
   }
   
   // Kritisk stasjon bonus hvis batteri er lavt
   if (routeData.batteryPercentage < 30 && distanceToStation < requiredRange * 1000 * 0.8) {
-    score += 30; // Stor bonus for kritiske stasjoner
+    score += 30;
   }
   
   // Leverandør bonus (kjente leverandører)
@@ -244,11 +258,20 @@ serve(async (req) => {
       routeDistance,
       needsCharging: adjustedCurrentRange < (routeDistance * 1.2)
     });
-    console.log('🚦 Charging is needed, analyzing stations...');
-    console.log('📍 Available stations:', stations.map(s => `${s.name} (${s.location})`));
+    
+    // SIKKERHETSMARGINAL: Hvis adjustert rekkevidde er mindre enn 150% av ruterekkevidde, finn nærmeste sikre stasjon
+    const safetyMargin = 1.5; // 50% sikkerhetsmarginal
+    const isRisky = adjustedCurrentRange < (routeDistance * safetyMargin);
+    
+    if (isRisky) {
+      console.log('⚠️ RISIKABEL RUTE: Leter etter nærmeste sikre ladestasjon i stedet for optimal');
+    } else {
+      console.log('✅ Trygg rekkevidde, analyserer beste stasjoner...');
+    }
+    
     // If we have 20% safety margin beyond route distance, no charging needed
-    const safetyMargin = 1.2; // 20% safety margin
-    if (adjustedCurrentRange >= (routeDistance * safetyMargin)) {
+    const basicSafetyMargin = 1.2; // 20% safety margin
+    if (adjustedCurrentRange >= (routeDistance * basicSafetyMargin)) {
       console.log('✅ No charging needed! Current range sufficient for route');
       return new Response(JSON.stringify({
         recommendedStation: null,
@@ -322,7 +345,8 @@ serve(async (req) => {
         carData,
         weather,
         requiredRange,
-        distanceFromRoute
+        distanceFromRoute,
+        isRisky  // Send med sikkerhetsstatus
       );
       
       return {
