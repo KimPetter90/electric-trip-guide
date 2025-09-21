@@ -158,7 +158,7 @@ const GoogleRouteMap: React.FC<{
     initializeMap();
   }, []);
 
-  // Check if station is near route
+  // Check if station is near route (within 2km)
   const isStationNearRoute = useCallback((station: ChargingStation): boolean => {
     if (!calculatedRoute || !window.google?.maps?.geometry) {
       return false;
@@ -167,14 +167,28 @@ const GoogleRouteMap: React.FC<{
     const stationPos = new google.maps.LatLng(station.latitude, station.longitude);
     const route = calculatedRoute.routes[0];
     
+    // Check distance to all points along the route with higher precision
     for (const leg of route.legs) {
       for (const step of leg.steps) {
-        const distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+        // Check start point
+        let distance = window.google.maps.geometry.spherical.computeDistanceBetween(
           stationPos,
           step.start_location
         );
         
-        if (distance <= 10000) { // 10km radius
+        if (distance <= 2000) { // 2km radius as requested
+          console.log(`🎯 Station ${station.name} is ${Math.round(distance)}m from route`);
+          return true;
+        }
+        
+        // Check end point
+        distance = window.google.maps.geometry.spherical.computeDistanceBetween(
+          stationPos,
+          step.end_location
+        );
+        
+        if (distance <= 2000) { // 2km radius
+          console.log(`🎯 Station ${station.name} is ${Math.round(distance)}m from route`);
           return true;
         }
       }
