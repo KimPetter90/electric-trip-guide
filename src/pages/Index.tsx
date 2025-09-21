@@ -87,7 +87,7 @@ function Index() {
       // Set navigation center to user location if available
       if (userLocation) {
         setNavigationCenter({ lat: userLocation.latitude, lng: userLocation.longitude });
-        setNavigationZoom(22); // Maximum zoom for navigation
+        setNavigationZoom(25); // Absolut maksimal zoom for navigasjon
       }
       // Start GPS tracking and update route trigger
       setRouteTrigger(prev => prev + 10);
