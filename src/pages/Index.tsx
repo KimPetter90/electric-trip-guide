@@ -131,11 +131,8 @@ function Index() {
   const handleRouteSelect = useCallback((routeId: string) => {
     console.log('🎯 Route selected:', routeId);
     setSelectedRouteId(routeId);
-    // Kun trigger rute hvis bruker eksplisitt velger en annen rute
-    if (routeTrigger > 0) {
-      setRouteTrigger(prev => prev + 1);
-    }
-  }, [routeTrigger]);
+    setRouteTrigger(prev => prev + 1);
+  }, []);
 
   // Load charging stations on component mount
   useEffect(() => {
