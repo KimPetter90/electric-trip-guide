@@ -96,6 +96,7 @@ function Index() {
   const [mapLoading, setMapLoading] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [chargingStations, setChargingStations] = useState<any[]>([]);
+  const [routeGenerationTimeout, setRouteGenerationTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Stable callback functions to prevent re-renders
   const handleChargingStationUpdate = useCallback((station: any, showButton: boolean, optimizedStations?: any[]) => {
@@ -318,9 +319,12 @@ function Index() {
     }
   };
 
-  // Optimalisert generering av rutevalg med caching
+  // Optimalisert generering av rutevalg med caching og debounce
   const generateRouteOptions = async () => {
     if (!selectedCar || !routeData.from || !routeData.to) return;
+    
+    // Sjekk at begge feltene har minst 3 tegn for å unngå for tidlig beregning
+    if (routeData.from.trim().length < 3 || routeData.to.trim().length < 3) return;
 
     const cacheKey = `${routeData.from}-${routeData.to}-${selectedCar.id}`;
     const cached = localStorage.getItem(`routeCache_${cacheKey}`);
@@ -429,6 +433,36 @@ function Index() {
       console.warn('Cache lagring feilet:', e);
     }
   };
+  
+  // Debouncet ruteberegning som venter 2 sekunder etter at brukeren slutter å skrive
+  const generateRouteOptionsDebounced = useCallback(() => {
+    // Clear existing timeout
+    if (routeGenerationTimeout) {
+      clearTimeout(routeGenerationTimeout);
+    }
+    
+    // Set new timeout
+    const timeout = setTimeout(() => {
+      if (selectedCar && routeData.from && routeData.to && 
+          routeData.from.trim().length >= 3 && routeData.to.trim().length >= 3) {
+        generateRouteOptions();
+      }
+    }, 2000); // 2 sekunder delay
+    
+    setRouteGenerationTimeout(timeout);
+  }, [selectedCar, routeData.from, routeData.to, routeGenerationTimeout]);
+  
+  // Auto-beregn ruter når routeData endres (debounced)
+  useEffect(() => {
+    generateRouteOptionsDebounced();
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (routeGenerationTimeout) {
+        clearTimeout(routeGenerationTimeout);
+      }
+    };
+  }, [routeData.from, routeData.to, selectedCar]);
 
   // Komplett distansetabell for norske byer
   const calculateApproximateDistance = (from: string, to: string): number => {
