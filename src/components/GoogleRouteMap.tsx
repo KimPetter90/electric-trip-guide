@@ -582,7 +582,7 @@ const GoogleRouteMap: React.FC<{
       console.log('🛣️ KALLER CALCULATEROUTE fra useEffect - MANUELL TRIGGER');
       calculateRoute();
     }
-  }, [calculateRoute, routeTrigger]);
+  }, [calculateRoute, routeTrigger, selectedRouteId]);
 
   // Cleanup on unmount
   useEffect(() => {

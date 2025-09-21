@@ -3162,7 +3162,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
     } else {
       console.log('⏸️ Venter på requirements...');
     }
-  }, [routeTrigger, accessToken, routeData.from, routeData.to, selectedCar, loading]); // Fjernet selectedRouteId
+  }, [routeTrigger, selectedRouteId, accessToken, routeData.from, routeData.to, selectedCar, loading]);
 
   if (!isVisible) {
     console.log('🚫 RouteMap ikke synlig - isVisible:', isVisible);

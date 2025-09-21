@@ -131,8 +131,11 @@ function Index() {
   const handleRouteSelect = useCallback((routeId: string) => {
     console.log('🎯 Route selected:', routeId);
     setSelectedRouteId(routeId);
-    // FJERNET: setRouteTrigger(prev => prev + 1); - kun manuell trigger
-  }, []);
+    // Trigger kartberegning når bruker velger ny rute
+    if (routeTrigger > 0) { // Kun hvis allerede har beregnet ruter
+      setRouteTrigger(prev => prev + 1);
+    }
+  }, [routeTrigger]);
 
   // Load charging stations on component mount
   useEffect(() => {
