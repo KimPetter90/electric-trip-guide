@@ -709,28 +709,78 @@ const GoogleRouteMap: React.FC<{
     }
   }, [calculateRoute, routeTrigger, selectedRouteId]);
 
-  // Lytt til brukerposisjon og sjekk for ruteoppdateringer
+  // Lytt til brukerposisjon og oppdater ruten til å vise kun gjenværende del
   useEffect(() => {
-    if (userLocation && mapInstanceRef.current && calculatedRoute) {
-      console.log('🗺️ Sjekker brukerposisjon mot rute:', userLocation);
+    if (userLocation && mapInstanceRef.current && calculatedRoute && directionsRendererRef.current) {
+      console.log('🗺️ Oppdaterer rute basert på brukerposisjon:', userLocation);
       
       const userLatLng = new google.maps.LatLng(userLocation.latitude, userLocation.longitude);
       const route = calculatedRoute.routes[0];
       
-      if (route && route.legs[0]) {
-        const startLocation = route.legs[0].start_location;
-        const distanceFromStart = google.maps.geometry.spherical.computeDistanceBetween(
-          userLatLng,
-          startLocation
-        );
+      if (route && route.overview_path) {
+        // Finn nærmeste punkt på ruten
+        let closestPointIndex = 0;
+        let minDistance = Infinity;
         
-        // Hvis mer enn 1km fra startpunktet, foreslå oppdatering
-        if (distanceFromStart > 1000) {
-          console.log('📍 Bruker er', Math.round(distanceFromStart), 'meter fra startpunkt - kan trenge ruteoppdatering');
+        route.overview_path.forEach((point, index) => {
+          const distance = google.maps.geometry.spherical.computeDistanceBetween(userLatLng, point);
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestPointIndex = index;
+          }
+        });
+        
+        console.log('📍 Nærmeste punkt på rute:', closestPointIndex, 'avstand:', Math.round(minDistance), 'm');
+        
+        // Hvis brukeren er nær ruten (under 100m), oppdater ruten
+        if (minDistance < 100) {
+          // Beregn ny rute fra brukerposisjon til destinasjon
+          updateRemainingRoute(userLocation, routeData.to);
         }
       }
     }
-  }, [userLocation, calculatedRoute]);
+  }, [userLocation, calculatedRoute, routeData.to]);
+
+  // Funksjon for å oppdatere ruten til kun gjenværende del
+  const updateRemainingRoute = async (currentPos: {latitude: number, longitude: number}, destination: string) => {
+    if (!mapInstanceRef.current || !directionsRendererRef.current) return;
+    
+    console.log('🔄 Oppdaterer rute fra nåværende posisjon til destinasjon');
+    
+    const directionsService = new google.maps.DirectionsService();
+    
+    try {
+      const result = await new Promise<google.maps.DirectionsResult>((resolve, reject) => {
+        directionsService.route(
+          {
+            origin: new google.maps.LatLng(currentPos.latitude, currentPos.longitude),
+            destination: destination,
+            travelMode: google.maps.TravelMode.DRIVING,
+            avoidHighways: false,
+            avoidTolls: false
+          },
+          (result, status) => {
+            if (status === google.maps.DirectionsStatus.OK && result) {
+              resolve(result);
+            } else {
+              reject(new Error(`Directions request failed: ${status}`));
+            }
+          }
+        );
+      });
+      
+      // Oppdater ruten med kun gjenværende del
+      directionsRendererRef.current.setDirections(result);
+      
+      // Oppdater den lagrede ruten
+      setCalculatedRoute(result);
+      
+      console.log('✅ Rute oppdatert til gjenværende del');
+      
+    } catch (error) {
+      console.error('❌ Kunne ikke oppdatere gjenværende rute:', error);
+    }
+  };
 
   // Cleanup on unmount
   useEffect(() => {
