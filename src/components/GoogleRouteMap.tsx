@@ -464,14 +464,46 @@ const GoogleRouteMap: React.FC<{
 
         const infoWindow = new google.maps.InfoWindow({
           content: `
-            <div style="padding: 10px; max-width: 250px;">
-              <h3 style="margin: 0 0 10px 0; color: #333;">${station.name}</h3>
-              <p><strong>Tilgjengelig:</strong> ${station.available}/${station.total}</p>
-              <p><strong>Effekt:</strong> ${station.power}</p>
-              <p><strong>Pris:</strong> ${station.cost} kr/kWh</p>
-              <p><strong>Leverandør:</strong> ${station.provider}</p>
-              <p style="font-size: 12px; color: #666;">${station.address}</p>
-              ${isRecommendedAlongRoute ? '<div style="padding: 5px; background: #FFD700; border-radius: 3px; text-align: center; font-weight: bold;">⭐ OPTIMALISERT ANBEFALING</div>' : ''}
+            <div class="charging-station-popup">
+              <div class="popup-header ${isRecommendedAlongRoute ? 'critical' : ''}">
+                <h3>${station.name}</h3>
+                ${isRecommendedAlongRoute ? '<div class="optimal-badge">⭐ OPTIMALISERT ANBEFALING</div>' : ''}
+              </div>
+              
+              <div class="status-indicator">
+                <div class="status-dot ${station.available > 0 ? 'available' : 'busy'}"></div>
+                <span>Status: ${station.available > 0 ? 'Tilgjengelig' : 'Opptatt'}</span>
+              </div>
+              
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <div class="stat-value">${station.available}/${station.total}</div>
+                  <div class="stat-label">Plasser</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-value">${station.power}</div>
+                  <div class="stat-label">Effekt</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-value">${station.cost}</div>
+                  <div class="stat-label">kr/kWh</div>
+                </div>
+              </div>
+              
+              <div class="provider-info">
+                <span class="provider-label">Leverandør:</span>
+                <span class="provider-name">${station.provider}</span>
+              </div>
+              
+              <div class="address">${station.address}</div>
+              
+              <div class="battery-prediction">
+                <div class="prediction-label">Lading estimat</div>
+                <div class="prediction-bar">
+                  <div class="prediction-fill" style="width: ${Math.min(100, (station.available / station.total) * 100)}%"></div>
+                </div>
+                <div class="prediction-text">${Math.round((station.available / station.total) * 100)}% tilgjengelighet</div>
+              </div>
             </div>
           `
         });
