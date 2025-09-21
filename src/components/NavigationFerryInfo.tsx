@@ -53,7 +53,7 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
       }
       
       const followingDep = new Date(nextDep);
-      followingDep.setMinutes(nextDep.getMinutes() + 30);
+      followingDep.setMinutes(nextDep.getMinutes() + 60);
 
       routes.push({
         route: 'Sulesund-Hareid',
