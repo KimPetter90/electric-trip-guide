@@ -209,6 +209,81 @@ const GoogleRouteMap: React.FC<{
     return bestStation || stationsNearRoute[0]; // Fallback to first station along route
   }, [calculatedRoute, chargingStations, isStationNearRoute]);
 
+  // Calculate required charging locations based on range
+  const getRequiredChargingStations = useCallback((): ChargingStation[] => {
+    if (!calculatedRoute || !selectedCar || !routeData.batteryPercentage) {
+      return [];
+    }
+
+    const route = calculatedRoute.routes[0];
+    const totalDistance = route.legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0) / 1000;
+    
+    // Current range available with battery percentage
+    const currentRange = (routeData.batteryPercentage / 100) * selectedCar.range;
+    
+    console.log(`🔋 RANGE ANALYSIS:`, {
+      totalDistance: `${totalDistance.toFixed(1)} km`,
+      carRange: `${selectedCar.range} km`,
+      batteryLevel: `${routeData.batteryPercentage}%`,
+      currentRange: `${currentRange.toFixed(1)} km`,
+      needsCharging: currentRange < totalDistance
+    });
+
+    // If we can reach destination without charging, no required stops
+    if (currentRange >= totalDistance) {
+      console.log('✅ Kan nå destinasjon uten å lade');
+      return [];
+    }
+
+    // Find the first required charging stop
+    let distanceTraveled = 0;
+    const requiredStations: ChargingStation[] = [];
+    
+    // We need to charge when we've used up our current range
+    const chargeNeededAt = currentRange * 0.9; // Add 10% safety margin
+    
+    // Find closest charging station to the point where we need to charge
+    const stationsNearRoute = chargingStations.filter(station => isStationNearRoute(station));
+    
+    if (stationsNearRoute.length > 0) {
+      // For now, find the best station within our range
+      const reachableStations = stationsNearRoute.filter(station => {
+        // Calculate approximate distance to station along the route
+        const routePath = route.overview_path;
+        let closestDistanceToRoute = Infinity;
+        
+        routePath.forEach((point, index) => {
+          const distanceToPoint = google.maps.geometry.spherical.computeDistanceBetween(
+            new google.maps.LatLng(station.latitude, station.longitude),
+            point
+          ) / 1000; // Convert to km
+          
+          if (distanceToPoint < closestDistanceToRoute) {
+            closestDistanceToRoute = distanceToPoint;
+          }
+        });
+        
+        // Station is reachable if it's within our current range
+        return closestDistanceToRoute <= chargeNeededAt;
+      });
+
+      if (reachableStations.length > 0) {
+        // Pick the best reachable station
+        const bestReachableStation = reachableStations
+          .sort((a, b) => {
+            const availabilityA = a.available / a.total;
+            const availabilityB = b.available / b.total;
+            return availabilityB - availabilityA;
+          })[0];
+        
+        requiredStations.push(bestReachableStation);
+        console.log(`🚨 OBLIGATORISK LADESTASJON: ${bestReachableStation.name} - must charge here to reach destination`);
+      }
+    }
+
+    return requiredStations;
+  }, [calculatedRoute, chargingStations, selectedCar, routeData.batteryPercentage, isStationNearRoute]);
+
   // Add charging station markers
   useEffect(() => {
     if (!mapInstanceRef.current || !chargingStations || chargingStations.length === 0) {
@@ -224,13 +299,32 @@ const GoogleRouteMap: React.FC<{
     // Find best station along route
     const bestStationAlongRoute = getBestStationAlongRoute();
 
+    // Find required charging stations
+    const requiredChargingStations = getRequiredChargingStations();
+
     // Add new charging station markers
     chargingStations.forEach(station => {
       const isRecommendedAlongRoute = bestStationAlongRoute && station.id === bestStationAlongRoute.id;
       const isNearRoute = calculatedRoute && isStationNearRoute(station);
+      const isRequiredForTrip = requiredChargingStations.some(req => req.id === station.id);
       
-      // Choose marker icon
-      const markerIcon = isRecommendedAlongRoute ? {
+      console.log(`🔌 Station ${station.name}:`, {
+        isRecommendedAlongRoute,
+        isNearRoute, 
+        isRequiredForTrip
+      });
+      
+      // Choose marker icon - Required stations get priority
+      const markerIcon = isRequiredForTrip ? {
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
+            <circle cx="14" cy="14" r="13" fill="#ff0000" stroke="#cc0000" stroke-width="2"/>
+            <text x="14" y="18" text-anchor="middle" fill="white" font-size="16" font-weight="bold">!</text>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(28, 28),
+        anchor: new google.maps.Point(14, 14)
+      } : isRecommendedAlongRoute ? {
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="11" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
@@ -262,8 +356,8 @@ const GoogleRouteMap: React.FC<{
         position: { lat: station.latitude, lng: station.longitude },
         map: mapInstanceRef.current!,
         icon: markerIcon,
-        title: `${station.name}\n${station.available}/${station.total} tilgjengelig (${Math.round((station.available / station.total) * 100)}%)\n${station.cost} kr/kWh${isRecommendedAlongRoute ? '\n⭐ ANBEFALT LANGS RUTEN' : ''}`,
-        zIndex: isRecommendedAlongRoute ? 1000 : (isNearRoute ? 100 : 10)
+        title: `${station.name}\n${station.available}/${station.total} tilgjengelig (${Math.round((station.available / station.total) * 100)}%)\n${station.cost} kr/kWh${isRequiredForTrip ? '\n🚨 OBLIGATORISK LADESTOPP' : isRecommendedAlongRoute ? '\n⭐ ANBEFALT LANGS RUTEN' : ''}`,
+        zIndex: isRequiredForTrip ? 2000 : (isRecommendedAlongRoute ? 1000 : (isNearRoute ? 100 : 10))
       });
 
       const infoWindow = new google.maps.InfoWindow({
@@ -275,6 +369,7 @@ const GoogleRouteMap: React.FC<{
             <p><strong>Pris:</strong> ${station.cost} kr/kWh</p>
             <p><strong>Leverandør:</strong> ${station.provider}</p>
             <p style="font-size: 12px; color: #666;">${station.address}</p>
+            ${isRequiredForTrip ? '<div style="padding: 5px; background: #ff0000; color: white; border-radius: 3px; text-align: center; font-weight: bold;">🚨 OBLIGATORISK LADESTOPP</div>' : ''}
             ${isRecommendedAlongRoute ? '<div style="padding: 5px; background: #FFD700; border-radius: 3px; text-align: center; font-weight: bold;">⭐ ANBEFALT LANGS RUTEN</div>' : ''}
           </div>
         `
@@ -286,7 +381,7 @@ const GoogleRouteMap: React.FC<{
 
       chargingStationMarkersRef.current.push(marker);
     });
-  }, [chargingStations, calculatedRoute, getBestStationAlongRoute]);
+  }, [chargingStations, calculatedRoute, getBestStationAlongRoute, getRequiredChargingStations]);
 
   // Calculate route when trigger changes
   const calculateRoute = useCallback(async () => {
