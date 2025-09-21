@@ -169,9 +169,9 @@ function calculateStationScore(
   const costScore = Math.max(0, 15 - (station.cost - 3) * 3);
   score += costScore;
   
-  // SIKKERHETSJUSTERING: Hvis situasjonen er risikabel, favoriser stasjoner som er tidlig på ruten men ikke ved start
+  // SIKKERHETSJUSTERING: Forskjellig scoring basert på om det er risikabelt eller ikke
   if (isRisky) {
-    // Ved risikabelt: vi vil ha stasjoner 100-300km fra start (ikke ved start, men tidlig på ruten)
+    // Ved risikabelt (med henger): favoriser stasjoner tidlig på ruten men ikke ved start
     if (distanceToStation < 50) {
       score -= 30; // STRAFF for stasjoner ved start - vi vil gjøre fremgang!
     } else if (distanceToStation >= 50 && distanceToStation < 150) {
@@ -182,13 +182,15 @@ function calculateStationScore(
       score -= 30; // Straff for stasjoner for langt unna når risikabelt
     }
   } else {
-    // Normal avstandsberegning når ikke risikabelt (fra midtpunkt av ruten)
-    const maxReasonableDistance = 100;
-    const distanceScore = Math.max(0, 30 - (distanceToStation / maxReasonableDistance) * 30);
-    score += distanceScore;
-    
-    if (distanceToStation > 150) {
-      score -= 20;
+    // Normal situasjon (uten henger): favoriser stasjoner nær midtpunkt av ruten
+    if (distanceToStation < 50) {
+      score += 30; // Bonus for stasjoner nær midtpunkt
+    } else if (distanceToStation < 100) {
+      score += 20; // Moderat bonus
+    } else if (distanceToStation < 150) {
+      score += 10; // Liten bonus
+    } else {
+      score -= 20; // Straff for stasjoner langt fra midtpunkt
     }
   }
   
