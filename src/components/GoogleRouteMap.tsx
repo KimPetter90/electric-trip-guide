@@ -752,14 +752,16 @@ const GoogleRouteMap: React.FC<{
         console.log('📍 Brukerposisjon:', userLocation);
         console.log('🎯 Destinasjon:', routeData.to);
         
-        // Zoom til brukerposisjon
+        // Zoom til brukerposisjon og HOLD zoom
         if (mapInstanceRef.current) {
-          mapInstanceRef.current.panTo({ lat: userLocation.latitude, lng: userLocation.longitude });
+          console.log('📍 Sentrerer på brukerposisjon og setter zoom 18');
+          mapInstanceRef.current.setCenter({ lat: userLocation.latitude, lng: userLocation.longitude });
+          mapInstanceRef.current.setZoom(18);
+          
+          // Start ruteberegning etter zoom er satt
           setTimeout(() => {
-            mapInstanceRef.current!.setZoom(18);
-            // Start ruteberegning etter zoom
             updateRemainingRoute(userLocation, routeData.to);
-          }, 500);
+          }, 100);
         }
       } else {
         calculateRoute();
@@ -816,6 +818,7 @@ const GoogleRouteMap: React.FC<{
     
     directionsRendererRef.current = new google.maps.DirectionsRenderer({
       suppressMarkers: false,
+      preserveViewport: true, // VIKTIG: Ikke endre zoom/viewport automatisk
       polylineOptions: {
         strokeColor: '#1976d2',
         strokeWeight: 8,
@@ -850,11 +853,19 @@ const GoogleRouteMap: React.FC<{
         );
       });
       
-      // Vis ruten
+      // Vis ruten UTEN å endre viewport
       directionsRendererRef.current.setDirections(result);
       setCalculatedRoute(result);
       
-      console.log('✅ Navigasjonsrute vist på kart');
+      // HOLD zoom på navigasjonsnivå
+      setTimeout(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.setZoom(18);
+          mapInstanceRef.current.setCenter({ lat: currentPos.latitude, lng: currentPos.longitude });
+        }
+      }, 100);
+      
+      console.log('✅ Navigasjonsrute vist på kart - zoom holdt på 18');
       
       console.log('✅ Rute oppdatert til gjenværende del');
       
