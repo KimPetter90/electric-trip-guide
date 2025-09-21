@@ -672,55 +672,33 @@ const GoogleRouteMap: React.FC<{
             directionsRendererRef.current = new google.maps.DirectionsRenderer({
               suppressMarkers: false,
               polylineOptions: {
-                strokeColor: '#FF0000', // Rød farge for maksimal synlighet
-                strokeWeight: 15, // Ekstra tykk linje
-                strokeOpacity: 1.0,
-                zIndex: 999999
+                strokeColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
+                strokeWeight: 6,
+                strokeOpacity: 1.0
               },
               markerOptions: {
-                visible: true,
-                zIndex: 999999
-              },
-              preserveViewport: false,
-              draggable: false
+                visible: true
+              }
             });
-            console.log('🔧 Created DirectionsRenderer with red route');
           } else {
-            // Force recreate renderer for visibility
-            if (directionsRendererRef.current) {
-              directionsRendererRef.current.setMap(null);
-            }
-            directionsRendererRef.current = new google.maps.DirectionsRenderer({
-              suppressMarkers: false,
+            // Update line color for existing renderer
+            directionsRendererRef.current.setOptions({
               polylineOptions: {
-                strokeColor: '#FF0000', // Rød for synlighet
-                strokeWeight: 15,
-                strokeOpacity: 1.0,
-                zIndex: 999999
+                strokeColor: selectedRouteId === 'eco' ? '#8b5cf6' : selectedRouteId === 'shortest' ? '#10b981' : '#2563eb',
+                strokeWeight: 6,
+                strokeOpacity: 1.0
               },
               markerOptions: {
-                visible: true,
-                zIndex: 999999
-              },
-              preserveViewport: false,
-              draggable: false
+                visible: true
+              }
             });
-            console.log('🔧 Recreated DirectionsRenderer with red route');
           }
 
           // ALWAYS set map again to ensure it's attached
           directionsRendererRef.current.setMap(mapInstanceRef.current);
           console.log('🗺️ Setting directions on renderer...');
           directionsRendererRef.current.setDirections(result);
-          console.log('✅ Directions set successfully - route should be visible');
-          
-          // Force refresh the polyline to ensure it's visible
-          setTimeout(() => {
-            if (directionsRendererRef.current) {
-              directionsRendererRef.current.setDirections(result);
-              console.log('🔄 Forced route refresh for visibility');
-            }
-          }, 100);
+          console.log('✅ Directions set successfully');
           
           // Adjust map viewport to show the entire route
           const bounds = new google.maps.LatLngBounds();
