@@ -140,7 +140,10 @@ const GoogleRouteMap: React.FC<{
 
         onLoadingChange(false);
 
-        onLoadingChange(false);
+        // Trigger initial route calculation if we have route data
+        if (routeData.from && routeData.to) {
+          setTimeout(() => calculateRoute(), 100);
+        }
 
       } catch (error: any) {
         console.error('❌ Google Maps initialization failed:', error);
@@ -490,27 +493,14 @@ const GoogleRouteMap: React.FC<{
 
     } catch (error: any) {
       console.error('❌ Route calculation failed:', error);
-      
-      let errorMessage = 'Ruteberegning feilet';
-      if (error.code === 'ZERO_RESULTS') {
-        errorMessage = 'Kunne ikke finne rute mellom stedene. Sjekk at adressene er korrekte og at det er mulig å kjøre mellom dem.';
-      } else if (error.code === 'NOT_FOUND') {
-        errorMessage = 'En eller flere av adressene kunne ikke finnes. Vennligst sjekk stavemåten.';
-      } else if (error.code === 'OVER_QUERY_LIMIT') {
-        errorMessage = 'For mange forespørsler. Vennligst prøv igjen om litt.';
-      } else if (error.code === 'REQUEST_DENIED') {
-        errorMessage = 'Tilgang nektet til rute-tjenesten.';
-      } else {
-        errorMessage = `Ruteberegning feilet: ${error.message}`;
-      }
-      
-      onError(errorMessage);
+      onError(`Ruteberegning feilet: ${error.message}`);
     } finally {
       onLoadingChange(false);
     }
   }, [routeData.from, routeData.to, routeData.via, routeData.batteryPercentage, selectedCar, selectedRouteId, onRouteCalculated, onLoadingChange, onError]);
 
   useEffect(() => {
+    console.log('🎯 Route trigger changed to:', routeTrigger, 'for route:', selectedRouteId);
     calculateRoute();
   }, [calculateRoute, routeTrigger, selectedRouteId]);
 
