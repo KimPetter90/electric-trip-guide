@@ -291,9 +291,18 @@ const GoogleRouteMap: React.FC<{
 
   // Add charging station markers - always visible
   useEffect(() => {
+    console.log('🗺️ Charging stations effect triggered:', {
+      mapExists: !!mapInstanceRef.current,
+      stationsCount: chargingStations?.length || 0,
+      stations: chargingStations
+    });
+    
     if (!mapInstanceRef.current || !chargingStations || chargingStations.length === 0) {
+      console.log('❌ Skipping charging stations - missing requirements');
       return;
     }
+    
+    console.log('✅ Adding charging station markers to map');
     
     // Clear distance cache when recalculating
     routeDistanceCache.current.clear();

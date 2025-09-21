@@ -137,11 +137,7 @@ function Index() {
   // Load charging stations on component mount
   useEffect(() => {
     const loadChargingStations = async () => {
-      console.log('📱 MOBILE DEBUG - Loading charging stations...');
-      console.log('📱 Device info:', {
-        isMobile: window.innerWidth < 768,
-        userAgent: navigator.userAgent
-      });
+      console.log('🔋 Loading charging stations...');
       
       try {
         const { data, error } = await supabase
@@ -149,15 +145,15 @@ function Index() {
           .select('*');
         
         if (error) {
-          console.error('❌ MOBILE - Feil ved lasting av ladestasjoner:', error);
+          console.error('❌ Error loading charging stations:', error);
           return;
         }
         
-        console.log('✅ MOBILE - Lastet inn', data?.length || 0, 'ladestasjoner');
-        console.log('📱 MOBILE - First station:', data?.[0]);
+        console.log('✅ Loaded', data?.length || 0, 'charging stations');
+        console.log('🔋 First station sample:', data?.[0]);
         setChargingStations(data || []);
       } catch (error) {
-        console.error('Feil ved lasting av ladestasjoner:', error);
+        console.error('❌ Exception loading charging stations:', error);
       }
     };
 
