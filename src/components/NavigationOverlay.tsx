@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Navigation, Square, AlertTriangle, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { NavigationFerryInfo } from './NavigationFerryInfo';
 
 interface NavigationOverlayProps {
   routeData?: {
@@ -359,7 +360,18 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
 
   // Return the minimal navigation overlay when tracking
   return (
-    <div className="absolute top-3 left-3 right-3 z-20 flex justify-between items-start gap-4">
+    <div className="absolute inset-0 pointer-events-none">
+      {/* Ferry Information */}
+      <NavigationFerryInfo
+        currentLocation={currentLocation ? {
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude
+        } : undefined}
+        destination={routeData?.to}
+        isVisible={true}
+      />
+
+      <div className="absolute top-3 left-3 right-3 z-20 flex justify-between items-start gap-4 pointer-events-auto">
       {/* Navigation info panel */}
       <div className="bg-background/95 backdrop-blur-sm rounded-lg border border-border/50 shadow-lg p-3 max-w-xs">
         <div className="flex items-center gap-2 mb-2">
@@ -426,6 +438,7 @@ export const NavigationOverlay: React.FC<NavigationOverlayProps> = ({
       >
         <Square className="h-4 w-4" />
       </Button>
+      </div>
     </div>
   );
 };
