@@ -271,19 +271,19 @@ serve(async (req) => {
     const safetyMargin = 1.5; // 50% sikkerhetsmarginal
     const isRisky = adjustedCurrentRange < (routeDistance * safetyMargin);
     
-    console.log('🚨 SIKKERHETSEVALUERING:', {
+    console.log('🚨 DETALJERT SIKKERHETSEVALUERING:', {
+      batteryPercentage: routeData.batteryPercentage,
+      trailerWeight: routeData.trailerWeight,
+      weatherImpact: weatherImpact,
+      trailerImpact: trailerImpact,
+      currentRange: currentRange,
       adjustedCurrentRange: adjustedCurrentRange.toFixed(0),
       routeDistance: routeDistance.toFixed(0),
       requiredSafeRange: (routeDistance * safetyMargin).toFixed(0),
       isRisky: isRisky,
-      safetyMarginPercent: ((adjustedCurrentRange / routeDistance) * 100).toFixed(0) + '%'
+      safetyMarginPercent: ((adjustedCurrentRange / routeDistance) * 100).toFixed(0) + '%',
+      modus: isRisky ? 'RISIKABEL - beregner fra START' : 'NORMAL - beregner fra MIDTPUNKT'
     });
-    
-    if (isRisky) {
-      console.log('⚠️ RISIKABEL RUTE: Leter etter nærmeste sikre ladestasjon i stedet for optimal');
-    } else {
-      console.log('✅ Trygg rekkevidde, analyserer beste stasjoner...');
-    }
     
     // If we have 20% safety margin beyond route distance, no charging needed
     const basicSafetyMargin = 1.2; // 20% safety margin
