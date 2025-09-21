@@ -40,8 +40,34 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
     // Mock ferge-data basert på populære ruter
     const routes: FerryInfo[] = [];
 
-    if (destination?.toLowerCase().includes('ålesund') || destination?.toLowerCase().includes('bergen')) {
-      // Molde-Vestnes rute (relevant for Ålesund-Bergen)
+    if (!destination) return routes;
+
+    const dest = destination.toLowerCase();
+    
+    // Sjekk for Kvalsvik/Nerlandsøy ruter (populær på Sunnmøre)
+    if (dest.includes('kvalsvik') || dest.includes('nerlandsøy') || dest.includes('sunnmøre')) {
+      const nextDep = new Date();
+      nextDep.setHours(currentHour, Math.ceil(currentMinute / 30) * 30, 0, 0);
+      if (nextDep.getTime() <= now.getTime()) {
+        nextDep.setMinutes(nextDep.getMinutes() + 30);
+      }
+      
+      const followingDep = new Date(nextDep);
+      followingDep.setMinutes(nextDep.getMinutes() + 30);
+
+      routes.push({
+        route: 'Sulesund-Hareid',
+        from: 'Sulesund',
+        to: 'Hareid',
+        nextDeparture: nextDep.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' }),
+        followingDeparture: followingDep.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' }),
+        travelTimeToFerry: calculateTravelTimeToFerry(currentLocation, 'sulesund'),
+        probability: 0
+      });
+    }
+
+    // Bergen/Vestlandet ruter
+    if (dest.includes('ålesund') || dest.includes('bergen') || dest.includes('vestnes') || dest.includes('molde')) {
       const nextDep = new Date();
       nextDep.setHours(currentHour + 1, 15, 0, 0);
       if (nextDep.getTime() < now.getTime()) {
@@ -62,13 +88,13 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
       });
     }
 
-    if (destination?.toLowerCase().includes('kristiansand') || destination?.toLowerCase().includes('stavanger')) {
-      // Hirtshals-Kristiansand (hvis relevant)
+    // Stavanger/Sørlandet ruter
+    if (dest.includes('kristiansand') || dest.includes('stavanger') || dest.includes('mortavika')) {
       const nextDep = new Date();
-      nextDep.setHours(currentHour + 2, 45, 0, 0);
+      nextDep.setHours(currentHour + 1, 45, 0, 0);
       
       const followingDep = new Date(nextDep);
-      followingDep.setDate(nextDep.getDate() + 1);
+      followingDep.setMinutes(nextDep.getMinutes() + 45);
 
       routes.push({
         route: 'Mortavika-Arsvågen',
@@ -81,8 +107,8 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
       });
     }
 
-    if (destination?.toLowerCase().includes('trondheim') || destination?.toLowerCase().includes('bodø')) {
-      // Hurtigruten eller Trondheim-relevante ferger
+    // Trondheim/Nord-Norge ruter
+    if (dest.includes('trondheim') || dest.includes('bodø') || dest.includes('flakk')) {
       const nextDep = new Date();
       nextDep.setHours(currentHour + 1, 30, 0, 0);
       
@@ -100,6 +126,28 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
       });
     }
 
+    // Fallback: Vis en generisk fergerute hvis ingen matcher
+    if (routes.length === 0) {
+      const nextDep = new Date();
+      nextDep.setHours(currentHour, Math.ceil(currentMinute / 15) * 15, 0, 0);
+      if (nextDep.getTime() <= now.getTime()) {
+        nextDep.setMinutes(nextDep.getMinutes() + 15);
+      }
+      
+      const followingDep = new Date(nextDep);
+      followingDep.setMinutes(nextDep.getMinutes() + 30);
+
+      routes.push({
+        route: 'Nærmeste ferge',
+        from: 'Fra',
+        to: 'Til',
+        nextDeparture: nextDep.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' }),
+        followingDeparture: followingDep.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' }),
+        travelTimeToFerry: 20,
+        probability: 0
+      });
+    }
+
     // Beregn sannsynlighet for å rekke fergen
     return routes.map(route => ({
       ...route,
@@ -108,14 +156,15 @@ export const NavigationFerryInfo: React.FC<NavigationFerryInfoProps> = ({
   };
 
   const calculateTravelTimeToFerry = (currentPos?: { latitude: number; longitude: number }, ferryPort?: string): number => {
-    if (!currentPos || !ferryPort) return 45; // Default 45 min
+    if (!currentPos || !ferryPort) return 25; // Default 25 min
 
     // Forenklet beregning basert på fergekai
     const distances: { [key: string]: number } = {
       'molde': 25,      // 25 min kjøring
       'mortavika': 60,  // 60 min kjøring  
       'flakk': 40,      // 40 min kjøring
-      'default': 45
+      'sulesund': 15,   // 15 min kjøring
+      'default': 25
     };
 
     return distances[ferryPort] || distances['default'];
