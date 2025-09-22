@@ -79,8 +79,6 @@ export const DriverNavigationView: React.FC<DriverNavigationViewProps> = ({
   };
 
   if (!isActive) return null;
-  
-  console.log('🚗 DriverNavigationView AKTIV - viser førerperspektiv!');
 
   return (
     <div className="fixed inset-0 z-[999] bg-gray-100 overflow-hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>

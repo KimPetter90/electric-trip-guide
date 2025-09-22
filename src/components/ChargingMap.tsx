@@ -9,7 +9,14 @@ interface RouteAnalysis {
   chargingTime: number;
   co2Saved: number;
   efficiency: number;
-  weather?: any;
+  weather?: WeatherData;
+}
+
+interface WeatherData {
+  temperature?: number;
+  humidity?: number;
+  windSpeed?: number;
+  conditions?: string;
 }
 
 
@@ -50,10 +57,7 @@ export default function ChargingMap({ isVisible, routeAnalysis, optimizedStation
   const cost = routeAnalysis?.totalCost || 650;
   const stops = optimizedStations ? optimizedStations.length : (routeAnalysis ? Math.ceil(routeAnalysis.totalDistance / 300) : 3);
 
-  // Konverter optimizedStations til riktig format for visning
-  console.log('🔌 ChargingMap: optimizedStations mottatt:', optimizedStations);
   const chargingStops = optimizedStations ? optimizedStations.map((station, index) => {
-    console.log('🔌 ChargingMap: Konverterer stasjon:', station.name, station);
     return {
       id: station.id,
       name: station.name,
@@ -65,8 +69,6 @@ export default function ChargingMap({ isVisible, routeAnalysis, optimizedStation
       fastCharger: station.fastCharger
     };
   }) : [];
-  
-  console.log('🔌 ChargingMap: Finale chargingStops som vises:', chargingStops);
 
   return (
     <div className="space-y-4">

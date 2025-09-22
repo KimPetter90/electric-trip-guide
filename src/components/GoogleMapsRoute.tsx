@@ -44,7 +44,6 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
   // Load charging stations from database
   const [chargingStations, setChargingStations] = useState<ChargingStation[]>([]);
   
-  console.log('🔄 GoogleMapsRoute: KOMPONENT STARTER', { isVisible, componentName: 'GoogleMapsRoute' });
   const mapRef = useRef<HTMLDivElement>(null);
   const userLocationMarker = useRef<google.maps.Marker | null>(null);
   const watchId = useRef<number | null>(null);
@@ -61,14 +60,6 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
   const [isGPSActive, setIsGPSActive] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsPermission, setGpsPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
-
-  console.log('🔄 GoogleMapsRoute KOMPONENT RENDERER!', { 
-    isVisible, 
-    hasMap: !!map, 
-    stationCount: chargingStations.length,
-    batteryPercent: routeData.batteryPercentage,
-    componentName: 'GoogleMapsRoute'
-  });
 
   // GPS functions
   const checkGPSPermission = async () => {
@@ -200,16 +191,9 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
   useEffect(() => {
     const loadChargingStations = async () => {
       try {
-        console.log('🔌 STARTER HENTING AV LADESTASJONER FRA DATABASE...');
         const { data, error } = await supabase
           .from('charging_stations')
           .select('*');
-        
-        console.log('🔌 DATABASSE RESPONS:', { 
-          data: data ? `${data.length} stasjoner` : 'null', 
-          error: error ? error.message : 'ingen feil',
-          firstStation: data?.[0] ? data[0].name : 'ingen data'
-        });
         
         if (error) {
           console.error('❌ FEIL VED HENTING AV LADESTASJONER:', error);
@@ -217,8 +201,6 @@ export default function GoogleMapsRoute({ isVisible, selectedCar, routeData }: G
         }
 
         if (data && data.length > 0) {
-          console.log(`✅ HENTET ${data.length} LADESTASJONER FRA DATABASE`);
-          console.log('📊 FØRSTE 3 STASJONER:', data.slice(0, 3).map(s => s.name));
           
           // Map database fields to our interface
           const mappedStations = data.map(station => ({

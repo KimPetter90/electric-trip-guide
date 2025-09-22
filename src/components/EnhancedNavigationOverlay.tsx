@@ -208,8 +208,6 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
       description: "Navigasjonen er startet",
       duration: 2000,
     });
-    
-    console.log('🚗 Førerperspektiv aktivert!');
   };
 
   const startDriverView = () => {
@@ -295,10 +293,8 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
       <div className="absolute top-3 left-3 z-50">
         <Button
           onClick={() => {
-            console.log('🧭 FØRERPERSPEKTIV KNAPP TRYKKET!');
             setIsTracking(true);
             setShowDriverView(true);
-            console.log('🚗 State endret - showDriverView:', true);
           }}
           className="bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm border-4 border-yellow-400"
           size="lg"

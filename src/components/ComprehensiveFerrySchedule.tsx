@@ -198,8 +198,6 @@ const ComprehensiveFerrySchedule: React.FC<ComprehensiveFerryProps> = ({
         }
       }
     }
-
-    console.log('🚢 Ferjeruter funnet for', fromLocation, '→', toLocation, ':', relevantRoutes);
     return [...new Set(relevantRoutes)]; // Fjern duplikater
   }, [fromLocation, toLocation, currentLocation, isGPSActive, calculateDistance]);
 
