@@ -127,12 +127,14 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
       baseMinutes = 600; // 10t (lang fjellvei)
       baseDistance = 650;
     }
-    // Vestlandsruter (ferjer og fjorder)
-    else if ((fromLower.includes('bergen') && (toLower.includes('ålesund') || toLower.includes('molde') || toLower.includes('fureåsen'))) ||
+    // Vestlandsruter (ferjer og fjorder) - REALISTISKE TIDER for fjell- og fjordveier
+    else if ((fromLower.includes('bergen') && (toLower.includes('ålesund') || toLower.includes('molde') || fromLower.includes('fureåsen'))) ||
              ((fromLower.includes('ålesund') || fromLower.includes('molde') || fromLower.includes('fureåsen')) && toLower.includes('bergen'))) {
-      baseMinutes = 360; // 6t (ferjer + fjellvei)
-      baseDistance = 280;
-      console.log('🚗 RouteInput: OVERSTYRER Fureåsen/Ålesund-Bergen: 360min', { from, to });
+      // Fureåsen/Ålesund til Bergen: 500km fjell/fjordvei med ferjer, lave fartsgrenser (60-80 km/h)
+      // Grunnkjøring: 7t + Ferjer: 1t + Trafikk/vær: 1-2t = 9-10t realistisk
+      baseMinutes = 540; // 9t (realistisk for fjell- og fjordkjøring med ferjer)
+      baseDistance = 480; // Reell avstand via fjellveier
+      console.log('🚗 RouteInput: OVERSTYRER Fureåsen/Ålesund-Bergen (REALISTISK FJELLVEI): 540min', { from, to });
     }
     // Nordnorge
     else if ((fromLower.includes('trondheim') && (toLower.includes('bodø') || toLower.includes('tromsø'))) ||
