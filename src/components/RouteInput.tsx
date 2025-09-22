@@ -32,14 +32,6 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [arrivalCalendarOpen, setArrivalCalendarOpen] = useState(false);
 
-  // Beregn avreisertid basert på rute og ankomsttid - oppdateres når ruten endres
-  const calculatedDepartureTime = useMemo(() => {
-    if (!routeData.arrivalTime || !routeData.from || !routeData.to) {
-      return null;
-    }
-    return calculateDepartureTime(routeData.arrivalTime);
-  }, [routeData.from, routeData.to, routeData.arrivalTime, routeData.batteryPercentage, routeData.trailerWeight, selectedRouteType]);
-
   const handleInputChange = (field: keyof RouteData, value: string | number | Date) => {
     // Validering og sanitizing
     if ((field === 'from' || field === 'to' || field === 'via') && typeof value === 'string') {
@@ -283,6 +275,14 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
     
     return `${format(departureTime, "dd.MM 'kl.' HH:mm")} (${totalTimeInfo})`;
   };
+
+  // Beregn avreisertid basert på rute og ankomsttid - oppdateres når ruten endres
+  const calculatedDepartureTime = useMemo(() => {
+    if (!routeData.arrivalTime || !routeData.from || !routeData.to) {
+      return null;
+    }
+    return calculateDepartureTime(routeData.arrivalTime);
+  }, [routeData.from, routeData.to, routeData.arrivalTime, routeData.batteryPercentage, routeData.trailerWeight, selectedRouteType]);
 
   return (
     <Card className="p-6 bg-card/80 backdrop-blur-sm border-border shadow-lg">
