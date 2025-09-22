@@ -149,21 +149,21 @@ export const DriverNavigationView: React.FC<DriverNavigationViewProps> = ({
         </div>
       </div>
 
-      {/* Green instruction panel - Google Maps style */}
+      {/* Green instruction panel - Optimized for cars */}
       {nextTurn && (
-        <div className="absolute top-16 left-4 right-4">
-          <div className="bg-green-600 text-white p-4 rounded-lg shadow-lg flex items-center space-x-4">
-            {/* White arrow icon */}
-            <div className="bg-white text-green-600 w-12 h-12 rounded flex items-center justify-center text-2xl font-bold">
+        <div className="absolute top-12 left-6 right-6">
+          <div className="bg-green-600 text-white p-6 rounded-2xl shadow-2xl flex items-center space-x-6 min-h-[100px]">
+            {/* Large white arrow icon - easier to see while driving */}
+            <div className="bg-white text-green-600 w-20 h-20 rounded-xl flex items-center justify-center text-4xl font-bold shadow-lg">
               {nextTurn.direction === 'right' ? '↱' : 
                nextTurn.direction === 'left' ? '↰' : 
                nextTurn.direction === 'u-turn' ? '↻' : '↑'}
             </div>
             <div className="flex-1">
-              <div className="text-2xl font-bold">
+              <div className="text-4xl font-bold mb-2">
                 {formatDistance(nextTurn.distance / 1000)}
               </div>
-              <div className="text-lg opacity-90">
+              <div className="text-2xl font-medium">
                 {nextTurn.streetName || nextTurn.instruction || 'Hovedveien'}
               </div>
             </div>
@@ -171,49 +171,49 @@ export const DriverNavigationView: React.FC<DriverNavigationViewProps> = ({
         </div>
       )}
 
-      {/* White bottom info panel */}
-      <div className="absolute bottom-4 left-4 right-16">
-        <div className="bg-white rounded-lg shadow-lg p-4">
+      {/* White bottom info panel - Car optimized */}
+      <div className="absolute bottom-6 left-6 right-20">
+        <div className="bg-white rounded-2xl shadow-2xl p-6 border-2 border-gray-200">
           <div className="flex justify-between items-center text-black">
-            <div className="text-center">
-              <div className="text-2xl font-bold">{estimatedArrival}</div>
-              <div className="text-sm text-gray-600">ankomst</div>
+            <div className="text-center flex-1">
+              <div className="text-3xl font-bold">{estimatedArrival}</div>
+              <div className="text-lg text-gray-600 font-medium">ankomst</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{Math.round(remainingTime)}</div>
-              <div className="text-sm text-gray-600">min</div>
+            <div className="text-center flex-1 border-x border-gray-300 mx-4">
+              <div className="text-3xl font-bold text-green-600">{Math.round(remainingTime)}</div>
+              <div className="text-lg text-gray-600 font-medium">min</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">{formatDistance(remainingDistance)}</div>
-              <div className="text-sm text-gray-600">km</div>
+            <div className="text-center flex-1">
+              <div className="text-3xl font-bold">{formatDistance(remainingDistance)}</div>
+              <div className="text-lg text-gray-600 font-medium">km</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Side controls - right side */}
-      <div className="absolute right-4 top-1/2 transform -translate-y-1/2 space-y-3">
-        {/* Speed limit sign */}
-        <div className="w-12 h-12 bg-white rounded-full border-4 border-red-500 flex items-center justify-center shadow-lg">
+      {/* Side controls - Car optimized */}
+      <div className="absolute right-6 top-1/2 transform -translate-y-1/2 space-y-4">
+        {/* Speed limit sign - larger for visibility */}
+        <div className="w-16 h-16 bg-white rounded-full border-4 border-red-500 flex items-center justify-center shadow-2xl">
           <div className="text-center">
-            <div className="text-lg font-bold text-black">30</div>
+            <div className="text-2xl font-bold text-black">30</div>
           </div>
         </div>
         
-        {/* Other controls */}
-        <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-lg">
-          <div className="text-xl">🔄</div>
-        </div>
+        {/* Other controls - larger touch targets */}
+        <button className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl hover:bg-gray-50 transition-colors">
+          <div className="text-2xl">🔄</div>
+        </button>
         
-        <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-lg">
-          <div className="text-xl">🔇</div>
-        </div>
+        <button className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl hover:bg-gray-50 transition-colors">
+          <div className="text-2xl">🔇</div>
+        </button>
       </div>
 
-      {/* Exit button */}
+      {/* Exit button - Car optimized */}
       <button
         onClick={onExit}
-        className="absolute top-4 right-4 z-50 w-10 h-10 bg-white hover:bg-gray-100 text-black rounded-lg shadow-lg transition-all duration-200 pointer-events-auto flex items-center justify-center"
+        className="absolute top-6 right-6 z-50 w-14 h-14 bg-white hover:bg-gray-100 text-black rounded-2xl shadow-2xl transition-all duration-200 pointer-events-auto flex items-center justify-center text-xl font-bold border-2 border-gray-200"
       >
         ✕
       </button>
