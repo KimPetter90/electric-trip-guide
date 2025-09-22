@@ -168,9 +168,23 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
                          <span>Kjøretid</span>
                        </div>
                        <div className="font-medium">
-                         {isSelected && routeAnalysis ? 
-                           formatDuration(Math.round(routeAnalysis.totalTime)) : 
-                           formatDuration(route.duration)}
+                         {(() => {
+                           console.log('🔍 RouteSelector tidsdata:', {
+                             isSelected,
+                             hasRouteAnalysis: !!routeAnalysis,
+                             routeAnalysisTime: routeAnalysis?.totalTime,
+                             routeDuration: route.duration,
+                             routeId: route.id
+                           });
+                           
+                           if (isSelected && routeAnalysis) {
+                             const timeValue = Math.round(routeAnalysis.totalTime);
+                             console.log('🕒 BEREGNET TID:', timeValue, 'minutter');
+                             return formatDuration(timeValue);
+                           } else {
+                             return formatDuration(route.duration);
+                           }
+                         })()}
                        </div>
                      </div>
                      <div>
