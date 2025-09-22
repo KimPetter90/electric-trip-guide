@@ -159,31 +159,35 @@ function Index() {
     setRouteAnalysis(analysis);
     
     // Oppdater rutevalg med faktiske data når de kommer tilbake
-    if (analysis && selectedRouteId && routeOptions.length > 0) {
-      const updatedRoutes = routeOptions.map(route => {
-        if (route.id === selectedRouteId) {
-          // Oppdater valgt rute med faktiske data
-          return {
-            ...route,
-            distance: Math.round(analysis.totalDistance),
-            duration: Math.round(analysis.totalTime * 60), // timer til minutter
-            estimatedCost: analysis.totalCost || Math.round(analysis.totalDistance * 0.6),
-            chargingStops: analysis.chargingTime > 0 ? Math.max(1, Math.round(analysis.chargingTime / 30)) : 0
-          };
-        }
-        return route;
+    if (analysis && selectedRouteId) {
+      setRouteOptions(prevRoutes => {
+        if (prevRoutes.length === 0) return prevRoutes;
+        
+        const updatedRoutes = prevRoutes.map(route => {
+          if (route.id === selectedRouteId) {
+            // Oppdater valgt rute med faktiske data
+            return {
+              ...route,
+              distance: Math.round(analysis.totalDistance),
+              duration: Math.round(analysis.totalTime * 60), // timer til minutter
+              estimatedCost: analysis.totalCost || Math.round(analysis.totalDistance * 0.6),
+              chargingStops: analysis.chargingTime > 0 ? Math.max(1, Math.round(analysis.chargingTime / 30)) : 0
+            };
+          }
+          return route;
+        });
+        
+        console.log('🔄 Oppdaterer rutevalg med faktiske data:', {
+          routeId: selectedRouteId,
+          distance: analysis.totalDistance + ' km',
+          duration: (analysis.totalTime * 60).toFixed(0) + ' min',
+          cost: analysis.totalCost + ' kr'
+        });
+        
+        return updatedRoutes;
       });
-      
-      console.log('🔄 Oppdaterer rutevalg med faktiske data:', {
-        routeId: selectedRouteId,
-        distance: analysis.totalDistance + ' km',
-        duration: (analysis.totalTime * 60).toFixed(0) + ' min',
-        cost: analysis.totalCost + ' kr'
-      });
-      
-      setRouteOptions(updatedRoutes);
     }
-  }, [selectedRouteId, routeOptions]);
+  }, [selectedRouteId]);
 
   // Google Maps callbacks - MUST be stable to prevent map reinitialization
   const onMapLoad = useCallback((map: google.maps.Map) => {
