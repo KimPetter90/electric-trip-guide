@@ -732,9 +732,11 @@ const GoogleRouteMap: React.FC<{
               (fromLower.includes('kvalsvik') && fromLower.includes('ålesund')) ||
               (fromLower.includes('fureåsen') && toLower.includes('kvalsvik')) ||
               (fromLower.includes('kvalsvik') && fromLower.includes('fureåsen'))) {
-            realisticTime = 65; // Korrigert til 1t 5min - OVERSTYR Google Maps
+            // Fureåsen til Kvalsvik (Nerlandsøy) - MED FERJE
+            // Kjøring til ferje: 25min + Ferjeventing/tid: 60min + Kjøring fra ferje: 15min + Buffer: 15min = 115min
+            realisticTime = 115; // Realistisk tid: 1t 55min med ferje, trafikk og vær
             totalTime = realisticTime; // Tving riktig tid uansett hva Google Maps sier
-            console.log('🎯 OVERSTYRER Google Maps for Ålesund/Fureåsen-Kvalsvik: 65min');
+            console.log('🎯 OVERSTYRER Google Maps for Ålesund/Fureåsen-Kvalsvik (med ferje): 115min');
           }
           // Bergen-Stavanger (kan ha ferje)
           else if ((fromLower.includes('bergen') && toLower.includes('stavanger')) ||

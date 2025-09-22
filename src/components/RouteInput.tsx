@@ -93,9 +93,11 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
         (fromLower.includes('kvalsvik') && fromLower.includes('ålesund')) ||
         (fromLower.includes('fureåsen') && toLower.includes('kvalsvik')) ||
         (fromLower.includes('kvalsvik') && fromLower.includes('fureåsen'))) {
-      baseMinutes = 65; // Realistisk tid: 1t 5min (ikke 115min!)
-      baseDistance = 55; // Faktisk avstand ca 55km
-      console.log('🚗 RouteInput: OVERSTYRER Ålesund/Fureåsen-Kvalsvik rute: 65min', { from, to });
+      // Fureåsen til Kvalsvik (Nerlandsøy) - MED FERJE
+      // Kjøring til ferje: 25min + Ferjeventing/tid: 60min + Kjøring fra ferje: 15min + Buffer: 15min = 115min
+      baseMinutes = 115; // Realistisk tid: 1t 55min med ferje, trafikk og vær
+      baseDistance = 45; // Faktisk avstand ca 45km + ferjedistanse
+      console.log('🚗 RouteInput: OVERSTYRER Ålesund/Fureåsen-Kvalsvik (med ferje): 115min', { from, to });
     }
     else if ((fromLower.includes('oslo') && toLower.includes('trondheim')) ||
              (fromLower.includes('trondheim') && toLower.includes('oslo'))) {
