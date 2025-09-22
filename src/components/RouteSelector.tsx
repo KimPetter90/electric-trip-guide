@@ -119,12 +119,12 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
                 onClick={() => handleRouteClick(route)}
               >
                 <div className="flex items-center gap-3">
-                  <Badge className={`flex items-center gap-1 ${
-                    route.routeType === 'fastest' ? 'bg-blue-500 text-white' :
-                    route.routeType === 'shortest' ? 'bg-green-500 text-white' :
-                    route.routeType === 'eco' ? 'bg-purple-500 text-white' :
-                    'bg-gray-500 text-white'
-                  }`}>
+                  <Badge variant={
+                    route.routeType === 'fastest' ? 'default' :
+                    route.routeType === 'shortest' ? 'secondary' :
+                    route.routeType === 'eco' ? 'outline' :
+                    'default'
+                  } className="flex items-center gap-1">
                     {getRouteTypeIcon(route.routeType)}
                     {getRouteTypeName(route.routeType)}
                   </Badge>
