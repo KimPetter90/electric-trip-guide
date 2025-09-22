@@ -155,33 +155,45 @@ function Index() {
     }
   }, []);
   
-  const handleRouteAnalysisUpdate = useCallback((analysis: RouteAnalysis | null) => {
+  const handleRouteAnalysisUpdate = useCallback((analysis: any) => {
+    console.log('🔥 ROUTE ANALYSIS UPDATE RECEIVED:', analysis);
     setRouteAnalysis(analysis);
   }, []);
 
   // Oppdater rutevalg når ny analyse kommer
   useEffect(() => {
+    console.log('🔍 CHECKING FOR ROUTE UPDATE:', {
+      hasRouteAnalysis: !!routeAnalysis,
+      selectedRouteId,
+      routeOptionsCount: routeOptions.length,
+      analysisData: routeAnalysis
+    });
+    
     if (routeAnalysis && selectedRouteId && routeOptions.length > 0) {
       const updatedRoutes = routeOptions.map(route => {
         if (route.id === selectedRouteId) {
           // Oppdater valgt rute med faktiske data
-          return {
+          const newRoute = {
             ...route,
             distance: Math.round(routeAnalysis.totalDistance),
             duration: Math.round(routeAnalysis.totalTime * 60), // timer til minutter
             estimatedCost: routeAnalysis.totalCost || Math.round(routeAnalysis.totalDistance * 0.6),
             chargingStops: routeAnalysis.chargingTime > 0 ? Math.max(1, Math.round(routeAnalysis.chargingTime / 30)) : 0
           };
+          
+          console.log('🔄 Oppdaterer rutevalg med faktiske data:', {
+            routeId: selectedRouteId,
+            oldDistance: route.distance,
+            newDistance: newRoute.distance,
+            oldDuration: route.duration,
+            newDuration: newRoute.duration,
+            oldCost: route.estimatedCost,
+            newCost: newRoute.estimatedCost
+          });
+          
+          return newRoute;
         }
         return route;
-      });
-      
-      console.log('🔄 Oppdaterer rutevalg med faktiske data:', {
-        routeId: selectedRouteId,
-        distance: routeAnalysis.totalDistance + ' km',
-        duration: (routeAnalysis.totalTime * 60).toFixed(0) + ' min',
-        cost: routeAnalysis.totalCost + ' kr',
-        chargingTime: routeAnalysis.chargingTime + ' min'
       });
       
       setRouteOptions(updatedRoutes);
