@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +31,14 @@ interface RouteInputProps {
 export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPlanning = false, selectedRouteType = 'fastest' }: RouteInputProps) {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [arrivalCalendarOpen, setArrivalCalendarOpen] = useState(false);
+
+  // Beregn avreisertid basert på rute og ankomsttid - oppdateres når ruten endres
+  const calculatedDepartureTime = useMemo(() => {
+    if (!routeData.arrivalTime || !routeData.from || !routeData.to) {
+      return null;
+    }
+    return calculateDepartureTime(routeData.arrivalTime);
+  }, [routeData.from, routeData.to, routeData.arrivalTime, routeData.batteryPercentage, routeData.trailerWeight, selectedRouteType]);
 
   const handleInputChange = (field: keyof RouteData, value: string | number | Date) => {
     // Validering og sanitizing
@@ -520,10 +528,10 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
             </PopoverContent>
           </Popover>
           
-          {routeData.arrivalTime && (
+          {routeData.arrivalTime && calculatedDepartureTime && (
             <div className="mt-3">
               <Badge variant="secondary" className="text-sm font-medium px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-800 border-blue-200 shadow-sm">
-                💡 Anbefalt avreise: {calculateDepartureTime(routeData.arrivalTime)}
+                💡 Anbefalt avreise: {calculatedDepartureTime}
               </Badge>
             </div>
           )}
