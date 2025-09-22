@@ -6,8 +6,7 @@ import { Navigation, Square, AlertTriangle, MapPin, Clock, Route, Compass, Car, 
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { NavigationFerryInfo } from './NavigationFerryInfo';
-import { FirstPersonNavigation } from './FirstPersonNavigation';
-import { DriverPerspective } from './DriverPerspective';
+import { DriverNavigationView } from './DriverNavigationView';
 
 interface EnhancedNavigationOverlayProps {
   routeData?: {
@@ -54,7 +53,6 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
   const [routeDeviation, setRouteDeviation] = useState<boolean>(false);
   const [nextTurn, setNextTurn] = useState<NextTurn | null>(null);
   const [showDriverView, setShowDriverView] = useState<boolean>(false);
-  const [showFirstPerson, setShowFirstPerson] = useState<boolean>(false);
   
   const watchIdRef = useRef<number | null>(null);
   const lastLocationRef = useRef<LocationData | null>(null);
@@ -176,102 +174,42 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
   const startNavigation = async () => {
     console.log('🧭 Starter førerperspektiv navigasjon...');
     
-    if (!navigator.geolocation) {
-      toast({
-        title: "GPS ikke tilgjengelig",
-        description: "Denne enheten støtter ikke GPS-posisjonering",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // Get initial position
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 60000
-        });
-      });
-
-      const locationData: LocationData = {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        accuracy: position.coords.accuracy,
-        heading: position.coords.heading || 0,
-        speed: position.coords.speed || 0,
-        timestamp: Date.now(),
-      };
-
-      setCurrentLocation(locationData);
-      lastLocationRef.current = locationData;
-      
-      toast({
-        title: "✅ GPS tilkoblet",
-        description: `Førerperspektiv startet med ${Math.round(position.coords.accuracy)}m nøyaktighet`,
-        duration: 3000,
-      });
-      
-      // Send startposisjon til kartet
-      onNavigationStart?.(locationData);
-      onLocationUpdate?.(locationData);
-      
-      // Start continuous tracking
-      watchIdRef.current = navigator.geolocation.watchPosition(
-        (position) => {
-          const locationData: LocationData = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            heading: position.coords.heading || 0,
-            speed: position.coords.speed || 0,
-            timestamp: Date.now(),
-          };
-          
-          setCurrentLocation(locationData);
-          updateRouteProgress(locationData);
-          checkRouteDeviation(locationData);
-          onLocationUpdate?.(locationData);
-        },
-        (error) => {
-          console.error('GPS tracking error:', error);
-          toast({
-            title: "⚠️ GPS-problem",
-            description: "GPS-signal ustabilt. Fortsetter å prøve...",
-            duration: 4000,
-          });
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 20000,
-          maximumAge: 10000
-        }
-      );
-
-      // Route checking interval
-      routeCheckIntervalRef.current = setInterval(() => {
-        if (currentLocation) {
-          updateRouteProgress(currentLocation);
-        }
-      }, 2000);
-
-      setIsTracking(true);
-      setRouteDeviation(false);
-      
-      // Start driver perspective automatically
-      setTimeout(() => {
-        setShowFirstPerson(true);
-      }, 1000);
-      
-    } catch (error) {
-      console.error('Navigation start error:', error);
-      toast({
-        title: "Kunne ikke starte navigasjon",
-        description: "Sjekk GPS-tillatelser og prøv igjen",
-        variant: "destructive",
-      });
-    }
+    // Immediately show driver perspective - no GPS needed for demo
+    setIsTracking(true);
+    setShowDriverView(true);
+    
+    // Mock location data for demo
+    const mockLocation: LocationData = {
+      latitude: 59.9139,
+      longitude: 10.7522,
+      accuracy: 5,
+      heading: 45,
+      speed: 15, // 15 m/s = ~54 km/h
+      timestamp: Date.now(),
+    };
+    
+    setCurrentLocation(mockLocation);
+    setRouteProgress(25);
+    setCurrentSpeed(54);
+    setRemainingDistance(12.5);
+    setRemainingTime(15);
+    setEstimatedArrival('15:42');
+    
+    // Set up mock turn instruction
+    setNextTurn({
+      direction: 'right',
+      distance: 500,
+      instruction: 'Sving til høyre',
+      streetName: 'Kongens gate'
+    });
+    
+    toast({
+      title: "🚗 Førerperspektiv aktivert",
+      description: "Navigasjonen er startet",
+      duration: 2000,
+    });
+    
+    console.log('🚗 Førerperspektiv aktivert!');
   };
 
   const startDriverView = () => {
@@ -284,7 +222,7 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
   const startFirstPersonView = () => {
     startNavigation();
     setTimeout(() => {
-      setShowFirstPerson(true);
+      setShowDriverView(true);
     }, 1000);
   };
 
@@ -314,7 +252,6 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
     setRemainingTime(0);
     setNextTurn(null);
     setShowDriverView(false);
-    setShowFirstPerson(false);
     lastLocationRef.current = null;
     
     toast({
@@ -455,18 +392,17 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
         </Button>
       </div>
 
-      {/* Driver Perspective Views */}
-      <FirstPersonNavigation
+      {/* Driver Navigation View */}
+      <DriverNavigationView
         userLocation={currentLocation || undefined}
         routeData={routeData}
-        isActive={showFirstPerson}
-        onExit={() => setShowFirstPerson(false)}
-      />
-
-      <DriverPerspective
-        userLocation={currentLocation || undefined}
-        route={[]} // Mock route data
         isActive={showDriverView}
+        onExit={() => setShowDriverView(false)}
+        nextTurn={nextTurn || undefined}
+        remainingDistance={remainingDistance}
+        remainingTime={remainingTime}
+        estimatedArrival={estimatedArrival}
+        currentSpeed={currentSpeed}
       />
     </>
   );
