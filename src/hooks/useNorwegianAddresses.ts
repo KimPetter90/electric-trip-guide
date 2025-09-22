@@ -51,14 +51,19 @@ export const useNorwegianAddresses = () => {
     setLoading(true);
     
     try {
-      // Søk parallelt i både adresser og steder
-      const [addressResponse, placeResponse] = await Promise.all([
+      // Søk parallelt i både adresser og steder med flere strategier
+      const [addressResponse, placeResponse, alternativeResponse] = await Promise.all([
         // Adresser fra Kartverket
-        fetch(`https://ws.geonorge.no/adresser/v1/sok?sok=${encodeURIComponent(query.trim())}&treffPerSide=5&side=0&asciiKompatibel=true`)
+        fetch(`https://ws.geonorge.no/adresser/v1/sok?sok=${encodeURIComponent(query.trim())}&treffPerSide=8&side=0&asciiKompatibel=true`)
           .catch(() => null),
-        // Steder/stedsnavn fra Kartverket
-        fetch(`https://ws.geonorge.no/stedsnavn/v1/navn?sok=${encodeURIComponent(query.trim())}&treffPerSide=5&side=0&fuzzy=true`)
-          .catch(() => null)
+        // Steder/stedsnavn fra Kartverket - øk søkeresultater og bruk mindre strenge kriterier  
+        fetch(`https://ws.geonorge.no/stedsnavn/v1/navn?sok=${encodeURIComponent(query.trim())}&treffPerSide=15&side=0&fuzzy=true&navnetype=*&kommunenavn=*`)
+          .catch(() => null),
+        // Alternativt søk med wildcard for delvise treff
+        query.length >= 3 ? 
+          fetch(`https://ws.geonorge.no/stedsnavn/v1/navn?sok=${encodeURIComponent(query.trim())}*&treffPerSide=10&side=0&fuzzy=false`)
+            .catch(() => null) : 
+          null
       ]);
       
       let allSuggestions: Suggestion[] = [];
@@ -78,7 +83,7 @@ export const useNorwegianAddresses = () => {
         }
       }
       
-      // Behandle steder
+      // Behandle hovedsøk for steder
       if (placeResponse?.ok) {
         try {
           const placeData: PlaceResponse = await placeResponse.json();
@@ -93,6 +98,31 @@ export const useNorwegianAddresses = () => {
         }
       }
       
+      // Behandle alternativt søk
+      if (alternativeResponse?.ok) {
+        try {
+          const altData: PlaceResponse = await alternativeResponse.json();
+          const altPlaces: PlaceSuggestion[] = altData.navn?.map(place => ({
+            ...place,
+            displayText: `${place.stedsnavn}${place.kommunenavn ? `, ${place.kommunenavn}` : ''}${place.fylkesnavn ? `, ${place.fylkesnavn}` : ''}`,
+            type: 'place' as const
+          })) || [];
+          
+          // Legg til kun nye resultater som ikke allerede finnes
+          altPlaces.forEach(altPlace => {
+            const exists = allSuggestions.some(existing => 
+              existing.type === 'place' && 
+              (existing as PlaceSuggestion).stedsnavn.toLowerCase() === altPlace.stedsnavn.toLowerCase()
+            );
+            if (!exists) {
+              allSuggestions.push(altPlace);
+            }
+          });
+        } catch (e) {
+          console.warn('Feil ved parsing av alternativt søk');
+        }
+      }
+      
       // Sorter så steder kommer først, deretter adresser
       allSuggestions.sort((a, b) => {
         if (a.type === 'place' && b.type === 'address') return -1;
@@ -100,12 +130,12 @@ export const useNorwegianAddresses = () => {
         return 0;
       });
       
-      setSuggestions(allSuggestions.slice(0, 10)); // Maks 10 totalt
+      setSuggestions(allSuggestions.slice(0, 12)); // Øk til 12 totalt
     } catch (error) {
       console.error('Feil ved søk:', error);
       
-      // Fallback til lokal søk hvis API feiler
-      const fallbackSuggestions: Suggestion[] = [...norwegianPlaces, ...norwegianCities]
+      // Utvidet fallback til lokal søk hvis API feiler
+      const expandedFallback = [...norwegianPlaces, ...norwegianCities, ...additionalNorwegianPlaces]
         .filter(place => place.toLowerCase().includes(query.toLowerCase()))
         .slice(0, 10)
         .map(place => ({
@@ -118,7 +148,7 @@ export const useNorwegianAddresses = () => {
           type: 'place' as const
         }));
       
-      setSuggestions(fallbackSuggestions);
+      setSuggestions(expandedFallback);
       
       if (query.length > 2) {
         toast.error('Kunne ikke hente data fra Kartverket. Bruker lokal søk.');
@@ -181,4 +211,26 @@ const norwegianCities = [
   "Lillehammer", "Grimstad", "Kongsberg", "Hammerfest", "Florø", "Narvik",
   "Elverum", "Lyngdal", "Alta", "Raufoss", "Bryne", "Mandal",
   "Jessheim", "Vennesla", "Ås", "Verdal", "Knarvik", "Notodden", "Tvedestrand"
+];
+
+// Ytterligere småsteder og øyer som ofte ikke finnes i API-ene  
+const additionalNorwegianPlaces = [
+  "Kvalsvik", "Kvalsvik Nerlandsøy", "Nerlandsøy", "Nerlandsøya",
+  "Giske", "Godøy", "Valderøy", "Vigra", "Ellingsøy", "Hjørundfjord",
+  "Sykkylven", "Stranda", "Ørsta", "Volda", "Fosnavåg", "Runde",
+  "Herøy Møre og Romsdal", "Sande Møre og Romsdal", "Vanylven", "Ulstein",
+  "Hareid", "Ørskog", "Vestnes", "Rauma", "Nesset", "Sunndal",
+  "Tingvoll", "Gjemnes", "Averøy", "Eide", "Frei", "Kristiansund N",
+  "Smøla", "Aure", "Halsa", "Surnadal", "Rindal", "Orkdal",
+  "Meldal", "Agdenes", "Snillfjord", "Hemne", "Rissa", "Leksvik",
+  "Mosvik", "Inderøy", "Steinkjer", "Snåsa", "Lierne", "Røyrvik",
+  "Namsskogan", "Grong", "Høylandet", "Overhalla", "Fosnes", "Flatanger",
+  "Vikna", "Nærøy", "Leka", "Bindal", "Sømna", "Brønnøy", "Vega",
+  "Vevelstad", "Herøy Nordland", "Alstahaug", "Leirfjord", "Vefsn",
+  "Grane", "Hattfjelldal", "Dønna", "Nesna", "Hemnes", "Rana",
+  "Lurøy", "Træna", "Rødøy", "Meløy", "Gildeskål", "Beiarn", "Saltdal",
+  "Fauske", "Sørfold", "Steigen", "Hamarøy", "Tysfjord", "Lødingen",
+  "Tjeldsund", "Evenes", "Ballangen", "Røst", "Værøy", "Flakstad",
+  "Vestvågøy", "Vågan", "Hadsel", "Bø Nordland", "Øksnes", "Sortland",
+  "Andøy", "Moskenes", "Svolvaer", "Kabelvåg", "Henningsvær", "Nusfjord"
 ];
