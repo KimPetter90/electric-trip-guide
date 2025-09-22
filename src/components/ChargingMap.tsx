@@ -51,9 +51,9 @@ export default function ChargingMap({ isVisible, routeAnalysis, optimizedStation
 
   // Bruk ekte rutedata eller fallback til standardverdier
   const distance = routeAnalysis?.totalDistance ? Math.round(routeAnalysis.totalDistance) : 465;
-  const totalTimeHours = routeAnalysis?.totalTime || 6.75;
-  const hours = Math.floor(totalTimeHours);
-  const minutes = Math.round((totalTimeHours - hours) * 60);
+  const totalTimeMinutes = routeAnalysis?.totalTime || 405; // minutter
+  const hours = Math.floor(totalTimeMinutes / 60);
+  const minutes = Math.round(totalTimeMinutes % 60);
   const cost = routeAnalysis?.totalCost || 650;
   const stops = optimizedStations ? optimizedStations.length : (routeAnalysis ? Math.ceil(routeAnalysis.totalDistance / 300) : 3);
 
