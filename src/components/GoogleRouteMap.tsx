@@ -647,7 +647,8 @@ const GoogleRouteMap: React.FC<{
     console.log('🛣️ CALCULATEROUTE STARTET:', { 
       mapExists: !!mapInstanceRef.current, 
       from: routeData.from, 
-      to: routeData.to 
+      to: routeData.to,
+      selectedRouteId 
     });
     
     if (!mapInstanceRef.current || !routeData.from || !routeData.to) {
@@ -935,7 +936,7 @@ const GoogleRouteMap: React.FC<{
         calculateRoute();
       }
     }
-  }, [calculateRoute, routeTrigger, selectedRouteId, userLocation, routeData.to]);
+  }, [routeTrigger, selectedRouteId]);
 
   // Lytt til brukerposisjon og oppdater ruten til å vise kun gjenværende del (kun under normal kjøring)
   useEffect(() => {
