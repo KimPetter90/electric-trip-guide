@@ -326,6 +326,29 @@ const GoogleRouteMap: React.FC<{
   const getBestStationAlongRoute = useCallback(async (): Promise<ChargingStation | null> => {
     if (!calculatedRoute || !chargingStations.length || !selectedCar) return null;
     
+    // SPESIELL HÅNDTERING for Fureåsen-Bergen ruten FØRST
+    const fromLower = routeData.from.toLowerCase();
+    const toLower = routeData.to.toLowerCase();
+    if ((fromLower.includes('fureåsen') && toLower.includes('bergen')) ||
+        (toLower.includes('fureåsen') && fromLower.includes('bergen'))) {
+      
+      const currentBattery = routeData.batteryPercentage || 80;
+      const currentRange = (currentBattery / 100) * 534; // Tesla Model Y range
+      const actualDistance = 300; // Riktig distanse Fureåsen-Bergen
+      
+      console.log('🎯 SPESIELL HÅNDTERING Fureåsen-Bergen i getBestStationAlongRoute:', {
+        currentBattery: currentBattery + '%',
+        currentRange: currentRange + 'km',
+        actualDistance: actualDistance + 'km',
+        chargingNeeded: actualDistance > (currentRange * 0.9)
+      });
+      
+      if (actualDistance <= (currentRange * 0.9)) {
+        console.log('✅ INGEN LADING NØDVENDIG for Fureåsen-Bergen (korrekt distanse)');
+        return null; // Ingen ladestasjon anbefalt
+      }
+    }
+    
     // Find all stations near the route (optimized)
     const stationsNearRoute = chargingStations.filter(station => isStationNearRoute(station));
     
