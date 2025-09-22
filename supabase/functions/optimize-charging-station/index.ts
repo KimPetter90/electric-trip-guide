@@ -404,13 +404,13 @@ serve(async (req) => {
           targetLat = (fromLat + toLat) / 2;
           targetLon = (fromLon + toLon) / 2;
         } else if (batteryPercentage >= 50) {
-          // Moderat batteri: 60% av ruten (litt senere)
-          targetLat = fromLat + (toLat - fromLat) * 0.6;
-          targetLon = fromLon + (toLon - fromLon) * 0.6;
+          // Moderat batteri: 40% av ruten (litt tidligere enn midtpunkt)
+          targetLat = fromLat + (toLat - fromLat) * 0.4;
+          targetLon = fromLon + (toLon - fromLon) * 0.4;
         } else {
-          // Lavt batteri: 80% av ruten (sent men ikke for sent)
-          targetLat = fromLat + (toLat - fromLat) * 0.8;
-          targetLon = fromLon + (toLon - fromLon) * 0.8;
+          // Lavt batteri: 30% av ruten (tidlig på ruten for å være sikker)
+          targetLat = fromLat + (toLat - fromLat) * 0.3;
+          targetLon = fromLon + (toLon - fromLon) * 0.3;
         }
         
         const dLat = (stationLat - targetLat) * Math.PI / 180;
@@ -425,7 +425,7 @@ serve(async (req) => {
       
       const batteryLevel = routeData.batteryPercentage || 80;
       const targetDescription = batteryLevel >= 70 ? 'midpoint' : 
-                               batteryLevel >= 50 ? '60% along route' : '80% along route';
+                               batteryLevel >= 50 ? '40% along route' : '30% along route';
       console.log(`📍 Station ${station.name}: ${distanceFromRoute.toFixed(0)}km from route ${targetDescription} (${fromLower} → ${toLower}, ${batteryLevel}% battery)`);
       
       const score = calculateStationScore(
