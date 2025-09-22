@@ -25,6 +25,8 @@ import { EnhancedMapSection } from "@/components/EnhancedMapSection";
 import { PricingSection } from "@/components/PricingSection";
 import PerformanceOptimizer from "@/components/PerformanceOptimizer";
 import { NavigationOverlay } from "@/components/NavigationOverlay";
+import { EnhancedNavigationOverlay } from "@/components/EnhancedNavigationOverlay";
+import { NavigationMap } from "@/components/NavigationMap";
 import { CarNavigationInterface } from "@/components/CarNavigationInterface";
 
 import ComprehensiveFerrySchedule from "@/components/ComprehensiveFerrySchedule";
@@ -134,6 +136,7 @@ function Index() {
   const [navigationCenter, setNavigationCenter] = useState({ lat: 60.472, lng: 8.4689 }); // Ny state for navigasjonssenter
   const [navigationMode, setNavigationMode] = useState(false); // Ny state for 2D-modus
   const [showCarNavigation, setShowCarNavigation] = useState(false);
+  const [currentUserLocation, setCurrentUserLocation] = useState<{latitude: number, longitude: number, heading?: number, speed?: number, accuracy?: number} | null>(null);
 
   // Debug car selection changes
   const handleCarSelect = useCallback((car: CarModel | null) => {
@@ -178,8 +181,37 @@ function Index() {
     console.log('🗺️ Navigasjon startet - zoomer inn til:', location);
     setNavigationCenter({ lat: location.latitude, lng: location.longitude });
     setNavigationZoom(17); // Zoom helt inn for navigasjon
-    setNavigationMode(true); // Aktiver 2D-modus
+    setNavigationMode(true); // Aktiver 3D-modus
     setShowNavigationTracker(true);
+    setCurrentUserLocation({
+      latitude: location.latitude,
+      longitude: location.longitude,
+      heading: location.heading,
+      speed: location.speed,
+      accuracy: location.accuracy
+    });
+  }, []);
+
+  // Callback for location updates during navigation
+  const onLocationUpdate = useCallback((location: any) => {
+    setCurrentUserLocation({
+      latitude: location.latitude,
+      longitude: location.longitude,
+      heading: location.heading,
+      speed: location.speed,
+      accuracy: location.accuracy
+    });
+    
+    if (navigationMode) {
+      setNavigationCenter({ lat: location.latitude, lng: location.longitude });
+    }
+  }, [navigationMode]);
+
+  // Callback for starting car navigation mode
+  const onStartCarNavigation = useCallback(() => {
+    console.log('🚗 Starting car navigation mode');
+    setShowCarNavigation(true);
+    setNavigationMode(true);
   }, []);
 
   // Optimized route selection - stable function reference
