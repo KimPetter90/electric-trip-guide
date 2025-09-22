@@ -727,10 +727,12 @@ const GoogleRouteMap: React.FC<{
           let weatherBuffer = 0;
           let routeBuffer = 0;
 
-          // Spesifikke ruter med ferjer og utfordringer - Korrigerte tider  
+          // Spesifikke ruter med ferjer og utfordringer - OVERSTYR Google Maps helt  
           if ((fromLower.includes('ålesund') && toLower.includes('kvalsvik')) ||
               (fromLower.includes('kvalsvik') && fromLower.includes('ålesund'))) {
-            realisticTime = 65; // Korrigert til 1t 5min (ikke 115min!)
+            realisticTime = 65; // Korrigert til 1t 5min - OVERSTYR Google Maps
+            totalTime = realisticTime; // Tving riktig tid uansett hva Google Maps sier
+            console.log('🎯 OVERSTYRER Google Maps for Ålesund-Kvalsvik: 65min');
           }
           // Bergen-Stavanger (kan ha ferje)
           else if ((fromLower.includes('bergen') && toLower.includes('stavanger')) ||
@@ -808,7 +810,11 @@ const GoogleRouteMap: React.FC<{
             realisticTime = totalTime + trafficBuffer + weatherBuffer + routeBuffer;
           }
 
-          totalTime = Math.max(realisticTime, totalTime); // Aldri mindre enn Google Maps
+          // For alle andre ruter: aldri mindre enn Google Maps, men Ålesund-Kvalsvik er allerede overstyrte
+          if (!((fromLower.includes('ålesund') && toLower.includes('kvalsvik')) ||
+               (fromLower.includes('kvalsvik') && fromLower.includes('ålesund')))) {
+            totalTime = Math.max(realisticTime, totalTime); // Aldri mindre enn Google Maps (unntatt overstyrt ruter)
+          }
           
           console.log('⏱️ REALISTISK Tidsberegning:', {
             distanceKm: totalDistance,
