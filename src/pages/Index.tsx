@@ -165,6 +165,12 @@ function Index() {
   }, []);
 
   const onRouteCalculated = useCallback((analysis: any) => {
+    console.log('🎯 Index.tsx: Mottok route analysis:', {
+      totalDistance: analysis.totalDistance,
+      estimatedTime: analysis.estimatedTime,
+      timeFormatted: `${Math.floor(analysis.estimatedTime / 60)}t ${Math.round(analysis.estimatedTime % 60)}min`,
+      source: 'GoogleRouteMap'
+    });
     setTripAnalysis(analysis);
   }, []);
 

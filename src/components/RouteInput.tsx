@@ -93,6 +93,7 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
         (fromLower.includes('kvalsvik') && fromLower.includes('ålesund'))) {
       baseMinutes = 65; // Realistisk tid: 1t 5min (ikke 115min!)
       baseDistance = 55; // Faktisk avstand ca 55km
+      console.log('🚗 RouteInput: OVERSTYRER Ålesund-Kvalsvik rute: 65min', { from, to });
     }
     else if ((fromLower.includes('oslo') && toLower.includes('trondheim')) ||
              (fromLower.includes('trondheim') && toLower.includes('oslo'))) {
@@ -169,6 +170,13 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
     let estimatedTravelMinutes = realisticTravelData.minutes;
     let estimatedDistanceKm = realisticTravelData.distance;
     let routeDescription = realisticTravelData.description;
+    
+    console.log('🕒 RouteInput calculateDepartureTime - travel data:', {
+      from: routeData.from,
+      to: routeData.to,
+      estimatedTravelMinutes,
+      travelTime: `${Math.floor(estimatedTravelMinutes / 60)}t ${Math.round(estimatedTravelMinutes % 60)}min`
+    });
     
     // Beregn ladebehov mer konservativt basert på rutetype
     const currentBattery = routeData.batteryPercentage;
