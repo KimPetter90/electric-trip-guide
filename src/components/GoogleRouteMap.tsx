@@ -482,22 +482,18 @@ const GoogleRouteMap: React.FC<{
         needsCharging
       });
       
-      if (!needsCharging) {
-        console.log('✅ No charging needed - hiding all charging stations');
-        return;
-      }
-
-      console.log('⚡ Charging needed - showing charging stations');
-      
-      // Clear distance cache when recalculating
-      routeDistanceCache.current.clear();
-
-      // Find best station along route (async)
+      // Declare bestStationAlongRoute variable
       let bestStationAlongRoute: ChargingStation | null = null;
       
-      
-      const findBestStationAndRender = async () => {
+      if (!needsCharging) {
+        console.log('✅ No charging needed - showing all stations as red (not recommended)');
+        // Show all stations but don't recommend any (all red)
+        bestStationAlongRoute = null; // Force no recommendation
+      } else {
+        console.log('⚡ Charging needed - showing charging stations with recommendation');
+        // Find best station along route (async)
         bestStationAlongRoute = await getBestStationAlongRoute();
+      }
       
       // Add new charging station markers - BRUK STATIONSTOUSE
       stationsToUse.forEach(station => {
@@ -614,10 +610,6 @@ const GoogleRouteMap: React.FC<{
 
         chargingStationMarkersRef.current.push(marker);
       });
-    };
-    
-    // Execute async function
-    findBestStationAndRender();
     };
     
     // Execute charging need check
