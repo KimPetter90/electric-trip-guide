@@ -182,15 +182,17 @@ function calculateStationScore(
       score -= 30; // Straff for stasjoner for langt unna når risikabelt
     }
   } else {
-    // Normal situasjon (uten henger): favoriser stasjoner nær midtpunkt av ruten
-    if (distanceToStation < 50) {
-      score += 30; // Bonus for stasjoner nær midtpunkt
+    // Normal situasjon: STRENGERE avstandskriterier for å unngå Volda
+    if (distanceToStation < 25) {
+      score += 50; // STOR BONUS for stasjoner veldig nær optimal punkt
+    } else if (distanceToStation < 50) {
+      score += 25; // Moderat bonus
+    } else if (distanceToStation < 75) {
+      score += 5; // Liten bonus
     } else if (distanceToStation < 100) {
-      score += 20; // Moderat bonus
-    } else if (distanceToStation < 150) {
-      score += 10; // Liten bonus
+      score -= 15; // Straff
     } else {
-      score -= 20; // Straff for stasjoner langt fra midtpunkt
+      score -= 50; // STOR STRAFF for stasjoner langt fra optimal punkt (som Volda)
     }
   }
   
