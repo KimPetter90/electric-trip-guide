@@ -939,10 +939,11 @@ const GoogleRouteMap: React.FC<{
           }, 100);
         }
       } else {
+        console.log('📊 BEREGNER NORMAL RUTE - trigger:', routeTrigger, 'route:', selectedRouteId);
         calculateRoute();
       }
     }
-  }, [routeTrigger, selectedRouteId]);
+  }, [routeTrigger, selectedRouteId, calculateRoute]);
 
   // Lytt til brukerposisjon og oppdater ruten til å vise kun gjenværende del (kun under normal kjøring)
   useEffect(() => {
