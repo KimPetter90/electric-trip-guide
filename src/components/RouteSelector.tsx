@@ -169,7 +169,7 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
                        </div>
                        <div className="font-medium">
                          {isSelected && routeAnalysis ? 
-                           formatDuration(Math.round(routeAnalysis.totalTime * 60)) : 
+                           formatDuration(Math.round(routeAnalysis.totalTime)) : 
                            formatDuration(route.duration)}
                        </div>
                      </div>
