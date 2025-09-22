@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Navigation, Square, AlertTriangle, MapPin, Clock, Route, Compass } from 'lucide-react';
+import { Navigation, Square, AlertTriangle, MapPin, Clock, Route, Compass, Car, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { NavigationFerryInfo } from './NavigationFerryInfo';
+import { FirstPersonNavigation } from './FirstPersonNavigation';
+import { DriverPerspective } from './DriverPerspective';
 
 interface EnhancedNavigationOverlayProps {
   routeData?: {
@@ -51,6 +53,8 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [routeDeviation, setRouteDeviation] = useState<boolean>(false);
   const [nextTurn, setNextTurn] = useState<NextTurn | null>(null);
+  const [showDriverView, setShowDriverView] = useState<boolean>(false);
+  const [showFirstPerson, setShowFirstPerson] = useState<boolean>(false);
   
   const watchIdRef = useRef<number | null>(null);
   const lastLocationRef = useRef<LocationData | null>(null);
@@ -265,10 +269,22 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
     }
   };
 
-  const startCarNavigation = () => {
-    // Start normal navigation first
+  const startDriverView = () => {
     startNavigation();
-    // Then trigger car navigation mode
+    setTimeout(() => {
+      setShowDriverView(true);
+    }, 1000);
+  };
+
+  const startFirstPersonView = () => {
+    startNavigation();
+    setTimeout(() => {
+      setShowFirstPerson(true);
+    }, 1000);
+  };
+
+  const startCarNavigation = () => {
+    startNavigation();
     setTimeout(() => {
       onStartCarNavigation?.();
     }, 1000);
@@ -292,6 +308,8 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
     setRemainingDistance(0);
     setRemainingTime(0);
     setNextTurn(null);
+    setShowDriverView(false);
+    setShowFirstPerson(false);
     lastLocationRef.current = null;
     
     toast({
@@ -349,6 +367,24 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
         >
           <Compass className="h-4 w-4 mr-2" />
           Start bil-navigasjon
+        </Button>
+
+        <Button
+          onClick={startFirstPersonView}
+          className="bg-purple-600/90 hover:bg-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
+          size="sm"
+        >
+          <Eye className="h-4 w-4 mr-2" />
+          Førerperspektiv
+        </Button>
+
+        <Button
+          onClick={startDriverView}
+          className="bg-green-600/90 hover:bg-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
+          size="sm"
+        >
+          <Car className="h-4 w-4 mr-2" />
+          3D Bil-kjøring
         </Button>
       </div>
     );
@@ -437,6 +473,20 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
           <Square className="h-4 w-4" />
         </Button>
       </div>
+
+      {/* Driver Perspective Views */}
+      <FirstPersonNavigation
+        userLocation={currentLocation || undefined}
+        routeData={routeData}
+        isActive={showFirstPerson}
+        onExit={() => setShowFirstPerson(false)}
+      />
+
+      <DriverPerspective
+        userLocation={currentLocation || undefined}
+        route={[]} // Mock route data
+        isActive={showDriverView}
+      />
     </>
   );
 };
