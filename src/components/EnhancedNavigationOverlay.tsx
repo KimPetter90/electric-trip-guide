@@ -296,13 +296,15 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
         <Button
           onClick={() => {
             console.log('🧭 FØRERPERSPEKTIV KNAPP TRYKKET!');
-            startNavigation();
+            setIsTracking(true);
+            setShowDriverView(true);
+            console.log('🚗 State endret - showDriverView:', true);
           }}
           className="bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm border-4 border-yellow-400"
           size="lg"
         >
           <Car className="h-5 w-5 mr-2" />
-          FØRERPERSPEKTIV TEST
+          START FØRERPERSPEKTIV
         </Button>
       </div>
     );
