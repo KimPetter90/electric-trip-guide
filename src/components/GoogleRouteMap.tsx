@@ -727,16 +727,19 @@ const GoogleRouteMap: React.FC<{
           let weatherBuffer = 0;
           let routeBuffer = 0;
 
-          // Spesifikke ruter med ferjer og utfordringer - OVERSTYR Google Maps helt  
-          if ((fromLower.includes('ålesund') && toLower.includes('kvalsvik')) ||
-              (fromLower.includes('kvalsvik') && fromLower.includes('ålesund')) ||
-              (fromLower.includes('fureåsen') && toLower.includes('kvalsvik')) ||
-              (fromLower.includes('kvalsvik') && fromLower.includes('fureåsen'))) {
-            // Fureåsen til Kvalsvik (Nerlandsøy) - MED FERJE
+          // Spesifikke ruter med ferjer og utfordringer - OVERSTYR Google Maps helt
+          // Ålesund/Fureåsen til Kvalsvik (Nerlandsøya) - Koordinater: (62.4722,6.1495) → (62.3333,5.5376)
+          if ((fromLower.includes('ålesund') && (toLower.includes('kvalsvik') || toLower.includes('nerlandsøy'))) ||
+              ((fromLower.includes('kvalsvik') || fromLower.includes('nerlandsøy')) && fromLower.includes('ålesund')) ||
+              (fromLower.includes('fureåsen') && (toLower.includes('kvalsvik') || toLower.includes('nerlandsøy'))) ||
+              ((fromLower.includes('kvalsvik') || fromLower.includes('nerlandsøy')) && fromLower.includes('fureåsen')) ||
+              (fromLower.includes('fureåsen 15') && (toLower.includes('kvalsvik') || toLower.includes('nerlandsøy'))) ||
+              ((fromLower.includes('kvalsvik') || fromLower.includes('nerlandsøy')) && fromLower.includes('fureåsen 15'))) {
+            // Fureåsen/Ålesund til Kvalsvik (Nerlandsøya) - MED FERJE
             // Kjøring til ferje: 25min + Ferjeventing/tid: 60min + Kjøring fra ferje: 15min + Buffer: 15min = 115min
             realisticTime = 115; // Realistisk tid: 1t 55min med ferje, trafikk og vær
             totalTime = realisticTime; // Tving riktig tid uansett hva Google Maps sier
-            console.log('🎯 OVERSTYRER Google Maps for Ålesund/Fureåsen-Kvalsvik (med ferje): 115min');
+            console.log('🎯 OVERSTYRER Google Maps for Ålesund/Fureåsen-Kvalsvik (Nerlandsøya, med ferje): 115min');
           }
           // Bergen-Stavanger (kan ha ferje)
           else if ((fromLower.includes('bergen') && toLower.includes('stavanger')) ||

@@ -236,15 +236,23 @@ export class RouteOptimizer {
     // Bruk faktiske koordinater for mer nøyaktig beregning
     // For Norge: bruk Haversine-formelen som utgangspunkt
     
-    // Kjente norske byer med koordinater
+    // Kjente norske byer og steder med korrekte koordinater
     const knownLocations: { [key: string]: { lat: number; lng: number } } = {
       'oslo': { lat: 59.9139, lng: 10.7522 },
       'bergen': { lat: 60.3913, lng: 5.3221 },
       'trondheim': { lat: 63.4305, lng: 10.3951 },
-      'ålesund': { lat: 62.4722, lng: 7.0653 },
+      'ålesund': { lat: 62.4722, lng: 6.1495 }, // KORRIGERT koordinat
+      'fureåsen': { lat: 62.4722, lng: 6.1495 }, // Fureåsen er i Ålesund
       'stavanger': { lat: 58.9700, lng: 5.7331 },
       'kristiansand': { lat: 58.1467, lng: 7.9956 },
-      'tromsø': { lat: 69.6496, lng: 18.9560 }
+      'tromsø': { lat: 69.6496, lng: 18.9560 },
+      'kvalsvik': { lat: 62.3333, lng: 5.5376 }, // Kvalsvik, Nerlandsøya
+      'nerlandsøya': { lat: 62.3333, lng: 5.5376 },
+      'fosnavåg': { lat: 62.3157, lng: 5.7361 }, // Nærområde til Kvalsvik
+      'molde': { lat: 62.7372, lng: 7.1607 },
+      'kristiansund': { lat: 63.1067, lng: 7.7315 },
+      'bodø': { lat: 67.2804, lng: 14.4049 },
+      'narvik': { lat: 68.4385, lng: 17.4272 }
     };
     
     // Finn startby
