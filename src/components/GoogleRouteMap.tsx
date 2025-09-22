@@ -750,14 +750,15 @@ const GoogleRouteMap: React.FC<{
             routeBuffer = 10;
             realisticTime = totalTime + ferryTime + trafficBuffer + weatherBuffer + routeBuffer;
           }
-          // Bergen-Ålesund/Molde (fjellvei + mulig ferje)
-          else if ((fromLower.includes('bergen') && (toLower.includes('ålesund') || toLower.includes('molde'))) ||
-                   ((fromLower.includes('ålesund') || fromLower.includes('molde')) && toLower.includes('bergen'))) {
+          // Bergen-Ålesund/Molde/Fureåsen (fjellvei + mulig ferje)
+          else if ((fromLower.includes('bergen') && (toLower.includes('ålesund') || toLower.includes('molde') || toLower.includes('fureåsen'))) ||
+                   ((fromLower.includes('ålesund') || fromLower.includes('molde') || fromLower.includes('fureåsen')) && toLower.includes('bergen'))) {
             ferryTime = 15;
             trafficBuffer = 15;
             weatherBuffer = 25;
             routeBuffer = 20;
             realisticTime = totalTime + ferryTime + trafficBuffer + weatherBuffer + routeBuffer;
+            console.log('🎯 OVERSTYRER Google Maps for Fureåsen/Ålesund-Bergen: +75min buffer');
           }
           // Nordnorge (E6)
           else if ((fromLower.includes('trondheim') && (toLower.includes('bodø') || toLower.includes('tromsø') || toLower.includes('narvik'))) ||

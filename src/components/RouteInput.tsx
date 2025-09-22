@@ -128,10 +128,11 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
       baseDistance = 650;
     }
     // Vestlandsruter (ferjer og fjorder)
-    else if ((fromLower.includes('bergen') && (toLower.includes('ålesund') || toLower.includes('molde'))) ||
-             ((fromLower.includes('ålesund') || fromLower.includes('molde')) && toLower.includes('bergen'))) {
+    else if ((fromLower.includes('bergen') && (toLower.includes('ålesund') || toLower.includes('molde') || toLower.includes('fureåsen'))) ||
+             ((fromLower.includes('ålesund') || fromLower.includes('molde') || fromLower.includes('fureåsen')) && toLower.includes('bergen'))) {
       baseMinutes = 360; // 6t (ferjer + fjellvei)
       baseDistance = 280;
+      console.log('🚗 RouteInput: OVERSTYRER Fureåsen/Ålesund-Bergen: 360min', { from, to });
     }
     // Nordnorge
     else if ((fromLower.includes('trondheim') && (toLower.includes('bodø') || toLower.includes('tromsø'))) ||
