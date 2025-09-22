@@ -239,7 +239,7 @@ serve(async (req) => {
       
       const currentBattery = routeData.batteryPercentage || 80;
       const currentRange = (currentBattery / 100) * carData.range;
-      const actualDistance = 300; // Riktig distanse Fureåsen-Bergen
+      const actualDistance = 420; // Riktig distanse Ålesund/Fureåsen-Bergen
       
       console.log('🎯 SPESIELL HÅNDTERING Edge Function - Fureåsen-Bergen:', {
         currentBattery: currentBattery + '%',
