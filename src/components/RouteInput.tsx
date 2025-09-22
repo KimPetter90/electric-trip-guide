@@ -90,10 +90,12 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
 
     // Hovedruter med alle realistiske faktorer - Korrigerte tider
     if ((fromLower.includes('ålesund') && toLower.includes('kvalsvik')) ||
-        (fromLower.includes('kvalsvik') && fromLower.includes('ålesund'))) {
+        (fromLower.includes('kvalsvik') && fromLower.includes('ålesund')) ||
+        (fromLower.includes('fureåsen') && toLower.includes('kvalsvik')) ||
+        (fromLower.includes('kvalsvik') && fromLower.includes('fureåsen'))) {
       baseMinutes = 65; // Realistisk tid: 1t 5min (ikke 115min!)
       baseDistance = 55; // Faktisk avstand ca 55km
-      console.log('🚗 RouteInput: OVERSTYRER Ålesund-Kvalsvik rute: 65min', { from, to });
+      console.log('🚗 RouteInput: OVERSTYRER Ålesund/Fureåsen-Kvalsvik rute: 65min', { from, to });
     }
     else if ((fromLower.includes('oslo') && toLower.includes('trondheim')) ||
              (fromLower.includes('trondheim') && toLower.includes('oslo'))) {
