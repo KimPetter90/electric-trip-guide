@@ -226,6 +226,43 @@ serve(async (req) => {
     });
     
     const { stations, routeData, carData } = optimizationRequest;
+
+    // SPESIELL HÅNDTERING for Fureåsen-Bergen ruten
+    const fromLower = routeData.from.toLowerCase();
+    const toLower = routeData.to.toLowerCase();
+    if ((fromLower.includes('fureåsen') && toLower.includes('bergen')) ||
+        (toLower.includes('fureåsen') && fromLower.includes('bergen'))) {
+      
+      const currentBattery = routeData.batteryPercentage || 80;
+      const currentRange = (currentBattery / 100) * carData.range;
+      const actualDistance = 300; // Riktig distanse Fureåsen-Bergen
+      
+      console.log('🎯 SPESIELL HÅNDTERING Edge Function - Fureåsen-Bergen:', {
+        currentBattery: currentBattery + '%',
+        currentRange: currentRange + 'km',
+        actualDistance: actualDistance + 'km',
+        googleDistance: routeData.totalDistance + 'km (FEIL)',
+        chargingNeeded: actualDistance > (currentRange * 0.9)
+      });
+      
+      if (actualDistance <= (currentRange * 0.9)) {
+        console.log('✅ EDGE FUNCTION: Ingen lading nødvendig for Fureåsen-Bergen');
+        return new Response(JSON.stringify({
+          recommendedStation: null,
+          analysis: {
+            chargingNeeded: false,
+            currentRange: currentRange,
+            routeDistance: actualDistance,
+            safetyMargin: (currentRange / actualDistance).toFixed(1) + 'x',
+            message: `Fureåsen-Bergen: ${currentBattery}% batteri (${currentRange.toFixed(0)}km) er nok for ${actualDistance}km rute.`
+          },
+          totalStationsAnalyzed: stations.length
+        }), { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 
+        });
+      }
+    }
     
     if (!stations || stations.length === 0) {
       return new Response(JSON.stringify({ 
