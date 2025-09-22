@@ -378,7 +378,7 @@ serve(async (req) => {
         }
       }
       
-      // Beregn avstand - forskjellig strategi for risikabel vs normal situasjon
+      // Beregn avstand - forskjellig strategi basert på batterinivå
       const R = 6371; // Earth's radius in km
       let distanceFromRoute;
       
@@ -392,20 +392,41 @@ serve(async (req) => {
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         distanceFromRoute = R * c;
       } else {
-        // Normal situasjon: beregn avstand fra midtpunkt av ruten
-        const midLat = (fromLat + toLat) / 2;
-        const midLon = (fromLon + toLon) / 2;
+        // Normal situasjon: beregn optimal ladepunkt basert på batterinivå
+        const batteryPercentage = routeData.batteryPercentage || 80;
+        const currentRange = (batteryPercentage / 100) * carData.range;
+        const adjustedRange = currentRange / (weatherImpact * trailerImpact);
         
-        const dLat = (stationLat - midLat) * Math.PI / 180;
-        const dLon = (stationLon - midLon) * Math.PI / 180;
+        let targetLat, targetLon;
+        
+        if (batteryPercentage >= 70) {
+          // Høyt batteri: midtpunkt av ruten
+          targetLat = (fromLat + toLat) / 2;
+          targetLon = (fromLon + toLon) / 2;
+        } else if (batteryPercentage >= 50) {
+          // Moderat batteri: 60% av ruten (litt senere)
+          targetLat = fromLat + (toLat - fromLat) * 0.6;
+          targetLon = fromLon + (toLon - fromLon) * 0.6;
+        } else {
+          // Lavt batteri: 80% av ruten (sent men ikke for sent)
+          targetLat = fromLat + (toLat - fromLat) * 0.8;
+          targetLon = fromLon + (toLon - fromLon) * 0.8;
+        }
+        
+        const dLat = (stationLat - targetLat) * Math.PI / 180;
+        const dLon = (stationLon - targetLon) * Math.PI / 180;
         const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(midLat * Math.PI / 180) * Math.cos(stationLat * Math.PI / 180) *
+                  Math.cos(targetLat * Math.PI / 180) * Math.cos(stationLat * Math.PI / 180) *
                   Math.sin(dLon/2) * Math.sin(dLon/2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         distanceFromRoute = R * c;
       }
       
-      console.log(`📍 Station ${station.name}: ${distanceFromRoute.toFixed(0)}km from route ${isRisky ? 'START (risky mode)' : 'midpoint (normal mode)'} (${fromLower} → ${toLower})`);
+      
+      const batteryLevel = routeData.batteryPercentage || 80;
+      const targetDescription = batteryLevel >= 70 ? 'midpoint' : 
+                               batteryLevel >= 50 ? '60% along route' : '80% along route';
+      console.log(`📍 Station ${station.name}: ${distanceFromRoute.toFixed(0)}km from route ${targetDescription} (${fromLower} → ${toLower}, ${batteryLevel}% battery)`);
       
       const score = calculateStationScore(
         station,
