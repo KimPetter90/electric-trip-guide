@@ -174,7 +174,7 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
   };
 
   const startNavigation = async () => {
-    console.log('🧭 Starter avansert navigasjon...');
+    console.log('🧭 Starter førerperspektiv navigasjon...');
     
     if (!navigator.geolocation) {
       toast({
@@ -209,7 +209,7 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
       
       toast({
         title: "✅ GPS tilkoblet",
-        description: `Navigasjon startet med ${Math.round(position.coords.accuracy)}m nøyaktighet`,
+        description: `Førerperspektiv startet med ${Math.round(position.coords.accuracy)}m nøyaktighet`,
         duration: 3000,
       });
       
@@ -258,6 +258,11 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
 
       setIsTracking(true);
       setRouteDeviation(false);
+      
+      // Start driver perspective automatically
+      setTimeout(() => {
+        setShowFirstPerson(true);
+      }, 1000);
       
     } catch (error) {
       console.error('Navigation start error:', error);
@@ -350,41 +355,14 @@ export const EnhancedNavigationOverlay: React.FC<EnhancedNavigationOverlayProps>
 
   if (!isTracking) {
     return (
-      <div className="absolute top-3 left-3 z-20 flex flex-col gap-2">
+      <div className="absolute top-3 left-3 z-20">
         <Button
           onClick={startNavigation}
           className="bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
-          size="sm"
+          size="lg"
         >
-          <Navigation className="h-4 w-4 mr-2" />
-          Start reise
-        </Button>
-        
-        <Button
-          onClick={startCarNavigation}
-          className="bg-blue-600/90 hover:bg-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
-          size="sm"
-        >
-          <Compass className="h-4 w-4 mr-2" />
-          Start bil-navigasjon
-        </Button>
-
-        <Button
-          onClick={startFirstPersonView}
-          className="bg-purple-600/90 hover:bg-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
-          size="sm"
-        >
-          <Eye className="h-4 w-4 mr-2" />
-          Førerperspektiv
-        </Button>
-
-        <Button
-          onClick={startDriverView}
-          className="bg-green-600/90 hover:bg-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
-          size="sm"
-        >
-          <Car className="h-4 w-4 mr-2" />
-          3D Bil-kjøring
+          <Car className="h-5 w-5 mr-2" />
+          Start førerperspektiv
         </Button>
       </div>
     );
