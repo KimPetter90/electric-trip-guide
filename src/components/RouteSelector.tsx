@@ -157,8 +157,9 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
                          <span>Avstand</span>
                        </div>
                        <div className="font-medium">
-                         {/* HARDKODET FIX FOR ÅLESUND-BERGEN */}
-                         {isSelected && route.id === 'fastest' ? '420 km' : route.distance + ' km'}
+                         {isSelected && routeAnalysis ? 
+                           Math.round(routeAnalysis.totalDistance) + ' km' : 
+                           route.distance + ' km'}
                        </div>
                      </div>
                      <div>
@@ -167,8 +168,9 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
                          <span>Kjøretid</span>
                        </div>
                        <div className="font-medium">
-                         {/* HARDKODET FIX FOR ÅLESUND-BERGEN */}
-                         {isSelected && route.id === 'fastest' ? '5t 12min' : formatDuration(route.duration)}
+                         {isSelected && routeAnalysis ? 
+                           formatDuration(Math.round(routeAnalysis.totalTime * 60)) : 
+                           formatDuration(route.duration)}
                        </div>
                      </div>
                      <div>
@@ -177,8 +179,9 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
                          <span>Ladestasjoner</span>
                        </div>
                        <div className="font-medium">
-                         {/* HARDKODET FIX FOR ÅLESUND-BERGEN */}
-                         {isSelected && route.id === 'fastest' ? '0 stopp' : route.chargingStops + ' stopp'}
+                         {isSelected && routeAnalysis ? 
+                           (routeAnalysis.chargingTime > 0 ? Math.max(1, Math.round(routeAnalysis.chargingTime / 30)) : 0) + ' stopp' : 
+                           route.chargingStops + ' stopp'}
                        </div>
                      </div>
                      <div>
@@ -186,8 +189,9 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
                          Estimert kostnad
                        </div>
                        <div className="font-medium">
-                         {/* HARDKODET FIX FOR ÅLESUND-BERGEN */}
-                         {isSelected && route.id === 'fastest' ? '0 NOK' : route.estimatedCost + ' NOK'}
+                         {isSelected && routeAnalysis ? 
+                           (routeAnalysis.totalCost || Math.round(routeAnalysis.totalDistance * 0.6)) + ' NOK' : 
+                           route.estimatedCost + ' NOK'}
                        </div>
                      </div>
                    </div>
