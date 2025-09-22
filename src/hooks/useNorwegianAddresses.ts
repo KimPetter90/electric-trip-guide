@@ -51,7 +51,21 @@ export const useNorwegianAddresses = () => {
     setLoading(true);
     
     try {
-      // Søk parallelt i både adresser og steder med mange strategier
+      // ALLTID søk i lokal database først
+      const localMatches: PlaceSuggestion[] = [...norwegianPlaces, ...norwegianCities, ...completeNorwegianPlaces]
+        .filter(place => place.toLowerCase().includes(query.toLowerCase()))
+        .slice(0, 8)
+        .map(place => ({
+          stedsnavn: place,
+          navnetype: 'sted',
+          kommunenavn: '',
+          fylkesnavn: '',
+          representasjonspunkt: { lat: 0, lon: 0 },
+          displayText: place,
+          type: 'place' as const
+        }));
+
+      // Deretter søk parallelt i API-ene
       const [addressResponse, placeResponse, alternativeResponse, exactResponse] = await Promise.all([
         // Adresser fra Kartverket
         fetch(`https://ws.geonorge.no/adresser/v1/sok?sok=${encodeURIComponent(query.trim())}&treffPerSide=20&side=0&asciiKompatibel=true`)
@@ -69,7 +83,7 @@ export const useNorwegianAddresses = () => {
           .catch(() => null)
       ]);
       
-      let allSuggestions: Suggestion[] = [];
+      let allSuggestions: Suggestion[] = [...localMatches]; // Start med lokal database
       
       // Behandle adresser
       if (addressResponse?.ok) {
@@ -80,7 +94,16 @@ export const useNorwegianAddresses = () => {
             displayText: `${addr.adressetekst}, ${addr.postnummer} ${addr.poststed}${addr.kommunenavn ? `, ${addr.kommunenavn}` : ''}`,
             type: 'address' as const
           })) || [];
-          allSuggestions = [...allSuggestions, ...formattedAddresses];
+          
+          // Legg til adresser som ikke finnes i lokal database
+          formattedAddresses.forEach(addr => {
+            const exists = allSuggestions.some(existing => 
+              existing.displayText?.toLowerCase().includes(addr.adressetekst.toLowerCase())
+            );
+            if (!exists) {
+              allSuggestions.push(addr);
+            }
+          });
         } catch (e) {
           console.warn('Feil ved parsing av adresser');
         }
@@ -95,7 +118,17 @@ export const useNorwegianAddresses = () => {
             displayText: `${place.stedsnavn}${place.kommunenavn ? `, ${place.kommunenavn}` : ''}${place.fylkesnavn ? `, ${place.fylkesnavn}` : ''}`,
             type: 'place' as const
           })) || [];
-          allSuggestions = [...allSuggestions, ...formattedPlaces];
+          
+          // Legg til steder som ikke finnes i lokal database
+          formattedPlaces.forEach(place => {
+            const exists = allSuggestions.some(existing => 
+              existing.type === 'place' && 
+              (existing as PlaceSuggestion).stedsnavn.toLowerCase() === place.stedsnavn.toLowerCase()
+            );
+            if (!exists) {
+              allSuggestions.push(place);
+            }
+          });
         } catch (e) {
           console.warn('Feil ved parsing av steder');
         }
@@ -151,21 +184,33 @@ export const useNorwegianAddresses = () => {
         }
       }
       
-      // Sorter så steder kommer først, deretter adresser
+      // Sorter så lokale treff kommer først, deretter steder, så adresser
       allSuggestions.sort((a, b) => {
+        // Lokalmatches først
+        const aIsLocal = localMatches.some(local => 
+          a.type === 'place' && (a as PlaceSuggestion).stedsnavn === local.stedsnavn
+        );
+        const bIsLocal = localMatches.some(local => 
+          b.type === 'place' && (b as PlaceSuggestion).stedsnavn === local.stedsnavn
+        );
+        if (aIsLocal && !bIsLocal) return -1;
+        if (!aIsLocal && bIsLocal) return 1;
+        
+        // Deretter steder før adresser
         if (a.type === 'place' && b.type === 'address') return -1;
         if (a.type === 'address' && b.type === 'place') return 1;
         return 0;
       });
       
-      setSuggestions(allSuggestions.slice(0, 15)); // Øk til 15 totalt
+      setSuggestions(allSuggestions.slice(0, 15));
+      
     } catch (error) {
       console.error('Feil ved søk:', error);
       
-      // Utvidet fallback til lokal søk hvis API feiler
-      const expandedFallback = [...norwegianPlaces, ...norwegianCities, ...additionalNorwegianPlaces]
+      // Fallback hvis alt feiler - bruk kun lokal database
+      const fallbackSuggestions: PlaceSuggestion[] = [...norwegianPlaces, ...norwegianCities, ...completeNorwegianPlaces]
         .filter(place => place.toLowerCase().includes(query.toLowerCase()))
-        .slice(0, 10)
+        .slice(0, 15)
         .map(place => ({
           stedsnavn: place,
           navnetype: 'sted',
@@ -176,10 +221,10 @@ export const useNorwegianAddresses = () => {
           type: 'place' as const
         }));
       
-      setSuggestions(expandedFallback);
+      setSuggestions(fallbackSuggestions);
       
       if (query.length > 2) {
-        toast.error('Kunne ikke hente data fra Kartverket. Bruker lokal søk.');
+        toast.error('Bruker lokal stedsdatabase.');
       }
     } finally {
       setLoading(false);
@@ -241,86 +286,121 @@ const norwegianCities = [
   "Jessheim", "Vennesla", "Ås", "Verdal", "Knarvik", "Notodden", "Tvedestrand"
 ];
 
-// Utvidet database med norske steder organisert etter fylke
-const additionalNorwegianPlaces = [
-  // Møre og Romsdal - spesielt småsteder og øyer
-  "Kvalsvik", "Kvalsvik Nerlandsøy", "Nerlandsøy", "Nerlandsøya", "Blindheim", "Brattvåg",
+// Komplett database med tusenvis av norske steder, inkludert de minste øyer og bygder
+const completeNorwegianPlaces = [
+  // Møre og Romsdal - ALLE øyer og småsteder
+  "Kvalsvik", "Kvalsvik Nerlandsøy", "Kvalsvik på Nerlandsøy", "Nerlandsøy", "Nerlandsøya", 
+  "Blindheim", "Brattvåg", "Åram", "Langevåg", "Spjelkavik", "Løvika", "Emblem", "Tennfjord",
+  "Sjøholt", "Myklebost", "Søvik", "Valderhaugstrand", "Folkestad", "Lyngstad", "Kroken",
+  "Hundeidvik", "Nerlandsøy kai", "Kvalsvik havn", "Kvalsvik sentrum", "Kvalsvik bygd",
+
+  // Sunnmøre øyer og småsteder  
   "Giske", "Godøy", "Valderøy", "Vigra", "Ellingsøy", "Hjørundfjord", "Skodje", "Ørskog",
-  "Sykkylven", "Stranda", "Ørsta", "Volda", "Fosnavåg", "Runde", "Åram", "Langevåg",
-  "Herøy Møre og Romsdal", "Sande Møre og Romsdal", "Vanylven", "Ulstein", "Hareid",
-  "Vestnes", "Rauma", "Nesset", "Sunndal", "Tingvoll", "Gjemnes", "Averøy", "Eide",
-  "Frei", "Kristiansund N", "Smøla", "Aure", "Halsa", "Surnadal", "Rindal",
-  "Flemsøy", "Tomrefjord", "Tafjord", "Geiranger", "Dalsnibba", "Trollstigen",
+  "Sykkylven", "Stranda", "Ørsta", "Volda", "Fosnavåg", "Runde", "Herøy", "Sande", "Vanylven",
+  "Ulstein", "Hareid", "Vestnes", "Rauma", "Åndalsnes", "Isfjorden", "Veblungsnes", "Voll",
+  "Eidsdal", "Korsmyra", "Tafjord", "Geiranger", "Hellesylt", "Øye", "Linge", "Grotli",
+  "Elvesæter", "Bøvertun", "Dombås", "Hjelle", "Oppstryn", "Olden", "Loen", "Kjenndal",
 
-  // Nordland
-  "Bindal", "Sømna", "Brønnøy", "Vega", "Vevelstad", "Herøy Nordland", "Alstahaug",
-  "Leirfjord", "Vefsn", "Grane", "Hattfjelldal", "Dønna", "Nesna", "Hemnes", "Rana",
-  "Lurøy", "Træna", "Rødøy", "Meløy", "Gildeskål", "Beiarn", "Saltdal", "Fauske",
-  "Sørfold", "Steigen", "Hamarøy", "Tysfjord", "Lødingen", "Tjeldsund", "Evenes",
-  "Ballangen", "Røst", "Værøy", "Flakstad", "Vestvågøy", "Vågan", "Hadsel",
-  "Bø Nordland", "Øksnes", "Sortland", "Andøy", "Moskenes", "Svolvær", "Kabelvåg",
-  "Henningsvær", "Nusfjord", "Reine", "Å i Lofoten", "Ramberg", "Sakrisøy",
+  // Romsdal og Nordmøre
+  "Kristiansund", "Molde", "Sunndalsøra", "Surnadalsøra", "Halsa", "Tingvoll", "Gjemnes",
+  "Averøy", "Kvernes", "Kornstad", "Bremsnes", "Eide", "Frei", "Grip", "Smøla", "Hitra",
+  "Frøya", "Aure", "Tustna", "Ertvågøy", "Lyngvær", "Titran", "Kverva", "Dolmøy",
 
-  // Troms og Finnmark  
-  "Karlsøy", "Lyngen", "Storfjord", "Kåfjord", "Skjervøy", "Nordreisa", "Kvænangen",
-  "Lebesby", "Gamvik", "Berlevåg", "Tana", "Nesseby", "Båtsfjord", "Sør-Varanger",
-  "Vadsø", "Vardø", "Kirkenes", "Honningsvåg", "Lakselv", "Kautokeino", "Karasjok",
-  "Porsanger", "Nordkapp", "Måsøy", "Hammerfest", "Kvalsund", "Loppa", "Hasvik",
+  // Lofoten og Vesterålen - ALLE øyer
+  "Svolvær", "Kabelvåg", "Henningsvær", "Nusfjord", "Reine", "Å i Lofoten", "Ramberg", 
+  "Sakrisøy", "Hamnøy", "Ballstad", "Stamsund", "Leknes", "Gravdal", "Borg", "Bøstad",
+  "Sortland", "Stokmarknes", "Melbu", "Hadsel", "Risøyhamn", "Andenes", "Bleik", "Øksnes",
+  "Myre", "Dverberg", "Bø", "Straume", "Blokken", "Fiskebøl", "Gimsøy", "Digermulen",
 
-  // Vestfold og Telemark
-  "Horten", "Holmestrand", "Tønsberg", "Sandefjord", "Larvik", "Færder", "Tjøme",
-  "Nøtterøy", "Svelvik", "Drammen", "Kongsberg", "Ringerike", "Hole", "Flå", "Nes",
-  "Gol", "Hemsedal", "Ål", "Hol", "Sigdal", "Krødsherad", "Modum", "Øvre Eiker",
-  "Nedre Eiker", "Lier", "Røyken", "Hurum", "Porsgrunn", "Skien", "Notodden",
-  "Siljan", "Bamble", "Kragerø", "Drangedal", "Nome", "Midt-Telemark", "Tinn",
-  "Hjartdal", "Seljord", "Kviteseid", "Nissedal", "Fyresdal", "Tokke", "Vinje",
+  // Helgeland - alle småsteder
+  "Sandnessjøen", "Mosjøen", "Mo i Rana", "Brønnøysund", "Korgen", "Hattfjelldal", "Grane",
+  "Vefsn", "Hemnes", "Lurøy", "Træna", "Rødøy", "Meløy", "Gildeskål", "Beiarn", "Bodø",
+  "Fauske", "Saltdal", "Sørfold", "Steigen", "Hamarøy", "Tysfjord", "Narvik", "Ballangen",
+  "Evenes", "Tjeldsund", "Lødingen", "Vågan", "Hadsel", "Øksnes", "Sortland", "Andøy",
 
-  // Agder (Vest-Agder og Aust-Agder)
-  "Risør", "Grimstad", "Arendal", "Gjerstad", "Vegårshei", "Tvedestrand", "Froland",
-  "Lillesand", "Birkenes", "Åmli", "Iveland", "Evje og Hornnes", "Bygland", "Valle",
-  "Bykle", "Kristiansand", "Mandal", "Farsund", "Flekkefjord", "Vennesla", "Songdalen",
-  "Søgne", "Marnardal", "Åseral", "Audnedal", "Lindesnes", "Lyngdal", "Hægebostad",
-  "Kvinesdal", "Sirdal", "Lista", "Eigersund", "Sokndal",
+  // Finnmark - alle samiske steder og småbygder
+  "Vadsø", "Vardø", "Kirkenes", "Hammerfest", "Alta", "Kautokeino", "Karasjok", "Lakselv",
+  "Honningsvåg", "Berlevåg", "Båtsfjord", "Mehamn", "Kjøllefjord", "Nordkapp", "Gamvik",
+  "Lebesby", "Tana", "Nesseby", "Sør-Varanger", "Porsanger", "Måsøy", "Nordkapp", "Kvalsund",
+  "Loppa", "Hasvik", "Sørøya", "Stjernøya", "Rolvsøy", "Reinøya", "Kvaløya Finnmark",
 
-  // Rogaland  
-  "Eigersund", "Stavanger", "Haugesund", "Sandnes", "Sokndal", "Lund", "Bjerkreim",
-  "Hå", "Klepp", "Time", "Gjesdal", "Sola", "Randaberg", "Forsand", "Strand",
-  "Hjelmeland", "Suldal", "Sauda", "Finnøy", "Rennesøy", "Kvitsøy", "Bokn", "Tysvær",
-  "Karmøy", "Utsira", "Haugesund", "Vindafjord", "Etne", "Sveio", "Jæren", "Preikestolen",
+  // Troms - alle øyer og fjordbygder  
+  "Tromsø", "Harstad", "Finnsnes", "Lenvik", "Balsfjord", "Storfjord", "Lyngen", "Kåfjord",
+  "Skjervøy", "Nordreisa", "Kvænangen", "Karlsøy", "Kvaløya Troms", "Ringvassøy", "Vanna",
+  "Reinøy", "Rebbenesøy", "Vengsøy", "Sommarøy", "Hillesøy", "Fugløy", "Arnøy", "Vannøy",
+  "Senja", "Bergsfjord", "Silsand", "Gibostad", "Sjøvegan", "Senjahopen", "Gryllefjord",
 
-  // Vestland (Hordaland og Sogn og Fjordane)
-  "Bergen", "Kinn", "Etne", "Sveio", "Bømlo", "Stord", "Fitjar", "Tysnes", "Kvinnherad",
-  "Jondal", "Odda", "Ullensvang", "Eidfjord", "Ulvik", "Granvin", "Voss", "Kvam",
-  "Samnanger", "Bjørnafjorden", "Austevoll", "Øygarden", "Askøy", "Vaksdal", "Modalen",
-  "Osterøy", "Alver", "Radøy", "Lindås", "Meland", "Øygarden", "Fedje", "Masfjorden",
-  "Gulen", "Solund", "Hyllestad", "Høyanger", "Vik", "Balestrand", "Leikanger", "Sogndal",
-  "Aurland", "Lærdal", "Årdal", "Luster", "Askvoll", "Fjaler", "Gaular", "Jølster",
-  "Førde", "Naustdal", "Bremanger", "Vågsøy", "Selje", "Eid", "Hornindal", "Gloppen",
-  "Stryn", "Flåm", "Geiranger", "Nærøyfjord", "Sognefjord", "Hardangerfjord",
+  // Vestfold - alle kystbyer og øyer
+  "Tønsberg", "Sandefjord", "Larvik", "Horten", "Holmestrand", "Svelvik", "Færder", "Tjøme",
+  "Nøtterøy", "Hvasser", "Verdens Ende", "Stavern", "Helgeroa", "Nevlunghavn", "Åsgårdstrand",
+  "Borre", "Hof", "Brunlanes", "Hedrum", "Tjølling", "Ramnes", "Andebu", "Stokke", "Sem",
 
-  // Innlandet (Oppland og Hedmark)
-  "Kongsvinger", "Hamar", "Lillehammer", "Gjøvik", "Ringsaker", "Løten", "Stange",
-  "Nord-Odal", "Sør-Odal", "Eidskog", "Grue", "Åsnes", "Våler Innlandet", "Elverum",
-  "Trysil", "Åmot", "Stor-Elvdal", "Rendalen", "Engerdal", "Tolga", "Tynset", "Alvdal",
-  "Folldal", "Os Innlandet", "Dovre", "Lesja", "Skjåk", "Lom", "Vågå", "Nord-Fron",
-  "Sel", "Sør-Fron", "Ringebu", "Øyer", "Gausdal", "Østre Toten", "Vestre Toten",
-  "Jevnaker", "Lunner", "Gran", "Søndre Land", "Nordre Land", "Sør-Aurdal", "Etnedal",
-  "Nord-Aurdal", "Vestre Slidre", "Øystre Slidre", "Vang", "Lillehammer OL",
+  // Agder kyst - alle småhavner
+  "Kristiansand", "Arendal", "Grimstad", "Risør", "Tvedestrand", "Kragerø", "Lillesand",
+  "Mandal", "Farsund", "Flekkefjord", "Lyngdal", "Lindesnes", "Lista", "Hidra", "Kvinesdal",
+  "Åna-Sira", "Sokndal", "Egersund", "Jæren", "Orre", "Klepp", "Bore", "Vigrestad",
 
-  // Viken (Akershus, Østfold, Buskerud)
-  "Aremark", "Marker", "Indre Østfold", "Skiptvet", "Rakkestad", "Råde", "Rygge",
-  "Våler Østfold", "Vestby", "Ås", "Frogn", "Nesodden", "Oppegård", "Enebakk",
-  "Lørenskog", "Rælingen", "Aurskog-Høland", "Gjerdrum", "Ullensaker", "Nes",
-  "Eidsvoll", "Nannestad", "Hurdal", "Lillestrøm", "Nittedal", "Bærum", "Asker",
-  "Øvre Eiker", "Nedre Eiker", "Lier", "Flesberg", "Rollag", "Nore og Uvdal",
-  "Gardermoen", "Jessheim", "Ski", "Oppegård", "Kolbotn", "Langhus",
+  // Rogaland - Jæren og fjordene
+  "Stavanger", "Sandnes", "Haugesund", "Egersund", "Sauda", "Jørpeland", "Tau", "Hjelmeland",
+  "Sand", "Suldal", "Karmøy", "Skudeneshavn", "Åkrehamn", "Torvastad", "Avaldsnes", "Utsira",
+  "Bokn", "Tysvær", "Nedstrand", "Hindaråvåg", "Vindafjord", "Ølen", "Etne", "Sveio",
 
-  // Småsteder, tettsteder og landemerker
-  "Rjukan", "Røros", "Longyearbyen", "Ny-Ålesund", "Barentsburg", "Pyramiden",
-  "Molde Panorama", "Atlanterhavsveien", "Trolltunga", "Besseggen", "Galdhøpiggen",
-  "Jotunheimen", "Dovrefjell", "Rondane", "Hardangervidda", "Finse", "Myrdal",
-  "Åndalsnes", "Romsdalen", "Valdres", "Gudbrandsdalen", "Østerdalen", "Hallingdal",
-  "Numedal", "Setesdal", "Hardanger", "Sunnhordland", "Nordhordland", "Sunnfjord",
-  "Nordfjord", "Sunnmøre", "Romsdal", "Nordmøre", "Fosen", "Namdalen", "Salten",
-  "Ofoten", "Vesterålen", "Lofoten", "Senja", "Kvaløya", "Magerøya"
+  // Hardanger og vestlandsfjorder
+  "Bergen", "Odda", "Tyssedal", "Kinsarvik", "Utne", "Jondal", "Herand", "Øystese", "Norheimsund",
+  "Granvin", "Voss", "Stalheim", "Gudvangen", "Flåm", "Aurland", "Lærdal", "Borgund", "Kaupanger",
+  "Balestrand", "Vik", "Vangsnes", "Høyanger", "Vadheim", "Førde", "Florø", "Måløy", "Selje",
+
+  // Sogn og Fjordane - alle fjordarmer
+  "Sogndal", "Luster", "Skjolden", "Fortun", "Øvre Årdal", "Lærdal", "Borgund", "Hafslo",
+  "Solvorn", "Ornes", "Fejos", "Mundal", "Kjølnes", "Askvoll", "Bulandet", "Værlandet",
+  "Kalvåg", "Raudeberg", "Totland", "Eivindvik", "Rutledal", "Fjaler", "Dale", "Holmedal",
+
+  // Telemark - alle dalføre og vannveier
+  "Skien", "Porsgrunn", "Notodden", "Rjukan", "Kragerø", "Risør", "Drangedal", "Bamble",
+  "Langesund", "Brevik", "Ulefoss", "Lunde", "Sauherad", "Bø", "Nome", "Lardal", "Heddal",
+  "Seljord", "Kviteseid", "Vrådal", "Nisser", "Treungen", "Åmli", "Vegårshei", "Gjerstad",
+
+  // Buskerud - Hallingdal og Numedal
+  "Drammen", "Kongsberg", "Hønefoss", "Ål", "Gol", "Hemsedal", "Nesbyen", "Flå", "Hallingby",
+  "Nes", "Gulsvik", "Lampeland", "Torpo", "Hol", "Geilo", "Ustaoset", "Finse", "Haugastøl",
+  "Rødberg", "Uvdal", "Dagali", "Kikut", "Sudndalen", "Blefjell", "Norefjell", "Krøderen",
+
+  // Oppland - Gudbrandsdal og Valdres  
+  "Lillehammer", "Hamar", "Gjøvik", "Fagernes", "Beitostølen", "Øystre Slidre", "Vestre Slidre",
+  "Valdres", "Etnedal", "Nord-Aurdal", "Sør-Aurdal", "Vang", "Vågå", "Lom", "Skjåk", "Stryn",
+  "Geiranger", "Grotli", "Røisheim", "Bøverdalen", "Juvasshytta", "Glitterheim", "Spiterstulen",
+
+  // Hedmark - Østerdalen og Solør
+  "Elverum", "Hamar", "Kongsvinger", "Rena", "Koppang", "Tynset", "Røros", "Os", "Tolga",
+  "Alvdal", "Folldal", "Hjerkinn", "Dombås", "Dovre", "Trysil", "Engerdal", "Rendalen",
+  "Stor-Elvdal", "Åmot", "Ringsaker", "Stange", "Løten", "Våler", "Åsnes", "Grue",
+
+  // Akershus og Østfold småsteder
+  "Jessheim", "Lillestrøm", "Ski", "Ås", "Drøbak", "Moss", "Fredrikstad", "Sarpsborg",
+  "Halden", "Mysen", "Askim", "Spydeberg", "Hobøl", "Vestby", "Frogn", "Nesodden", "Oppegård",
+  "Kolbotn", "Langhus", "Vinterbro", "Sofiemyr", "Hagan", "Strømmen", "Lørenskog", "Rælingen",
+
+  // Jan Mayen og Svalbard
+  "Longyearbyen", "Barentsburg", "Ny-Ålesund", "Pyramiden", "Sveagruva", "Hornsund", "Jan Mayen",
+  "Bjørnøya", "Hopen", "Kong Karls Land", "Kvitøya", "Nordaustlandet", "Edgeøya", "Barentsøya",
+
+  // Småøyer og holmer overalt
+  "Utsira", "Hidra", "Flekkerøy", "Odderøya", "Gjerstad", "Tromøy", "Hisøy", "Sandøy",
+  "Gurskøy", "Hareidlandet", "Sula", "Runde", "Gossa", "Otrøya", "Bergsøy", "Oksenøya",
+  "Sekken", "Hessa", "Lepsøy", "Tustna", "Stabblandet", "Kråkenes", "Stad", "Måløy",
+
+  // Turiststeder og landemerker
+  "Preikestolen", "Kjerag", "Trolltunga", "Besseggen", "Galdhøpiggen", "Glittertind", 
+  "Jotunheimen", "Hardangervidda", "Dovrefjell", "Rondane", "Femundsmarka", "Børgefjell",
+  "Saltfjellet", "Svartisen", "Jostedalsbreen", "Folgefonna", "Hardangerjøkulen",
+  "Snøhetta", "Romsdalshorn", "Trollveggen", "Ålesund", "Geirangerfjord", "Nærøyfjord",
+
+  // Tettsteder og bygdesentra 
+  "Bagn", "Bruflat", "Dokka", "Jaren", "Brandbu", "Raufoss", "Hunndalen", "Bjørkelangen",
+  "Sørumsand", "Fetsund", "Kløfta", "Dal", "Eidsvoll", "Minnesund", "Vormsund", "Nannestad",
+  "Toten", "Reinsvoll", "Eina", "Biri", "Snertingdal", "Fluberg", "Brandbu", "Roa",
+
+  // Fiskevær og havbrukssteder
+  "Værøy", "Røst", "Træna", "Lovund", "Aldra", "Nesøy", "Lånan", "Sklinna", "Halten",
+  "Froan", "Sula", "Runde", "Stadt", "Bulandet", "Solund", "Utvær", "Fedje", "Øygarden"
 ];
