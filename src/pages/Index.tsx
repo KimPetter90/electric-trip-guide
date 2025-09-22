@@ -156,34 +156,37 @@ function Index() {
   }, []);
   
   const handleRouteAnalysisUpdate = useCallback((analysis: RouteAnalysis | null) => {
+    console.log('📊 Route analysis update received:', analysis);
     setRouteAnalysis(analysis);
     
     // Oppdater rutevalg med faktiske data når de kommer tilbake
     if (analysis && selectedRouteId) {
+      console.log('🔄 Updating route options for selectedRouteId:', selectedRouteId);
       setRouteOptions(prevRoutes => {
+        console.log('📋 Previous routes:', prevRoutes.map(r => ({ id: r.id, distance: r.distance, duration: r.duration })));
         if (prevRoutes.length === 0) return prevRoutes;
         
         const updatedRoutes = prevRoutes.map(route => {
           if (route.id === selectedRouteId) {
-            // Oppdater valgt rute med faktiske data
-            return {
+            const updated = {
               ...route,
               distance: Math.round(analysis.totalDistance),
               duration: Math.round(analysis.totalTime * 60), // timer til minutter
               estimatedCost: analysis.totalCost || Math.round(analysis.totalDistance * 0.6),
               chargingStops: analysis.chargingTime > 0 ? Math.max(1, Math.round(analysis.chargingTime / 30)) : 0
             };
+            console.log('✅ Updated route:', { 
+              id: updated.id, 
+              distance: updated.distance, 
+              duration: updated.duration,
+              cost: updated.estimatedCost 
+            });
+            return updated;
           }
           return route;
         });
         
-        console.log('🔄 Oppdaterer rutevalg med faktiske data:', {
-          routeId: selectedRouteId,
-          distance: analysis.totalDistance + ' km',
-          duration: (analysis.totalTime * 60).toFixed(0) + ' min',
-          cost: analysis.totalCost + ' kr'
-        });
-        
+        console.log('🔄 Final updated routes:', updatedRoutes.map(r => ({ id: r.id, distance: r.distance, duration: r.duration })));
         return updatedRoutes;
       });
     }
@@ -253,12 +256,14 @@ function Index() {
   // Optimized route selection - stable function reference
   const handleRouteSelect = useCallback((routeId: string) => {
     console.log('🎯 Route selected:', routeId);
+    console.log('🔍 Current routeOptions:', routeOptions.map(r => ({ id: r.id, distance: r.distance, duration: r.duration })));
     setSelectedRouteId(routeId);
     // Trigger kartberegning når bruker velger ny rute
     if (routeTrigger > 0) { // Kun hvis allerede har beregnet ruter
+      console.log('🚀 Triggering route calculation for:', routeId);
       setRouteTrigger(prev => prev + 1);
     }
-  }, [routeTrigger]);
+  }, [routeTrigger, routeOptions]);
 
   // Load charging stations on component mount
   useEffect(() => {
