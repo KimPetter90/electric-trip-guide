@@ -890,7 +890,7 @@ const GoogleRouteMap: React.FC<{
           
           const analysis: TripAnalysis = {
             totalDistance,
-            estimatedTime: totalTime,
+            estimatedTime: totalTime / 60, // Konverter fra minutter til timer
             batteryUsage: selectedCar ? (totalDistance / selectedCar.range) * 100 : 0,
             requiredStops: selectedCar ? Math.max(0, Math.ceil((totalDistance / selectedCar.range) - (routeData.batteryPercentage / 100))) : 0,
             weatherImpact: 'Moderat',
