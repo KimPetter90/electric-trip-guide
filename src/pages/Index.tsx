@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useUserRole } from "@/hooks/useUserRole";
+import { ExitIntentPopup } from "@/components/ExitIntentPopup";
+import { RevenueBooster } from "@/components/RevenueBooster";
 import CarSelector from "@/components/CarSelector";
 import RouteImpact from "@/components/RouteImpact";
 import RouteInput from "@/components/RouteInput";
@@ -1203,6 +1205,12 @@ function Index() {
           setRouteTrigger(0);
         }}
       />
+      
+      {/* Exit intent popup for conversion */}
+      <ExitIntentPopup />
+      
+      {/* Revenue booster for maximum monetization */}
+      <RevenueBooster />
     </div>
   );
 }

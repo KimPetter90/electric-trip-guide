@@ -6,6 +6,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { ConversionBooster } from "@/components/ConversionBooster";
 import { 
   Crown, 
   Zap, 
@@ -22,41 +23,42 @@ import {
 const PRICING_PLANS = {
   premium: {
     name: "ElRoute Premium",
-    price: 199,
-    priceId: "price_1S9U5rDgjF2NREPhuG6Kvd1Q", // Optimalisert månedlig pris
-    description: "Perfekt for private brukere",
+    price: 99, // REDUSERT PRIS for økt konvertering!
+    priceId: "price_1S9U5rDgjF2NREPhuG6Kvd1Q",
+    description: "💥 SPESIALTILBUD - 50% rabatt! Perfekt for private brukere",
     features: [
       "100 ruter per måned",
       "Værintegrasjon",
-      "Ruteoptimalisering",
+      "Ruteoptimalisering", 
       "Ladestasjonsinfo",
+      "Ferjeinfo med sanntidsdata",
       "Mobil-app",
       "E-post support"
     ],
     icon: Star,
     popular: true,
-    yearlyPriceId: "price_1S9U6eDgjF2NREPhAgggcpu0", // 15% årlig rabatt
-    studentPriceId: "price_1S9U6yDgjF2NREPhZchK8E4m" // 25% studentrabatt
+    originalPrice: 199
   },
   pro: {
     name: "ElRoute Pro", 
-    price: 299, // REDUSERT fra 399 NOK!
-    priceId: "price_1S9U6RDgjF2NREPhxe8pPOqz", // Ny optimalisert pris
-    description: "For power-brukere og bedrifter",
+    price: 199, // KRAFTIG REDUSERT for bedre salg!
+    priceId: "price_1S9U6RDgjF2NREPhxe8pPOqz",
+    description: "🚀 KRAFTIG REDUSERT! For power-brukere og bedrifter",
     features: [
       "Ubegrensede ruter",
       "Avansert værintegrasjon", 
       "AI-ruteoptimalisering",
-      "Prioritert support",
+      "Prioritert support (24/7)",
       "API-tilgang",
-      "Ferjeintegrasjon",
+      "Ferjeintegrasjon med sanntid",
       "Eksport til GPX/KML",
       "Business analytics",
-      "Rapporter og analytics"
+      "Rapporter og analytics",
+      "Dedikert kontoansvarlig"
     ],
     icon: Rocket,
     popular: false,
-    yearlyPriceId: "price_1S9U6oDgjF2NREPhkyi7IeoS" // 15% årlig rabatt
+    originalPrice: 399
   }
 };
 
@@ -276,12 +278,17 @@ export const PricingSection: React.FC = () => {
               <Crown className="h-8 w-8 text-primary animate-pulse-neon" />
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-gradient font-orbitron">
-              Velg din plan
+              🔥 SPESIALTILBUD - 50% RABATT! 🔥
             </h2>
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Oppgrader til premium for ubegrensede ruter og avanserte funksjoner
+            Oppgrader nå og spar tusener! Tilbudet utløper snart ⏰
           </p>
+          
+          {/* Conversion boosters */}
+          <div className="max-w-2xl mx-auto mt-8">
+            <ConversionBooster />
+          </div>
         </div>
 
         {/* Gratis plan info */}
@@ -357,7 +364,17 @@ export const PricingSection: React.FC = () => {
                   </div>
                   
                   <div className="mb-4">
-                    <span className="text-4xl font-bold">{plan.price}</span>
+                    {('originalPrice' in plan) && (
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <span className="text-lg text-muted-foreground line-through">
+                          {plan.originalPrice} NOK
+                        </span>
+                        <Badge variant="destructive" className="text-xs animate-pulse">
+                          SPAR {Math.round(((plan.originalPrice - plan.price) / plan.originalPrice) * 100)}%
+                        </Badge>
+                      </div>
+                    )}
+                    <span className="text-4xl font-bold text-green-600">{plan.price}</span>
                     <span className="text-muted-foreground"> NOK/mnd</span>
                   </div>
                   
