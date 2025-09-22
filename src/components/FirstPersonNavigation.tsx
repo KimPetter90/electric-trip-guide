@@ -1,6 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import React from 'react';
 
 interface FirstPersonNavigationProps {
   userLocation?: {
@@ -24,124 +22,50 @@ export const FirstPersonNavigation: React.FC<FirstPersonNavigationProps> = ({
   isActive,
   onExit
 }) => {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const [mapboxToken, setMapboxToken] = useState<string>('');
-
-  // Fetch Mapbox token
-  useEffect(() => {
-    const fetchToken = async () => {
-      try {
-        // For now, use a placeholder - you'll need to set up the token
-        const response = await fetch('/api/mapbox-token');
-        const data = await response.json();
-        setMapboxToken(data.token);
-      } catch (error) {
-        console.error('Error fetching Mapbox token:', error);
-        // Fallback - you can set your token here temporarily
-        setMapboxToken('pk.your_mapbox_token_here');
-      }
-    };
-    fetchToken();
-  }, []);
-
-  // Initialize map with street-level view
-  useEffect(() => {
-    if (!mapContainer.current || !mapboxToken || !isActive) return;
-
-    mapboxgl.accessToken = mapboxToken;
-
-    const initialLat = userLocation?.latitude || 59.9139;
-    const initialLng = userLocation?.longitude || 10.7522;
-
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [initialLng, initialLat],
-      zoom: 19, // Very close zoom for street level
-      pitch: 0, // Completely flat - ground level view
-      bearing: userLocation?.heading || 0,
-      antialias: true,
-      dragRotate: false, // Disable manual rotation
-      dragPan: false, // Disable manual panning
-      scrollZoom: false, // Disable zoom
-      doubleClickZoom: false,
-      touchZoomRotate: false
-    });
-
-    // Remove all controls for immersive experience
-    map.current.on('load', () => {
-      // Add user location indicator
-      map.current?.addSource('user-location', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          geometry: {
-            type: 'Point',
-            coordinates: [initialLng, initialLat]
-          },
-          properties: {}
-        }
-      });
-
-      // Add car icon
-      map.current?.addLayer({
-        id: 'user-car',
-        type: 'symbol',
-        source: 'user-location',
-        layout: {
-          'icon-image': 'car', // You'd need to load a car icon
-          'icon-size': 1.5,
-          'icon-rotate': ['get', 'bearing'],
-          'icon-rotation-alignment': 'map',
-          'icon-allow-overlap': true,
-          'icon-ignore-placement': true
-        }
-      });
-    });
-
-    return () => {
-      map.current?.remove();
-    };
-  }, [mapboxToken, isActive]);
-
-  // Update location and camera position
-  useEffect(() => {
-    if (!map.current || !userLocation || !isActive) return;
-
-    const coordinates: [number, number] = [userLocation.longitude, userLocation.latitude];
-    
-    // Update user location
-    const source = map.current.getSource('user-location') as mapboxgl.GeoJSONSource;
-    if (source) {
-      source.setData({
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: coordinates
-        },
-        properties: {
-          bearing: userLocation.heading || 0
-        }
-      });
-    }
-
-    // Move camera to follow user exactly - ground level perspective
-    map.current.easeTo({
-      center: coordinates,
-      zoom: 20, // Maximum zoom for street-level detail
-      bearing: userLocation.heading || 0,
-      pitch: 0, // Completely flat, ground-level view
-      duration: 1000
-    });
-  }, [userLocation, isActive]);
-
   if (!isActive) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black">
-      {/* Map container - full screen */}
-      <div ref={mapContainer} className="w-full h-full" />
+    <div className="fixed inset-0 z-50 bg-gray-900">
+      {/* Mock road view with simple graphics */}
+      <div className="w-full h-full relative overflow-hidden bg-gradient-to-b from-sky-400 to-gray-800">
+        {/* Road surface */}
+        <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gray-700">
+          {/* Road markings */}
+          <div className="absolute inset-0">
+            {Array.from({ length: 20 }, (_, i) => (
+              <div
+                key={i}
+                className="absolute bg-yellow-300 w-2 h-12 left-1/2 transform -translate-x-1/2 animate-pulse"
+                style={{
+                  bottom: `${i * 30}px`,
+                  animationDelay: `${i * 0.1}s`
+                }}
+              />
+            ))}
+          </div>
+          
+          {/* Side lines */}
+          <div className="absolute left-1/4 top-0 bottom-0 w-1 bg-white opacity-80" />
+          <div className="absolute right-1/4 top-0 bottom-0 w-1 bg-white opacity-80" />
+        </div>
+        
+        {/* Horizon */}
+        <div className="absolute top-1/2 left-0 right-0 h-px bg-white/30" />
+        
+        {/* Mock buildings/scenery */}
+        {Array.from({ length: 10 }, (_, i) => (
+          <div
+            key={i}
+            className="absolute bg-gray-600 opacity-60"
+            style={{
+              left: `${Math.random() * 80 + 10}%`,
+              top: `${30 + Math.random() * 20}%`,
+              width: `${20 + Math.random() * 40}px`,
+              height: `${30 + Math.random() * 60}px`,
+            }}
+          />
+        ))}
+      </div>
       
       {/* HUD Overlay */}
       <div className="absolute inset-0 pointer-events-none">
