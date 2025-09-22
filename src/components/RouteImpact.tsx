@@ -143,9 +143,11 @@ const RouteImpact: React.FC<RouteImpactProps> = ({ selectedCar, routeData }) => 
       'sandefjord': [59.1289, 10.2280],
       'tønsberg': [59.2674, 10.4078],
       
-      // Møre og Romsdal
-      'kvalsvik': [62.3167, 6.1000], // Nerlandsøy
-      'nerlandsøy': [62.3167, 6.1000],
+      // Møre og Romsdal - Riktige koordinater
+      'kvalsvik': [62.3424, 5.5948], // Kvalsvik på Nerlandsøy (korrigerte koordinater)
+      'nerlandsøy': [62.3424, 5.5948], // Nerlandsøy ligger vest for Ålesund
+      'kvalsvik nerlandsøy': [62.3424, 5.5948],
+      'kvalsvik på nerlandsøy': [62.3424, 5.5948],
       'volda': [62.1467, 6.0714],
       'ørsta': [62.1989, 6.1297],
       'stryn': [61.9111, 6.7164],

@@ -727,10 +727,10 @@ const GoogleRouteMap: React.FC<{
           let weatherBuffer = 0;
           let routeBuffer = 0;
 
-          // Spesifikke ruter med ferjer og utfordringer
+          // Spesifikke ruter med ferjer og utfordringer - Korrigerte tider  
           if ((fromLower.includes('ålesund') && toLower.includes('kvalsvik')) ||
               (fromLower.includes('kvalsvik') && fromLower.includes('ålesund'))) {
-            realisticTime = 115; // 1t 55min med ferje og alt
+            realisticTime = 65; // Korrigert til 1t 5min (ikke 115min!)
           }
           // Bergen-Stavanger (kan ha ferje)
           else if ((fromLower.includes('bergen') && toLower.includes('stavanger')) ||

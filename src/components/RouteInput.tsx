@@ -88,11 +88,11 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
     let baseMinutes = 180;
     let baseDistance = 200;
 
-    // Hovedruter med alle realistiske faktorer
+    // Hovedruter med alle realistiske faktorer - Korrigerte tider
     if ((fromLower.includes('ålesund') && toLower.includes('kvalsvik')) ||
         (fromLower.includes('kvalsvik') && fromLower.includes('ålesund'))) {
-      baseMinutes = 115; // Ferje + alt
-      baseDistance = 71;
+      baseMinutes = 65; // Realistisk tid: 1t 5min (ikke 115min!)
+      baseDistance = 55; // Faktisk avstand ca 55km
     }
     else if ((fromLower.includes('oslo') && toLower.includes('trondheim')) ||
              (fromLower.includes('trondheim') && toLower.includes('oslo'))) {
