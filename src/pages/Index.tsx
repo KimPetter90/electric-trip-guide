@@ -155,50 +155,35 @@ function Index() {
     }
   }, []);
   
-  const handleRouteAnalysisUpdate = useCallback((analysis: any) => {
-    console.log('🔥 ROUTE ANALYSIS UPDATE RECEIVED:', analysis);
+  const handleRouteAnalysisUpdate = useCallback((analysis: RouteAnalysis | null) => {
     setRouteAnalysis(analysis);
-  }, []);
-
-  // Oppdater rutevalg når ny analyse kommer
-  useEffect(() => {
-    console.log('🔍 CHECKING FOR ROUTE UPDATE:', {
-      hasRouteAnalysis: !!routeAnalysis,
-      selectedRouteId,
-      routeOptionsCount: routeOptions.length,
-      analysisData: routeAnalysis
-    });
     
-    if (routeAnalysis && selectedRouteId && routeOptions.length > 0) {
+    // Oppdater rutevalg med faktiske data når de kommer tilbake
+    if (analysis && selectedRouteId && routeOptions.length > 0) {
       const updatedRoutes = routeOptions.map(route => {
         if (route.id === selectedRouteId) {
           // Oppdater valgt rute med faktiske data
-          const newRoute = {
+          return {
             ...route,
-            distance: Math.round(routeAnalysis.totalDistance),
-            duration: Math.round(routeAnalysis.totalTime), // allerede i minutter
-            estimatedCost: routeAnalysis.totalCost || Math.round(routeAnalysis.totalDistance * 0.6),
-            chargingStops: routeAnalysis.chargingTime > 0 ? Math.max(1, Math.round(routeAnalysis.chargingTime / 30)) : 0
+            distance: Math.round(analysis.totalDistance),
+            duration: Math.round(analysis.totalTime * 60), // timer til minutter
+            estimatedCost: analysis.totalCost || Math.round(analysis.totalDistance * 0.6),
+            chargingStops: analysis.chargingTime > 0 ? Math.max(1, Math.round(analysis.chargingTime / 30)) : 0
           };
-          
-          console.log('🔄 Oppdaterer rutevalg med faktiske data:', {
-            routeId: selectedRouteId,
-            oldDistance: route.distance,
-            newDistance: newRoute.distance,
-            oldDuration: route.duration,
-            newDuration: newRoute.duration,
-            oldCost: route.estimatedCost,
-            newCost: newRoute.estimatedCost
-          });
-          
-          return newRoute;
         }
         return route;
       });
       
+      console.log('🔄 Oppdaterer rutevalg med faktiske data:', {
+        routeId: selectedRouteId,
+        distance: analysis.totalDistance + ' km',
+        duration: (analysis.totalTime * 60).toFixed(0) + ' min',
+        cost: analysis.totalCost + ' kr'
+      });
+      
       setRouteOptions(updatedRoutes);
     }
-  }, [routeAnalysis, selectedRouteId]);
+  }, [selectedRouteId, routeOptions]);
 
   // Google Maps callbacks - MUST be stable to prevent map reinitialization
   const onMapLoad = useCallback((map: google.maps.Map) => {
@@ -972,7 +957,6 @@ function Index() {
                   selectedRoute={selectedRouteId}
                   onRouteSelect={handleRouteSelect}
                   isLoading={loadingRoutes}
-                  routeAnalysis={routeAnalysis}
                 />
                 
                 

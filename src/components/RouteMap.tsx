@@ -3293,14 +3293,7 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                   <div>
                     <p className="text-sm font-orbitron font-medium text-muted-foreground">Total distanse</p>
                      <p className="text-3xl font-orbitron font-bold text-gradient">
-                       {(() => {
-                         console.log('🔍 RouteMap DISTANSE:', {
-                           hasRouteAnalysis: !!routeAnalysis,
-                           totalDistance: routeAnalysis?.totalDistance,
-                           rounded: routeAnalysis ? Math.round(routeAnalysis.totalDistance) : '---'
-                         });
-                         return routeAnalysis ? Math.round(routeAnalysis.totalDistance) : '---';
-                       })()} km
+                       {routeAnalysis ? Math.round(routeAnalysis.totalDistance) : '---'} km
                      </p>
                   </div>
                 </div>
@@ -3311,17 +3304,9 @@ const fetchDirectionsData = async (startCoords: [number, number], endCoords: [nu
                   <Clock className="h-5 w-5 text-primary animate-glow-pulse" />
                   <div>
                     <p className="text-sm font-orbitron font-medium text-muted-foreground">Total tid</p>
-                     <p className="text-3xl font-orbitron font-bold text-gradient">
-                       {(() => {
-                         console.log('🔍 RouteMap TIDSDATA:', {
-                           hasRouteAnalysis: !!routeAnalysis,
-                           totalTime: routeAnalysis?.totalTime,
-                           totalTimeType: typeof routeAnalysis?.totalTime,
-                           calculation: routeAnalysis ? `${Math.floor(routeAnalysis.totalTime / 60)}t ${Math.round(routeAnalysis.totalTime % 60)}m` : '---'
-                         });
-                         return routeAnalysis ? `${Math.floor(routeAnalysis.totalTime / 60)}t ${Math.round(routeAnalysis.totalTime % 60)}m` : '---';
-                       })()}
-                     </p>
+                    <p className="text-3xl font-orbitron font-bold text-gradient">
+                      {routeAnalysis ? `${Math.floor(routeAnalysis.totalTime)}t ${Math.round((routeAnalysis.totalTime % 1) * 60)}m` : '---'}
+                    </p>
                   </div>
                 </div>
               </Card>

@@ -804,12 +804,8 @@ const GoogleRouteMap: React.FC<{
             trafficBuffer = 30; // By-trafikk (Bergen/Ålesund)
             weatherBuffer = 60; // Fjell/vær-påvirkning
             routeBuffer = 30; // Sikkerhetsbuffer for uforutsette hendelser
-            realisticTime = totalTime + ferryTime + trafficBuffer + weatherBuffer + routeBuffer;
-            console.log('🎯 OVERSTYRER Google Maps for Fureåsen/Ålesund-Bergen:', {
-              googleTime: `${Math.floor(totalTime / 60)}t ${Math.round(totalTime % 60)}min`,
-              buffers: `+${ferryTime + trafficBuffer + weatherBuffer + routeBuffer}min`,
-              finalTime: `${Math.floor(realisticTime / 60)}t ${Math.round(realisticTime % 60)}min`
-            });
+            realisticTime = Math.max(realisticTime, totalTime + ferryTime + trafficBuffer + weatherBuffer + routeBuffer);
+            console.log('🎯 OVERSTYRER Google Maps for Fureåsen/Ålesund-Bergen: +150min realistisk buffer');
           }
           // Nordnorge (E6)
           else if ((fromLower.includes('trondheim') && (toLower.includes('bodø') || toLower.includes('tromsø') || toLower.includes('narvik'))) ||
@@ -874,7 +870,7 @@ const GoogleRouteMap: React.FC<{
                (toLower.includes('kvalsv') && fromLower.includes('ålesund')) ||
                (fromLower.includes('fureåsen') && toLower.includes('kvalsv')) ||
                (toLower.includes('kvalsv') && fromLower.includes('fureåsen')))) {
-            totalTime = realisticTime; // Bruk beregnet realistisk tid for Bergen-Ålesund ruten
+            totalTime = Math.max(realisticTime, totalTime); // Aldri mindre enn Google Maps (unntatt overstyrt ruter)
           }
           
           console.log('⏱️ REALISTISK Tidsberegning:', {

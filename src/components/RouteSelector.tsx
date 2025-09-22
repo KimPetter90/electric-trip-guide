@@ -18,15 +18,13 @@ interface RouteSelectorProps {
   selectedRoute: string | null;
   onRouteSelect: (routeId: string) => void;
   isLoading?: boolean;
-  routeAnalysis?: any; // Faktiske rutedata fra RouteMap
 }
 
 const RouteSelector: React.FC<RouteSelectorProps> = ({ 
   routes, 
   selectedRoute, 
   onRouteSelect, 
-  isLoading = false,
-  routeAnalysis 
+  isLoading = false 
 }) => {
   const [expandedRoute, setExpandedRoute] = useState<string | null>(null);
 
@@ -150,65 +148,35 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
                     {getRouteDescription(route.routeType)}
                   </p>
                   
-                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                     <div>
-                       <div className="flex items-center gap-1 text-muted-foreground mb-1">
-                         <Route className="h-3 w-3" />
-                         <span>Avstand</span>
-                       </div>
-                       <div className="font-medium">
-                         {isSelected && routeAnalysis ? 
-                           Math.round(routeAnalysis.totalDistance) + ' km' : 
-                           route.distance + ' km'}
-                       </div>
-                     </div>
-                     <div>
-                       <div className="flex items-center gap-1 text-muted-foreground mb-1">
-                         <Clock className="h-3 w-3" />
-                         <span>Kjøretid</span>
-                       </div>
-                       <div className="font-medium">
-                         {(() => {
-                           console.log('🔍 RouteSelector tidsdata:', {
-                             isSelected,
-                             hasRouteAnalysis: !!routeAnalysis,
-                             routeAnalysisTime: routeAnalysis?.totalTime,
-                             routeDuration: route.duration,
-                             routeId: route.id
-                           });
-                           
-                           if (isSelected && routeAnalysis) {
-                             const timeValue = Math.round(routeAnalysis.totalTime);
-                             console.log('🕒 BEREGNET TID:', timeValue, 'minutter');
-                             return formatDuration(timeValue);
-                           } else {
-                             return formatDuration(route.duration);
-                           }
-                         })()}
-                       </div>
-                     </div>
-                     <div>
-                       <div className="flex items-center gap-1 text-muted-foreground mb-1">
-                         <Zap className="h-3 w-3" />
-                         <span>Ladestasjoner</span>
-                       </div>
-                       <div className="font-medium">
-                         {isSelected && routeAnalysis ? 
-                           (routeAnalysis.chargingTime > 0 ? Math.max(1, Math.round(routeAnalysis.chargingTime / 30)) : 0) + ' stopp' : 
-                           route.chargingStops + ' stopp'}
-                       </div>
-                     </div>
-                     <div>
-                       <div className="text-muted-foreground mb-1">
-                         Estimert kostnad
-                       </div>
-                       <div className="font-medium">
-                         {isSelected && routeAnalysis ? 
-                           (routeAnalysis.totalCost || Math.round(routeAnalysis.totalDistance * 0.6)) + ' NOK' : 
-                           route.estimatedCost + ' NOK'}
-                       </div>
-                     </div>
-                   </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <div className="flex items-center gap-1 text-muted-foreground mb-1">
+                        <Route className="h-3 w-3" />
+                        <span>Avstand</span>
+                      </div>
+                      <div className="font-medium">{route.distance} km</div>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1 text-muted-foreground mb-1">
+                        <Clock className="h-3 w-3" />
+                        <span>Kjøretid</span>
+                      </div>
+                      <div className="font-medium">{formatDuration(route.duration)}</div>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1 text-muted-foreground mb-1">
+                        <Zap className="h-3 w-3" />
+                        <span>Ladestasjoner</span>
+                      </div>
+                      <div className="font-medium">{route.chargingStops} stopp</div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground mb-1">
+                        Estimert kostnad
+                      </div>
+                      <div className="font-medium">{route.estimatedCost} NOK</div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
