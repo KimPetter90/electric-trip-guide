@@ -972,6 +972,7 @@ function Index() {
                   selectedRoute={selectedRouteId}
                   onRouteSelect={handleRouteSelect}
                   isLoading={loadingRoutes}
+                  routeAnalysis={routeAnalysis}
                 />
                 
                 
