@@ -176,7 +176,7 @@ function Index() {
           const newRoute = {
             ...route,
             distance: Math.round(routeAnalysis.totalDistance),
-            duration: Math.round(routeAnalysis.totalTime * 60), // timer til minutter
+            duration: Math.round(routeAnalysis.totalTime), // allerede i minutter
             estimatedCost: routeAnalysis.totalCost || Math.round(routeAnalysis.totalDistance * 0.6),
             chargingStops: routeAnalysis.chargingTime > 0 ? Math.max(1, Math.round(routeAnalysis.chargingTime / 30)) : 0
           };
