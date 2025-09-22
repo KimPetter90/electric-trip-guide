@@ -90,12 +90,12 @@ export default function RouteInput({ routeData, onRouteChange, onPlanRoute, isPl
 
     // Hovedruter med alle realistiske faktorer - Korrigerte tider
     // Ålesund/Fureåsen til Kvalsvik (Nerlandsøya) - Koordinater: (62.4722,6.1495) → (62.3333,5.5376)
-    if ((fromLower.includes('ålesund') && (toLower.includes('kvalsvik') || toLower.includes('nerlandsøy'))) ||
-        ((fromLower.includes('kvalsvik') || fromLower.includes('nerlandsøy')) && fromLower.includes('ålesund')) ||
-        (fromLower.includes('fureåsen') && (toLower.includes('kvalsvik') || toLower.includes('nerlandsøy'))) ||
-        ((fromLower.includes('kvalsvik') || fromLower.includes('nerlandsøy')) && fromLower.includes('fureåsen')) ||
-        (fromLower.includes('fureåsen 15') && (toLower.includes('kvalsvik') || toLower.includes('nerlandsøy'))) ||
-        ((fromLower.includes('kvalsvik') || fromLower.includes('nerlandsøy')) && fromLower.includes('fureåsen 15'))) {
+    if ((fromLower.includes('ålesund') && (toLower.includes('kvalsv') || toLower.includes('nerlandsøy'))) ||
+        ((toLower.includes('kvalsv') || toLower.includes('nerlandsøy')) && fromLower.includes('ålesund')) ||
+        (fromLower.includes('fureåsen') && (toLower.includes('kvalsv') || toLower.includes('nerlandsøy'))) ||
+        ((toLower.includes('kvalsv') || toLower.includes('nerlandsøy')) && fromLower.includes('fureåsen')) ||
+        (fromLower.includes('fureåsen 15') && (toLower.includes('kvalsv') || toLower.includes('nerlandsøy'))) ||
+        ((toLower.includes('kvalsv') || toLower.includes('nerlandsøy')) && fromLower.includes('fureåsen 15'))) {
       // Fureåsen/Ålesund til Kvalsvik (Nerlandsøya) - MED FERJE
       // Kjøring til ferje: 25min + Ferjeventing/tid: 60min + Kjøring fra ferje: 15min + Buffer: 15min = 115min
       baseMinutes = 115; // Realistisk tid: 1t 55min med ferje, trafikk og vær
