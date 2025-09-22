@@ -949,8 +949,8 @@ function Index() {
                 
                 
                 <div data-testid="route-map" className="relative mt-8">
-                  {/* Enhanced Navigation Overlay - med førerperspektiv */}
-                  <EnhancedNavigationOverlay
+                  {/* Navigation Overlay - minimal og elegant */}
+                  <NavigationOverlay
                     routeData={routeData}
                     onRouteDeviation={(newFrom, to) => {
                       setRouteData(prev => ({ ...prev, from: newFrom, to }));
@@ -978,7 +978,6 @@ function Index() {
                       // Trigger en spesiell ruteoppdatering
                       setRouteTrigger(prev => prev + 10); // Spesiell trigger for navigasjonsstart
                     }}
-                    onStartCarNavigation={onStartCarNavigation}
                   />
 
                   {/* Mobile-specific loading indicator */}
