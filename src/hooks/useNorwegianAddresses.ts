@@ -12,17 +12,37 @@ interface AddressSuggestion {
     lon: number;
   };
   displayText?: string;
+  type: 'address';
 }
 
+interface PlaceSuggestion {
+  stedsnavn: string;
+  navnetype: string;
+  kommunenavn: string;
+  fylkesnavn: string;
+  representasjonspunkt: {
+    lat: number;
+    lon: number;
+  };
+  displayText?: string;
+  type: 'place';
+}
+
+type Suggestion = AddressSuggestion | PlaceSuggestion;
+
 interface GeonorgeResponse {
-  adresser: AddressSuggestion[];
+  adresser: Omit<AddressSuggestion, 'type' | 'displayText'>[];
+}
+
+interface PlaceResponse {
+  navn: Omit<PlaceSuggestion, 'type' | 'displayText'>[];
 }
 
 export const useNorwegianAddresses = () => {
-  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const searchAddresses = useCallback(async (query: string) => {
+  const searchAddressesAndPlaces = useCallback(async (query: string) => {
     if (!query || query.trim().length < 2) {
       setSuggestions([]);
       return;
@@ -31,45 +51,77 @@ export const useNorwegianAddresses = () => {
     setLoading(true);
     
     try {
-      // Bruk Kartverkets adresse-API (Geonorge)
-      const response = await fetch(
-        `https://ws.geonorge.no/adresser/v1/sok?sok=${encodeURIComponent(query.trim())}&treffPerSide=10&side=0&asciiKompatibel=true`
-      );
+      // Søk parallelt i både adresser og steder
+      const [addressResponse, placeResponse] = await Promise.all([
+        // Adresser fra Kartverket
+        fetch(`https://ws.geonorge.no/adresser/v1/sok?sok=${encodeURIComponent(query.trim())}&treffPerSide=5&side=0&asciiKompatibel=true`)
+          .catch(() => null),
+        // Steder/stedsnavn fra Kartverket
+        fetch(`https://ws.geonorge.no/stedsnavn/v1/navn?sok=${encodeURIComponent(query.trim())}&treffPerSide=5&side=0&fuzzy=true`)
+          .catch(() => null)
+      ]);
       
-      if (!response.ok) {
-        throw new Error(`API feil: ${response.status}`);
+      let allSuggestions: Suggestion[] = [];
+      
+      // Behandle adresser
+      if (addressResponse?.ok) {
+        try {
+          const addressData: GeonorgeResponse = await addressResponse.json();
+          const formattedAddresses: AddressSuggestion[] = addressData.adresser?.map(addr => ({
+            ...addr,
+            displayText: `${addr.adressetekst}, ${addr.postnummer} ${addr.poststed}${addr.kommunenavn ? `, ${addr.kommunenavn}` : ''}`,
+            type: 'address' as const
+          })) || [];
+          allSuggestions = [...allSuggestions, ...formattedAddresses];
+        } catch (e) {
+          console.warn('Feil ved parsing av adresser');
+        }
       }
       
-      const data: GeonorgeResponse = await response.json();
+      // Behandle steder
+      if (placeResponse?.ok) {
+        try {
+          const placeData: PlaceResponse = await placeResponse.json();
+          const formattedPlaces: PlaceSuggestion[] = placeData.navn?.map(place => ({
+            ...place,
+            displayText: `${place.stedsnavn}${place.kommunenavn ? `, ${place.kommunenavn}` : ''}${place.fylkesnavn ? `, ${place.fylkesnavn}` : ''}`,
+            type: 'place' as const
+          })) || [];
+          allSuggestions = [...allSuggestions, ...formattedPlaces];
+        } catch (e) {
+          console.warn('Feil ved parsing av steder');
+        }
+      }
       
-      // Filter og format resultatene
-      const formatted = data.adresser?.map(addr => ({
-        ...addr,
-        displayText: `${addr.adressetekst}, ${addr.postnummer} ${addr.poststed}${addr.kommunenavn ? `, ${addr.kommunenavn}` : ''}`
-      })) || [];
+      // Sorter så steder kommer først, deretter adresser
+      allSuggestions.sort((a, b) => {
+        if (a.type === 'place' && b.type === 'address') return -1;
+        if (a.type === 'address' && b.type === 'place') return 1;
+        return 0;
+      });
       
-      setSuggestions(formatted);
+      setSuggestions(allSuggestions.slice(0, 10)); // Maks 10 totalt
     } catch (error) {
-      console.error('Feil ved adressesøk:', error);
+      console.error('Feil ved søk:', error);
       
       // Fallback til lokal søk hvis API feiler
-      const fallbackSuggestions = norwegianCities
-        .filter(city => city.toLowerCase().includes(query.toLowerCase()))
+      const fallbackSuggestions: Suggestion[] = [...norwegianPlaces, ...norwegianCities]
+        .filter(place => place.toLowerCase().includes(query.toLowerCase()))
         .slice(0, 10)
-        .map(city => ({
-          adressetekst: city,
-          postnummer: '',
-          poststed: '',
+        .map(place => ({
+          stedsnavn: place,
+          navnetype: 'sted',
           kommunenavn: '',
           fylkesnavn: '',
           representasjonspunkt: { lat: 0, lon: 0 },
-          displayText: city
+          displayText: place,
+          type: 'place' as const
         }));
       
       setSuggestions(fallbackSuggestions);
       
       if (query.length > 2) {
-        toast.error('Kunne ikke hente adresser fra Kartverket. Bruker lokal søk.');
+        toast.error('Kunne ikke hente data fra Kartverket. Bruker lokal søk.');
       }
     } finally {
       setLoading(false);
@@ -85,11 +137,11 @@ export const useNorwegianAddresses = () => {
     }
     
     const timeout = setTimeout(() => {
-      searchAddresses(query);
+      searchAddressesAndPlaces(query);
     }, 300); // Wait 300ms before searching
     
     setSearchTimeout(timeout);
-  }, [searchAddresses, searchTimeout]);
+  }, [searchAddressesAndPlaces, searchTimeout]);
 
   useEffect(() => {
     return () => {
@@ -107,13 +159,26 @@ export const useNorwegianAddresses = () => {
   };
 };
 
-// Fallback norske steder for når API ikke er tilgjengelig
+// Fallback norske steder og byer for når API ikke er tilgjengelig
+const norwegianPlaces = [
+  "Oslo Lufthavn Gardermoen", "Bergen Lufthavn Flesland", "Stavanger Lufthavn Sola",
+  "Trondheim Lufthavn Værnes", "Tromsø Lufthavn", "Bodø Lufthavn", "Kristiansand Lufthavn",
+  "Oslo Sentralstasjon", "Bergen stasjon", "Trondheim Sentralstasjon", "Stavanger stasjon",
+  "Drammen stasjon", "Fredrikstad stasjon", "Sarpsborg stasjon", "Moss stasjon",
+  "Oslo City", "Bergen Storsenter", "City Syd", "Sandvika Storsenter", "Strømmen Storsenter",
+  "Ikea Furuset", "Ikea Åsane", "Ikea Slependen", "Ikea Leangen", "Ikea Forus",
+  "Rikshospitalet", "Haukeland sykehus", "St. Olavs hospital", "Stavanger universitetssjukehus",
+  "Universitetet i Oslo", "Universitetet i Bergen", "NTNU Trondheim", "Universitetet i Stavanger",
+  "Holmenkollen", "Frognerparken", "Vigelandsparken", "Akershus festning", "Preikestolen",
+  "Geirangerfjorden", "Lofoten", "Nordkapp", "Flåm"
+];
+
 const norwegianCities = [
   "Oslo", "Bergen", "Trondheim", "Stavanger", "Bærum", "Kristiansand", "Fredrikstad",
   "Sandnes", "Tromsø", "Drammen", "Asker", "Lillestrøm", "Halden", "Moss", "Bodø",
   "Molde", "Ålesund", "Tønsberg", "Haugesund", "Sandefjord", "Arendal", "Hamar",
-  "Larvik", "Halden", "Askøy", "Gjøvik", "Mo i Rana", "Harstad", "Horten",
+  "Larvik", "Askøy", "Gjøvik", "Mo i Rana", "Harstad", "Horten",
   "Lillehammer", "Grimstad", "Kongsberg", "Hammerfest", "Florø", "Narvik",
-  "Elverum", "Lyngdal", "Alta", "Moss", "Raufoss", "Bryne", "Mandal",
+  "Elverum", "Lyngdal", "Alta", "Raufoss", "Bryne", "Mandal",
   "Jessheim", "Vennesla", "Ås", "Verdal", "Knarvik", "Notodden", "Tvedestrand"
 ];
