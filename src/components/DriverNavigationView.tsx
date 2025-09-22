@@ -83,178 +83,140 @@ export const DriverNavigationView: React.FC<DriverNavigationViewProps> = ({
   console.log('🚗 DriverNavigationView AKTIV - viser førerperspektiv!');
 
   return (
-    <div className="fixed inset-0 z-[999] bg-gradient-to-b from-sky-400 via-sky-300 to-gray-800 overflow-hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
-      {/* Road Surface with Perspective */}
-      <div className="absolute bottom-0 left-0 right-0 h-3/5">
-        {/* Road */}
-        <div 
-          className="absolute bottom-0 w-full h-full bg-gray-700"
-          style={{
-            clipPath: 'polygon(35% 0%, 65% 0%, 85% 100%, 15% 100%)'
-          }}
-        >
-          {/* Center line dashes */}
-          <div className="absolute inset-0 flex flex-col items-center justify-end">
-            {Array.from({ length: 15 }, (_, i) => (
-              <div
-                key={i}
-                className="bg-yellow-300 mb-4"
-                style={{
-                  width: `${8 - i * 0.3}px`,
-                  height: `${20 - i * 1}px`,
-                  transform: `translateY(${roadOffset - i * 8}px)`,
-                  opacity: Math.max(0.3, 1 - i * 0.05)
-                }}
-              />
-            ))}
-          </div>
+    <div className="fixed inset-0 z-[999] bg-gray-100 overflow-hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+      {/* Map Background - Google Maps style */}
+      <div className="absolute inset-0 bg-gray-200">
+        {/* Street grid pattern */}
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 800 600">
+          {/* Background streets */}
+          <defs>
+            <pattern id="streets" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+              <rect width="80" height="80" fill="#f5f5f5"/>
+              <line x1="0" y1="40" x2="80" y2="40" stroke="#e5e5e5" strokeWidth="1"/>
+              <line x1="40" y1="0" x2="40" y2="80" stroke="#e5e5e5" strokeWidth="1"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#streets)"/>
           
-          {/* Side lines */}
-          <div 
-            className="absolute top-0 bottom-0 bg-white opacity-80"
-            style={{
-              left: '35%',
-              width: '2px',
-              clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)'
-            }}
+          {/* Main route - blue line */}
+          <polyline
+            points="100,500 200,400 400,350 600,300 700,250"
+            fill="none"
+            stroke="#4285f4"
+            strokeWidth="8"
+            strokeLinecap="round"
           />
-          <div 
-            className="absolute top-0 bottom-0 bg-white opacity-80"
-            style={{
-              right: '35%',
-              width: '2px',
-              clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)'
-            }}
-          />
+          
+          {/* Some buildings */}
+          <rect x="150" y="250" width="60" height="40" fill="#ddd" opacity="0.7"/>
+          <rect x="250" y="200" width="80" height="60" fill="#ddd" opacity="0.7"/>
+          <rect x="450" y="180" width="70" height="50" fill="#ddd" opacity="0.7"/>
+          <rect x="580" y="150" width="90" height="70" fill="#ddd" opacity="0.7"/>
+          
+          {/* Green areas */}
+          <circle cx="320" cy="400" r="30" fill="#34d399" opacity="0.3"/>
+          <circle cx="520" cy="250" r="25" fill="#34d399" opacity="0.3"/>
+        </svg>
+        
+        {/* Current location - blue arrow */}
+        <div className="absolute" style={{ left: '45%', top: '60%', transform: 'translate(-50%, -50%)' }}>
+          <div className="relative">
+            {/* Outer circle */}
+            <div className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-blue-500">
+              {/* Blue arrow */}
+              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                <div className="text-white text-xs font-bold">▲</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Time and status bar - top left */}
+      <div className="absolute top-4 left-4 flex items-center space-x-4">
+        <div className="text-2xl font-bold text-black">
+          {new Date().toLocaleTimeString('no-NO', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })}
+        </div>
+        <div className="flex items-center space-x-1">
+          <div className="w-1 h-1 bg-black rounded-full"></div>
+          <div className="w-1 h-1 bg-black rounded-full"></div>
+          <div className="w-1 h-1 bg-black rounded-full"></div>
+          <div className="w-1 h-1 bg-black rounded-full"></div>
+          <span className="text-sm font-medium">5G</span>
+        </div>
+      </div>
+
+      {/* Green instruction panel - Google Maps style */}
+      {nextTurn && (
+        <div className="absolute top-16 left-4 right-4">
+          <div className="bg-green-600 text-white p-4 rounded-lg shadow-lg flex items-center space-x-4">
+            {/* White arrow icon */}
+            <div className="bg-white text-green-600 w-12 h-12 rounded flex items-center justify-center text-2xl font-bold">
+              {nextTurn.direction === 'right' ? '↱' : 
+               nextTurn.direction === 'left' ? '↰' : 
+               nextTurn.direction === 'u-turn' ? '↻' : '↑'}
+            </div>
+            <div className="flex-1">
+              <div className="text-2xl font-bold">
+                {formatDistance(nextTurn.distance / 1000)}
+              </div>
+              <div className="text-lg opacity-90">
+                {nextTurn.streetName || nextTurn.instruction || 'Hovedveien'}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* White bottom info panel */}
+      <div className="absolute bottom-4 left-4 right-16">
+        <div className="bg-white rounded-lg shadow-lg p-4">
+          <div className="flex justify-between items-center text-black">
+            <div className="text-center">
+              <div className="text-2xl font-bold">{estimatedArrival}</div>
+              <div className="text-sm text-gray-600">ankomst</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">{Math.round(remainingTime)}</div>
+              <div className="text-sm text-gray-600">min</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold">{formatDistance(remainingDistance)}</div>
+              <div className="text-sm text-gray-600">km</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Side controls - right side */}
+      <div className="absolute right-4 top-1/2 transform -translate-y-1/2 space-y-3">
+        {/* Speed limit sign */}
+        <div className="w-12 h-12 bg-white rounded-full border-4 border-red-500 flex items-center justify-center shadow-lg">
+          <div className="text-center">
+            <div className="text-lg font-bold text-black">30</div>
+          </div>
         </div>
         
-        {/* Road shoulders */}
-        <div className="absolute bottom-0 left-0 w-full h-full bg-green-600 opacity-40" />
-      </div>
-
-      {/* Horizon */}
-      <div className="absolute top-2/5 left-0 right-0 h-px bg-white/50" />
-
-      {/* Mock scenery */}
-      {Array.from({ length: 8 }, (_, i) => (
-        <div
-          key={i}
-          className="absolute bg-gray-600 opacity-40 rounded-sm"
-          style={{
-            left: `${10 + i * 10 + Math.sin(i) * 20}%`,
-            top: `${25 + Math.random() * 15}%`,
-            width: `${15 + Math.random() * 25}px`,
-            height: `${20 + Math.random() * 40}px`,
-            transform: `perspective(100px) rotateX(${Math.random() * 10}deg)`
-          }}
-        />
-      ))}
-
-      {/* HUD Overlay */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Top Status Bar */}
-        <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
-          <Badge className="bg-green-600/90 text-white border-none">
-            <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse mr-2" />
-            GPS Aktiv
-          </Badge>
-          <div className="bg-black/70 text-white px-3 py-1 rounded-lg text-lg font-mono">
-            {new Date().toLocaleTimeString('no-NO', { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            })}
-          </div>
+        {/* Other controls */}
+        <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-lg">
+          <div className="text-xl">🔄</div>
         </div>
-
-        {/* Large Navigation Instruction */}
-        {nextTurn && (
-          <div className="absolute top-20 left-1/2 transform -translate-x-1/2">
-            <div className="bg-blue-600/95 text-white p-6 rounded-2xl shadow-2xl border-2 border-blue-400/50 backdrop-blur-sm">
-              <div className="text-center">
-                <div className="text-6xl mb-3 font-bold">
-                  {getDirectionIcon(nextTurn.direction)}
-                </div>
-                <div className="text-4xl font-bold mb-2">
-                  {formatDistance(nextTurn.distance / 1000)}
-                </div>
-                <div className="text-2xl font-semibold mb-1">
-                  {nextTurn.instruction}
-                </div>
-                {nextTurn.streetName && (
-                  <div className="text-lg opacity-90">
-                    på {nextTurn.streetName}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Bottom Dashboard */}
-        <div className="absolute bottom-6 left-4 right-4">
-          <div className="bg-black/85 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-            <div className="grid grid-cols-3 gap-8 text-center text-white mb-4">
-              <div>
-                <div className="text-5xl font-bold text-green-400 font-mono">
-                  {Math.round(currentSpeed)}
-                </div>
-                <div className="text-lg opacity-80 font-semibold">km/t</div>
-              </div>
-              <div>
-                <div className="text-5xl font-bold text-blue-400">
-                  {formatDistance(remainingDistance)}
-                </div>
-                <div className="text-lg opacity-80 font-semibold">igjen</div>
-              </div>
-              <div>
-                <div className="text-5xl font-bold text-orange-400 font-mono">
-                  {estimatedArrival}
-                </div>
-                <div className="text-lg opacity-80 font-semibold">ankomst</div>
-              </div>
-            </div>
-            
-            {/* Route Progress Bar */}
-            <div className="w-full bg-gray-700 rounded-full h-4 mb-4">
-              <div 
-                className="bg-gradient-to-r from-blue-500 to-green-500 h-4 rounded-full transition-all duration-1000 shadow-lg"
-                style={{ width: '35%' }}
-              />
-            </div>
-
-            {/* Destination Info */}
-            <div className="text-center text-white">
-              <div className="text-2xl font-bold">{routeData?.to || 'Destinasjon'}</div>
-              <div className="text-lg opacity-75">via E6 • {formatTime(remainingTime)}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Left side info panel */}
-        <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-          <div className="bg-black/70 text-white p-4 rounded-xl backdrop-blur-sm space-y-3 border border-white/20">
-            <div className="text-center">
-              <div className="text-xl font-bold">Neste sving</div>
-              <div className="text-sm opacity-80">Hold til høyre</div>
-            </div>
-            <div className="text-center border-t border-white/20 pt-3">
-              <div className="text-lg font-semibold">E6 Nord</div>
-              <div className="text-xs opacity-80">Hovedvei</div>
-            </div>
-          </div>
+        
+        <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-lg">
+          <div className="text-xl">🔇</div>
         </div>
       </div>
 
-      {/* Exit Navigation Button */}
+      {/* Exit button */}
       <button
         onClick={onExit}
-        className="absolute top-4 right-4 z-50 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl shadow-2xl transition-all duration-200 pointer-events-auto text-lg font-bold border-2 border-red-400"
+        className="absolute top-4 right-4 z-50 w-10 h-10 bg-white hover:bg-gray-100 text-black rounded-lg shadow-lg transition-all duration-200 pointer-events-auto flex items-center justify-center"
       >
-        ✕ Avslutt
+        ✕
       </button>
-
-      {/* Car Dashboard Bottom Edge Effect */}
-      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
     </div>
   );
 };
