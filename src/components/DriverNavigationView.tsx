@@ -72,67 +72,75 @@ export const DriverNavigationView: React.FC<DriverNavigationViewProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[999] bg-background flex flex-col">
-      {/* Header med exit button */}
-      <div className="flex justify-between items-center p-4 bg-primary text-primary-foreground">
-        <div className="flex items-center gap-2">
-          <Navigation className="h-5 w-5" />
-          <span className="font-medium">Navigasjon</span>
+    <div className="fixed inset-0 z-[999] bg-gray-900 text-white flex flex-col">
+      {/* Top instruction area - Google Maps style */}
+      <div className="flex-1 flex flex-col">
+        {/* Exit button in top-right corner */}
+        <div className="absolute top-4 right-4 z-10">
+          <Button 
+            onClick={onExit}
+            variant="ghost" 
+            size="sm"
+            className="bg-black/30 text-white hover:bg-black/50 rounded-full w-10 h-10 p-0"
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </div>
-        <Button 
-          onClick={onExit}
-          variant="ghost" 
-          size="sm"
-          className="text-primary-foreground hover:bg-primary-foreground/20"
-        >
-          <X className="h-5 w-5" />
-        </Button>
+
+        {/* Main navigation instruction */}
+        {nextTurn && (
+          <div className="flex-1 flex items-center justify-center px-8">
+            <div className="flex items-center gap-8 max-w-4xl w-full">
+              {/* Large direction arrow */}
+              <div className="flex-shrink-0">
+                <div className="w-32 h-32 bg-blue-600 rounded-2xl flex items-center justify-center">
+                  <span className="text-6xl text-white">
+                    {getDirectionArrow(nextTurn.direction)}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Turn instruction and distance */}
+              <div className="flex-1">
+                <div className="text-5xl font-bold mb-2">
+                  {formatDistance(nextTurn.distance / 1000)}
+                </div>
+                <div className="text-2xl text-gray-300 mb-1">
+                  {nextTurn.instruction}
+                </div>
+                {nextTurn.streetName && (
+                  <div className="text-xl text-gray-400">
+                    på {nextTurn.streetName}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Destination info */}
+        {routeData?.to && (
+          <div className="px-8 py-4 text-center">
+            <div className="text-lg text-gray-400">Kjører til</div>
+            <div className="text-xl font-medium text-white">{routeData.to}</div>
+          </div>
+        )}
       </div>
 
-      {/* Hovedinnhold */}
-      <div className="flex-1 flex flex-col justify-center items-center p-8 text-center">
-        
-        {/* Neste sving - stor og tydelig */}
-        {nextTurn && (
-          <div className="mb-8">
-            <div className="text-8xl mb-4 text-primary">
-              {getDirectionArrow(nextTurn.direction)}
-            </div>
-            <div className="text-4xl font-bold mb-2">
-              {formatDistance(nextTurn.distance / 1000)}
-            </div>
-            <div className="text-xl text-muted-foreground mb-1">
-              {nextTurn.instruction}
-            </div>
-            {nextTurn.streetName && (
-              <div className="text-lg text-muted-foreground">
-                på {nextTurn.streetName}
-              </div>
-            )}
+      {/* Bottom info bar - Google Maps style */}
+      <div className="bg-black/80 p-6">
+        <div className="flex justify-between items-center max-w-4xl mx-auto">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-white">{formatDistance(remainingDistance)}</div>
+            <div className="text-sm text-gray-400">gjenstår</div>
           </div>
-        )}
-
-        {/* Destinasjon */}
-        {routeData?.to && (
-          <div className="mb-6 text-center">
-            <div className="text-lg text-muted-foreground mb-1">Til</div>
-            <div className="text-2xl font-semibold">{routeData.to}</div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-white">{formatTime(remainingTime)}</div>
+            <div className="text-sm text-gray-400">ETA {estimatedArrival}</div>
           </div>
-        )}
-
-        {/* Ruteinfo i bunnen */}
-        <div className="grid grid-cols-3 gap-8 text-center w-full max-w-md">
-          <div>
-            <div className="text-2xl font-bold">{formatDistance(remainingDistance)}</div>
-            <div className="text-sm text-muted-foreground">Gjenstår</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold">{formatTime(remainingTime)}</div>
-            <div className="text-sm text-muted-foreground">ETA {estimatedArrival}</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold">{Math.round(currentSpeed)} km/t</div>
-            <div className="text-sm text-muted-foreground">Hastighet</div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-white">{Math.round(currentSpeed)} km/t</div>
+            <div className="text-sm text-gray-400">hastighet</div>
           </div>
         </div>
       </div>
