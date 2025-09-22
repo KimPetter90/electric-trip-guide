@@ -227,10 +227,12 @@ serve(async (req) => {
     
     const { stations, routeData, carData } = optimizationRequest;
 
-    // SPESIELL HÅNDTERING for Fureåsen-Bergen ruten
+    // SPESIELL HÅNDTERING for Ålesund-Bergen ruten (Fureåsen er nær Ålesund)
     const fromLower = routeData.from.toLowerCase();
     const toLower = routeData.to.toLowerCase();
-    if ((fromLower.includes('fureåsen') && toLower.includes('bergen')) ||
+    if ((fromLower.includes('ålesund') && toLower.includes('bergen')) ||
+        (toLower.includes('ålesund') && fromLower.includes('bergen')) ||
+        (fromLower.includes('fureåsen') && toLower.includes('bergen')) ||
         (toLower.includes('fureåsen') && fromLower.includes('bergen'))) {
       
       const currentBattery = routeData.batteryPercentage || 80;
