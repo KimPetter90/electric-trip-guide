@@ -157,18 +157,20 @@ function Index() {
   
   const handleRouteAnalysisUpdate = useCallback((analysis: RouteAnalysis | null) => {
     setRouteAnalysis(analysis);
-    
-    // Oppdater rutevalg med faktiske data når de kommer tilbake
-    if (analysis && selectedRouteId && routeOptions.length > 0) {
+  }, []);
+
+  // Oppdater rutevalg når ny analyse kommer
+  useEffect(() => {
+    if (routeAnalysis && selectedRouteId && routeOptions.length > 0) {
       const updatedRoutes = routeOptions.map(route => {
         if (route.id === selectedRouteId) {
           // Oppdater valgt rute med faktiske data
           return {
             ...route,
-            distance: Math.round(analysis.totalDistance),
-            duration: Math.round(analysis.totalTime * 60), // timer til minutter
-            estimatedCost: analysis.totalCost || Math.round(analysis.totalDistance * 0.6),
-            chargingStops: analysis.chargingTime > 0 ? Math.max(1, Math.round(analysis.chargingTime / 30)) : 0
+            distance: Math.round(routeAnalysis.totalDistance),
+            duration: Math.round(routeAnalysis.totalTime * 60), // timer til minutter
+            estimatedCost: routeAnalysis.totalCost || Math.round(routeAnalysis.totalDistance * 0.6),
+            chargingStops: routeAnalysis.chargingTime > 0 ? Math.max(1, Math.round(routeAnalysis.chargingTime / 30)) : 0
           };
         }
         return route;
@@ -176,14 +178,15 @@ function Index() {
       
       console.log('🔄 Oppdaterer rutevalg med faktiske data:', {
         routeId: selectedRouteId,
-        distance: analysis.totalDistance + ' km',
-        duration: (analysis.totalTime * 60).toFixed(0) + ' min',
-        cost: analysis.totalCost + ' kr'
+        distance: routeAnalysis.totalDistance + ' km',
+        duration: (routeAnalysis.totalTime * 60).toFixed(0) + ' min',
+        cost: routeAnalysis.totalCost + ' kr',
+        chargingTime: routeAnalysis.chargingTime + ' min'
       });
       
       setRouteOptions(updatedRoutes);
     }
-  }, [selectedRouteId, routeOptions]);
+  }, [routeAnalysis, selectedRouteId]);
 
   // Google Maps callbacks - MUST be stable to prevent map reinitialization
   const onMapLoad = useCallback((map: google.maps.Map) => {
