@@ -440,7 +440,7 @@ const GoogleRouteMap: React.FC<{
     return bestAvailable || stationsNearRoute[0];
   };
 
-  // Add charging station markers - SHOW IMMEDIATELY WHEN MAP LOADS
+  // Add charging station markers - ONLY IF CHARGING IS NEEDED
   useEffect(() => {
     const stationsToUse = loadedStations.length > 0 ? loadedStations : chargingStations;
     console.log('🗺️ Charging stations effect triggered:', {
@@ -454,22 +454,50 @@ const GoogleRouteMap: React.FC<{
       console.log('❌ Skipping charging stations - map not ready');
       return;
     }
-    
-    console.log('✅ Adding charging station markers to map');
-    
-    // Clear distance cache when recalculating
-    routeDistanceCache.current.clear();
 
-    // Clear existing charging station markers
+    // Always clear existing charging station markers first
     chargingStationMarkersRef.current.forEach(marker => marker.setMap(null));
     chargingStationMarkersRef.current = [];
+    
+    // Check if we need charging before showing stations
+    const checkChargingNeed = async () => {
+      if (!routeData?.from || !routeData?.to || !calculatedRoute) {
+        console.log('❌ Skipping charging stations - no route data');
+        return;
+      }
 
-    // Find best station along route (async)
-    let bestStationAlongRoute: ChargingStation | null = null;
-    
-    
-    const findBestStationAndRender = async () => {
-      bestStationAlongRoute = await getBestStationAlongRoute();
+      // Quick battery calculation to determine if we need charging
+      const currentBattery = routeData.batteryPercentage || 80;
+      const baseRange = 534; // Tesla Model Y range
+      const currentRange = (currentBattery / 100) * baseRange;
+      const routeDistance = calculatedRoute.routes[0].legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0) / 1000 || 300; // Fallback for Fureåsen-Bergen
+      
+      // Conservative check: need charging if route distance > 90% of current range
+      const needsCharging = routeDistance > (currentRange * 0.9);
+      
+      console.log('🔋 Charging need check:', {
+        currentBattery: currentBattery + '%',
+        currentRange: currentRange + 'km',
+        routeDistance: routeDistance + 'km',
+        needsCharging
+      });
+      
+      if (!needsCharging) {
+        console.log('✅ No charging needed - hiding all charging stations');
+        return;
+      }
+
+      console.log('⚡ Charging needed - showing charging stations');
+      
+      // Clear distance cache when recalculating
+      routeDistanceCache.current.clear();
+
+      // Find best station along route (async)
+      let bestStationAlongRoute: ChargingStation | null = null;
+      
+      
+      const findBestStationAndRender = async () => {
+        bestStationAlongRoute = await getBestStationAlongRoute();
       
       // Add new charging station markers - BRUK STATIONSTOUSE
       stationsToUse.forEach(station => {
@@ -590,8 +618,12 @@ const GoogleRouteMap: React.FC<{
     
     // Execute async function
     findBestStationAndRender();
+    };
     
-  }, [mapInstanceRef.current, loadedStations, chargingStations, calculatedRoute, getBestStationAlongRoute, isStationNearRoute]);
+    // Execute charging need check
+    checkChargingNeed();
+    
+  }, [mapInstanceRef.current, loadedStations, chargingStations, calculatedRoute, routeData, getBestStationAlongRoute, isStationNearRoute]);
 
   // Force re-render markers when route changes
 
