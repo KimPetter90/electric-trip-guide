@@ -6,17 +6,21 @@ import { Zap, X, Crown, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { CONVERSION_CONFIG, URGENCY_MESSAGES } from '@/config/marketing';
+import { STRIPE_PRICE_IDS } from '@/config/pricing';
 
 export const ExitIntentPopup: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [hasShown, setHasShown] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutter
+  const [timeLeft, setTimeLeft] = useState<number>(CONVERSION_CONFIG.EXIT_INTENT.discount.timeLimit);
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const exitIntentConfig = CONVERSION_CONFIG.EXIT_INTENT;
+
   useEffect(() => {
     const handleMouseLeave = (e: MouseEvent) => {
-      if (e.clientY <= 0 && !hasShown && !user) {
+      if (e.clientY <= exitIntentConfig.triggers.mouseLeaveBoundary && !hasShown && !user) {
         setIsOpen(true);
         setHasShown(true);
       }
@@ -53,7 +57,7 @@ export const ExitIntentPopup: React.FC = () => {
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: {
-          priceId: "price_1S9U5rDgjF2NREPhuG6Kvd1Q", // Premium plan
+          priceId: STRIPE_PRICE_IDS.PREMIUM,
           mode: 'subscription'
         }
       });
@@ -98,15 +102,15 @@ export const ExitIntentPopup: React.FC = () => {
             </div>
             
             <DialogTitle className="text-2xl font-bold text-red-600">
-              VENT! Ikke gå ennå! 🚨
+              {exitIntentConfig.messages.title}
             </DialogTitle>
             
             <div className="space-y-2">
               <p className="text-lg font-semibold">
-                Eksklusiv rabatt bare for deg:
+                {exitIntentConfig.messages.subtitle}
               </p>
               <Badge variant="destructive" className="text-lg px-4 py-2 animate-pulse">
-                70% RABATT - KUN I {formatTime(timeLeft)}
+                {exitIntentConfig.discount.percentage}% {exitIntentConfig.messages.urgencyText} {formatTime(timeLeft)}
               </Badge>
             </div>
           </div>
@@ -115,14 +119,16 @@ export const ExitIntentPopup: React.FC = () => {
         <div className="space-y-4 text-center">
           <div className="p-4 bg-white/50 rounded-lg border border-red-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-600 line-through">Vanlig pris: 199 kr</span>
+              <span className="text-sm text-gray-600 line-through">
+                Vanlig pris: {exitIntentConfig.discount.originalPrice} {exitIntentConfig.discount.currency}
+              </span>
               <Crown className="h-4 w-4 text-yellow-500" />
             </div>
             <div className="text-3xl font-bold text-green-600">
-              Kun 59 kr/mnd
+              Kun {exitIntentConfig.discount.discountedPrice} {exitIntentConfig.discount.currency}/mnd
             </div>
             <p className="text-xs text-gray-600">
-              Spar 1.680 kr i året!
+              Spar {(exitIntentConfig.discount.originalPrice - exitIntentConfig.discount.discountedPrice) * 12} {exitIntentConfig.discount.currency} i året!
             </p>
           </div>
 
@@ -133,7 +139,7 @@ export const ExitIntentPopup: React.FC = () => {
               size="lg"
             >
               <Clock className="h-5 w-5 mr-2" />
-              HENT RABATTEN NÅ!
+              {exitIntentConfig.messages.ctaText}
             </Button>
             
             <p className="text-xs text-gray-600">
@@ -142,9 +148,9 @@ export const ExitIntentPopup: React.FC = () => {
           </div>
 
           <div className="text-xs text-gray-500 space-y-1">
-            <p>✅ 30 dager gratis prøveperiode</p>
-            <p>✅ Avbryt når som helst</p>
-            <p>✅ Sikkert betalingssystem</p>
+            {exitIntentConfig.messages.guarantees.map((guarantee, index) => (
+              <p key={index}>✅ {guarantee}</p>
+            ))}
           </div>
         </div>
       </DialogContent>

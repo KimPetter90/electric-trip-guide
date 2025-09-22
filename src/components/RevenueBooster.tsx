@@ -7,27 +7,31 @@ import { Zap, Crown, Users, TrendingUp, Star, Clock, Gift } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { CONVERSION_CONFIG, ANALYTICS_SIMULATION } from '@/config/marketing';
+import { STRIPE_PRICE_IDS } from '@/config/pricing';
 
 export const RevenueBooster: React.FC = () => {
   const [showBooster, setShowBooster] = useState(false);
-  const [recentSignups, setRecentSignups] = useState(23);
-  const [todayRevenue, setTodayRevenue] = useState(4780);
+  const [recentSignups, setRecentSignups] = useState<number>(ANALYTICS_SIMULATION.USER_GROWTH.baseCount);
+  const [todayRevenue, setTodayRevenue] = useState<number>(ANALYTICS_SIMULATION.REVENUE_SIMULATION.baseRevenue);
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const revenueConfig = CONVERSION_CONFIG.REVENUE_BOOSTER;
+
   useEffect(() => {
-    // Vis booster etter 30 sekunder
+    // Show booster after configured delay
     const timer = setTimeout(() => {
       if (!user) setShowBooster(true);
-    }, 30000);
+    }, revenueConfig.triggers.showAfterSeconds * 1000);
 
-    // Oppdater tall hvert 10. sekund for å skape urgency
+    // Update numbers periodically to create urgency
     const updateTimer = setInterval(() => {
       if (Math.random() > 0.7) {
         setRecentSignups(prev => prev + 1);
-        setTodayRevenue(prev => prev + Math.floor(Math.random() * 199) + 99);
+        setTodayRevenue(prev => prev + Math.floor(Math.random() * (ANALYTICS_SIMULATION.REVENUE_SIMULATION.incrementMax - ANALYTICS_SIMULATION.REVENUE_SIMULATION.incrementMin)) + ANALYTICS_SIMULATION.REVENUE_SIMULATION.incrementMin);
       }
-    }, 10000);
+    }, revenueConfig.triggers.updateIntervalSeconds * 1000);
 
     return () => {
       clearTimeout(timer);
@@ -67,7 +71,7 @@ export const RevenueBooster: React.FC = () => {
       <DialogContent className="max-w-2xl bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-500/50">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-bold text-orange-600">
-            🔥 SISTE SJANSE - MEGA RABATT! 🔥
+            {revenueConfig.messages.title}
           </DialogTitle>
         </DialogHeader>
 
@@ -97,15 +101,19 @@ export const RevenueBooster: React.FC = () => {
           {/* Main offer */}
           <div className="text-center space-y-4">
             <Badge variant="destructive" className="text-lg px-4 py-2 animate-pulse">
-              85% RABATT - BARE I 15 MINUTTER!
+              {revenueConfig.discount.percentage}% {revenueConfig.messages.urgencyText}
             </Badge>
             
             <div className="bg-white/70 p-6 rounded-lg border border-yellow-300">
               <div className="space-y-2">
-                <p className="text-sm text-gray-500 line-through">Normalpris: 199 kr/mnd</p>
-                <p className="text-4xl font-bold text-green-600">Kun 29 kr/mnd</p>
+                <p className="text-sm text-gray-500 line-through">
+                  Normalpris: {revenueConfig.discount.originalPrice} kr/mnd
+                </p>
+                <p className="text-4xl font-bold text-green-600">
+                  Kun {revenueConfig.discount.discountedPrice} kr/mnd
+                </p>
                 <p className="text-lg font-semibold text-orange-600">
-                  💰 SPAR 2.040 kr i året!
+                  💰 SPAR {revenueConfig.discount.yearlyRawSavings} kr i året!
                 </p>
               </div>
             </div>
@@ -135,12 +143,12 @@ export const RevenueBooster: React.FC = () => {
           {/* Action buttons */}
           <div className="space-y-3">
             <Button
-              onClick={() => handleUpgrade('price_1S9U5rDgjF2NREPhuG6Kvd1Q')}
+              onClick={() => handleUpgrade(STRIPE_PRICE_IDS.PREMIUM)}
               className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold py-4 text-lg animate-pulse"
               size="lg"
             >
               <Crown className="h-5 w-5 mr-2" />
-              HENT MEGA-RABATTEN NÅ!
+              {revenueConfig.messages.ctaText}
             </Button>
 
             <div className="flex items-center justify-center gap-4 text-xs text-gray-600">
@@ -155,7 +163,7 @@ export const RevenueBooster: React.FC = () => {
             </div>
 
             <p className="text-center text-xs text-red-600 font-bold animate-bounce">
-              ⚡ Kun 7 plasser igjen til denne prisen!
+              ⚡ Kun {revenueConfig.scarcity.spotsLeft} plasser igjen til denne prisen!
             </p>
           </div>
         </div>

@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { ConversionBooster } from "@/components/ConversionBooster";
+import { PRICING_CONFIG, TRIAL_CONFIG } from "@/config/pricing";
 import { 
   Crown, 
   Zap, 
@@ -94,7 +95,7 @@ export const PricingSection: React.FC = () => {
       if (data?.success) {
         toast({
           title: "🎉 Prøveperiode aktivert!",
-          description: `${planType.charAt(0).toUpperCase() + planType.slice(1)} prøveperiode er nå aktiv i 30 dager.`,
+          description: `${planType.charAt(0).toUpperCase() + planType.slice(1)} prøveperiode er nå aktiv i ${TRIAL_CONFIG.DURATION_DAYS} dager.`,
         });
         
         // Refresh subscription status to show the trial
@@ -299,7 +300,7 @@ export const PricingSection: React.FC = () => {
                 <Zap className="h-6 w-6 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">Gratis versjon</h3>
+                <h3 className="text-lg font-semibold">{PRICING_CONFIG.PLANS.FREE.name}</h3>
                 <p className="text-muted-foreground">Perfekt for å teste tjenesten</p>
               </div>
               <Badge variant="secondary" className="ml-auto">
@@ -307,22 +308,12 @@ export const PricingSection: React.FC = () => {
               </Badge>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span>25 ruter/måned</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span>Grunnleggende kart</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span>Ladestasjoner</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span>Community support</span>
-              </div>
+              {PRICING_CONFIG.PLANS.FREE.features.map((feature, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span>{feature}</span>
+                </div>
+              ))}
             </div>
           </Card>
         </div>
@@ -364,10 +355,10 @@ export const PricingSection: React.FC = () => {
                   </div>
                   
                   <div className="mb-4">
-                    {('originalPrice' in plan) && (
+                    {plan.originalPrice && (
                       <div className="flex items-center justify-center gap-2 mb-2">
                         <span className="text-lg text-muted-foreground line-through">
-                          {plan.originalPrice} NOK
+                          {plan.originalPrice} {PRICING_CONFIG.CURRENCY}
                         </span>
                         <Badge variant="destructive" className="text-xs animate-pulse">
                           SPAR {Math.round(((plan.originalPrice - plan.price) / plan.originalPrice) * 100)}%
@@ -375,7 +366,7 @@ export const PricingSection: React.FC = () => {
                       </div>
                     )}
                     <span className="text-4xl font-bold text-green-600">{plan.price}</span>
-                    <span className="text-muted-foreground"> NOK/mnd</span>
+                    <span className="text-muted-foreground"> {PRICING_CONFIG.CURRENCY}/{PRICING_CONFIG.BILLING_INTERVAL}</span>
                   </div>
                   
                   <p className="text-muted-foreground">{plan.description}</p>
@@ -446,7 +437,7 @@ export const PricingSection: React.FC = () => {
 
                 {plan.popular && (
                   <p className="text-xs text-center text-muted-foreground mt-3">
-                    14 dager gratis prøveperiode • Avbryt når som helst
+                    {TRIAL_CONFIG.DURATION_DAYS} dager gratis prøveperiode • Avbryt når som helst
                   </p>
                 )}
               </Card>
