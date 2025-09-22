@@ -79,9 +79,11 @@ export const DriverNavigationView: React.FC<DriverNavigationViewProps> = ({
   };
 
   if (!isActive) return null;
+  
+  console.log('🚗 DriverNavigationView AKTIV - viser førerperspektiv!');
 
   return (
-    <div className="fixed inset-0 z-[100] bg-gradient-to-b from-sky-400 via-sky-300 to-gray-800 overflow-hidden">
+    <div className="fixed inset-0 z-[999] bg-gradient-to-b from-sky-400 via-sky-300 to-gray-800 overflow-hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
       {/* Road Surface with Perspective */}
       <div className="absolute bottom-0 left-0 right-0 h-3/5">
         {/* Road */}
