@@ -245,10 +245,11 @@ function Index() {
 
   // Optimized route selection - stable function reference
   const handleRouteSelect = useCallback((routeId: string) => {
-    console.log('🎯 Route selected:', routeId);
+    console.log('🎯 Route selected:', routeId, 'Current routeTrigger:', routeTrigger);
     setSelectedRouteId(routeId);
     // Trigger kartberegning når bruker velger ny rute
     if (routeTrigger > 0) { // Kun hvis allerede har beregnet ruter
+      console.log('🚀 Triggering route calculation for:', routeId, 'new trigger will be:', routeTrigger + 1);
       setRouteTrigger(prev => prev + 1);
     }
   }, [routeTrigger]);

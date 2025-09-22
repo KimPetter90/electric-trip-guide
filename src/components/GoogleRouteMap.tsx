@@ -711,7 +711,13 @@ const GoogleRouteMap: React.FC<{
       });
       
       directionsService.route(request, (result, status) => {
-        console.log('📍 DIRECTIONS RESPONS:', { status, result: !!result });
+        console.log('📍 DIRECTIONS RESPONS:', { 
+          status, 
+          result: !!result, 
+          selectedRouteId, 
+          hasDirectionsRenderer: !!directionsRendererRef.current,
+          mapExists: !!mapInstanceRef.current
+        });
         
         if (status === google.maps.DirectionsStatus.OK && result) {
           console.log('✅ Route calculated successfully for:', selectedRouteId, 'with distance:', result.routes[0].legs[0].distance?.text);
@@ -745,9 +751,9 @@ const GoogleRouteMap: React.FC<{
 
           // ALWAYS set map again to ensure it's attached
           directionsRendererRef.current.setMap(mapInstanceRef.current);
-          console.log('🗺️ Setting directions on renderer...');
+          console.log('🗺️ Setting directions on renderer for route:', selectedRouteId);
           directionsRendererRef.current.setDirections(result);
-          console.log('✅ Directions set successfully');
+          console.log('✅ Directions set successfully for:', selectedRouteId);
           
           // Adjust map viewport to show the entire route
           const bounds = new google.maps.LatLngBounds();
